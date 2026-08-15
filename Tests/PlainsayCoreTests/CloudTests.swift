@@ -101,8 +101,8 @@ struct PlainsayCloudTests {
 /// Collects a state callback that the factory hands out as `@Sendable`.
 private final class StateBox: @unchecked Sendable {
     private let lock = NSLock()
-    private var stored: WhisperKitEngine.LoadState?
-    var value: WhisperKitEngine.LoadState? {
+    private var stored: SpeechModelLoadState?
+    var value: SpeechModelLoadState? {
         get { lock.withLock { stored } }
         set { lock.withLock { stored = newValue } }
     }
@@ -131,19 +131,27 @@ struct OnDeviceDefaultTests {
     }
 
     @Test("Choosing Cloud without credentials does not silently fall back")
-    func cloudWithoutCredentialsReportsFailure() {
+    func cloudWithoutCredentialsReportsFailure() async {
         let settings = freshSettings()
         settings.transcriptionSource = .cloud
+        settings.model = .parakeetTDT06BV3
         ProviderFactory.cloudCredentials = nil
 
         let box = StateBox()
-        _ = ProviderFactory.makeEngine(settings) { box.value = $0 }
+        let engine = ProviderFactory.makeEngine(settings) { box.value = $0 }
         let reported = box.value
 
         // Working dictation that quietly ignores the paid setting would hide a
         // billing problem behind an apparently fine app.
         if case .failed = reported {} else {
             Issue.record("expected a failure state, got \(String(describing: reported))")
+        }
+
+        do {
+            try await engine.prepare()
+            Issue.record("missing Cloud credentials unexpectedly prepared a local engine")
+        } catch {
+            #expect(error.localizedDescription.contains("Sign in to Plainsay Cloud"))
         }
     }
 

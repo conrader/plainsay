@@ -116,8 +116,9 @@ private struct SpeechSettings: View {
             if settings.transcriptionSource == .onDevice {
                 Section("On-device model") {
                     Picker("Model", selection: $settings.model) {
-                        ForEach(WhisperModel.allCases, id: \.self) { model in
+                        ForEach(OnDeviceModel.allCases, id: \.self) { model in
                             Text(model.displayName).tag(model)
+                                .disabled(!model.isSupportedOnCurrentHardware)
                         }
                     }
                     LabeledContent("Status") {
@@ -126,6 +127,12 @@ private struct SpeechSettings: View {
                     Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+
+                    if settings.model == .parakeetTDT06BV3 {
+                        Text("Automatically handles Polish and English. When cleanup is enabled, vocabulary terms are applied there rather than as decoder hints. NVIDIA Parakeet is provided under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and runs through FluidAudio.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             } else if settings.transcriptionSource == .cloud {
                 Section("Plainsay Cloud") {
@@ -189,7 +196,7 @@ private struct SpeechSettings: View {
                 }
 
                 if settings.dictionary.normalizedTerms.isEmpty {
-                    Text("Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model and uses them to fix spellings afterwards.")
+                    Text(vocabularyExplanation)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
@@ -234,6 +241,13 @@ private struct SpeechSettings: View {
         }
     }
 
+    private var vocabularyExplanation: String {
+        if settings.transcriptionSource == .onDevice && !settings.model.supportsDecoderPrompt {
+            return "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay uses these terms during cleanup when cleanup is enabled."
+        }
+        return "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model and uses them to fix spellings afterwards."
+    }
+
     private func addTerm() {
         let term = newTerm.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !term.isEmpty else { return }
@@ -247,7 +261,7 @@ private struct SpeechSettings: View {
 }
 
 private struct ModelStatusLabel: View {
-    let state: WhisperKitEngine.LoadState
+    let state: SpeechModelLoadState
 
     var body: some View {
         switch state {

@@ -48,15 +48,11 @@ public enum ProviderFactory {
 
     public static func makeEngine(
         _ settings: PlainsaySettings,
-        onState: @escaping @Sendable (WhisperKitEngine.LoadState) -> Void
+        onState: @escaping @Sendable (SpeechModelLoadState) -> Void
     ) -> any TranscriptionEngine {
         switch settings.transcriptionSource {
         case .onDevice:
-            return WhisperKitEngine(
-                model: settings.model,
-                language: settings.language,
-                onStateChange: onState
-            )
+            return makeOnDeviceEngine(settings, onState: onState)
 
         case .cloud:
             guard let cloud = cloudCredentials else {
@@ -64,12 +60,9 @@ public enum ProviderFactory {
                 // rather than silently transcribing on-device: the user picked
                 // Cloud, and quietly doing something else hides a billing
                 // problem behind working dictation.
-                onState(.failed("Sign in to Plainsay Cloud in Settings › Speech"))
-                return WhisperKitEngine(
-                    model: settings.model,
-                    language: settings.language,
-                    onStateChange: onState
-                )
+                let message = "Sign in to Plainsay Cloud in Settings › Speech"
+                onState(.failed(message))
+                return UnavailableTranscriptionEngine(message: message)
             }
             onState(.ready)
             return RemoteWhisperEngine(
@@ -87,12 +80,9 @@ public enum ProviderFactory {
             guard !key.isEmpty else {
                 // Falling back silently would be worse: dictation would keep
                 // working while quietly ignoring the setting you chose.
-                onState(.failed("No API key for \(provider.displayName)"))
-                return WhisperKitEngine(
-                    model: settings.model,
-                    language: settings.language,
-                    onStateChange: onState
-                )
+                let message = "No API key for \(provider.displayName)"
+                onState(.failed(message))
+                return UnavailableTranscriptionEngine(message: message)
             }
             // Remote needs no loading, so report ready immediately or the
             // hotkey would refuse to record.
@@ -105,5 +95,36 @@ public enum ProviderFactory {
                 uploadFormat: provider.uploadFormat
             )
         }
+    }
+
+    private static func makeOnDeviceEngine(
+        _ settings: PlainsaySettings,
+        onState: @escaping @Sendable (SpeechModelLoadState) -> Void
+    ) -> any TranscriptionEngine {
+        switch settings.model {
+        case .parakeetTDT06BV3:
+            ParakeetEngine(
+                language: settings.language,
+                onStateChange: onState
+            )
+        default:
+            WhisperKitEngine(
+                model: settings.model,
+                language: settings.language,
+                onStateChange: onState
+            )
+        }
+    }
+}
+
+private struct UnavailableTranscriptionEngine: TranscriptionEngine {
+    let message: String
+
+    func prepare() async throws {
+        throw TranscriptionError.failed(message)
+    }
+
+    func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        throw TranscriptionError.failed(message)
     }
 }

@@ -1,8 +1,8 @@
 import Foundation
 
-/// User-supplied vocabulary: names, jargon, product names that Whisper mangles
-/// phonetically. Used twice in the pipeline — once to bias ASR decoding, once to
-/// repair whatever still slipped through during cleanup.
+/// User-supplied vocabulary: names, jargon, and product names that speech
+/// models mangle phonetically. Engines with prompt support use it to bias ASR;
+/// every engine can use it to repair spellings during cleanup.
 public struct TermDictionary: Codable, Sendable, Equatable {
     public var terms: [String]
 

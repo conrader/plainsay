@@ -12,7 +12,7 @@ public final class PlainsaySettings {
 
     public var binding: HotkeyBinding { didSet { persist(binding, .binding) } }
     public var hotkeyMode: HotkeyMode { didSet { persist(hotkeyMode, .hotkeyMode) } }
-    public var model: WhisperModel { didSet { persist(model, .model) } }
+    public var model: OnDeviceModel { didSet { persist(model, .model) } }
     public var dictionary: TermDictionary { didSet { persist(dictionary, .dictionary) } }
     public var cleanupEnabled: Bool { didSet { defaults.set(cleanupEnabled, forKey: Key.cleanupEnabled.rawValue) } }
     public var cleanupProvider: CleanupProvider { didSet { persist(cleanupProvider, .cleanupProvider) } }
@@ -28,7 +28,7 @@ public final class PlainsaySettings {
     /// Leave the dictation on the clipboard instead of restoring what was there.
     /// Insurance for apps that silently swallow a synthetic ⌘V.
     public var keepOnClipboard: Bool { didSet { defaults.set(keepOnClipboard, forKey: Key.keepOnClipboard.rawValue) } }
-    /// Whisper language code, or nil to auto-detect.
+    /// Speech-model language code, or nil for automatic multilingual decoding.
     public var language: String? { didSet { defaults.set(language, forKey: Key.language.rawValue) } }
 
     public var geminiAPIKey: String {
@@ -99,7 +99,7 @@ public final class PlainsaySettings {
 
         binding = decode(.binding, HotkeyBinding.rightCommandKey)
         hotkeyMode = decode(.hotkeyMode, HotkeyMode.hybrid)
-        model = decode(.model, WhisperModel.largeV3Turbo)
+        model = decode(.model, OnDeviceModel.largeV3Turbo)
         dictionary = decode(.dictionary, TermDictionary())
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true

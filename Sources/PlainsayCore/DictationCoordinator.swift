@@ -38,7 +38,7 @@ public final class DictationCoordinator {
 
     /// How many samples the ribbon shows — about four seconds at 30fps.
     public static let levelHistoryLength = 120
-    public private(set) var modelState: WhisperKitEngine.LoadState = .idle
+    public private(set) var modelState: SpeechModelLoadState = .idle
     public private(set) var lastTranscript: String?
 
     /// Every dictation, written down before insertion is attempted.
@@ -52,7 +52,16 @@ public final class DictationCoordinator {
     private let recorder: any AudioRecording
     private let inserter: any TextInserting
     private var engine: (any TranscriptionEngine)?
-    private let makeEngine: @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine
+    /// Recording, transcription, and crash recovery all retain the current
+    /// engine. A model change waits until every such use has finished.
+    private var activeEngineWork = 0
+    private var engineIdleWaiters: [CheckedContinuation<Void, Never>] = []
+    /// Reloads form a short serial queue. This prevents an old FluidAudio
+    /// cleanup from racing a newer model load through its shared Core ML cache.
+    private var modelReloadTask: Task<Void, Never>?
+    /// Invalidates progress and completion from superseded model loads.
+    private var modelLoadGeneration: UInt64 = 0
+    private let makeEngine: @MainActor (OnDeviceModel, String?, @escaping @Sendable (SpeechModelLoadState) -> Void) -> any TranscriptionEngine
     private let makeCleaner: @MainActor (PlainsaySettings) -> any TextCleaning
     /// Tests pass a fake engine; production resolves one from settings.
     private let usesInjectedEngine: Bool
@@ -70,7 +79,7 @@ public final class DictationCoordinator {
         cloud: PlainsayCloudClient = PlainsayCloudClient(),
         recorder: any AudioRecording = AudioRecorder(),
         inserter: any TextInserting = PasteboardTextInserter(),
-        makeEngine: @escaping @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine = { _, _, _ in
+        makeEngine: @escaping @MainActor (OnDeviceModel, String?, @escaping @Sendable (SpeechModelLoadState) -> Void) -> any TranscriptionEngine = { _, _, _ in
             // Replaced below; the real construction needs the whole settings
             // object, not just the model, now that the engine can be remote.
             WhisperKitEngine()
@@ -117,7 +126,7 @@ public final class DictationCoordinator {
         } catch {
             phase = .error(error.localizedDescription)
         }
-        await loadModel()
+        await reloadModel()
         await recoverInterruptedAudio()
     }
 
@@ -128,35 +137,64 @@ public final class DictationCoordinator {
     /// history, where it can be copied.
     private func recoverInterruptedAudio() async {
         let pending = pendingAudio.recoverable()
-        guard !pending.isEmpty, let engine else { return }
+        guard !pending.isEmpty,
+              case .ready = modelState,
+              let engine
+        else { return }
+        beginEngineWork()
+        defer { finishEngineWork() }
         Log.pipeline.info("recovering \(pending.count, privacy: .public) interrupted recording(s)")
 
         for url in pending {
-            defer { pendingAudio.discard(url) }
-            guard let samples = pendingAudio.load(url), !samples.isEmpty else { continue }
+            guard let samples = pendingAudio.load(url), !samples.isEmpty else {
+                pendingAudio.discard(url)
+                continue
+            }
             let duration = Double(samples.count) / whisperSampleRate
-            guard duration >= Self.minimumDuration else { continue }
+            guard duration >= Self.minimumDuration else {
+                pendingAudio.discard(url)
+                continue
+            }
 
-            guard let raw = try? await engine.transcribe(
-                samples: samples,
-                prompt: settings.dictionary.asrPrompt()
-            ), !raw.isEmpty else { continue }
+            let raw: String
+            do {
+                raw = try await engine.transcribe(
+                    samples: samples,
+                    prompt: settings.dictionary.asrPrompt()
+                )
+            } catch {
+                // Keep recoverable audio on disk if the model is unavailable or
+                // transiently fails. Deleting it here would turn a load race
+                // into permanent dictation loss.
+                Log.pipeline.error("recovery transcription failed; keeping audio: \(error.localizedDescription, privacy: .public)")
+                continue
+            }
+            guard !raw.isEmpty else {
+                pendingAudio.discard(url)
+                continue
+            }
 
             let cleaned = (try? await makeCleaner(settings).clean(raw, dictionary: settings.dictionary)) ?? raw
             history.add(TranscriptRecord(
                 text: cleaned, rawText: raw, outcome: .recovered,
                 durationSeconds: duration, targetApp: nil
             ))
+            pendingAudio.discard(url)
             Log.pipeline.info("recovered \(cleaned.count, privacy: .public) chars from an interrupted recording")
         }
     }
 
     public func stop() {
+        // After hotkey-up, `phase` remains `.recording` for one scheduler turn
+        // while the queued pipeline takes ownership of this work unit. Only
+        // release it here if the recorder itself is still capturing.
+        let stoppedDuringRecording = phase == .recording && recorder.isRecording
         hotkeys.stop()
         meterTask?.cancel()
         recorder.cancel()
         machine.reset()
         phase = .idle
+        if stoppedDuringRecording { finishEngineWork() }
     }
 
     /// Applies changed settings without a relaunch.
@@ -166,8 +204,51 @@ public final class DictationCoordinator {
     }
 
     public func reloadModel() async {
+        modelLoadGeneration &+= 1
+        let generation = modelLoadGeneration
+        modelState = .idle
+
+        let previousReload = modelReloadTask
+        // Network downloads in FluidAudio are cancellation-aware. Stop a
+        // superseded choice immediately, then wait for its orderly teardown
+        // before touching the shared Core ML runtime again.
+        previousReload?.cancel()
+        let reload = Task { @MainActor [weak self] in
+            await previousReload?.value
+            guard let self,
+                  !Task.isCancelled,
+                  generation == self.modelLoadGeneration
+            else { return }
+            await self.performModelReload(generation: generation)
+        }
+        modelReloadTask = reload
+
+        // A caller such as `start()` must not continue into crash recovery just
+        // because its own generation was superseded. Follow the queue until the
+        // latest requested model has either become ready or failed.
+        var awaitedGeneration = generation
+        var awaitedReload = reload
+        while true {
+            await awaitedReload.value
+            guard awaitedGeneration != modelLoadGeneration else { return }
+            guard let latestReload = modelReloadTask else { return }
+            awaitedGeneration = modelLoadGeneration
+            awaitedReload = latestReload
+        }
+    }
+
+    private func performModelReload(generation: UInt64) async {
+        // A settings change can arrive while recording or while the decoder is
+        // suspended. Keep that dictation on its original resident model.
+        await waitForEngineToBecomeIdle()
+        guard !Task.isCancelled, generation == modelLoadGeneration else { return }
+
+        let previousEngine = engine
         engine = nil
-        await loadModel()
+        await previousEngine?.shutdown()
+        guard !Task.isCancelled, generation == modelLoadGeneration else { return }
+
+        await loadModel(generation: generation)
     }
 
     /// Fetches the hosted plan's provider keys into memory.
@@ -195,22 +276,36 @@ public final class DictationCoordinator {
         }
     }
 
-    private func loadModel() async {
-        let onState: @Sendable (WhisperKitEngine.LoadState) -> Void = { [weak self] state in
-            Task { @MainActor in self?.modelState = state }
+    private func loadModel(generation: UInt64) async {
+        let onState: @Sendable (SpeechModelLoadState) -> Void = { [weak self] state in
+            Task { @MainActor in
+                guard let self, self.modelLoadGeneration == generation else { return }
+                self.modelState = state
+            }
         }
         // Tests inject `makeEngine`; production goes through the factory, which
         // is the only thing that knows about remote providers.
         let engine = usesInjectedEngine
             ? makeEngine(settings.model, settings.language, onState)
             : ProviderFactory.makeEngine(settings, onState: onState)
+        guard !Task.isCancelled, generation == modelLoadGeneration else { return }
         self.engine = engine
         do {
             try await engine.prepare()
+            guard generation == modelLoadGeneration else {
+                self.engine = nil
+                await engine.shutdown()
+                return
+            }
             // Don't depend on the engine having reported readiness itself —
             // a successful `prepare()` is the definition of ready.
             modelState = .ready
         } catch {
+            guard generation == modelLoadGeneration else {
+                self.engine = nil
+                await engine.shutdown()
+                return
+            }
             modelState = .failed(error.localizedDescription)
         }
     }
@@ -252,6 +347,13 @@ public final class DictationCoordinator {
     private func beginRecording() {
         resetTask?.cancel()
 
+        // One dictation at a time. In particular, do not start recording while
+        // the previous sentence is still transcribing or being cleaned.
+        guard !phase.isBusy, activeEngineWork == 0 else {
+            machine.reset()
+            return
+        }
+
         guard case .ready = modelState else {
             // Be specific about which wait this is. The first launch after a
             // model change compiles for the Neural Engine, which takes minutes,
@@ -284,6 +386,7 @@ public final class DictationCoordinator {
         }
 
         phase = .recording
+        beginEngineWork()
         elapsed = 0
         // Cleared here rather than on stop, so the ribbon stays frozen on the
         // sentence you just spoke while it transcribes.
@@ -305,6 +408,7 @@ public final class DictationCoordinator {
             Log.pipeline.info("discarded \(duration, format: .fixed(precision: 2), privacy: .public)s — below minimum")
             record(text: "", raw: "", outcome: .tooShort, duration: duration)
             phase = .idle
+            finishEngineWork()
             return
         }
 
@@ -314,12 +418,34 @@ public final class DictationCoordinator {
     // MARK: - Pipeline
 
     private func process(_ samples: [Float]) async {
+        defer { finishEngineWork() }
         // On disk before transcription, deleted after. Whatever survives a
         // crash here is a dictation that was never turned into text.
         let staged = pendingAudio.save(samples)
         defer { pendingAudio.discard(staged) }
 
         await runPipeline(samples)
+    }
+
+    private func beginEngineWork() {
+        activeEngineWork += 1
+    }
+
+    private func finishEngineWork() {
+        guard activeEngineWork > 0 else { return }
+        activeEngineWork -= 1
+        guard activeEngineWork == 0 else { return }
+
+        let waiters = engineIdleWaiters
+        engineIdleWaiters.removeAll()
+        for waiter in waiters { waiter.resume() }
+    }
+
+    private func waitForEngineToBecomeIdle() async {
+        guard activeEngineWork > 0 else { return }
+        await withCheckedContinuation { continuation in
+            engineIdleWaiters.append(continuation)
+        }
     }
 
     private func runPipeline(_ samples: [Float]) async {

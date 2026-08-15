@@ -48,6 +48,107 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
     }
 }
 
+/// A deterministic suspension point for lifecycle race tests.
+private actor AsyncTestGate {
+    private var isOpen = false
+    private var hasStarted = false
+    private var openWaiters: [CheckedContinuation<Void, Never>] = []
+    private var startWaiters: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        hasStarted = true
+        let waiters = startWaiters
+        startWaiters.removeAll()
+        for waiter in waiters { waiter.resume() }
+
+        guard !isOpen else { return }
+        await withCheckedContinuation { continuation in
+            openWaiters.append(continuation)
+        }
+    }
+
+    func waitUntilStarted() async {
+        guard !hasStarted else { return }
+        await withCheckedContinuation { continuation in
+            startWaiters.append(continuation)
+        }
+    }
+
+    var started: Bool { hasStarted }
+
+    func open() {
+        isOpen = true
+        let waiters = openWaiters
+        openWaiters.removeAll()
+        for waiter in waiters { waiter.resume() }
+    }
+}
+
+private actor AsyncCompletionFlag {
+    private(set) var isSet = false
+
+    func set() {
+        isSet = true
+    }
+}
+
+private actor ControlledLoadingEngine: TranscriptionEngine {
+    private let gate: AsyncTestGate
+    private let transcript: String
+    private let onStateChange: @Sendable (SpeechModelLoadState) -> Void
+    private(set) var shutdownCount = 0
+
+    init(
+        gate: AsyncTestGate,
+        transcript: String,
+        onStateChange: @escaping @Sendable (SpeechModelLoadState) -> Void
+    ) {
+        self.gate = gate
+        self.transcript = transcript
+        self.onStateChange = onStateChange
+    }
+
+    func prepare() async throws {
+        onStateChange(.loading)
+        await gate.wait()
+        onStateChange(.ready)
+    }
+
+    func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        transcript
+    }
+
+    func shutdown() async {
+        shutdownCount += 1
+    }
+}
+
+@MainActor
+private final class LoadingEngineBox {
+    var old: ControlledLoadingEngine?
+    var latest: ControlledLoadingEngine?
+}
+
+private actor ControlledTranscriptionEngine: TranscriptionEngine {
+    private let gate: AsyncTestGate
+    private(set) var shutdownCount = 0
+
+    init(gate: AsyncTestGate) {
+        self.gate = gate
+    }
+
+    func prepare() async throws {}
+
+    func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        await gate.wait()
+        return "The dictation survived the model change."
+    }
+
+    func shutdown() async {
+        shutdownCount += 1
+    }
+}
+
 final class FakeCleaner: TextCleaning, @unchecked Sendable {
     var output = "The thing is, it works."
     var error: Error?
@@ -287,5 +388,211 @@ struct PipelineTests {
         try await harness.settle()
 
         #expect(harness.inserter.inserted.count == 1)
+    }
+
+    @Test("Superseded model loads finish before the latest one starts")
+    func serializesRapidModelReloads() async throws {
+        let defaults = UserDefaults(suiteName: "plainsay.reloads.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: defaults)
+        settings.playFeedbackSounds = false
+
+        let oldGate = AsyncTestGate()
+        let newGate = AsyncTestGate()
+        let engines = LoadingEngineBox()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("reload-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("reload-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { model, _, onState in
+                let isOld = model == .largeV3Turbo
+                let engine = ControlledLoadingEngine(
+                    gate: isOld ? oldGate : newGate,
+                    transcript: isOld ? "old" : "new",
+                    onStateChange: onState
+                )
+                if isOld {
+                    engines.old = engine
+                } else {
+                    engines.latest = engine
+                }
+                return engine
+            },
+            makeCleaner: { _ in NoCleanup() },
+            usesInjectedEngine: true
+        )
+
+        let oldLoadCompleted = AsyncCompletionFlag()
+        let oldLoad = Task {
+            await coordinator.reloadModel()
+            await oldLoadCompleted.set()
+        }
+        await oldGate.waitUntilStarted()
+        try await waitForModelState(.loading, coordinator: coordinator)
+
+        settings.model = .smallEN
+        let latestLoad = Task { await coordinator.reloadModel() }
+        try await waitForModelState(.idle, coordinator: coordinator)
+
+        #expect(!(await newGate.started))
+        await oldGate.open()
+        await newGate.waitUntilStarted()
+        try await waitForModelState(.loading, coordinator: coordinator)
+        for _ in 0..<10 { await Task.yield() }
+        #expect(!(await oldLoadCompleted.isSet))
+        let oldEngine = try #require(engines.old)
+        #expect(await oldEngine.shutdownCount == 1)
+
+        await newGate.open()
+        await oldLoad.value
+        await latestLoad.value
+
+        #expect(coordinator.modelState == .ready)
+        let newEngine = try #require(engines.latest)
+        #expect(await newEngine.shutdownCount == 0)
+    }
+
+    @Test("A reload waits for an active transcription and blocks overlap")
+    func reloadWaitsForTranscription() async throws {
+        let settings = isolatedSettings("transcription-reload")
+        let recorder = FakeRecorder()
+        let inserter = FakeInserter()
+        let gate = AsyncTestGate()
+        let engine = ControlledTranscriptionEngine(gate: gate)
+        let coordinator = makeLifecycleCoordinator(
+            settings: settings,
+            recorder: recorder,
+            inserter: inserter,
+            engine: engine,
+            name: "transcription-reload"
+        )
+        await coordinator.reloadModel()
+
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        coordinator.handleHotkeyEdge(.up(at: 1))
+        await gate.waitUntilStarted()
+
+        // A new press while the decoder is busy must not start another capture.
+        coordinator.handleHotkeyEdge(.down(at: 2))
+        #expect(!recorder.isRecording)
+
+        let reload = Task { await coordinator.reloadModel() }
+        try await waitForModelState(.idle, coordinator: coordinator)
+        #expect(await engine.shutdownCount == 0)
+
+        await gate.open()
+        await reload.value
+
+        #expect(inserter.inserted == ["The dictation survived the model change."])
+        #expect(await engine.shutdownCount == 1)
+        #expect(coordinator.modelState == .ready)
+    }
+
+    @Test("Changing models while recording preserves that recording")
+    func reloadWaitsForRecording() async throws {
+        let settings = isolatedSettings("recording-reload")
+        let recorder = FakeRecorder()
+        let inserter = FakeInserter()
+        let gate = AsyncTestGate()
+        await gate.open()
+        let engine = ControlledTranscriptionEngine(gate: gate)
+        let coordinator = makeLifecycleCoordinator(
+            settings: settings,
+            recorder: recorder,
+            inserter: inserter,
+            engine: engine,
+            name: "recording-reload"
+        )
+        await coordinator.reloadModel()
+
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(coordinator.phase == .recording)
+
+        let reload = Task { await coordinator.reloadModel() }
+        try await waitForModelState(.idle, coordinator: coordinator)
+        #expect(await engine.shutdownCount == 0)
+
+        coordinator.handleHotkeyEdge(.up(at: 1))
+        await reload.value
+
+        #expect(inserter.inserted == ["The dictation survived the model change."])
+        #expect(await engine.shutdownCount == 1)
+        #expect(coordinator.modelState == .ready)
+    }
+
+    @Test("Stopping after key-up does not release a queued transcription")
+    func stopKeepsQueuedPipelineOwnership() async throws {
+        let settings = isolatedSettings("stop-reload-race")
+        let recorder = FakeRecorder()
+        let inserter = FakeInserter()
+        let gate = AsyncTestGate()
+        let engine = ControlledTranscriptionEngine(gate: gate)
+        let coordinator = makeLifecycleCoordinator(
+            settings: settings,
+            recorder: recorder,
+            inserter: inserter,
+            engine: engine,
+            name: "stop-reload-race"
+        )
+        await coordinator.reloadModel()
+
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        coordinator.handleHotkeyEdge(.up(at: 1))
+        coordinator.stop()
+
+        let reload = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+        try await waitForModelState(.idle, coordinator: coordinator)
+        #expect(await engine.shutdownCount == 0)
+
+        await gate.open()
+        await reload.value
+
+        #expect(inserter.inserted == ["The dictation survived the model change."])
+        #expect(await engine.shutdownCount == 1)
+    }
+
+    private func isolatedSettings(_ name: String) -> PlainsaySettings {
+        let defaults = UserDefaults(suiteName: "plainsay.\(name).\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: defaults)
+        settings.playFeedbackSounds = false
+        return settings
+    }
+
+    private func makeLifecycleCoordinator(
+        settings: PlainsaySettings,
+        recorder: FakeRecorder,
+        inserter: FakeInserter,
+        engine: any TranscriptionEngine,
+        name: String
+    ) -> DictationCoordinator {
+        DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("\(name)-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("\(name)-pending")),
+            recorder: recorder,
+            inserter: inserter,
+            makeEngine: { _, _, _ in engine },
+            makeCleaner: { _ in NoCleanup() },
+            usesInjectedEngine: true
+        )
+    }
+
+    private func temporaryDirectory(_ name: String) -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-\(name)-\(UUID().uuidString)")
+    }
+
+    private func waitForModelState(
+        _ expected: SpeechModelLoadState,
+        coordinator: DictationCoordinator
+    ) async throws {
+        let deadline = ContinuousClock.now + .seconds(1)
+        while ContinuousClock.now < deadline {
+            if coordinator.modelState == expected { return }
+            try await Task.sleep(for: .milliseconds(1))
+        }
+        try #require(coordinator.modelState == expected)
     }
 }

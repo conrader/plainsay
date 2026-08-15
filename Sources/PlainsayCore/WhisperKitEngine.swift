@@ -3,16 +3,10 @@ import WhisperKit
 
 /// On-device Whisper via WhisperKit (CoreML, Apple Neural Engine + GPU).
 public actor WhisperKitEngine: TranscriptionEngine {
-    public enum LoadState: Sendable, Equatable {
-        case idle
-        case downloading(progress: Double)
-        case loading
-        case ready
-        case failed(String)
-    }
+    public typealias LoadState = SpeechModelLoadState
 
     private var kit: WhisperKit?
-    private let model: WhisperModel
+    private let model: OnDeviceModel
     private let language: String?
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
@@ -21,7 +15,7 @@ public actor WhisperKitEngine: TranscriptionEngine {
     ///   - language: BCP-47-ish Whisper code (`"en"`), or nil to auto-detect.
     ///   - onStateChange: progress reporting for the menu bar and settings UI.
     public init(
-        model: WhisperModel = .largeV3Turbo,
+        model: OnDeviceModel = .largeV3Turbo,
         language: String? = nil,
         onStateChange: @escaping @Sendable (LoadState) -> Void = { _ in }
     ) {
@@ -44,11 +38,18 @@ public actor WhisperKitEngine: TranscriptionEngine {
 
     public func prepare() async throws {
         if kit != nil { return }
+        try Task.checkCancellation()
+
+        guard let modelID = model.whisperKitModelID else {
+            let message = "\(model.displayName) is not a WhisperKit model."
+            setState(.failed(message))
+            throw TranscriptionError.failed(message)
+        }
 
         setState(.downloading(progress: 0))
         do {
             let config = WhisperKitConfig(
-                model: model.rawValue,
+                model: modelID,
                 verbose: false,
                 logLevel: .error,
                 prewarm: true,
@@ -56,12 +57,22 @@ public actor WhisperKitEngine: TranscriptionEngine {
                 download: true
             )
             setState(.loading)
-            kit = try await WhisperKit(config)
+            let loadedKit = try await WhisperKit(config)
+            try Task.checkCancellation()
+            kit = loadedKit
             setState(.ready)
+        } catch is CancellationError {
+            setState(.idle)
+            throw CancellationError()
         } catch {
             setState(.failed(error.localizedDescription))
             throw TranscriptionError.failed(error.localizedDescription)
         }
+    }
+
+    public func shutdown() async {
+        kit = nil
+        setState(.idle)
     }
 
     /// Whisper's window. Audio below this fits in a single pass, so splitting

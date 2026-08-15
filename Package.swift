@@ -10,12 +10,18 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "1.1.0"),
+        // FluidAudio is still pre-1.0 and its ASR API changes between minor
+        // releases, so keep the integration on the version it is tested with.
+        .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.5"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.5"),
     ],
     targets: [
         .target(
             name: "PlainsayCore",
-            dependencies: [.product(name: "WhisperKit", package: "WhisperKit")]
+            dependencies: [
+                .product(name: "WhisperKit", package: "WhisperKit"),
+                .product(name: "FluidAudio", package: "FluidAudio"),
+            ]
         ),
         .executableTarget(
             name: "PlainsayApp",
