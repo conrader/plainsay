@@ -8,24 +8,39 @@ struct SettingsView: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
 
+    private enum Tab: Hashable { case general, speech, cleanup, history, permissions }
+    @State private var selection: Tab = .general
+
     var body: some View {
-        TabView {
+        // The selection binding is load-bearing, not decoration. Without it,
+        // anything that rebuilds the view hierarchy — such as re-checking
+        // permissions after returning from System Settings — drops you back on
+        // the first tab, which is maddening precisely when you are mid-task.
+        TabView(selection: $selection) {
             GeneralSettings(settings: settings, coordinator: coordinator)
                 .tabItem { Label("General", systemImage: "keyboard") }
+                .tag(Tab.general)
 
             SpeechSettings(settings: settings, coordinator: coordinator)
                 .tabItem { Label("Speech", systemImage: "waveform") }
+                .tag(Tab.speech)
 
             CleanupSettings(settings: settings)
                 .tabItem { Label("Cleanup", systemImage: "wand.and.sparkles") }
+                .tag(Tab.cleanup)
 
             HistoryView(history: coordinator.history)
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+                .tag(Tab.history)
 
             PermissionsSettings()
                 .tabItem { Label("Permissions", systemImage: "lock.shield") }
+                .tag(Tab.permissions)
         }
-        .frame(width: 520, height: 420)
+        // Wide enough that five tabs fit on the toolbar. Below roughly 600pt
+        // macOS collapses them into an overflow menu in the corner, which turns
+        // every settings change into a two-click hunt.
+        .frame(minWidth: 660, idealWidth: 660, minHeight: 520, idealHeight: 520)
     }
 }
 
@@ -223,13 +238,19 @@ private struct CleanupSettings: View {
 // MARK: - Permissions
 
 struct PermissionsSettings: View {
-    @State private var refresh = 0
+    /// Cached grant state. Held as data rather than re-read during `body`, so
+    /// refreshing never has to invalidate the view's identity.
+    @State private var granted: [Permission: Bool] = [:]
 
     var body: some View {
         Form {
             Section {
                 ForEach(Permission.allCases) { permission in
-                    PermissionRow(permission: permission, onChange: { refresh += 1 })
+                    PermissionRow(
+                        permission: permission,
+                        isGranted: granted[permission] ?? false,
+                        onChange: refresh
+                    )
                 }
             } footer: {
                 Text("macOS only applies a new grant when Plainsay restarts. Quit and reopen it after changing these.")
@@ -238,18 +259,25 @@ struct PermissionsSettings: View {
             }
         }
         .formStyle(.grouped)
-        .id(refresh)
+        .onAppear(perform: refresh)
         // Grants happen in System Settings, so re-check whenever we come back.
         .onReceive(NotificationCenter.default.publisher(
             for: NSApplication.didBecomeActiveNotification
         )) { _ in
-            refresh += 1
+            refresh()
         }
+    }
+
+    private func refresh() {
+        granted = Dictionary(
+            uniqueKeysWithValues: Permission.allCases.map { ($0, $0.isGranted) }
+        )
     }
 }
 
 private struct PermissionRow: View {
     let permission: Permission
+    let isGranted: Bool
     let onChange: () -> Void
 
     var body: some View {
@@ -261,7 +289,7 @@ private struct PermissionRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if permission.isGranted {
+            if isGranted {
                 Label("Granted", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .labelStyle(.titleAndIcon)
