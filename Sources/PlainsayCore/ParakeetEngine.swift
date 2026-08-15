@@ -16,6 +16,9 @@ public actor ParakeetEngine: TranscriptionEngine {
     private let onStateChange: @Sendable (LoadState) -> Void
     private var activeTranscriptions = 0
     private var shutdownRequested = false
+    private var activeLoadID: UUID?
+    private var acceptsFluidProgress = false
+    private var progressPresentation = ProgressPresentation()
 
     public init(
         language: String? = nil,
@@ -37,6 +40,43 @@ public actor ParakeetEngine: TranscriptionEngine {
         onStateChange(newState)
     }
 
+    /// `AsrModels.downloadAndLoad` performs several FluidAudio repo operations.
+    /// Each operation restarts its own 0...1 fraction, so treating every event
+    /// as whole-model progress makes the UI jump from Loading 100% back to
+    /// Downloading 0%. The first operation downloads the complete repository;
+    /// once compilation begins, keep a stable indeterminate preparation state
+    /// and ignore the later per-component resets.
+    struct ProgressPresentation: Sendable {
+        private(set) var hasBegunLoading = false
+
+        mutating func state(
+            fractionCompleted: Double,
+            isCompiling: Bool
+        ) -> LoadState? {
+            guard !hasBegunLoading else { return nil }
+            if isCompiling {
+                hasBegunLoading = true
+                return .loading(progress: nil)
+            }
+            return .downloading(
+                progress: LoadState.clampedProgress(fractionCompleted * 2)
+            )
+        }
+    }
+
+    private func receiveFluidProgress(
+        fractionCompleted: Double,
+        isCompiling: Bool,
+        loadID: UUID
+    ) {
+        guard activeLoadID == loadID, acceptsFluidProgress else { return }
+        guard let state = progressPresentation.state(
+            fractionCompleted: fractionCompleted,
+            isCompiling: isCompiling
+        ) else { return }
+        setState(state)
+    }
+
     public func prepare() async throws {
         if manager != nil { return }
         guard !shutdownRequested else { throw CancellationError() }
@@ -47,25 +87,41 @@ public actor ParakeetEngine: TranscriptionEngine {
         setState(.failed(message))
         throw TranscriptionError.failed(message)
         #else
+        let loadID = UUID()
+        activeLoadID = loadID
+        acceptsFluidProgress = true
+        progressPresentation = ProgressPresentation()
         setState(.downloading(progress: 0))
-        let reportProgress = onStateChange
 
         do {
             let models = try await AsrModels.downloadAndLoad(
                 version: .v3,
                 encoderPrecision: .int8,
-                progressHandler: { progress in
+                progressHandler: { [weak self] progress in
+                    let isCompiling: Bool
                     switch progress.phase {
                     case .compiling:
-                        reportProgress(.loading)
+                        isCompiling = true
                     case .listing, .downloading:
-                        reportProgress(.downloading(progress: progress.fractionCompleted))
+                        isCompiling = false
+                    }
+                    let fraction = progress.fractionCompleted
+                    Task { [weak self] in
+                        await self?.receiveFluidProgress(
+                            fractionCompleted: fraction,
+                            isCompiling: isCompiling,
+                            loadID: loadID
+                        )
                     }
                 }
             )
             try Task.checkCancellation()
+            guard activeLoadID == loadID else { throw CancellationError() }
 
-            setState(.loading)
+            // Progress from `downloadAndLoad` is no longer relevant. In
+            // particular, a delayed callback must not replace `.ready` later.
+            acceptsFluidProgress = false
+            setState(.loading(progress: nil))
             // FluidAudio recommends disabling mel-context carry-over for v3
             // multilingual recordings longer than a single model window. It
             // prevents later Polish chunks drifting toward English.
@@ -76,16 +132,28 @@ public actor ParakeetEngine: TranscriptionEngine {
             // on the Neural Engine. Do not resurrect a superseded engine.
             guard !Task.isCancelled, !shutdownRequested else {
                 await manager.cleanup()
-                setState(.idle)
+                if activeLoadID == loadID {
+                    activeLoadID = nil
+                    setState(.idle)
+                }
                 throw CancellationError()
             }
             self.manager = manager
+            activeLoadID = nil
             setState(.ready)
         } catch is CancellationError {
-            setState(.idle)
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                acceptsFluidProgress = false
+                setState(.idle)
+            }
             throw CancellationError()
         } catch {
-            setState(.failed(error.localizedDescription))
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                acceptsFluidProgress = false
+                setState(.failed(error.localizedDescription))
+            }
             throw TranscriptionError.failed(error.localizedDescription)
         }
         #endif
@@ -122,6 +190,9 @@ public actor ParakeetEngine: TranscriptionEngine {
 
     public func shutdown() async {
         shutdownRequested = true
+        activeLoadID = nil
+        acceptsFluidProgress = false
+        progressPresentation = ProgressPresentation()
         guard activeTranscriptions == 0 else { return }
         await releaseManager()
     }

@@ -10,6 +10,8 @@ public actor WhisperKitEngine: TranscriptionEngine {
     private let language: String?
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
+    private var activeLoadID: UUID?
+    private var isDownloading = false
 
     /// - Parameters:
     ///   - language: BCP-47-ish Whisper code (`"en"`), or nil to auto-detect.
@@ -36,6 +38,11 @@ public actor WhisperKitEngine: TranscriptionEngine {
         onStateChange(new)
     }
 
+    private func reportDownloadProgress(_ progress: Double, loadID: UUID) {
+        guard activeLoadID == loadID, isDownloading else { return }
+        setState(.downloading(progress: LoadState.clampedProgress(progress)))
+    }
+
     public func prepare() async throws {
         if kit != nil { return }
         try Task.checkCancellation()
@@ -46,31 +53,60 @@ public actor WhisperKitEngine: TranscriptionEngine {
             throw TranscriptionError.failed(message)
         }
 
+        let loadID = UUID()
+        activeLoadID = loadID
+        isDownloading = true
         setState(.downloading(progress: 0))
         do {
+            let modelFolder = try await WhisperKit.download(
+                variant: modelID,
+                progressCallback: { [weak self] progress in
+                    let fraction = progress.fractionCompleted
+                    Task { [weak self] in
+                        await self?.reportDownloadProgress(fraction, loadID: loadID)
+                    }
+                }
+            )
+            try Task.checkCancellation()
+            guard activeLoadID == loadID else { throw CancellationError() }
+
+            isDownloading = false
+            setState(.loading(progress: nil))
             let config = WhisperKitConfig(
                 model: modelID,
+                modelFolder: modelFolder.path,
                 verbose: false,
                 logLevel: .error,
                 prewarm: true,
                 load: true,
-                download: true
+                download: false
             )
-            setState(.loading)
             let loadedKit = try await WhisperKit(config)
             try Task.checkCancellation()
+            guard activeLoadID == loadID else { throw CancellationError() }
             kit = loadedKit
+            activeLoadID = nil
             setState(.ready)
         } catch is CancellationError {
-            setState(.idle)
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                isDownloading = false
+                setState(.idle)
+            }
             throw CancellationError()
         } catch {
-            setState(.failed(error.localizedDescription))
+            if activeLoadID == loadID {
+                activeLoadID = nil
+                isDownloading = false
+                setState(.failed(error.localizedDescription))
+            }
             throw TranscriptionError.failed(error.localizedDescription)
         }
     }
 
     public func shutdown() async {
+        activeLoadID = nil
+        isDownloading = false
         kit = nil
         setState(.idle)
     }

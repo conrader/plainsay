@@ -28,3 +28,12 @@
   `ThirdPartyLicenses/WhisperKit-MIT.txt`.
 - WhisperKit's incorporated-software notices and their complete license terms
   are bundled as `ThirdPartyLicenses/WhisperKit-NOTICES.txt`.
+
+## Sparkle
+
+- Copyright Sparkle contributors
+- Source: https://github.com/sparkle-project/Sparkle
+- License: MIT, with incorporated-software notices
+  https://opensource.org/license/mit/
+- The complete Sparkle license and its external license notices are bundled as
+  `ThirdPartyLicenses/Sparkle-LICENSE.txt`.

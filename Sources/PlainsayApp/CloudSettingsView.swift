@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import PlainsayCore
 
@@ -14,6 +15,7 @@ struct CloudSettingsView: View {
     @State private var code = ""
     @State private var awaitingCode = false
     @State private var busy = false
+    @State private var refreshing = false
     @State private var message: String?
     @State private var isError = false
 
@@ -34,6 +36,13 @@ struct CloudSettingsView: View {
         .task {
             guard cloud.isSignedIn else { return }
             await refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // Returning from Stripe is the common path here. Refreshing on
+            // activation makes the newly active subscription appear without
+            // asking the user to close the assistant or relaunch Plainsay.
+            guard cloud.isSignedIn, !busy else { return }
+            Task { await refresh() }
         }
     }
 
@@ -103,23 +112,32 @@ struct CloudSettingsView: View {
                 if account.isActive {
                     Button("Manage subscription") { Task { await openPortal() } }
                 } else {
-                    Button("Subscribe — 12 zł/month") { Task { await subscribe(annual: false) } }
+                    Button("Subscribe — about $3/month") { Task { await subscribe(annual: false) } }
                         .buttonStyle(.borderedProminent)
-                    Button("120 zł/year") { Task { await subscribe(annual: true) } }
+                    Button("About $30/year") { Task { await subscribe(annual: true) } }
                 }
                 Spacer()
-                Button("Sign out") {
-                    cloud.signOut()
-                    ProviderFactory.cloudCredentials = nil
-                    onCredentialsChanged()
-                    message = nil
-                }
-                .buttonStyle(.borderless)
+                Button("Sign out", action: signOut)
+                    .buttonStyle(.borderless)
+                    .disabled(busy)
             }
         } else {
-            HStack {
-                ProgressView().controlSize(.small)
-                Text("Checking your subscription…").font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                if busy || message == nil {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Image(systemName: "exclamationmark.circle")
+                        .foregroundStyle(.orange)
+                }
+                Text(busy || message == nil ? "Checking your subscription…" : "Account status is unavailable")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Retry") { Task { await refresh() } }
+                    .disabled(busy)
+                Button("Sign out", action: signOut)
+                    .buttonStyle(.borderless)
+                    .disabled(busy)
             }
         }
     }
@@ -152,17 +170,35 @@ struct CloudSettingsView: View {
         await run(nil) { NSWorkspace.shared.open(try await cloud.portalURL()) }
     }
 
+    private func signOut() {
+        cloud.signOut()
+        if ProviderFactory.cloudCredentials != nil {
+            ProviderFactory.cloudCredentials = nil
+            onCredentialsChanged()
+        }
+        message = nil
+    }
+
     /// Pulls account state and, if subscribed, the provider credentials.
     private func refresh() async {
+        guard !refreshing else { return }
+        refreshing = true
+        defer { refreshing = false }
+
         await run(nil) {
             let account = try await cloud.refreshAccount()
             guard account.isActive else {
-                ProviderFactory.cloudCredentials = nil
-                onCredentialsChanged()
+                if ProviderFactory.cloudCredentials != nil {
+                    ProviderFactory.cloudCredentials = nil
+                    onCredentialsChanged()
+                }
                 return
             }
-            ProviderFactory.cloudCredentials = try await cloud.refreshCredentials()
-            onCredentialsChanged()
+            let credentials = try await cloud.refreshCredentials()
+            if ProviderFactory.cloudCredentials != credentials {
+                ProviderFactory.cloudCredentials = credentials
+                onCredentialsChanged()
+            }
         }
     }
 

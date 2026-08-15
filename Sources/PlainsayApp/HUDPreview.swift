@@ -24,6 +24,14 @@ struct HUDPreview: View {
         ("Just started", HUDState(phase: .recording, levelHistory: Array(sampleLevels.prefix(14)), elapsed: 0)),
         ("Transcribing", HUDState(phase: .transcribing, levelHistory: sampleLevels)),
         ("Polishing", HUDState(phase: .cleaning, levelHistory: sampleLevels)),
+        ("Downloading model", HUDState(
+            phase: .modelLoading,
+            modelState: .downloading(progress: 0.42)
+        )),
+        ("Preparing model", HUDState(
+            phase: .modelLoading,
+            modelState: .loading(progress: nil)
+        )),
         ("Cleanup unavailable", HUDState(phase: .insertedRaw, levelHistory: sampleLevels)),
         ("Error", HUDState(
             phase: .error("Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."),

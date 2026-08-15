@@ -27,6 +27,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/PlainsayApp"
 cp Scripts/Info.plist "$APP/Contents/Info.plist"
+cp LICENSE "$APP/Contents/Resources/Plainsay-MIT.txt"
 cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/"
 mkdir -p "$APP/Contents/Resources/ThirdPartyLicenses"
 cp .build/checkouts/FluidAudio/LICENSE \
@@ -35,6 +36,8 @@ cp .build/checkouts/WhisperKit/LICENSE \
 	"$APP/Contents/Resources/ThirdPartyLicenses/WhisperKit-MIT.txt"
 cp .build/checkouts/WhisperKit/NOTICES \
 	"$APP/Contents/Resources/ThirdPartyLicenses/WhisperKit-NOTICES.txt"
+cp .build/checkouts/Sparkle/LICENSE \
+	"$APP/Contents/Resources/ThirdPartyLicenses/Sparkle-LICENSE.txt"
 
 # Sparkle ships as a framework and SwiftPM does not embed it, so the binary
 # links against something the bundle does not contain. Copy it in and point

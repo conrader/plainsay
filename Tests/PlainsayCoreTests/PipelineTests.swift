@@ -109,7 +109,7 @@ private actor ControlledLoadingEngine: TranscriptionEngine {
     }
 
     func prepare() async throws {
-        onStateChange(.loading)
+        onStateChange(.loading(progress: nil))
         await gate.wait()
         onStateChange(.ready)
     }
@@ -129,6 +129,11 @@ private final class LoadingEngineBox {
     var latest: ControlledLoadingEngine?
 }
 
+@MainActor
+private final class ModelStateCallbackBox {
+    var report: (@Sendable (SpeechModelLoadState) -> Void)?
+}
+
 private actor ControlledTranscriptionEngine: TranscriptionEngine {
     private let gate: AsyncTestGate
     private(set) var shutdownCount = 0
@@ -146,6 +151,29 @@ private actor ControlledTranscriptionEngine: TranscriptionEngine {
 
     func shutdown() async {
         shutdownCount += 1
+    }
+}
+
+private actor ControlledFailingLoadingEngine: TranscriptionEngine {
+    private let gate: AsyncTestGate
+    private let onStateChange: @Sendable (SpeechModelLoadState) -> Void
+
+    init(
+        gate: AsyncTestGate,
+        onStateChange: @escaping @Sendable (SpeechModelLoadState) -> Void
+    ) {
+        self.gate = gate
+        self.onStateChange = onStateChange
+    }
+
+    func prepare() async throws {
+        onStateChange(.loading(progress: nil))
+        await gate.wait()
+        throw TranscriptionError.failed("controlled load failure")
+    }
+
+    func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        throw TranscriptionError.modelNotLoaded
     }
 }
 
@@ -329,6 +357,7 @@ struct PipelineTests {
 
         #expect(harness.inserter.inserted.isEmpty)
         #expect(!harness.recorder.isRecording)
+        #expect(harness.coordinator.phase == .modelLoading)
     }
 
     @Test("Every dictation is written to history, so a failed paste loses nothing")
@@ -429,7 +458,7 @@ struct PipelineTests {
             await oldLoadCompleted.set()
         }
         await oldGate.waitUntilStarted()
-        try await waitForModelState(.loading, coordinator: coordinator)
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
 
         settings.model = .smallEN
         let latestLoad = Task { await coordinator.reloadModel() }
@@ -438,7 +467,7 @@ struct PipelineTests {
         #expect(!(await newGate.started))
         await oldGate.open()
         await newGate.waitUntilStarted()
-        try await waitForModelState(.loading, coordinator: coordinator)
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
         for _ in 0..<10 { await Task.yield() }
         #expect(!(await oldLoadCompleted.isSet))
         let oldEngine = try #require(engines.old)
@@ -451,6 +480,103 @@ struct PipelineTests {
         #expect(coordinator.modelState == .ready)
         let newEngine = try #require(engines.latest)
         #expect(await newEngine.shutdownCount == 0)
+    }
+
+    @Test("Late progress cannot overwrite a completed model load")
+    func terminalModelStateIsStickyWithinGeneration() async {
+        let settings = isolatedSettings("late-model-progress")
+        let callback = ModelStateCallbackBox()
+        let engine = FakeEngine()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("late-progress-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("late-progress-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                callback.report = onState
+                return engine
+            },
+            makeCleaner: { _ in NoCleanup() },
+            usesInjectedEngine: true
+        )
+
+        await coordinator.reloadModel()
+        #expect(coordinator.modelState == .ready)
+
+        callback.report?(.downloading(progress: 0.2))
+        callback.report?(.loading(progress: nil))
+        for _ in 0..<10 { await Task.yield() }
+
+        #expect(coordinator.modelState == .ready)
+    }
+
+    @Test("The model progress HUD dismisses after loading completes")
+    func modelLoadingHUDCompletes() async throws {
+        let settings = isolatedSettings("model-hud-completes")
+        let gate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("model-hud-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("model-hud-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                ControlledLoadingEngine(gate: gate, transcript: "unused", onStateChange: onState)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            usesInjectedEngine: true
+        )
+
+        let load = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
+
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(coordinator.phase == .modelLoading)
+
+        await gate.open()
+        await load.value
+        #expect(coordinator.modelState == .ready)
+
+        let deadline = ContinuousClock.now + .seconds(2)
+        while ContinuousClock.now < deadline, coordinator.phase != .idle {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(coordinator.phase == .idle)
+    }
+
+    @Test("A model load failure replaces progress with an error")
+    func modelLoadingHUDFails() async throws {
+        let settings = isolatedSettings("model-hud-fails")
+        let gate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("model-failure-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("model-failure-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                ControlledFailingLoadingEngine(gate: gate, onStateChange: onState)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            usesInjectedEngine: true
+        )
+
+        let load = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(coordinator.phase == .modelLoading)
+
+        await gate.open()
+        await load.value
+
+        if case .error(let message) = coordinator.phase {
+            #expect(message.contains("controlled load failure"))
+        } else {
+            Issue.record("expected model load error, got \(coordinator.phase)")
+        }
     }
 
     @Test("A reload waits for an active transcription and blocks overlap")

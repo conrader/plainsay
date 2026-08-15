@@ -7,8 +7,17 @@ import Observation
 @Observable
 public final class PlainsaySettings {
     public static let shared = PlainsaySettings()
+    /// Stable completion marker. App updates must not bump this to force the
+    /// assistant on someone who has already configured Plainsay; new options
+    /// belong in Settings or an explicitly requested setup run.
+    public static let currentOnboardingVersion = 1
 
     private let defaults: UserDefaults
+    /// Captured before this instance can persist anything. Older releases did
+    /// not have an onboarding marker, so an existing preference is the only
+    /// durable signal that this is an update rather than a fresh install when
+    /// one of the system permissions is currently missing.
+    private let hadLegacyConfiguration: Bool
 
     public var binding: HotkeyBinding { didSet { persist(binding, .binding) } }
     public var hotkeyMode: HotkeyMode { didSet { persist(hotkeyMode, .hotkeyMode) } }
@@ -25,6 +34,16 @@ public final class PlainsaySettings {
     public var asrModel: String { didSet { defaults.set(asrModel, forKey: Key.asrModel.rawValue) } }
     public var asrBaseURL: String { didSet { defaults.set(asrBaseURL, forKey: Key.asrBaseURL.rawValue) } }
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
+    public var onboardingVersion: Int {
+        didSet { defaults.set(onboardingVersion, forKey: Key.onboardingVersion.rawValue) }
+    }
+    /// Distinguishes an interrupted first run from an older installation that
+    /// predates the setup assistant. Closing the assistant must not silently
+    /// turn into "completed" on the next launch just because permissions were
+    /// granted before it was closed.
+    public var onboardingWasPresented: Bool {
+        didSet { defaults.set(onboardingWasPresented, forKey: Key.onboardingWasPresented.rawValue) }
+    }
     /// Leave the dictation on the clipboard instead of restoring what was there.
     /// Insurance for apps that silently swallow a synthetic ⌘V.
     public var keepOnClipboard: Bool { didSet { defaults.set(keepOnClipboard, forKey: Key.keepOnClipboard.rawValue) } }
@@ -81,14 +100,35 @@ public final class PlainsaySettings {
             && !resolvedCleanupBaseURL.isEmpty
     }
 
+    public var needsOnboarding: Bool {
+        onboardingVersion < Self.currentOnboardingVersion
+    }
+
+    /// Version 0 predates the setup assistant. Existing preferences or a fully
+    /// authorized installation identify an existing user who should not be put
+    /// through first-run setup merely because the app was updated.
+    @discardableResult
+    public func migrateLegacyOnboardingIfNeeded(allPermissionsGranted: Bool) -> Bool {
+        guard onboardingVersion == 0,
+              !onboardingWasPresented,
+              allPermissionsGranted || hadLegacyConfiguration
+        else { return false }
+        onboardingVersion = Self.currentOnboardingVersion
+        return true
+    }
+
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
+        case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
     }
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        hadLegacyConfiguration = Self.legacyConfigurationKeys.contains {
+            defaults.object(forKey: $0.rawValue) != nil
+        }
 
         func decode<T: Decodable>(_ key: Key, _ fallback: T) -> T {
             guard let data = defaults.data(forKey: key.rawValue),
@@ -103,6 +143,8 @@ public final class PlainsaySettings {
         dictionary = decode(.dictionary, TermDictionary())
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
+        onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
+        onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         cleanupProvider = decode(.cleanupProvider, CleanupProvider.gemini)
         cleanupModel = defaults.string(forKey: Key.cleanupModel.rawValue) ?? ""
@@ -118,4 +160,24 @@ public final class PlainsaySettings {
         guard let data = try? JSONEncoder().encode(value) else { return }
         defaults.set(data, forKey: key.rawValue)
     }
+
+    /// Onboarding keys are intentionally excluded: they describe setup state,
+    /// not evidence that an older Plainsay release was configured and used.
+    private static let legacyConfigurationKeys: [Key] = [
+        .binding,
+        .hotkeyMode,
+        .model,
+        .dictionary,
+        .cleanupEnabled,
+        .playFeedbackSounds,
+        .language,
+        .keepOnClipboard,
+        .cleanupProvider,
+        .cleanupModel,
+        .cleanupBaseURL,
+        .transcriptionSource,
+        .asrProvider,
+        .asrModel,
+        .asrBaseURL,
+    ]
 }

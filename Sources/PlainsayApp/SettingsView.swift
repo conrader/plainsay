@@ -7,9 +7,10 @@ import PlainsayCore
 struct SettingsView: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
+    let permissionStatus: PermissionStatus
 
-    private enum Tab: Hashable { case general, speech, cleanup, history, permissions }
-    @State private var selection: Tab = .general
+    private enum Tab: Hashable { case speech, general, cleanup, history, permissions }
+    @State private var selection: Tab = .speech
 
     var body: some View {
         // The selection binding is load-bearing, not decoration. Without it,
@@ -17,13 +18,13 @@ struct SettingsView: View {
         // permissions after returning from System Settings — drops you back on
         // the first tab, which is maddening precisely when you are mid-task.
         TabView(selection: $selection) {
-            GeneralSettings(settings: settings, coordinator: coordinator)
-                .tabItem { Label("General", systemImage: "keyboard") }
-                .tag(Tab.general)
-
             SpeechSettings(settings: settings, coordinator: coordinator)
                 .tabItem { Label("Speech", systemImage: "waveform") }
                 .tag(Tab.speech)
+
+            GeneralSettings(settings: settings, coordinator: coordinator)
+                .tabItem { Label("General", systemImage: "keyboard") }
+                .tag(Tab.general)
 
             CleanupSettings(settings: settings)
                 .tabItem { Label("Cleanup", systemImage: "wand.and.sparkles") }
@@ -33,7 +34,7 @@ struct SettingsView: View {
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)
 
-            PermissionsSettings()
+            PermissionsSettings(permissionStatus: permissionStatus)
                 .tabItem { Label("Permissions", systemImage: "lock.shield") }
                 .tag(Tab.permissions)
         }
@@ -72,6 +73,15 @@ private struct GeneralSettings: View {
 
             Section {
                 Toggle("Play a sound when dictation starts and ends", isOn: $settings.playFeedbackSounds)
+            }
+
+            Section("Setup") {
+                Button("Run Setup Assistant…") {
+                    openSetupAssistant()
+                }
+                Text("Choose a speech model, shortcut, and review the permissions Plainsay needs.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -121,9 +131,7 @@ private struct SpeechSettings: View {
                                 .disabled(!model.isSupportedOnCurrentHardware)
                         }
                     }
-                    LabeledContent("Status") {
-                        ModelStatusLabel(state: coordinator.modelState)
-                    }
+                    ModelLoadStatusView(state: coordinator.modelState)
                     Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -233,11 +241,11 @@ private struct SpeechSettings: View {
     private var sourceExplanation: String {
         switch settings.transcriptionSource {
         case .onDevice:
-            "Audio never leaves this Mac. Costs nothing, needs a one-time model download."
+            "Recorded audio stays on this Mac. Local speech needs a model download and uses Mac storage and memory; optional cleanup may still send transcript text to its configured provider."
         case .remote:
             "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
         case .cloud:
-            "Audio is uploaded to Plainsay Cloud. No model download and no keys to manage, for a monthly subscription."
+            "About $3/month: transcription and cleanup are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
         }
     }
 
@@ -257,28 +265,6 @@ private struct SpeechSettings: View {
 
     private func remove(_ term: String) {
         settings.dictionary.terms.removeAll { $0.caseInsensitiveCompare(term) == .orderedSame }
-    }
-}
-
-private struct ModelStatusLabel: View {
-    let state: SpeechModelLoadState
-
-    var body: some View {
-        switch state {
-        case .idle:
-            Text("Not loaded").foregroundStyle(.secondary)
-        case .downloading:
-            Text("Downloading…").foregroundStyle(.secondary)
-        case .loading:
-            Text("Loading…").foregroundStyle(.secondary)
-        case .ready:
-            Label("Ready", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-        case .failed(let message):
-            Label(message, systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-                .lineLimit(2)
-        }
     }
 }
 
@@ -357,6 +343,7 @@ private struct CleanupSettings: View {
 // MARK: - Permissions
 
 struct PermissionsSettings: View {
+    let permissionStatus: PermissionStatus
     /// Cached grant state. Held as data rather than re-read during `body`, so
     /// refreshing never has to invalidate the view's identity.
     @State private var granted: [Permission: Bool] = [:]
@@ -392,6 +379,7 @@ struct PermissionsSettings: View {
     }
 
     private func refresh() {
+        permissionStatus.refresh()
         let current = Dictionary(
             uniqueKeysWithValues: Permission.allCases.map { ($0, $0.isGranted) }
         )
@@ -406,7 +394,7 @@ struct PermissionsSettings: View {
     }
 }
 
-private struct PermissionRow: View {
+struct PermissionRow: View {
     let permission: Permission
     let isGranted: Bool
     let onChange: () -> Void

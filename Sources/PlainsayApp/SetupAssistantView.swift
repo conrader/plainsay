@@ -1,0 +1,884 @@
+import SwiftUI
+import PlainsayCore
+
+struct SetupAssistantView: View {
+    @Bindable var settings: PlainsaySettings
+    let coordinator: DictationCoordinator
+    let permissionStatus: PermissionStatus
+    let onSpeechConfirmed: @MainActor (Bool) -> Void
+    let onFinish: @MainActor () -> Void
+
+    @State private var step: Step = .speech
+    @State private var speechSource: TranscriptionSource
+    @State private var speechModel: OnDeviceModel
+
+    init(
+        settings: PlainsaySettings,
+        coordinator: DictationCoordinator,
+        permissionStatus: PermissionStatus,
+        preferCloudOnFirstPresentation: Bool,
+        onSpeechConfirmed: @escaping @MainActor (Bool) -> Void,
+        onFinish: @escaping @MainActor () -> Void
+    ) {
+        self.settings = settings
+        self.coordinator = coordinator
+        self.permissionStatus = permissionStatus
+        self.onSpeechConfirmed = onSpeechConfirmed
+        self.onFinish = onFinish
+
+        // A first-run choice stays a draft until Continue. Reopening the
+        // assistant must reflect what the user is already using.
+        _speechSource = State(
+            initialValue: preferCloudOnFirstPresentation ? .cloud : settings.transcriptionSource
+        )
+        _speechModel = State(
+            initialValue: preferCloudOnFirstPresentation
+                && OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
+                ? .parakeetTDT06BV3
+                : settings.model
+        )
+    }
+
+    private enum Step: Int, CaseIterable, Identifiable {
+        case speech
+        case shortcut
+        case permissions
+        case ready
+
+        var id: Int { rawValue }
+
+        var title: String {
+            switch self {
+            case .speech: "Speech"
+            case .shortcut: "Shortcut"
+            case .permissions: "Permissions"
+            case .ready: "Ready"
+            }
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            stepIndicator
+                .padding(.horizontal, 36)
+                .padding(.vertical, 18)
+
+            Divider()
+
+            ScrollView {
+                Group {
+                    switch step {
+                    case .speech:
+                        SpeechSetupStep(
+                            source: $speechSource,
+                            model: $speechModel,
+                            settings: settings,
+                            coordinator: coordinator
+                        )
+                    case .shortcut:
+                        ShortcutSetupStep(settings: settings)
+                    case .permissions:
+                        PermissionsSetupStep(permissionStatus: permissionStatus)
+                    case .ready:
+                        ReadySetupStep(
+                            settings: settings,
+                            coordinator: coordinator,
+                            permissionStatus: permissionStatus
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 42)
+                .padding(.vertical, 28)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Divider()
+
+            navigation
+                .padding(.horizontal, 28)
+                .padding(.vertical, 16)
+        }
+        .frame(minWidth: 700, minHeight: 570)
+        .onChange(of: settings.binding) { coordinator.settingsChanged() }
+        .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
+    }
+
+    private var stepIndicator: some View {
+        HStack(spacing: 8) {
+            ForEach(Step.allCases) { item in
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(item.rawValue <= step.rawValue ? Color.accentColor : Color.secondary.opacity(0.16))
+                            .frame(width: 24, height: 24)
+
+                        if item.rawValue < step.rawValue {
+                            Image(systemName: "checkmark")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.white)
+                        } else {
+                            Text("\(item.rawValue + 1)")
+                                .font(.caption2.bold())
+                                .foregroundStyle(item.rawValue == step.rawValue ? Color.white : Color.secondary)
+                        }
+                    }
+
+                    Text(item.title)
+                        .font(.callout.weight(item == step ? .semibold : .regular))
+                        .foregroundStyle(item == step ? Color.primary : Color.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Step \(item.rawValue + 1), \(item.title)")
+
+                if item != Step.allCases.last {
+                    Capsule()
+                        .fill(item.rawValue < step.rawValue ? Color.accentColor : Color.secondary.opacity(0.16))
+                        .frame(maxWidth: .infinity, maxHeight: 2)
+                }
+            }
+        }
+    }
+
+    private var navigation: some View {
+        HStack {
+            Button("Back") {
+                guard let previous = Step(rawValue: step.rawValue - 1) else { return }
+                step = previous
+            }
+            .disabled(step == .speech)
+
+            Spacer()
+
+            if step == .ready {
+                Button("Done", action: onFinish)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                VStack(alignment: .trailing, spacing: 5) {
+                    if let continueRequirement {
+                        Text(continueRequirement)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button(continueTitle) {
+                        let leavingSpeech = step == .speech
+                        guard let next = Step(rawValue: step.rawValue + 1) else { return }
+                        step = next
+
+                        // Reaching the final page means the configuration has
+                        // been made. Closing the window's red control from
+                        // there must not resurrect the assistant next launch.
+                        if next == .ready {
+                            settings.onboardingVersion = PlainsaySettings.currentOnboardingVersion
+                        }
+
+                        if leavingSpeech {
+                            // Only this explicit transition commits the draft.
+                            // It also avoids reloading an unchanged source or model.
+                            let changed = speechSource != settings.transcriptionSource
+                                || speechModel != settings.model
+                            settings.transcriptionSource = speechSource
+                            settings.model = speechModel
+                            onSpeechConfirmed(changed)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(continueRequirement != nil)
+                }
+            }
+        }
+    }
+
+    private var continueRequirement: String? {
+        guard step == .speech else { return nil }
+        switch speechSource {
+        case .cloud:
+            return coordinator.cloud.account?.isActive == true
+                ? nil
+                : "Sign in and activate Cloud above to continue"
+        case .remote:
+            return settings.apiKey(for: settings.asrProvider).isEmpty
+                ? "Add your provider key in Speech settings first"
+                : nil
+        case .onDevice:
+            return nil
+        }
+    }
+
+    private var continueTitle: String {
+        guard step == .speech else { return "Continue" }
+        return switch speechSource {
+        case .cloud: "Continue with Cloud"
+        case .onDevice: "Continue with Local"
+        case .remote: "Continue with my API"
+        }
+    }
+}
+
+private struct SpeechSetupStep: View {
+    @Binding var source: TranscriptionSource
+    @Binding var model: OnDeviceModel
+    let settings: PlainsaySettings
+    let coordinator: DictationCoordinator
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: "waveform.badge.mic",
+                colors: [.indigo, .blue],
+                title: "Choose your Plainsay experience",
+                detail: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac."
+            )
+
+            HStack(alignment: .top, spacing: 14) {
+                PlanCard(
+                    isSelected: source == .cloud,
+                    icon: "cloud.fill",
+                    colors: [.indigo, .blue],
+                    eyebrow: "RECOMMENDED",
+                    title: "Plainsay Cloud",
+                    price: "≈ $3 / month",
+                    features: [
+                        "No model download or preparation",
+                        "Transcription and cleanup included",
+                        "No API keys to configure",
+                    ],
+                    action: { source = .cloud }
+                )
+
+                PlanCard(
+                    isSelected: source == .onDevice,
+                    icon: "lock.shield.fill",
+                    colors: [.green, .mint],
+                    eyebrow: "LOCAL SPEECH",
+                    title: "On this Mac",
+                    price: "Free",
+                    features: [
+                        "Recorded audio never leaves this Mac",
+                        "Works without internet after setup",
+                        "Uses Mac storage and memory while active",
+                    ],
+                    action: { source = .onDevice }
+                )
+            }
+
+            switch source {
+            case .cloud:
+                cloudDetails
+            case .onDevice:
+                localDetails
+            case .remote:
+                ownAPIDetails
+            }
+
+            Button {
+                source = .remote
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: source == .remote ? "checkmark.circle.fill" : "key.horizontal")
+                        .foregroundStyle(source == .remote ? Color.accentColor : Color.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Use my own cloud API")
+                            .foregroundStyle(.primary)
+                        Text("Advanced · configure a compatible provider and key in Speech settings")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    source == .remote ? Color.accentColor.opacity(0.08) : Color.secondary.opacity(0.06),
+                    in: RoundedRectangle(cornerRadius: 12)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(source == .remote ? Color.accentColor.opacity(0.7) : Color.clear, lineWidth: 1.5)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var cloudDetails: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: "sparkles")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.indigo)
+                    .frame(width: 34, height: 34)
+                    .background(Color.indigo.opacity(0.11), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Everything handled for you")
+                        .font(.headline)
+                    Text("Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Divider()
+
+            CloudSettingsView(cloud: coordinator.cloud) {
+                // Signing in should wake an already-selected Cloud setup. On
+                // first run Cloud is still only a draft, so leave the current
+                // local engine untouched until Continue commits the choice.
+                guard settings.transcriptionSource == .cloud else { return }
+                Task { await coordinator.reloadModel() }
+            }
+
+            Label(
+                "Privacy: recorded audio is uploaded to Plainsay Cloud for transcription and requires an internet connection. Choose Local if audio must never leave this Mac.",
+                systemImage: "hand.raised.fill"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [Color.indigo.opacity(0.08), Color.blue.opacity(0.035)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+    }
+
+    private var localDetails: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Choose a local model")
+                        .font(.headline)
+                    Text("Recommended multilingual models need about 475–632 MB and can take several minutes to download and prepare the first time.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 12)
+                Label("One-time setup", systemImage: "arrow.down.circle")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            ModelChoiceCard(
+                isSelected: model == .parakeetTDT06BV3,
+                isEnabled: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware,
+                icon: "bird.fill",
+                colors: [.green, .mint],
+                brand: "NVIDIA",
+                name: "Parakeet TDT 0.6B v3",
+                badge: "RECOMMENDED",
+                detail: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
+                    ? "Best fit for Polish + English · multilingual · ~475 MB"
+                    : "Requires an Apple silicon Mac",
+                action: { model = .parakeetTDT06BV3 }
+            )
+
+            whisperChoice
+
+            Label(
+                "Local refers to speech recognition and recorded audio. If transcript cleanup is enabled with a cloud provider, transcript text may still be sent to that provider; turn cleanup off for a fully local text path.",
+                systemImage: "info.circle"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var whisperChoice: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Button {
+                if model == .parakeetTDT06BV3 {
+                    model = .largeV3Turbo
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    ModelMark(icon: "waveform", colors: [.indigo, .purple])
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("WHISPER BY OPENAI")
+                            .font(.caption2.bold())
+                            .tracking(1)
+                            .foregroundStyle(.indigo)
+                        Text("Whisper")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("A proven model family with several size and language options")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: isWhisperSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(isWhisperSelected ? Color.accentColor : Color.secondary.opacity(0.5))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isWhisperSelected {
+                Divider()
+
+                Picker("Whisper variant", selection: $model) {
+                    ForEach(whisperModels, id: \.self) { option in
+                        Text(whisperTitle(option)).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
+        .padding(15)
+        .background(Color.primary.opacity(isWhisperSelected ? 0.055 : 0.028), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isWhisperSelected ? Color.accentColor.opacity(0.8) : Color.secondary.opacity(0.16), lineWidth: isWhisperSelected ? 2 : 1)
+        }
+    }
+
+    private var ownAPIDetails: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Bring your own provider", systemImage: "key.horizontal.fill")
+                .font(.headline)
+            Text("Plainsay will use \(settings.asrProvider.displayName) with the model and API key saved in Speech settings. Audio leaves this Mac and provider charges may apply.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var isWhisperSelected: Bool {
+        model != .parakeetTDT06BV3
+    }
+
+    private var whisperModels: [OnDeviceModel] {
+        OnDeviceModel.allCases.filter { $0 != .parakeetTDT06BV3 }
+    }
+
+    private func whisperTitle(_ model: OnDeviceModel) -> String {
+        switch model {
+        case .baseEN: "Base · English only · 150 MB"
+        case .smallEN: "Small · English only · 480 MB"
+        case .distilLargeV3Turbo: "Distil Large v3 Turbo · multilingual · 600 MB"
+        case .largeV3Turbo: "Large v3 Turbo · multilingual · 632 MB"
+        case .parakeetTDT06BV3: model.displayName
+        }
+    }
+}
+
+private struct PlanCard: View {
+    let isSelected: Bool
+    let icon: String
+    let colors: [Color]
+    let eyebrow: String
+    let title: String
+    let price: String
+    let features: [String]
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top) {
+                    ModelMark(icon: icon, colors: colors, size: 56)
+                    Spacer()
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.45))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(eyebrow)
+                        .font(.caption2.bold())
+                        .tracking(1)
+                        .foregroundStyle(colors.first ?? .accentColor)
+                    Text(title)
+                        .font(.title3.bold())
+                        .foregroundStyle(.primary)
+                    Text(price)
+                        .font(.title2.bold())
+                        .foregroundStyle(.primary)
+                }
+
+                VStack(alignment: .leading, spacing: 7) {
+                    ForEach(features, id: \.self) { feature in
+                        Label(feature, systemImage: "checkmark")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 220, alignment: .topLeading)
+            .padding(18)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(
+            LinearGradient(
+                colors: isSelected
+                    ? [colors[0].opacity(0.12), colors[1].opacity(0.045)]
+                    : [Color.primary.opacity(0.035), Color.primary.opacity(0.02)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 18)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(isSelected ? colors[0].opacity(0.85) : Color.secondary.opacity(0.16), lineWidth: isSelected ? 2 : 1)
+        }
+        .shadow(color: isSelected ? colors[0].opacity(0.1) : .clear, radius: 12, y: 5)
+    }
+}
+
+private struct ModelChoiceCard: View {
+    let isSelected: Bool
+    let isEnabled: Bool
+    let icon: String
+    let colors: [Color]
+    let brand: String
+    let name: String
+    let badge: String
+    let detail: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                ModelMark(icon: icon, colors: colors)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(brand)
+                            .font(.caption2.bold())
+                            .tracking(1)
+                            .foregroundStyle(colors[0])
+                        Text(badge)
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(colors[0].opacity(0.13), in: Capsule())
+                            .foregroundStyle(colors[0])
+                    }
+                    Text(name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? colors[0] : Color.secondary.opacity(0.5))
+            }
+            .padding(15)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.55)
+        .background(colors[0].opacity(isSelected ? 0.10 : 0.035), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isSelected ? colors[0].opacity(0.9) : Color.secondary.opacity(0.16), lineWidth: isSelected ? 2 : 1)
+        }
+    }
+}
+
+private struct ModelMark: View {
+    let icon: String
+    let colors: [Color]
+    var size: CGFloat = 48
+
+    var body: some View {
+        Image(systemName: icon)
+            .font(.system(size: size * 0.42, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(
+                LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: size * 0.28)
+            )
+            .shadow(color: (colors.first ?? .clear).opacity(0.2), radius: 7, y: 3)
+    }
+}
+
+private struct ShortcutSetupStep: View {
+    @Bindable var settings: PlainsaySettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            SetupHeading(
+                icon: "keyboard.fill",
+                colors: [.orange, .pink],
+                title: "Pick a shortcut",
+                detail: "Use one key from any app. Plainsay listens only while dictation is active."
+            )
+
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 18) {
+                    Image(systemName: "command.square.fill")
+                        .font(.system(size: 50))
+                        .foregroundStyle(.orange)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(settings.binding.displayName)
+                            .font(.title2.bold())
+                        Text("Your dictation shortcut")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Divider()
+
+                Form {
+                    Picker("Hotkey", selection: $settings.binding) {
+                        ForEach(HotkeyBinding.presets) { preset in
+                            Text(preset.displayName).tag(preset)
+                        }
+                    }
+
+                    Picker("Behavior", selection: $settings.hotkeyMode) {
+                        ForEach(HotkeyMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                }
+                .formStyle(.grouped)
+                .scrollDisabled(true)
+                .frame(height: 130)
+            }
+            .padding(20)
+            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
+
+            Label(behaviorHint, systemImage: "info.circle")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var behaviorHint: String {
+        switch settings.hotkeyMode {
+        case .hybrid:
+            "Hold \(settings.binding.displayName) while speaking, or tap once to keep recording and tap again to stop."
+        case .holdOnly:
+            "Hold \(settings.binding.displayName) while speaking. Release it to stop."
+        case .toggleOnly:
+            "Tap \(settings.binding.displayName) to start, then tap it again to stop."
+        }
+    }
+}
+
+private struct PermissionsSetupStep: View {
+    let permissionStatus: PermissionStatus
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: "lock.shield.fill",
+                colors: [.teal, .blue],
+                title: "Allow the essentials",
+                detail: "Each permission has one narrow job. Choose Grant when you are ready; you can continue even if you finish these later."
+            )
+
+            VStack(spacing: 15) {
+                ForEach(Permission.allCases) { permission in
+                    PermissionRow(
+                        permission: permission,
+                        isGranted: permissionStatus.isGranted(permission),
+                        onChange: permissionStatus.refresh
+                    )
+
+                    if permission != Permission.allCases.last {
+                        Divider()
+                    }
+                }
+            }
+            .padding(20)
+            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
+
+            Label(
+                "After changing Accessibility or Input Monitoring, quit and reopen Plainsay so macOS applies the grant.",
+                systemImage: "arrow.clockwise.circle"
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
+        }
+        .task {
+            while !Task.isCancelled {
+                permissionStatus.refresh()
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+}
+
+private struct ReadySetupStep: View {
+    @Bindable var settings: PlainsaySettings
+    let coordinator: DictationCoordinator
+    let permissionStatus: PermissionStatus
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: canDictate ? "checkmark.circle.fill" : readinessIcon,
+                colors: canDictate ? [.green, .mint] : [.orange, .yellow],
+                title: canDictate ? "Plainsay is ready" : readinessTitle,
+                detail: readyDetail
+            )
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 14) {
+                    ModelMark(icon: sourceIcon, colors: sourceColors)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("YOUR SPEECH SETUP")
+                            .font(.caption2.bold())
+                            .tracking(1)
+                            .foregroundStyle(sourceColors[0])
+                        Text(speechConfigurationTitle)
+                            .font(.headline)
+                        Text(speechConfigurationDetail)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                ModelLoadStatusView(state: coordinator.modelState)
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label(dictationInstruction, systemImage: "keyboard.fill")
+                    .font(.headline)
+                Text("The menu bar icon shows whether Plainsay is ready. If you try the shortcut while a local model is still preparing, its progress appears on screen.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            if case .error(let message) = coordinator.phase {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if !permissionStatus.allGranted {
+                Label("Some permissions still need attention before dictation can work.", systemImage: "exclamationmark.triangle")
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
+    private var canDictate: Bool {
+        coordinator.isReadyForDictation && permissionStatus.allGranted
+    }
+
+    private var readinessIcon: String {
+        if case .error = coordinator.phase { return "exclamationmark.triangle.fill" }
+        return "hourglass.circle.fill"
+    }
+
+    private var readinessTitle: String {
+        if case .error = coordinator.phase { return "Plainsay needs attention" }
+        return "Plainsay is getting ready"
+    }
+
+    private var readyDetail: String {
+        if canDictate {
+            return "You can dictate into any app. Settings are always available from the menu bar."
+        }
+        if case .error = coordinator.phase {
+            return "Finish the item below before dictation can start. Your setup choice has been saved."
+        }
+        return "You can finish setup now. Preparation continues in the background, and the menu bar shows when dictation is available."
+    }
+
+    private var dictationInstruction: String {
+        switch settings.hotkeyMode {
+        case .holdOnly: "Hold \(settings.binding.displayName) to dictate"
+        case .toggleOnly: "Tap \(settings.binding.displayName) to start and stop"
+        case .hybrid: "Hold or tap \(settings.binding.displayName) to dictate"
+        }
+    }
+
+    private var speechConfigurationTitle: String {
+        switch settings.transcriptionSource {
+        case .onDevice: settings.model == .parakeetTDT06BV3 ? "NVIDIA Parakeet" : "Whisper by OpenAI"
+        case .remote: settings.asrProvider.displayName
+        case .cloud: "Plainsay Cloud"
+        }
+    }
+
+    private var speechConfigurationDetail: String {
+        switch settings.transcriptionSource {
+        case .onDevice: "\(settings.model.displayName) · \(settings.model.approximateSize)"
+        case .remote: "Your API · \(settings.resolvedASRModel)"
+        case .cloud: "About $3/month · transcription and cleanup included"
+        }
+    }
+
+    private var sourceIcon: String {
+        switch settings.transcriptionSource {
+        case .onDevice: settings.model == .parakeetTDT06BV3 ? "bird.fill" : "waveform"
+        case .remote: "key.horizontal.fill"
+        case .cloud: "cloud.fill"
+        }
+    }
+
+    private var sourceColors: [Color] {
+        switch settings.transcriptionSource {
+        case .onDevice: settings.model == .parakeetTDT06BV3 ? [.green, .mint] : [.indigo, .purple]
+        case .remote: [.gray, .blue]
+        case .cloud: [.indigo, .blue]
+        }
+    }
+}
+
+private struct SetupHeading: View {
+    let icon: String
+    let colors: [Color]
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            ModelMark(icon: icon, colors: colors, size: 62)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
+                Text(detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}

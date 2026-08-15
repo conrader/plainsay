@@ -13,11 +13,17 @@ import PlainsayCore
 final class SettingsWindowController: NSObject, NSWindowDelegate {
     private let settings: PlainsaySettings
     private let coordinator: DictationCoordinator
+    private let permissionStatus: PermissionStatus
     private var window: NSWindow?
 
-    init(settings: PlainsaySettings, coordinator: DictationCoordinator) {
+    init(
+        settings: PlainsaySettings,
+        coordinator: DictationCoordinator,
+        permissionStatus: PermissionStatus
+    ) {
         self.settings = settings
         self.coordinator = coordinator
+        self.permissionStatus = permissionStatus
     }
 
     func show() {
@@ -34,7 +40,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
             window.contentMinSize = NSSize(width: 660, height: 460)
             window.title = "Plainsay Settings"
             window.contentView = NSHostingView(
-                rootView: SettingsView(settings: settings, coordinator: coordinator)
+                rootView: SettingsView(
+                    settings: settings,
+                    coordinator: coordinator,
+                    permissionStatus: permissionStatus
+                )
             )
             window.isReleasedWhenClosed = false
             window.center()

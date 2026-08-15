@@ -7,11 +7,18 @@ import PlainsayCore
 /// looked at — without a microphone, a model, or any permissions.
 struct HUDState: Equatable {
     var phase: DictationCoordinator.Phase = .idle
+    var modelState: SpeechModelLoadState = .idle
     var levelHistory: [Float] = []
     var elapsed: TimeInterval = 0
 
-    init(phase: DictationCoordinator.Phase = .idle, levelHistory: [Float] = [], elapsed: TimeInterval = 0) {
+    init(
+        phase: DictationCoordinator.Phase = .idle,
+        modelState: SpeechModelLoadState = .idle,
+        levelHistory: [Float] = [],
+        elapsed: TimeInterval = 0
+    ) {
         self.phase = phase
+        self.modelState = modelState
         self.levelHistory = levelHistory
         self.elapsed = elapsed
     }
@@ -19,6 +26,7 @@ struct HUDState: Equatable {
     @MainActor
     init(_ coordinator: DictationCoordinator) {
         phase = coordinator.phase
+        modelState = coordinator.modelState
         levelHistory = coordinator.levelHistory
         elapsed = coordinator.elapsed
     }
@@ -30,28 +38,34 @@ struct HUDView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        HStack(spacing: 12) {
-            WaveformRibbon(
-                levels: state.levelHistory,
-                isLive: state.phase == .recording,
-                capacity: DictationCoordinator.levelHistoryLength,
-                tint: labelColor
-            )
-            .frame(height: 22)
-            .frame(maxWidth: .infinity)
+        Group {
+            if state.phase == .modelLoading {
+                HUDModelProgressView(state: state.modelState)
+            } else {
+                HStack(spacing: 12) {
+                    WaveformRibbon(
+                        levels: state.levelHistory,
+                        isLive: state.phase == .recording,
+                        capacity: DictationCoordinator.levelHistoryLength,
+                        tint: labelColor
+                    )
+                    .frame(height: 22)
+                    .frame(maxWidth: .infinity)
 
-            Text(label)
-                .font(.hudLabel)
-                .instrumentTracking()
-                .foregroundStyle(labelColor)
-                .fixedSize()
+                    Text(label)
+                        .font(.hudLabel)
+                        .instrumentTracking()
+                        .foregroundStyle(labelColor)
+                        .fixedSize()
 
-            if state.phase == .recording {
-                Text(timecode)
-                    .font(.hudTimer)
-                    .foregroundStyle(Palette.slate)
-                    .monospacedDigit()
-                    .fixedSize()
+                    if state.phase == .recording {
+                        Text(timecode)
+                            .font(.hudTimer)
+                            .foregroundStyle(Palette.slate)
+                            .monospacedDigit()
+                            .fixedSize()
+                    }
+                }
             }
         }
         .padding(.horizontal, 14)
@@ -93,6 +107,7 @@ struct HUDView: View {
         case .recording: "LISTENING"
         case .transcribing: "TRANSCRIBING"
         case .cleaning: "POLISHING"
+        case .modelLoading: "PREPARING MODEL"
         case .insertedRaw: "INSERTED · RAW"
         case .error: "ERROR"
         case .idle: ""
@@ -124,10 +139,127 @@ struct HUDView: View {
         case .recording: "Listening, \(Int(state.elapsed)) seconds"
         case .transcribing: "Transcribing"
         case .cleaning: "Polishing transcript"
+        case .modelLoading: modelAccessibilityLabel
         case .insertedRaw: "Inserted raw transcript, cleanup unavailable"
         case .error(let message): "Error: \(message)"
         case .idle: "Idle"
         }
+    }
+
+    private var modelAccessibilityLabel: String {
+        switch state.modelState {
+        case .idle:
+            "Starting speech model"
+        case .downloading(let progress):
+            "Downloading speech model, \(percentage(progress)) percent"
+        case .loading(let progress):
+            if let progress {
+                "Preparing speech model, \(percentage(progress)) percent"
+            } else {
+                "Preparing speech model"
+            }
+        case .ready:
+            "Speech model ready"
+        case .failed(let message):
+            "Speech model failed to load: \(message)"
+        }
+    }
+
+    private func percentage(_ value: Double) -> Int {
+        guard value.isFinite else { return 0 }
+        return Int((min(max(value, 0), 1) * 100).rounded())
+    }
+}
+
+/// Compact progress treatment for the hotkey HUD. The larger Settings and
+/// Setup Assistant use `ModelLoadStatusView`; this keeps the same wording and
+/// progress semantics within the HUD's fixed one-line footprint.
+private struct HUDModelProgressView: View {
+    let state: SpeechModelLoadState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 8) {
+                Text(label)
+                    .font(.hudLabel)
+                    .instrumentTracking()
+                    .foregroundStyle(labelColor)
+                Spacer(minLength: 8)
+                if let percentage {
+                    Text("\(percentage)%")
+                        .font(.hudTimer)
+                        .foregroundStyle(Palette.slate)
+                        .monospacedDigit()
+                }
+            }
+
+            progressView
+                .progressViewStyle(.linear)
+                .tint(progressTint)
+        }
+    }
+
+    @ViewBuilder
+    private var progressView: some View {
+        switch state {
+        case .downloading(let progress):
+            ProgressView(value: normalized(progress))
+        case .loading(let progress):
+            if let progress {
+                ProgressView(value: normalized(progress))
+            } else {
+                ProgressView()
+            }
+        case .ready:
+            ProgressView(value: 1)
+        case .idle:
+            ProgressView()
+        case .failed:
+            ProgressView(value: 0)
+        }
+    }
+
+    private var label: String {
+        switch state {
+        case .idle: "STARTING MODEL"
+        case .downloading: "DOWNLOADING MODEL"
+        case .loading: "PREPARING MODEL"
+        case .ready: "MODEL READY"
+        case .failed: "MODEL ERROR"
+        }
+    }
+
+    private var labelColor: Color {
+        switch state {
+        case .ready: Palette.signal
+        case .failed: Palette.ember
+        default: Palette.bone
+        }
+    }
+
+    private var progressTint: Color {
+        switch state {
+        case .failed: Palette.ember
+        default: Palette.signal
+        }
+    }
+
+    private var percentage: Int? {
+        switch state {
+        case .downloading(let progress):
+            Int((normalized(progress) * 100).rounded())
+        case .loading(let progress):
+            progress.map { Int((normalized($0) * 100).rounded()) }
+        case .ready:
+            100
+        case .idle, .failed:
+            nil
+        }
+    }
+
+    private func normalized(_ value: Double) -> Double {
+        guard value.isFinite else { return 0 }
+        return min(max(value, 0), 1)
     }
 }
 

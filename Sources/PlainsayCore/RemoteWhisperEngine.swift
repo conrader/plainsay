@@ -2,10 +2,10 @@ import Foundation
 
 /// Where speech-to-text runs.
 public enum TranscriptionSource: String, Codable, CaseIterable, Sendable, Identifiable {
-    /// WhisperKit on this Mac. Free, private, no network.
+    /// Local speech recognition. Free and never uploads recorded audio.
     ///
-    /// The default, and the product's actual claim. The two options below send
-    /// audio off the machine, so neither may ever become the default.
+    /// Optional transcript cleanup is a separate stage and can still use a
+    /// configured cloud provider. The two speech options below upload audio.
     case onDevice
     /// Any OpenAI-compatible `/v1/audio/transcriptions` endpoint, your own key.
     case remote
@@ -16,7 +16,7 @@ public enum TranscriptionSource: String, Codable, CaseIterable, Sendable, Identi
 
     public var displayName: String {
         switch self {
-        case .onDevice: "On this Mac (private, free)"
+        case .onDevice: "On this Mac (free, local speech)"
         case .remote: "Cloud API (your own key)"
         case .cloud: "Plainsay Cloud (subscription)"
         }

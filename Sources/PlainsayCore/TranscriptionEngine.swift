@@ -37,9 +37,21 @@ public enum TranscriptionError: LocalizedError {
 public enum SpeechModelLoadState: Sendable, Equatable {
     case idle
     case downloading(progress: Double)
-    case loading
+    /// Core ML is preparing the downloaded model. `nil` means that the
+    /// underlying runtime cannot report determinate progress for this stage.
+    case loading(progress: Double?)
     case ready
     case failed(String)
+
+    /// Returns a finite fraction in the closed unit interval. Download APIs
+    /// occasionally surface NaN while their total size is still unknown, so
+    /// progress must be sanitized before it reaches SwiftUI's `ProgressView`.
+    public static func clampedProgress(_ progress: Double) -> Double {
+        if progress.isNaN { return 0 }
+        if progress == .infinity { return 1 }
+        if progress == -.infinity { return 0 }
+        return min(max(progress, 0), 1)
+    }
 }
 
 /// On-device speech models available in the Speech settings.
@@ -57,9 +69,9 @@ public enum OnDeviceModel: String, Codable, CaseIterable, Sendable {
         switch self {
         case .baseEN: "Base (English) — fastest, least accurate"
         case .smallEN: "Small (English) — good balance"
-        case .distilLargeV3Turbo: "Distil Large v3 Turbo — fast, multilingual"
-        case .largeV3Turbo: "Large v3 Turbo — most accurate (recommended)"
-        case .parakeetTDT06BV3: "NVIDIA Parakeet TDT 0.6B v3 — fast, multilingual"
+        case .distilLargeV3Turbo: "Whisper Distil Large v3 Turbo — fast, multilingual"
+        case .largeV3Turbo: "Whisper Large v3 Turbo — accurate, multilingual"
+        case .parakeetTDT06BV3: "NVIDIA Parakeet TDT 0.6B v3 — recommended for Polish + English"
         }
     }
 

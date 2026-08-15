@@ -3,6 +3,7 @@ import ApplicationServices
 import AVFoundation
 import Foundation
 import IOKit.hid
+import Observation
 
 /// The three TCC grants Plainsay cannot work without.
 public enum Permission: String, CaseIterable, Sendable, Identifiable {
@@ -96,4 +97,38 @@ public enum Permissions {
     }
 
     public static var allGranted: Bool { missing.isEmpty }
+}
+
+/// Observable TCC snapshot for UI that must change when the user returns from
+/// System Settings. Reading the system APIs directly is not observable, so a
+/// menu-bar label can otherwise stay stale until unrelated app state changes.
+@MainActor
+@Observable
+public final class PermissionStatus {
+    private var grants: [Permission: Bool]
+
+    public init() {
+        grants = Dictionary(
+            uniqueKeysWithValues: Permission.allCases.map { ($0, $0.isGranted) }
+        )
+    }
+
+    public var allGranted: Bool {
+        Permission.allCases.allSatisfy { grants[$0] == true }
+    }
+
+    public var missing: [Permission] {
+        Permission.allCases.filter { grants[$0] != true }
+    }
+
+    public func isGranted(_ permission: Permission) -> Bool {
+        grants[permission] == true
+    }
+
+    public func refresh() {
+        let current = Dictionary(
+            uniqueKeysWithValues: Permission.allCases.map { ($0, $0.isGranted) }
+        )
+        if current != grants { grants = current }
+    }
 }

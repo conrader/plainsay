@@ -13,6 +13,10 @@ public final class DictationCoordinator {
         case recording
         case transcribing
         case cleaning
+        /// The hotkey was pressed while the selected speech model was still
+        /// downloading or being prepared. The HUD renders `modelState` rather
+        /// than treating this as a generic failure.
+        case modelLoading
         /// Finished, but cleanup fell back to the raw transcript.
         case insertedRaw
         case error(String)
@@ -20,7 +24,7 @@ public final class DictationCoordinator {
         public var isBusy: Bool {
             switch self {
             case .recording, .transcribing, .cleaning: true
-            case .idle, .insertedRaw, .error: false
+            case .idle, .modelLoading, .insertedRaw, .error: false
             }
         }
     }
@@ -40,6 +44,16 @@ public final class DictationCoordinator {
     public static let levelHistoryLength = 120
     public private(set) var modelState: SpeechModelLoadState = .idle
     public private(set) var lastTranscript: String?
+
+    /// The single technical answer to "will the hotkey work right now?" Setup
+    /// completion is deliberately not part of this: after the user confirms a
+    /// speech choice, the pipeline may already be usable while the assistant is
+    /// still open on its final page.
+    public var isReadyForDictation: Bool {
+        guard modelState == .ready, Permissions.allGranted else { return false }
+        if case .error = phase { return false }
+        return true
+    }
 
     /// Every dictation, written down before insertion is attempted.
     public let history: TranscriptHistory
@@ -107,19 +121,16 @@ public final class DictationCoordinator {
     // MARK: - Lifecycle
 
     /// Starts listening and loads the speech model. Safe to call repeatedly.
-    public func start() async {
+    public func start(requestMicrophonePermission: Bool = true) async {
         // Ask for the microphone here, at launch, while nothing is happening.
         // The System Settings Microphone pane has no "+" button, so the system
         // prompt is the *only* way this grant can ever be given — and if we
         // wait until the first hotkey press to ask, the prompt steals focus
         // mid-sentence and that dictation is lost regardless of the answer.
-        if AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
+        if requestMicrophonePermission,
+           AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
             await Permission.microphone.request()
         }
-
-        // Credentials before the engine is built, or the factory has nothing to
-        // work with and Cloud reports itself unavailable on a cold launch.
-        await refreshCloudCredentialsIfNeeded()
 
         do {
             try hotkeys.start()
@@ -248,6 +259,12 @@ public final class DictationCoordinator {
         await previousEngine?.shutdown()
         guard !Task.isCancelled, generation == modelLoadGeneration else { return }
 
+        // Source changes from Settings or a reopened setup assistant do not go
+        // through `start()`. Refresh here so switching to an active Cloud
+        // subscription never builds the engine with stale/nil credentials.
+        await refreshCloudCredentialsIfNeeded()
+        guard !Task.isCancelled, generation == modelLoadGeneration else { return }
+
         await loadModel(generation: generation)
     }
 
@@ -280,7 +297,7 @@ public final class DictationCoordinator {
         let onState: @Sendable (SpeechModelLoadState) -> Void = { [weak self] state in
             Task { @MainActor in
                 guard let self, self.modelLoadGeneration == generation else { return }
-                self.modelState = state
+                self.applyReportedModelState(state)
             }
         }
         // Tests inject `makeEngine`; production goes through the factory, which
@@ -299,14 +316,45 @@ public final class DictationCoordinator {
             }
             // Don't depend on the engine having reported readiness itself —
             // a successful `prepare()` is the definition of ready.
-            modelState = .ready
+            applyModelState(.ready)
         } catch {
             guard generation == modelLoadGeneration else {
                 self.engine = nil
                 await engine.shutdown()
                 return
             }
-            modelState = .failed(error.localizedDescription)
+            applyModelState(.failed(error.localizedDescription))
+        }
+    }
+
+    /// Keeps the model-status HUD in sync with the load that prompted it. A
+    /// successful load gets a brief confirmation; a failed load expands into
+    /// the normal error treatment rather than leaving an endless progress bar.
+    private func applyModelState(_ state: SpeechModelLoadState) {
+        modelState = state
+        guard phase == .modelLoading else { return }
+
+        switch state {
+        case .ready:
+            scheduleReset(after: .seconds(1))
+        case .failed(let message):
+            flashError("Speech model failed to load: \(message)")
+        case .idle, .downloading, .loading:
+            break
+        }
+    }
+
+    /// Progress callbacks cross actors through an unstructured MainActor task.
+    /// A callback queued just before `prepare()` returns can therefore arrive
+    /// after the coordinator has authoritatively marked the same load ready or
+    /// failed. Terminal completion is sticky until the next generation resets
+    /// the state to idle.
+    private func applyReportedModelState(_ state: SpeechModelLoadState) {
+        switch modelState {
+        case .ready, .failed:
+            return
+        case .idle, .downloading, .loading:
+            applyModelState(state)
         }
     }
 
@@ -354,21 +402,27 @@ public final class DictationCoordinator {
             return
         }
 
-        guard case .ready = modelState else {
-            // Be specific about which wait this is. The first launch after a
-            // model change compiles for the Neural Engine, which takes minutes,
-            // not seconds — "still loading" leaves you guessing whether to wait
-            // or restart, and restarting throws the compile away.
+        switch modelState {
+        case .ready:
+            break
+        case .idle, .downloading, .loading:
+            // Loading is an expected first-run state, not an error. Leave this
+            // phase visible until the engine becomes ready (or fails) so the
+            // HUD can show the same live progress as Settings.
+            phase = .modelLoading
+            machine.reset()
+            return
+        case .failed:
             flashError(modelStatusMessage)
             machine.reset()
             return
         }
 
-        // If the microphone was never granted, asking is more useful than
-        // failing. `AudioRecorder.start()` would just throw here.
+        // Never trigger a system prompt from the hotkey: it steals focus and
+        // guarantees that the sentence being spoken is lost. The setup and
+        // Settings permission buttons own that interaction.
         guard AudioRecorder.microphoneAuthorized() else {
             flashError("Plainsay needs microphone access")
-            Task { await Permission.microphone.request() }
             machine.reset()
             return
         }
