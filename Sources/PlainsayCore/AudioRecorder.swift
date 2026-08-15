@@ -1,10 +1,13 @@
-import AVFoundation
+// The macOS 15 AVFAudio SDK predates Swift sendability annotations. Access to
+// these objects is confined to the main actor or the explicitly serial audio
+// tap processor below.
+@preconcurrency import AVFoundation
 import Foundation
 
 public enum AudioRecorderError: LocalizedError {
     case microphoneDenied
     case noInputDevice
-    case converterUnavailable(from: AVAudioFormat)
+    case converterUnavailable(sampleRate: Double)
     case engineFailed(String)
 
     public var errorDescription: String? {
@@ -13,8 +16,8 @@ public enum AudioRecorderError: LocalizedError {
             "Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."
         case .noInputDevice:
             "No audio input device available."
-        case .converterUnavailable(let format):
-            "Cannot convert audio from \(format.sampleRate)Hz to 16kHz mono."
+        case .converterUnavailable(let sampleRate):
+            "Cannot convert audio from \(sampleRate)Hz to 16kHz mono."
         case .engineFailed(let message):
             "Audio engine failed: \(message)"
         }
@@ -199,7 +202,7 @@ public final class AudioRecorder: AudioRecording {
             channels: 1,
             interleaved: false
         ) else {
-            throw AudioRecorderError.converterUnavailable(from: inputFormat)
+            throw AudioRecorderError.converterUnavailable(sampleRate: inputFormat.sampleRate)
         }
 
         guard let processor = AudioTapProcessor(
@@ -208,7 +211,7 @@ public final class AudioRecorder: AudioRecording {
             sink: sink,
             maxInputFrames: Self.tapBufferSize
         ) else {
-            throw AudioRecorderError.converterUnavailable(from: inputFormat)
+            throw AudioRecorderError.converterUnavailable(sampleRate: inputFormat.sampleRate)
         }
         self.processor = processor
 
