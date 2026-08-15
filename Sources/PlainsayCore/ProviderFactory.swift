@@ -76,7 +76,9 @@ public enum ProviderFactory {
                 baseURL: cloud.transcription.baseURL,
                 apiKey: cloud.transcription.key,
                 model: cloud.transcription.model,
-                language: settings.language
+                language: settings.language,
+                // The hosted plan transcribes through deAPI, which needs m4a.
+                uploadFormat: .m4a
             )
 
         case .remote:
@@ -99,7 +101,8 @@ public enum ProviderFactory {
                 baseURL: settings.resolvedASRBaseURL,
                 apiKey: key,
                 model: settings.resolvedASRModel,
-                language: settings.language
+                language: settings.language,
+                uploadFormat: provider.uploadFormat
             )
         }
     }

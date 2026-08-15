@@ -93,6 +93,20 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
         }
     }
 
+    /// What to upload.
+    ///
+    /// deAPI rejects WAV outright, whatever MIME type it is sent under, and
+    /// accepts m4a. The others are left on WAV because that is the path
+    /// actually exercised against them — m4a would very likely work and upload
+    /// five times less, but switching an unverified path on a guess trades a
+    /// known-good default for an untested one.
+    public var uploadFormat: AudioUploadFormat {
+        switch self {
+        case .deapi: .m4a
+        case .groq, .openAI, .custom: .wav
+        }
+    }
+
     /// Rough cost per hour of audio, for the settings UI. Worth showing:
     /// the spread between providers is more than an order of magnitude.
     public var approximateCostPerHour: String? {
@@ -117,12 +131,14 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
     private let language: String?
     private let session: URLSession
     private let timeout: TimeInterval
+    private let uploadFormat: AudioUploadFormat
 
     public init(
         baseURL: String,
         apiKey: String,
         model: String,
         language: String? = nil,
+        uploadFormat: AudioUploadFormat = .wav,
         timeout: TimeInterval = 30,
         session: URLSession = .shared
     ) {
@@ -130,6 +146,7 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
         self.apiKey = apiKey
         self.model = model
         self.language = language
+        self.uploadFormat = uploadFormat
         self.timeout = timeout
         self.session = session
     }
@@ -161,10 +178,24 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
         // Same glossary trick as on-device: Whisper conditions on this text.
         if let prompt, !prompt.isEmpty { fields.append(("prompt", prompt)) }
 
+        // AAC when the provider needs it, WAV when it does not — and WAV as the
+        // fallback if encoding fails, because a bigger upload beats no dictation.
+        var format = uploadFormat
+        var audio: Data
+        if format == .m4a, let encoded = AACEncoder.encode(samples: samples) {
+            audio = encoded
+        } else {
+            if format == .m4a { Log.audio.error("AAC encoding failed — falling back to WAV upload") }
+            format = .wav
+            audio = WAVEncoder.encode(samples: samples)
+        }
+
         request.httpBody = Self.multipartBody(
             boundary: boundary,
             fields: fields,
-            audio: WAVEncoder.encode(samples: samples)
+            audio: audio,
+            filename: format.filename,
+            contentType: format.mimeType
         )
 
         let data: Data
@@ -197,7 +228,8 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
         boundary: String,
         fields: [(String, String)],
         audio: Data,
-        filename: String = "audio.wav"
+        filename: String = "audio.wav",
+        contentType: String = "audio/wav"
     ) -> Data {
         var body = Data()
         func append(_ string: String) { body.append(Data(string.utf8)) }
@@ -210,7 +242,7 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
 
         append("--\(boundary)\r\n")
         append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n")
-        append("Content-Type: audio/wav\r\n\r\n")
+        append("Content-Type: \(contentType)\r\n\r\n")
         body.append(audio)
         append("\r\n--\(boundary)--\r\n")
 
