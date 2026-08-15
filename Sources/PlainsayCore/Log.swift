@@ -34,4 +34,6 @@ public enum DictationOutcome: String, Codable, Sendable {
     case microphoneUnavailable
     case modelNotReady
     case insertionUnverified
+    /// Transcribed on a later launch, after the original run was interrupted.
+    case recovered
 }

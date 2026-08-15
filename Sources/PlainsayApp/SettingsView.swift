@@ -259,19 +259,31 @@ struct PermissionsSettings: View {
             }
         }
         .formStyle(.grouped)
-        .onAppear(perform: refresh)
-        // Grants happen in System Settings, so re-check whenever we come back.
-        .onReceive(NotificationCenter.default.publisher(
-            for: NSApplication.didBecomeActiveNotification
-        )) { _ in
-            refresh()
+        // Poll while this tab is on screen. Grants are made in System Settings,
+        // in another process, and there is no notification for them: an
+        // accessory app often never "becomes active" again when you come back
+        // to an already-open window, so an event-driven refresh silently misses
+        // the change and the row keeps saying Grant after you granted it.
+        .task {
+            while !Task.isCancelled {
+                refresh()
+                try? await Task.sleep(for: .seconds(1))
+            }
         }
     }
 
     private func refresh() {
-        granted = Dictionary(
+        let current = Dictionary(
             uniqueKeysWithValues: Permission.allCases.map { ($0, $0.isGranted) }
         )
+        if current != granted {
+            Log.pipeline.info("""
+                permissions: mic=\(current[.microphone] ?? false, privacy: .public) \
+                ax=\(current[.accessibility] ?? false, privacy: .public) \
+                input=\(current[.inputMonitoring] ?? false, privacy: .public)
+                """)
+            granted = current
+        }
     }
 }
 

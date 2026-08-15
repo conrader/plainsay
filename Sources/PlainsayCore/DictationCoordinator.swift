@@ -43,6 +43,8 @@ public final class DictationCoordinator {
 
     /// Every dictation, written down before insertion is attempted.
     public let history: TranscriptHistory
+    /// Captured audio, staged on disk until transcription completes.
+    private let pendingAudio: PendingAudioStore
 
     private let settings: PlainsaySettings
     private let recorder: any AudioRecording
@@ -60,6 +62,7 @@ public final class DictationCoordinator {
     public init(
         settings: PlainsaySettings = .shared,
         history: TranscriptHistory = TranscriptHistory(),
+        pendingAudio: PendingAudioStore = PendingAudioStore(),
         recorder: any AudioRecording = AudioRecorder(),
         inserter: any TextInserting = PasteboardTextInserter(),
         makeEngine: @escaping @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine = { model, language, onState in
@@ -72,6 +75,7 @@ public final class DictationCoordinator {
     ) {
         self.settings = settings
         self.history = history
+        self.pendingAudio = pendingAudio
         self.recorder = recorder
         self.inserter = inserter
         self.makeEngine = makeEngine
@@ -103,6 +107,37 @@ public final class DictationCoordinator {
             phase = .error(error.localizedDescription)
         }
         await loadModel()
+        await recoverInterruptedAudio()
+    }
+
+    /// Transcribes audio that a previous run captured but never processed.
+    ///
+    /// Deliberately does not paste: by now the focus is somewhere else entirely,
+    /// and a surprise paste minutes later is worse than none. The text lands in
+    /// history, where it can be copied.
+    private func recoverInterruptedAudio() async {
+        let pending = pendingAudio.recoverable()
+        guard !pending.isEmpty, let engine else { return }
+        Log.pipeline.info("recovering \(pending.count, privacy: .public) interrupted recording(s)")
+
+        for url in pending {
+            defer { pendingAudio.discard(url) }
+            guard let samples = pendingAudio.load(url), !samples.isEmpty else { continue }
+            let duration = Double(samples.count) / whisperSampleRate
+            guard duration >= Self.minimumDuration else { continue }
+
+            guard let raw = try? await engine.transcribe(
+                samples: samples,
+                prompt: settings.dictionary.asrPrompt()
+            ), !raw.isEmpty else { continue }
+
+            let cleaned = (try? await makeCleaner(settings).clean(raw, dictionary: settings.dictionary)) ?? raw
+            history.add(TranscriptRecord(
+                text: cleaned, rawText: raw, outcome: .recovered,
+                durationSeconds: duration, targetApp: nil
+            ))
+            Log.pipeline.info("recovered \(cleaned.count, privacy: .public) chars from an interrupted recording")
+        }
     }
 
     public func stop() {
@@ -238,6 +273,15 @@ public final class DictationCoordinator {
     // MARK: - Pipeline
 
     private func process(_ samples: [Float]) async {
+        // On disk before transcription, deleted after. Whatever survives a
+        // crash here is a dictation that was never turned into text.
+        let staged = pendingAudio.save(samples)
+        defer { pendingAudio.discard(staged) }
+
+        await runPipeline(samples)
+    }
+
+    private func runPipeline(_ samples: [Float]) async {
         let duration = Double(samples.count) / whisperSampleRate
 
         guard let engine else {
