@@ -10,6 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "1.1.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.5"),
     ],
     targets: [
         .target(
@@ -18,7 +19,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "PlainsayApp",
-            dependencies: ["PlainsayCore"]
+            dependencies: [
+                "PlainsayCore",
+                .product(name: "Sparkle", package: "Sparkle"),
+            ]
         ),
         .testTarget(
             name: "PlainsayCoreTests",

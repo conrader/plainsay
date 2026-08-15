@@ -28,7 +28,34 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/PlainsayApp"
 cp Scripts/Info.plist "$APP/Contents/Info.plist"
 
+# Sparkle ships as a framework and SwiftPM does not embed it, so the binary
+# links against something the bundle does not contain. Copy it in and point
+# the loader at it, or the app dies at launch with a dyld error.
+SPARKLE_SRC="$(swift build -c "$CONFIG" --show-bin-path)/Sparkle.framework"
+if [ -d "$SPARKLE_SRC" ]; then
+	echo "==> Embedding Sparkle"
+	mkdir -p "$APP/Contents/Frameworks"
+	rsync -a --delete "$SPARKLE_SRC" "$APP/Contents/Frameworks/"
+	install_name_tool -add_rpath "@executable_path/../Frameworks" \
+		"$APP/Contents/MacOS/PlainsayApp" 2>/dev/null || true
+else
+	echo "!! Sparkle.framework not found at $SPARKLE_SRC" >&2
+	exit 1
+fi
+
+# Inside out: the framework and its helpers must each be signed before the
+# outer bundle, or the outer signature covers something that then changes.
 echo "==> Signing as: $SIGN_IDENTITY"
+for inner in \
+	"$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices"/*.xpc \
+	"$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate" \
+	"$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app" \
+	"$APP/Contents/Frameworks/Sparkle.framework"
+do
+	[ -e "$inner" ] || continue
+	codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp=none "$inner" >/dev/null
+done
+
 codesign --force \
 	--sign "$SIGN_IDENTITY" \
 	--identifier com.plainsay.dictation \

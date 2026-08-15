@@ -10,6 +10,9 @@ final class AppModel {
 
     let settings = PlainsaySettings.shared
     let coordinator: DictationCoordinator
+    /// Owns Sparkle. Created once here so the scheduled check starts at launch
+    /// rather than only when a menu happens to be drawn.
+    let updates = UpdateController()
     let hud: HUDController
     let settingsWindow: SettingsWindowController
 

@@ -9,7 +9,7 @@ struct PlainsayApplication: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(coordinator: model.coordinator, settings: model.settings)
+            MenuContent(updates: model.updates, coordinator: model.coordinator, settings: model.settings)
         } label: {
             MenuBarIcon(coordinator: model.coordinator)
         }
@@ -37,6 +37,7 @@ private struct MenuBarIcon: View {
 }
 
 struct MenuContent: View {
+    let updates: UpdateController
     let coordinator: DictationCoordinator
     let settings: PlainsaySettings
 
@@ -61,6 +62,13 @@ struct MenuContent: View {
             }
             .keyboardShortcut("c", modifiers: [.command, .shift])
         }
+
+        // Distributed outside the App Store, so nothing updates this app but
+        // this menu item and the scheduled check behind it.
+        Button("Check for Updates…") {
+            updates.checkForUpdates()
+        }
+        .disabled(!updates.canCheck)
 
         Button("Settings…") {
             openSettings()
