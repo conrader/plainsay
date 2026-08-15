@@ -1,5 +1,8 @@
 import Foundation
-import WhisperKit
+// WhisperKit 1.1 predates Swift 6 sendability annotations. The entire
+// instance is owned and used by this actor, so importing its declarations as
+// pre-concurrency accurately describes the isolation boundary.
+@preconcurrency import WhisperKit
 
 /// On-device Whisper via WhisperKit (CoreML, Apple Neural Engine + GPU).
 public actor WhisperKitEngine: TranscriptionEngine {
