@@ -155,3 +155,35 @@ struct OpenAICompatibleCleanupTests {
         )
     }
 }
+
+@Suite("ASR providers")
+struct ASRProviderTests {
+    @Test("Every preset provider is fully configured out of the box")
+    func presetsAreComplete() {
+        for provider in ASRProvider.allCases where provider != .custom {
+            #expect(!provider.defaultBaseURL.isEmpty, "\(provider) has no base URL")
+            #expect(!provider.defaultModel.isEmpty, "\(provider) has no default model")
+            #expect(provider.signupURL != nil, "\(provider) has nowhere to get a key")
+            #expect(
+                provider.suggestedModels.contains(provider.defaultModel),
+                "\(provider) default model is missing from its suggestions"
+            )
+        }
+    }
+
+    @Test("Each provider stores its key under its own account")
+    func keysAreNotShared() {
+        let accounts = ASRProvider.allCases.map(\.keychainAccount)
+        // Shared accounts would mean switching provider silently reuses — or
+        // overwrites — someone else's key.
+        #expect(Set(accounts).count == accounts.count)
+    }
+
+    @Test("deAPI points at the synchronous OpenAI-compatible host")
+    func deapiUsesSyncEndpoint() {
+        // api.deapi.ai/v2 is async — it returns a request_id to poll, which
+        // cannot serve a dictation. oai.deapi.ai is the synchronous surface.
+        #expect(ASRProvider.deapi.defaultBaseURL == "https://oai.deapi.ai/v1")
+        #expect(ASRProvider.deapi.defaultModel == "WhisperLargeV3")
+    }
+}

@@ -20,6 +20,7 @@ public enum TranscriptionSource: String, Codable, CaseIterable, Sendable, Identi
 /// Cloud speech-to-text providers, all speaking the OpenAI dialect.
 public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     case groq
+    case deapi
     case openAI
     case custom
 
@@ -28,6 +29,7 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var displayName: String {
         switch self {
         case .groq: "Groq"
+        case .deapi: "deAPI"
         case .openAI: "OpenAI"
         case .custom: "Custom (OpenAI-compatible)"
         }
@@ -36,6 +38,10 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var defaultBaseURL: String {
         switch self {
         case .groq: "https://api.groq.com/openai/v1"
+        // deAPI's own v2 endpoint is asynchronous — it returns a request_id to
+        // poll, which is unusable for dictation. Its OpenAI-compatible surface
+        // is synchronous, so that is the one we speak to.
+        case .deapi: "https://oai.deapi.ai/v1"
         case .openAI: "https://api.openai.com/v1"
         case .custom: ""
         }
@@ -44,6 +50,8 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var defaultModel: String {
         switch self {
         case .groq: "whisper-large-v3-turbo"
+        // Native slugs, deliberately not OpenAI's naming.
+        case .deapi: "WhisperLargeV3"
         case .openAI: "whisper-1"
         case .custom: ""
         }
@@ -52,6 +60,7 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var suggestedModels: [String] {
         switch self {
         case .groq: ["whisper-large-v3-turbo", "whisper-large-v3"]
+        case .deapi: ["WhisperLargeV3", "WhisperLargeV3Ct2"]
         case .openAI: ["whisper-1", "gpt-4o-mini-transcribe"]
         case .custom: []
         }
@@ -60,6 +69,7 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var keychainAccount: String {
         switch self {
         case .groq: "groq-api-key"
+        case .deapi: "deapi-api-key"
         case .openAI: "openai-api-key"
         case .custom: "custom-asr-api-key"
         }
@@ -68,6 +78,7 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var signupURL: String? {
         switch self {
         case .groq: "https://console.groq.com/keys"
+        case .deapi: "https://app.deapi.ai/settings/api-keys"
         case .openAI: "https://platform.openai.com/api-keys"
         case .custom: nil
         }
@@ -78,6 +89,7 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     public var approximateCostPerHour: String? {
         switch self {
         case .groq: "~$0.04/hour of audio"
+        case .deapi: "~$0.021/hour of audio · $5 free credit to start"
         case .openAI: "~$0.36/hour of audio"
         case .custom: nil
         }
