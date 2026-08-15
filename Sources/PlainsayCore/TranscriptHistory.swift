@@ -1,0 +1,105 @@
+import AppKit
+import Foundation
+import Observation
+
+public struct TranscriptRecord: Codable, Sendable, Identifiable, Equatable {
+    public let id: UUID
+    public let date: Date
+    /// What was actually inserted (cleaned, or raw if cleanup failed).
+    public let text: String
+    /// The unpolished transcript, kept so a bad cleanup is recoverable.
+    public let rawText: String
+    public let outcome: DictationOutcome
+    public let durationSeconds: Double
+    /// Bundle id of the app it was aimed at.
+    public let targetApp: String?
+
+    public init(
+        id: UUID = UUID(),
+        date: Date = Date(),
+        text: String,
+        rawText: String,
+        outcome: DictationOutcome,
+        durationSeconds: Double,
+        targetApp: String?
+    ) {
+        self.id = id
+        self.date = date
+        self.text = text
+        self.rawText = rawText
+        self.outcome = outcome
+        self.durationSeconds = durationSeconds
+        self.targetApp = targetApp
+    }
+}
+
+/// Keeps the last N dictations on disk.
+///
+/// This exists because pasting into another app is the one step Plainsay cannot
+/// verify. If a paste silently fails — the target app was busy, Accessibility
+/// was revoked, focus moved — the words are gone and no amount of logging
+/// brings them back. Writing every transcript down first means the worst case
+/// is "copy it from the menu", not "say it all again".
+@MainActor
+@Observable
+public final class TranscriptHistory {
+    public private(set) var records: [TranscriptRecord] = []
+
+    private let limit: Int
+    private let fileURL: URL
+
+    public init(limit: Int = 100, directory: URL? = nil) {
+        self.limit = limit
+
+        let base = directory ?? FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Plainsay", isDirectory: true)
+
+        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        fileURL = base.appendingPathComponent("history.json")
+        load()
+    }
+
+    public var mostRecent: TranscriptRecord? { records.first }
+
+    public func add(_ record: TranscriptRecord) {
+        records.insert(record, at: 0)
+        if records.count > limit {
+            records.removeLast(records.count - limit)
+        }
+        save()
+    }
+
+    public func clear() {
+        records = []
+        save()
+    }
+
+    /// Puts a past dictation back on the clipboard so it can be pasted by hand.
+    @discardableResult
+    public func copyToClipboard(_ record: TranscriptRecord) -> Bool {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        return pasteboard.setString(record.text, forType: .string)
+    }
+
+    private func load() {
+        guard let data = try? Data(contentsOf: fileURL) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        records = (try? decoder.decode([TranscriptRecord].self, from: data)) ?? []
+    }
+
+    private func save() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let data = try? encoder.encode(records) else { return }
+        // Atomic: a crash mid-write must not corrupt the whole history.
+        try? data.write(to: fileURL, options: .atomic)
+    }
+}
+
+#if canImport(AppKit)
+import AppKit
+#endif
