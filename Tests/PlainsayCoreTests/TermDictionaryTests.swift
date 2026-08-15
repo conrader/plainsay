@@ -65,3 +65,25 @@ struct TranscriptNormalizationTests {
         #expect(normalizeTranscript("you") == "you")
     }
 }
+
+@Suite("Signal detection")
+struct SignalDetectionTests {
+    @Test("Digital silence has no signal")
+    func silenceHasNoSignal() {
+        #expect(!WhisperKitEngine.hasSignal([Float](repeating: 0, count: 16_000)))
+    }
+
+    @Test("Quiet but audible speech counts as signal")
+    func quietSpeechHasSignal() {
+        // 0.11 peak is what a real close-mic dictation measured at, and it was
+        // being dropped as silence before the retry existed.
+        var samples = [Float](repeating: 0.001, count: 16_000)
+        samples[8_000] = 0.1136
+        #expect(WhisperKitEngine.hasSignal(samples))
+    }
+
+    @Test("Room tone alone does not count as signal")
+    func roomToneIsNotSignal() {
+        #expect(!WhisperKitEngine.hasSignal([Float](repeating: 0.005, count: 16_000)))
+    }
+}

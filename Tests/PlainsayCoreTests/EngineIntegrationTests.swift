@@ -64,6 +64,22 @@ struct EngineIntegrationTests {
         #expect(lowered.contains("lazy dog"), "got: \(transcript)")
     }
 
+    @Test("Quiet speech is still transcribed, not suppressed as silence", .timeLimit(.minutes(5)))
+    func quietSpeechSurvives() async throws {
+        // Scaled down to roughly the level a real dictation measured at
+        // (peak ~0.11), which the decoder was dropping as silence.
+        let loud = try synthesize("The meeting is on Thursday at four.")
+        let peak = loud.map(abs).max() ?? 1
+        let quiet = loud.map { $0 * (0.11 / max(peak, 0.0001)) }
+
+        let engine = WhisperKitEngine(model: .largeV3Turbo, language: "en")
+        try await engine.prepare()
+        let transcript = try await engine.transcribe(samples: quiet, prompt: nil)
+
+        #expect(!transcript.isEmpty, "quiet speech was dropped")
+        #expect(transcript.lowercased().contains("thursday"), "got: \(transcript)")
+    }
+
     @Test("Silence transcribes to nothing rather than a hallucination", .timeLimit(.minutes(5)))
     func silenceProducesNothing() async throws {
         let silence = [Float](repeating: 0, count: Int(whisperSampleRate * 2))

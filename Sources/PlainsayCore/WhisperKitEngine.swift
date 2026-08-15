@@ -64,8 +64,36 @@ public actor WhisperKitEngine: TranscriptionEngine {
         }
     }
 
+    /// Whisper's window. Audio below this fits in a single pass, so splitting
+    /// it can only lose material.
+    private static let windowSeconds: Double = 30
+
     public func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        let text = try await run(samples: samples, prompt: prompt, relaxed: false)
+        guard text.isEmpty else { return text }
+
+        // An empty result on audio that clearly contained speech is a decoder
+        // suppression, not silence. Retrying with the silence heuristics turned
+        // off costs a second in the rare failure case and saves the dictation.
+        guard Self.hasSignal(samples) else { return text }
+        Log.model.info("empty transcript despite audible input — retrying with silence detection off")
+        return try await run(samples: samples, prompt: prompt, relaxed: true)
+    }
+
+    /// True when the audio is loud enough that a human would hear speech.
+    static func hasSignal(_ samples: [Float], threshold: Float = 0.02) -> Bool {
+        var peak: Float = 0
+        for sample in samples where abs(sample) > peak { peak = abs(sample) }
+        return peak > threshold
+    }
+
+    private func run(samples: [Float], prompt: String?, relaxed: Bool) async throws -> String {
         guard let kit else { throw TranscriptionError.modelNotLoaded }
+
+        // VAD chunking exists to split audio longer than the model's window.
+        // Applied to a short dictation it has nothing to divide and can
+        // classify the whole clip as non-speech, yielding no chunks at all.
+        let needsChunking = Double(samples.count) / whisperSampleRate > Self.windowSeconds
 
         var options = DecodingOptions(
             verbose: false,
@@ -76,9 +104,14 @@ public actor WhisperKitEngine: TranscriptionEngine {
             detectLanguage: model.isEnglishOnly ? false : (language == nil),
             skipSpecialTokens: true,
             withoutTimestamps: true,
-            // VAD chunking keeps long dictations from being cut at fixed
-            // 30s window boundaries mid-word.
-            chunkingStrategy: .vad
+            // Quiet, close-mic dictation sits near these thresholds, and both
+            // must fire together for Whisper to declare silence. Loosening them
+            // trades the odd hallucination on true silence — which the empty
+            // check catches anyway — for not dropping a real sentence.
+            compressionRatioThreshold: relaxed ? nil : 2.4,
+            logProbThreshold: relaxed ? nil : -1.0,
+            noSpeechThreshold: relaxed ? nil : 0.9,
+            chunkingStrategy: needsChunking ? .vad : nil
         )
 
         if let prompt, let tokenizer = kit.tokenizer {
