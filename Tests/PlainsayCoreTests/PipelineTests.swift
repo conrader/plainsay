@@ -104,7 +104,8 @@ private struct Harness {
             recorder: recorder,
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
-            makeCleaner: { _ in cleaner }
+            makeCleaner: { _ in cleaner },
+            usesInjectedEngine: true
         )
     }
 

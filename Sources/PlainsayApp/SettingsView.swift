@@ -97,22 +97,82 @@ private struct SpeechSettings: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     @State private var newTerm = ""
+    @State private var asrKeyRevision = 0
 
     var body: some View {
         Form {
             Section {
-                Picker("Model", selection: $settings.model) {
-                    ForEach(WhisperModel.allCases, id: \.self) { model in
-                        Text(model.displayName).tag(model)
+                Picker("Transcribe", selection: $settings.transcriptionSource) {
+                    ForEach(TranscriptionSource.allCases) { source in
+                        Text(source.displayName).tag(source)
                     }
                 }
-                LabeledContent("Status") {
-                    ModelStatusLabel(state: coordinator.modelState)
-                }
             } footer: {
-                Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
+                Text(settings.transcriptionSource == .onDevice
+                     ? "Audio never leaves this Mac. Costs nothing, needs a one-time model download."
+                     : "Audio is uploaded for transcription. No model download, faster on older Macs, billed per minute.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            }
+
+            if settings.transcriptionSource == .onDevice {
+                Section("On-device model") {
+                    Picker("Model", selection: $settings.model) {
+                        ForEach(WhisperModel.allCases, id: \.self) { model in
+                            Text(model.displayName).tag(model)
+                        }
+                    }
+                    LabeledContent("Status") {
+                        ModelStatusLabel(state: coordinator.modelState)
+                    }
+                    Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Section("Transcription service") {
+                    Picker("Service", selection: $settings.asrProvider) {
+                        ForEach(ASRProvider.allCases) { provider in
+                            Text(provider.displayName).tag(provider)
+                        }
+                    }
+
+                    if settings.asrProvider == .custom {
+                        TextField(
+                            "Base URL",
+                            text: $settings.asrBaseURL,
+                            prompt: Text("https://example.com/v1")
+                        )
+                        .textFieldStyle(.roundedBorder)
+                    }
+
+                    ModelField(
+                        label: "Model",
+                        suggestions: settings.asrProvider.suggestedModels,
+                        placeholder: settings.asrProvider.defaultModel.isEmpty
+                            ? "model name"
+                            : settings.asrProvider.defaultModel,
+                        value: $settings.asrModel
+                    )
+
+                    APIKeyField(
+                        title: "\(settings.asrProvider.displayName) API key",
+                        signupURL: settings.asrProvider.signupURL,
+                        currentKey: settings.apiKey(for: settings.asrProvider),
+                        onSave: { key in
+                            settings.setAPIKey(key, for: settings.asrProvider)
+                            asrKeyRevision += 1
+                            Task { await coordinator.reloadModel() }
+                        }
+                    )
+                    .id("\(settings.asrProvider.rawValue)-\(asrKeyRevision)")
+
+                    if let cost = settings.asrProvider.approximateCostPerHour {
+                        Text(cost)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             Section("Vocabulary") {
@@ -147,6 +207,12 @@ private struct SpeechSettings: View {
         }
         .formStyle(.grouped)
         .onChange(of: settings.model) {
+            Task { await coordinator.reloadModel() }
+        }
+        .onChange(of: settings.transcriptionSource) {
+            Task { await coordinator.reloadModel() }
+        }
+        .onChange(of: settings.asrProvider) {
             Task { await coordinator.reloadModel() }
         }
     }
@@ -189,49 +255,71 @@ private struct ModelStatusLabel: View {
 
 private struct CleanupSettings: View {
     @Bindable var settings: PlainsaySettings
-    @State private var key: String = ""
+    @State private var keyRevision = 0
 
     var body: some View {
         Form {
             Section {
                 Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
             } footer: {
-                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Costs about $0.0004 per dictation.")
+                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
 
-            Section {
-                SecureField("Gemini API key", text: $key)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit(save)
-                HStack {
-                    Button("Save key", action: save)
-                        .disabled(key.isEmpty)
-                    if settings.hasGeminiKey {
-                        Spacer()
-                        Button("Remove", role: .destructive) {
-                            settings.geminiAPIKey = ""
-                            key = ""
+            if settings.cleanupEnabled {
+                Section("Provider") {
+                    Picker("Service", selection: $settings.cleanupProvider) {
+                        ForEach(CleanupProvider.allCases) { provider in
+                            Text(provider.displayName).tag(provider)
                         }
                     }
+
+                    if settings.cleanupProvider == .custom {
+                        TextField(
+                            "Base URL",
+                            text: $settings.cleanupBaseURL,
+                            prompt: Text("https://example.com/v1")
+                        )
+                        .textFieldStyle(.roundedBorder)
+                    }
+
+                    ModelField(
+                        label: "Model",
+                        suggestions: settings.cleanupProvider.suggestedModels,
+                        placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                            ? "model name"
+                            : settings.cleanupProvider.defaultModel,
+                        value: $settings.cleanupModel
+                    )
+
+                    APIKeyField(
+                        title: "\(settings.cleanupProvider.displayName) API key",
+                        signupURL: settings.cleanupProvider.signupURL,
+                        currentKey: settings.apiKey(for: settings.cleanupProvider),
+                        onSave: { key in
+                            settings.setAPIKey(key, for: settings.cleanupProvider)
+                            keyRevision += 1
+                        }
+                    )
+                    .id("\(settings.cleanupProvider.rawValue)-\(keyRevision)")
                 }
-            } header: {
-                Text("Gemini")
-            } footer: {
-                Text(settings.hasGeminiKey
-                     ? "Key stored in your Keychain. Without a working key, Plainsay inserts the raw transcript instead."
-                     : "Get a key at aistudio.google.com. Without one, Plainsay inserts the raw transcript.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+
+                Section {
+                    Text(statusLine)
+                        .font(.callout)
+                        .foregroundStyle(settings.cleanupIsConfigured ? Color.secondary : Color.orange)
+                }
             }
         }
         .formStyle(.grouped)
-        .onAppear { key = settings.geminiAPIKey }
     }
 
-    private func save() {
-        settings.geminiAPIKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var statusLine: String {
+        guard settings.cleanupIsConfigured else {
+            return "Not configured — Plainsay will insert the raw transcript until a key is saved."
+        }
+        return "Cleanup runs through \(settings.cleanupProvider.displayName) using \(settings.resolvedCleanupModel). A failure always falls back to the raw transcript."
     }
 }
 

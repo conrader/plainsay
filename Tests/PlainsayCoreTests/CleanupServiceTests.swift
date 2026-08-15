@@ -4,8 +4,24 @@ import Testing
 
 /// Intercepts the Gemini request so the tests never touch the network.
 final class MockURLProtocol: URLProtocol, @unchecked Sendable {
-    nonisolated(unsafe) static var handler: (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))?
-    nonisolated(unsafe) static var lastBody: Data?
+    // Keyed by host so suites exercising different providers cannot clobber
+    // each other's stubs when Swift Testing runs them in parallel.
+    nonisolated(unsafe) private static var handlers:
+        [String: @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)] = [:]
+    nonisolated(unsafe) private static var bodies: [String: Data] = [:]
+    private static let lock = NSLock()
+
+    static func handler(for host: String) -> (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))? {
+        lock.withLock { handlers[host] }
+    }
+
+    static func lastBody(for host: String) -> Data? {
+        lock.withLock { bodies[host] }
+    }
+
+    static func reset(host: String) {
+        lock.withLock { bodies[host] = nil }
+    }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -24,12 +40,12 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
             }
             buffer.deallocate()
             stream.close()
-            Self.lastBody = data
+            Self.record(data, for: request)
         } else {
-            Self.lastBody = request.httpBody
+            Self.record(request.httpBody, for: request)
         }
 
-        guard let handler = Self.handler else {
+        guard let handler = Self.handler(for: request.url?.host() ?? "") else {
             client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
             return
         }
@@ -46,24 +62,31 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
 
     override func stopLoading() {}
 
+    private static func record(_ data: Data?, for request: URLRequest) {
+        guard let host = request.url?.host() else { return }
+        lock.withLock { bodies[host] = data }
+    }
+
     static func session() -> URLSession {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [MockURLProtocol.self]
         return URLSession(configuration: config)
     }
 
-    static func respond(status: Int = 200, json: String) {
-        handler = { request in
-            (
-                HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!,
-                Data(json.utf8)
-            )
+    static func respond(host: String, status: Int = 200, json: String) {
+        lock.withLock {
+            handlers[host] = { request in
+                (
+                    HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!,
+                    Data(json.utf8)
+                )
+            }
         }
     }
 }
 
-// Serialized because `MockURLProtocol` holds its stub in static state; run in
-// parallel these tests overwrite each other's responses.
+let geminiHost = "generativelanguage.googleapis.com"
+
 @Suite("Cleanup", .serialized)
 struct CleanupServiceTests {
     private func makeService() -> GeminiCleanupService {
@@ -72,7 +95,7 @@ struct CleanupServiceTests {
 
     @Test("Returns the model's rewritten text")
     func returnsCleanedText() async throws {
-        MockURLProtocol.respond(json: """
+        MockURLProtocol.respond(host: geminiHost, json: """
         {"candidates":[{"content":{"parts":[{"text":"I'll be there on Tuesday."}]}}]}
         """)
 
@@ -86,7 +109,7 @@ struct CleanupServiceTests {
 
     @Test("Joins a response split across multiple parts")
     func joinsParts() async throws {
-        MockURLProtocol.respond(json: """
+        MockURLProtocol.respond(host: geminiHost, json: """
         {"candidates":[{"content":{"parts":[{"text":"Hello "},{"text":"world."}]}}]}
         """)
 
@@ -97,7 +120,7 @@ struct CleanupServiceTests {
 
     @Test("An HTTP failure throws so the caller can fall back to the raw text")
     func httpErrorThrows() async {
-        MockURLProtocol.respond(status: 429, json: #"{"error":"quota"}"#)
+        MockURLProtocol.respond(host: geminiHost, status: 429, json: #"{"error":"quota"}"#)
 
         await #expect(throws: CleanupError.self) {
             try await makeService().clean("hello", dictionary: TermDictionary())
@@ -106,7 +129,7 @@ struct CleanupServiceTests {
 
     @Test("A response with no candidates throws rather than returning empty text")
     func emptyResponseThrows() async {
-        MockURLProtocol.respond(json: #"{"candidates":[]}"#)
+        MockURLProtocol.respond(host: geminiHost, json: #"{"candidates":[]}"#)
 
         await #expect(throws: CleanupError.self) {
             try await makeService().clean("hello", dictionary: TermDictionary())
@@ -124,7 +147,7 @@ struct CleanupServiceTests {
 
     @Test("Empty input short-circuits")
     func emptyInputSkipsRequest() async throws {
-        MockURLProtocol.handler = { _ in throw URLError(.notConnectedToInternet) }
+        MockURLProtocol.respond(host: geminiHost, status: 500, json: "{}")
 
         let result = try await makeService().clean("   ", dictionary: TermDictionary())
 
@@ -133,14 +156,14 @@ struct CleanupServiceTests {
 
     @Test("The transcript is delimited and the key is sent as a header")
     func requestShape() async throws {
-        MockURLProtocol.respond(json: """
+        MockURLProtocol.respond(host: geminiHost, json: """
         {"candidates":[{"content":{"parts":[{"text":"ok"}]}}]}
         """)
-        MockURLProtocol.lastBody = nil
+        MockURLProtocol.reset(host: geminiHost)
 
         _ = try await makeService().clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]))
 
-        let body = try #require(MockURLProtocol.lastBody)
+        let body = try #require(MockURLProtocol.lastBody(for: geminiHost))
         let json = String(decoding: body, as: UTF8.self)
 
         #expect(json.contains("<transcript>"))

@@ -22,7 +22,7 @@ public enum AudioRecorderError: LocalizedError {
 }
 
 /// Whisper wants 16kHz mono float samples; hardware rarely provides them directly.
-let whisperSampleRate: Double = 16_000
+public let whisperSampleRate: Double = 16_000
 
 /// Owns the converter and output buffer used on the realtime audio thread.
 ///

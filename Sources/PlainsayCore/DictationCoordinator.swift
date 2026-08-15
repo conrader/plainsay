@@ -52,6 +52,8 @@ public final class DictationCoordinator {
     private var engine: (any TranscriptionEngine)?
     private let makeEngine: @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine
     private let makeCleaner: @MainActor (PlainsaySettings) -> any TextCleaning
+    /// Tests pass a fake engine; production resolves one from settings.
+    private let usesInjectedEngine: Bool
 
     private let hotkeys: HotkeyMonitor
     private var machine: HotkeyStateMachine
@@ -65,13 +67,13 @@ public final class DictationCoordinator {
         pendingAudio: PendingAudioStore = PendingAudioStore(),
         recorder: any AudioRecording = AudioRecorder(),
         inserter: any TextInserting = PasteboardTextInserter(),
-        makeEngine: @escaping @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine = { model, language, onState in
-            WhisperKitEngine(model: model, language: language, onStateChange: onState)
+        makeEngine: @escaping @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine = { _, _, _ in
+            // Replaced below; the real construction needs the whole settings
+            // object, not just the model, now that the engine can be remote.
+            WhisperKitEngine()
         },
-        makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = { settings in
-            guard settings.cleanupEnabled, settings.hasGeminiKey else { return NoCleanup() }
-            return GeminiCleanupService(apiKey: settings.geminiAPIKey)
-        }
+        makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = ProviderFactory.makeCleaner,
+        usesInjectedEngine: Bool = false
     ) {
         self.settings = settings
         self.history = history
@@ -80,6 +82,7 @@ public final class DictationCoordinator {
         self.inserter = inserter
         self.makeEngine = makeEngine
         self.makeCleaner = makeCleaner
+        self.usesInjectedEngine = usesInjectedEngine
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
 
@@ -160,9 +163,14 @@ public final class DictationCoordinator {
     }
 
     private func loadModel() async {
-        let engine = makeEngine(settings.model, settings.language) { [weak self] state in
+        let onState: @Sendable (WhisperKitEngine.LoadState) -> Void = { [weak self] state in
             Task { @MainActor in self?.modelState = state }
         }
+        // Tests inject `makeEngine`; production goes through the factory, which
+        // is the only thing that knows about remote providers.
+        let engine = usesInjectedEngine
+            ? makeEngine(settings.model, settings.language, onState)
+            : ProviderFactory.makeEngine(settings, onState: onState)
         self.engine = engine
         do {
             try await engine.prepare()
