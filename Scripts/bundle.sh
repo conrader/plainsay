@@ -41,4 +41,19 @@ codesign --verify --verbose=1 "$APP"
 
 echo
 echo "Built $APP"
-echo "Run it with:  open $APP"
+
+# Installing matters more than it looks: TCC grants follow the bundle, and a
+# stale copy in /Applications keeps running the old code while you test the
+# new one — which is a genuinely confusing hour to spend.
+if [ "${INSTALL:-0}" = "1" ]; then
+	echo "==> Installing to /Applications"
+	pkill -f "Plainsay.app" 2>/dev/null || true
+	sleep 1
+	rm -rf /Applications/Plainsay.app
+	cp -R "$APP" /Applications/
+	echo "Installed /Applications/Plainsay.app"
+	echo "Run it with:  open /Applications/Plainsay.app"
+else
+	echo "Run it with:  open $APP"
+	echo "Install with: INSTALL=1 ./Scripts/bundle.sh"
+fi

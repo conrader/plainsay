@@ -11,9 +11,11 @@ filler words out, punctuation in, your wording intact.
 ## Build and run
 
 ```bash
-./Scripts/bundle.sh
-open build/Plainsay.app
+INSTALL=1 ./Scripts/bundle.sh
+open /Applications/Plainsay.app
 ```
+
+Leave off `INSTALL=1` to build into `build/` without touching `/Applications`.
 
 The bundle is not optional. macOS refuses microphone, accessibility, and input
 monitoring access to a bare executable, so `swift run` produces an app that
