@@ -29,8 +29,31 @@ echo "==> Version $VERSION (build $BUILD)"
 
 ./Scripts/bundle.sh
 
+# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
+# the app the first time anyone launches it from a download — which is every
+# new user, and every user whose update arrives quarantined.
+#
+# The credentials live in a Keychain profile created once with:
+#   xcrun notarytool store-credentials "plainsay-notary" \
+#     --key <AuthKey_*.p8> --key-id <id> --issuer <uuid>
+if [ "${NOTARIZE:-1}" = "1" ]; then
+	echo "==> Notarising (a few minutes)"
+	rm -rf dist && mkdir -p dist
+	ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app dist/notarize.zip
+	xcrun notarytool submit dist/notarize.zip \
+		--keychain-profile "plainsay-notary" --wait --timeout 20m
+	xcrun stapler staple build/Plainsay.app
+	# The ticket is what makes this offline-verifiable; without stapling, a
+	# machine with no network sees an unnotarized app.
+	xcrun stapler validate build/Plainsay.app
+	spctl -a -vvv -t exec build/Plainsay.app
+	rm -f dist/notarize.zip
+else
+	echo "==> Skipping notarisation (NOTARIZE=0) — do not ship this build"
+fi
+
 echo "==> Packaging"
-rm -rf dist && mkdir -p dist
+mkdir -p dist
 ZIP="dist/Plainsay-$VERSION.zip"
 # ditto, not zip: it preserves the symlinks and extended attributes inside the
 # framework, and a plain zip corrupts the signature on the way through.

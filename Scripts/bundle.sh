@@ -53,7 +53,7 @@ for inner in \
 	"$APP/Contents/Frameworks/Sparkle.framework"
 do
 	[ -e "$inner" ] || continue
-	codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp=none "$inner" >/dev/null
+	codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp "$inner" >/dev/null
 done
 
 codesign --force \
@@ -61,7 +61,7 @@ codesign --force \
 	--identifier com.plainsay.dictation \
 	--options runtime \
 	--entitlements Scripts/Plainsay.entitlements \
-	--timestamp=none \
+	--timestamp \
 	"$APP"
 
 codesign --verify --verbose=1 "$APP"
