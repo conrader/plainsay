@@ -6,8 +6,25 @@ import Foundation
 /// coordinator never has to know a provider exists.
 @MainActor
 public enum ProviderFactory {
+    /// Credentials for the current Plainsay Cloud session, if any.
+    ///
+    /// Held here rather than in settings because they must never be persisted:
+    /// settings write through to `UserDefaults`, and the deAPI key in here is
+    /// shared between every subscriber.
+    public static var cloudCredentials: CloudCredentials?
+
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
         guard settings.cleanupEnabled else { return NoCleanup() }
+
+        // A Cloud subscription supplies its own minted cleanup key, so it wins
+        // over whatever provider is configured for bring-your-own-key use.
+        if settings.transcriptionSource == .cloud, let cloud = cloudCredentials {
+            return OpenAICompatibleCleanupService(
+                baseURL: cloud.cleanup.baseURL,
+                apiKey: cloud.cleanup.key,
+                model: cloud.cleanup.model
+            )
+        }
 
         let provider = settings.cleanupProvider
         let key = settings.apiKey(for: provider)
@@ -39,6 +56,27 @@ public enum ProviderFactory {
                 model: settings.model,
                 language: settings.language,
                 onStateChange: onState
+            )
+
+        case .cloud:
+            guard let cloud = cloudCredentials else {
+                // Signed out, unsubscribed, or the key fetch failed. Say so
+                // rather than silently transcribing on-device: the user picked
+                // Cloud, and quietly doing something else hides a billing
+                // problem behind working dictation.
+                onState(.failed("Sign in to Plainsay Cloud in Settings › Speech"))
+                return WhisperKitEngine(
+                    model: settings.model,
+                    language: settings.language,
+                    onStateChange: onState
+                )
+            }
+            onState(.ready)
+            return RemoteWhisperEngine(
+                baseURL: cloud.transcription.baseURL,
+                apiKey: cloud.transcription.key,
+                model: cloud.transcription.model,
+                language: settings.language
             )
 
         case .remote:

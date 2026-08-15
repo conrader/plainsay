@@ -45,6 +45,8 @@ public final class DictationCoordinator {
     public let history: TranscriptHistory
     /// Captured audio, staged on disk until transcription completes.
     private let pendingAudio: PendingAudioStore
+    /// Subscription and credential client for the hosted plan.
+    public let cloud: PlainsayCloudClient
 
     private let settings: PlainsaySettings
     private let recorder: any AudioRecording
@@ -65,6 +67,7 @@ public final class DictationCoordinator {
         settings: PlainsaySettings = .shared,
         history: TranscriptHistory = TranscriptHistory(),
         pendingAudio: PendingAudioStore = PendingAudioStore(),
+        cloud: PlainsayCloudClient = PlainsayCloudClient(),
         recorder: any AudioRecording = AudioRecorder(),
         inserter: any TextInserting = PasteboardTextInserter(),
         makeEngine: @escaping @MainActor (WhisperModel, String?, @escaping @Sendable (WhisperKitEngine.LoadState) -> Void) -> any TranscriptionEngine = { _, _, _ in
@@ -78,6 +81,7 @@ public final class DictationCoordinator {
         self.settings = settings
         self.history = history
         self.pendingAudio = pendingAudio
+        self.cloud = cloud
         self.recorder = recorder
         self.inserter = inserter
         self.makeEngine = makeEngine
@@ -103,6 +107,10 @@ public final class DictationCoordinator {
         if AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
             await Permission.microphone.request()
         }
+
+        // Credentials before the engine is built, or the factory has nothing to
+        // work with and Cloud reports itself unavailable on a cold launch.
+        await refreshCloudCredentialsIfNeeded()
 
         do {
             try hotkeys.start()
@@ -160,6 +168,31 @@ public final class DictationCoordinator {
     public func reloadModel() async {
         engine = nil
         await loadModel()
+    }
+
+    /// Fetches the hosted plan's provider keys into memory.
+    ///
+    /// Only ever called for the Cloud source, so someone dictating on-device
+    /// never causes a network call to the subscription service.
+    private func refreshCloudCredentialsIfNeeded() async {
+        guard settings.transcriptionSource == .cloud, cloud.isSignedIn else {
+            ProviderFactory.cloudCredentials = nil
+            return
+        }
+
+        do {
+            let account = try await cloud.refreshAccount()
+            guard account.isActive else {
+                ProviderFactory.cloudCredentials = nil
+                Log.model.info("Plainsay Cloud subscription is \(account.status, privacy: .public)")
+                return
+            }
+            ProviderFactory.cloudCredentials = try await cloud.refreshCredentials()
+            Log.model.info("Plainsay Cloud credentials loaded into memory")
+        } catch {
+            ProviderFactory.cloudCredentials = nil
+            Log.model.error("Plainsay Cloud unavailable: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func loadModel() async {

@@ -108,9 +108,7 @@ private struct SpeechSettings: View {
                     }
                 }
             } footer: {
-                Text(settings.transcriptionSource == .onDevice
-                     ? "Audio never leaves this Mac. Costs nothing, needs a one-time model download."
-                     : "Audio is uploaded for transcription. No model download, faster on older Macs, billed per minute.")
+                Text(sourceExplanation)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -128,6 +126,12 @@ private struct SpeechSettings: View {
                     Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                }
+            } else if settings.transcriptionSource == .cloud {
+                Section("Plainsay Cloud") {
+                    CloudSettingsView(cloud: coordinator.cloud) {
+                        Task { await coordinator.reloadModel() }
+                    }
                 }
             } else {
                 Section("Transcription service") {
@@ -214,6 +218,19 @@ private struct SpeechSettings: View {
         }
         .onChange(of: settings.asrProvider) {
             Task { await coordinator.reloadModel() }
+        }
+    }
+
+    /// Said plainly, because this is the setting that decides whether someone's
+    /// voice leaves their machine.
+    private var sourceExplanation: String {
+        switch settings.transcriptionSource {
+        case .onDevice:
+            "Audio never leaves this Mac. Costs nothing, needs a one-time model download."
+        case .remote:
+            "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+        case .cloud:
+            "Audio is uploaded to Plainsay Cloud. No model download and no keys to manage, for a monthly subscription."
         }
     }
 
