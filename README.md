@@ -48,40 +48,23 @@ is the changelog: every version's notes, oldest to newest.
 Already running Plainsay? It checks for updates itself — no need to
 re-download. See **Check for Updates…** in the menu bar.
 
-## Build and run
-
-```bash
-INSTALL=1 ./Scripts/bundle.sh
-open /Applications/Plainsay.app
-```
-
-Leave off `INSTALL=1` to build into `build/` without touching `/Applications`.
-
-The bundle is not optional. macOS refuses microphone, accessibility, and input
-monitoring access to a bare executable, so `swift run` produces an app that
-cannot do anything.
-
-`bundle.sh` signs with a Developer ID by default. Override it:
-
-```bash
-SIGN_IDENTITY="-" ./Scripts/bundle.sh   # ad-hoc
-```
-
-Ad-hoc signing works, but macOS keys permission grants to the signature, so
-every rebuild asks for all three permissions again.
-
 ## First launch
 
-1. **Grant three permissions** — Plainsay opens Settings › Permissions if any are
-   missing. Microphone to hear you, Accessibility to paste, Input Monitoring to
-   notice the hotkey while another app is focused. macOS only applies a new
-   grant after a restart, so quit and reopen afterwards.
-2. **Wait for the model** — the default Whisper download is 632 MB; Parakeet is
-   about 475 MB. It is cached after the first run, and the menu bar says when
-   it is ready.
-3. **Add a Gemini key** in Settings › Cleanup. Get one at
-   [aistudio.google.com](https://aistudio.google.com). It's stored in your
-   Keychain. Without a key Plainsay still works — it inserts the raw transcript.
+The Setup Assistant walks through all of this on its own — the steps below
+are just what it's actually doing.
+
+1. **Pick how speech gets transcribed** — Plainsay Cloud (no download,
+   ≈$3/month), on-device Whisper or NVIDIA Parakeet (free, ~475–632 MB
+   download, cached after the first run), or your own API key.
+2. **Grant three permissions** — Microphone to hear you, Accessibility to
+   paste, Input Monitoring to notice the hotkey while another app is focused.
+   macOS only applies a new grant after a restart, so quit and reopen
+   afterwards.
+3. **Optional: add a cleanup key** in Settings › Speech, if you want filler
+   words and punctuation cleaned up locally instead of through Plainsay
+   Cloud. Get one at [aistudio.google.com](https://aistudio.google.com) for
+   Gemini. It's stored in your Keychain. Without one, Plainsay still works —
+   it inserts the raw transcript.
 
 ## Using it
 
@@ -125,6 +108,31 @@ snapshotted and restored around the paste.
 `TranscriptionEngine` and `TextCleaning` are protocols, so switching between
 WhisperKit and Parakeet, or Gemini and another cleanup model, does not touch the
 pipeline.
+
+## Building from source
+
+Most people want the [download](#download) above, not this — it's for
+contributors.
+
+```bash
+INSTALL=1 ./Scripts/bundle.sh
+open /Applications/Plainsay.app
+```
+
+Leave off `INSTALL=1` to build into `build/` without touching `/Applications`.
+
+The bundle is not optional. macOS refuses microphone, accessibility, and input
+monitoring access to a bare executable, so `swift run` produces an app that
+cannot do anything.
+
+`bundle.sh` signs with a Developer ID by default. Override it:
+
+```bash
+SIGN_IDENTITY="-" ./Scripts/bundle.sh   # ad-hoc
+```
+
+Ad-hoc signing works, but macOS keys permission grants to the signature, so
+every rebuild asks for all three permissions again.
 
 ## Tests
 
