@@ -129,6 +129,15 @@
   header.hero .req { font-size: 12px; color: var(--slate); }
   @media (max-width: 620px) { header.hero h1 { font-size: 38px; } }
 
+  .trust-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 2px 0 4px; }
+  .trust-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 600; color: var(--bone);
+    background: rgba(111,211,199,0.10); border: 1px solid rgba(111,211,199,0.30);
+    border-radius: var(--radius-pill); padding: 6px 13px;
+  }
+  .trust-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--signal); flex: 0 0 auto; }
+
   /* ---------------------------------------------------------------
      HUD demo (mirrors components/hud/HUDReadout + WaveformRibbon + ProgressSweep)
   ----------------------------------------------------------------- */
@@ -158,11 +167,8 @@
     position: absolute; top: 0; left: 0; height: 100%; width: var(--sweep-segment);
     border-radius: var(--radius-pill);
     background: linear-gradient(90deg, transparent, var(--signal), transparent);
-    animation: sweep var(--dur-sweep) linear infinite;
     opacity: 0;
   }
-  @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(285%); } }
-  @media (prefers-reduced-motion: reduce) { .hud .sweep { animation: none; opacity: 0.5 !important; transform: none; } }
 
   /* ---------------------------------------------------------------
      Section rhythm
@@ -268,6 +274,11 @@
     <header class="hero">
       <h1>Hold a key, speak, release.</h1>
       <p class="sub">Clean written text lands in whatever app you're using. Transcription can run entirely on your Mac — recorded audio never has to leave it.</p>
+      <div class="trust-row">
+        <span class="trust-badge"><span class="dot"></span>Open source</span>
+        <span class="trust-badge"><span class="dot"></span>Transparent</span>
+        <span class="trust-badge"><span class="dot"></span>Safe by design</span>
+      </div>
       <div class="cta">
         <a class="btn" href="https://github.com/conrader/plainsay/releases/latest">Download for macOS</a>
         <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
@@ -305,6 +316,22 @@
       <div class="reasons" id="reasons"></div>
     </section>
 
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
+      <p class="lede">Trust isn't a claim here — it's something you can go read. The whole client is MIT licensed and public: the pipeline, the HUD, the settings, all of it. Not open core, and not "open now, closed later" — free to fork, modify, and self-host indefinitely.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">WHAT'S OPEN</span>
+          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. On-device, Plainsay makes no network call you didn't ask for: no analytics, no telemetry, no phoning home.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">WHAT ISN'T</span>
+          <p>The billing backend for the paid Cloud tier — it holds payment and provider credentials, which is exactly why it stays separate and private. The dictation experience you actually use is fully open.</p>
+        </div>
+      </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
+    </section>
+
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
       <p class="lede">The free local tier is the default recommendation, not a funnel. Cloud exists for people who want zero setup — not because local is hobbled.</p>
@@ -326,19 +353,11 @@
       </div>
     </section>
 
-    <section id="open-source">
-      <div class="split">
-        <div class="block">
-          <h2 class="kicker" style="margin:0;">Open source, forever</h2>
-          <p>The whole client is MIT licensed and public — the pipeline, the UI, everything you run. Not open core, and not "open now, closed later": free to fork, modify, and self-host indefinitely.</p>
-          <p class="dim">The billing backend for the paid Cloud tier is a separate private service — it holds payment credentials and isn't part of the open-source claim. The dictation experience is.</p>
-          <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a></p>
-        </div>
-        <div class="block">
-          <h2 class="kicker" style="margin:0;">Coming</h2>
-          <p>Full live typing — words landing in your document as you speak. Today's HUD live preview is the deliberate first step; true live typing trades away the "clean, then insert once" guarantee, so it ships separately.</p>
-          <p class="dim">Also: continued work on language auto-detection, and default-model changes as local models improve.</p>
-        </div>
+    <section id="coming">
+      <div class="block">
+        <h2 class="kicker" style="margin:0 0 10px;">Coming</h2>
+        <p>Full live typing — words landing in your document as you speak. Today's HUD live preview is the deliberate first step; true live typing trades away the "clean, then insert once" guarantee, so it ships separately.</p>
+        <p class="dim">Also: continued work on language auto-detection, and default-model changes as local models improve.</p>
       </div>
     </section>
 
@@ -397,10 +416,10 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "lock.shield.fill", title: "On-device by default", body: "Whisper or NVIDIA Parakeet run locally through Core ML. Recorded audio never has to leave the Mac — not a checkbox, the default." },
-    { icon: "text.quote", title: "Open source, forever", body: "MIT licensed, whole client public. A permanent commitment, not a current state." },
+    { icon: "text.quote", title: "Open source", body: "MIT licensed, whole client public — every line of the pipeline, the HUD, the settings. A permanent commitment, not a current state. Read exactly what happens to your voice." },
+    { icon: "lock.shield.fill", title: "Transparent by default", body: "Whisper or NVIDIA Parakeet run locally through Core ML. Recorded audio never has to leave the Mac — not a checkbox, the default. No hidden telemetry, no phoning home." },
+    { icon: "clock.arrow.circlepath", title: "Safe: never silently lost", body: "Every dictation is saved to local history before insertion is even attempted. Failures are recoverable states, not vanished text." },
     { icon: "gearshape.2", title: "No vendor lock-in", body: "Five ways to transcribe, five ways to edit — pick any combination, including your own API key and endpoint. Nothing is hard-coded to one AI vendor." },
-    { icon: "clock.arrow.circlepath", title: "Never silently lost", body: "Every dictation is saved to local history before insertion is even attempted. Failures are recoverable states, not vanished text." },
     { icon: "waveform.badge.mic", title: "Voice filtering", body: "Enroll your voice once; other speakers in the room are filtered out locally, before transcription even runs." },
     { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is about $3/month. The local tier is free, fully capable, and needs no account — the same product, not a crippled one." }
   ];
@@ -482,11 +501,9 @@
   renderPlans();
 
   // -----------------------------------------------------------------
-  // HUD demo — mirrors HUDReadout.jsx + WaveformRibbon.jsx + the
-  // .dc.html Component's tick(): an 8.5s loop, recording(5s) ->
-  // transcribing(1.8s) -> cleaning(1.7s).
+  // HUD demo — a static "listening" readout (mirrors HUDReadout.jsx +
+  // WaveformRibbon.jsx), no auto-cycling animation.
   // -----------------------------------------------------------------
-  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var canvas = document.getElementById("hudCanvas");
   var ctx = canvas.getContext("2d");
   var labelEl = document.getElementById("hudLabel");
@@ -530,59 +547,23 @@
     });
   }
 
-  function timecode(seconds) {
-    var total = Math.floor(seconds || 0);
-    var s = String(total % 60);
-    if (s.length < 2) s = "0" + s;
-    return Math.floor(total / 60) + ":" + s;
-  }
-
-  var t0 = Date.now();
-  function tick() {
-    if (reduceMotion) {
-      levels = [0.2, 0.5, 0.8, 0.6, 0.3, 0.7, 0.9, 0.5, 0.25, 0.6];
-      drawWaveform(false);
-      labelEl.textContent = "LISTENING";
-      labelEl.style.color = "var(--bone)";
-      timerEl.textContent = "0:00";
-      sweepEl.style.opacity = "0";
-      return;
-    }
-
-    var cycle = ((Date.now() - t0) / 1000) % 8.5;
-    var phase, elapsed = 0;
-    if (cycle < 5) { phase = "recording"; elapsed = cycle; }
-    else if (cycle < 6.8) { phase = "transcribing"; }
-    else { phase = "cleaning"; }
-
-    if (phase === "recording") {
-      var t = cycle * 7;
-      var prev = levels.length ? levels[levels.length - 1] : 0.3;
-      var raw = Math.max(0.06, Math.abs(
-        Math.sin(t * 0.9) * 0.5 + Math.sin(t * 2.3) * 0.28 + Math.sin(t * 5.1) * 0.14 + (Math.random() - 0.5) * 0.12
-      ));
-      var v = prev * 0.45 + Math.min(1, raw) * 0.55;
-      levels.push(v);
-      if (levels.length > 60) levels = levels.slice(-60);
-    }
-
-    var working = phase === "transcribing" || phase === "cleaning";
-    var tint = phase === "recording" ? "var(--bone)" : "var(--slate)";
-    var labels = { recording: "LISTENING", transcribing: "TRANSCRIBING", cleaning: "POLISHING" };
-
-    drawWaveform(phase === "recording");
-    labelEl.textContent = labels[phase];
-    labelEl.style.color = tint;
-    timerEl.style.visibility = phase === "recording" ? "visible" : "hidden";
-    timerEl.textContent = timecode(elapsed);
-    sweepEl.style.opacity = working ? "1" : "0";
-
-    requestAnimationFrame(tick);
+  // Static readout: a plausible "listening" waveform, no cycling phases,
+  // no re-draw loop.
+  function render() {
+    levels = [0.2, 0.5, 0.8, 0.6, 0.3, 0.7, 0.9, 0.5, 0.25, 0.6];
+    drawWaveform(false);
+    labelEl.textContent = "LISTENING";
+    labelEl.style.color = "var(--bone)";
+    timerEl.textContent = "0:00";
+    sweepEl.style.opacity = "0";
   }
 
   resizeCanvas();
-  window.addEventListener("resize", resizeCanvas);
-  if (reduceMotion) { tick(); } else { requestAnimationFrame(tick); }
+  window.addEventListener("resize", function () {
+    resizeCanvas();
+    render();
+  });
+  render();
 })();
 </script>
 </body>
