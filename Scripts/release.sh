@@ -122,6 +122,9 @@ XML
 echo "==> Publishing to $HOST"
 ssh "$HOST" "sudo mkdir -p $REMOTE_DIR/releases && sudo chown -R \$(whoami) $REMOTE_DIR"
 scp -q "$ZIP" "$HOST:$REMOTE_DIR/releases/"
+# Stable filename, not GitHub: the homepage's download link points at this
+# exact path and never has to change — every release just overwrites it.
+scp -q "$DMG" "$HOST:$REMOTE_DIR/releases/Plainsay-latest.dmg"
 scp -q dist/appcast.xml "$HOST:$REMOTE_DIR/appcast.xml"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
