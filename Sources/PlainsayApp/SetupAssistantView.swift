@@ -8,7 +8,7 @@ struct SetupAssistantView: View {
     let onSpeechConfirmed: @MainActor (Bool) -> Void
     let onFinish: @MainActor () -> Void
 
-    @State private var step: Step = .interfaceLanguage
+    @State private var step: Step = .speech
     // Lives here, not in SpeechSetupStep: `continueRequirement` below reads
     // settings.apiKey(for:), a Keychain read SwiftUI's observation can't see.
     // A child's local @State can't invalidate this parent's body, so the
@@ -45,7 +45,6 @@ struct SetupAssistantView: View {
     }
 
     private enum Step: Int, CaseIterable, Identifiable {
-        case interfaceLanguage
         case speech
         case configure
         case language
@@ -58,7 +57,6 @@ struct SetupAssistantView: View {
 
         var title: String {
             switch self {
-            case .interfaceLanguage: Localization.appString("wizard.step.interfaceLanguage", fallback: "Interface")
             case .speech: Localization.appString("wizard.step.speech", fallback: "Speech")
             case .configure: Localization.appString("wizard.step.configure", fallback: "Configure")
             case .language: Localization.appString("wizard.step.refine", fallback: "Refine")
@@ -72,6 +70,13 @@ struct SetupAssistantView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                languageCorner
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 14)
+
             stepIndicator
                 .padding(.horizontal, 36)
                 .padding(.vertical, 18)
@@ -81,8 +86,6 @@ struct SetupAssistantView: View {
             ScrollView {
                 Group {
                     switch step {
-                    case .interfaceLanguage:
-                        InterfaceLanguageSetupStep(settings: settings)
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .configure:
@@ -125,6 +128,28 @@ struct SetupAssistantView: View {
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
         .environment(\.locale, Locale(identifier: Localization.resolvedCode(override: settings.interfaceLanguage)))
+    }
+
+    /// A small, always-present control rather than its own wizard step: a
+    /// single picker with one meaningful choice made a page that was mostly
+    /// empty space, and the language someone reads the rest of the wizard in
+    /// is a decision that belongs before step 1, not as step 1.
+    private var languageCorner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "globe")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Picker("", selection: $settings.interfaceLanguage) {
+                ForEach(AppLanguage.all) { language in
+                    Text(language.displayName).tag(language.code)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .fixedSize()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Localization.appString("Interface language", fallback: "Interface language"))
     }
 
     private var stepIndicator: some View {
@@ -175,7 +200,7 @@ struct SetupAssistantView: View {
                 guard let previous = Step(rawValue: step.rawValue - 1) else { return }
                 step = previous
             }
-            .disabled(step == .interfaceLanguage)
+            .disabled(step == .speech)
 
             Spacer()
 
@@ -637,41 +662,6 @@ private struct ConfigureSpeechSetupStep: View {
                 "wizard.whisper.largeV3Turbo", fallback: "Large v3 Turbo · multilingual · 632 MB"
             )
         case .parakeetTDT06BV3: model.displayName
-        }
-    }
-}
-
-/// The very first step, deliberately: everything after it — including this
-/// wizard's own remaining pages — renders through `.environment(\.locale, ...)`
-/// on `SetupAssistantView`, so picking a language here changes what the rest
-/// of setup looks like immediately. Distinct from `LanguageSetupStep` below,
-/// which is about what the speech models listen for, not what the app shows.
-private struct InterfaceLanguageSetupStep: View {
-    @Bindable var settings: PlainsaySettings
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            SetupHeading(
-                icon: "globe",
-                colors: [.blue, .mint],
-                title: Localization.appString("wizard.interfaceLanguage.title", fallback: "Choose a language"),
-                detail: Localization.appString(
-                    "wizard.interfaceLanguage.detail",
-                    fallback: "Plainsay's menus, windows, and messages can show in any of these. You can change this later in Settings › General."
-                )
-            )
-
-            VStack(alignment: .leading, spacing: 10) {
-                Picker("Interface language", selection: $settings.interfaceLanguage) {
-                    ForEach(AppLanguage.all) { language in
-                        Text(language.displayName).tag(language.code)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-            }
-            .padding(18)
-            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
         }
     }
 }

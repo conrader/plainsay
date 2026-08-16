@@ -10,6 +10,33 @@ Both use Core ML and Apple silicon acceleration.
 A Gemini Flash Lite pass then turns spoken language into written language:
 filler words out, punctuation in, your wording intact.
 
+## Screenshots
+
+**Setup Assistant** — walks through everything on first run:
+
+<table>
+<tr>
+<td width="33%"><a href="Screenshots/setup-speech.png"><img src="Screenshots/setup-speech.png" alt="Setup Assistant: choose Plainsay Cloud or local speech"></a><br><sub>Choose Plainsay Cloud or local speech</sub></td>
+<td width="33%"><a href="Screenshots/setup-configure.png"><img src="Screenshots/setup-configure.png" alt="Setup Assistant: choose a local speech model"></a><br><sub>Pick a local model — Parakeet or Whisper</sub></td>
+<td width="33%"><a href="Screenshots/setup-refine.png"><img src="Screenshots/setup-refine.png" alt="Setup Assistant: languages spoken and cleanup provider"></a><br><sub>Languages you speak, and cleanup</sub></td>
+</tr>
+<tr>
+<td width="33%"><a href="Screenshots/setup-voice.png"><img src="Screenshots/setup-voice.png" alt="Setup Assistant: optionally filter out other voices"></a><br><sub>Optional: ignore other voices in the room</sub></td>
+<td width="33%"><a href="Screenshots/setup-shortcut.png"><img src="Screenshots/setup-shortcut.png" alt="Setup Assistant: pick a dictation shortcut"></a><br><sub>Pick your dictation shortcut</sub></td>
+<td width="33%"><a href="Screenshots/setup-permissions.png"><img src="Screenshots/setup-permissions.png" alt="Setup Assistant: grant the three permissions"></a><br><sub>Grant the three permissions</sub></td>
+</tr>
+</table>
+
+**Settings** — always one click away from the menu bar:
+
+<table>
+<tr>
+<td width="33%"><a href="Screenshots/settings-speech.png"><img src="Screenshots/settings-speech.png" alt="Settings: Speech tab"></a><br><sub>Speech — model, live preview, languages</sub></td>
+<td width="33%"><a href="Screenshots/settings-general.png"><img src="Screenshots/settings-general.png" alt="Settings: General tab, with the interface language picker"></a><br><sub>General — interface language, hotkey</sub></td>
+<td width="33%"><a href="Screenshots/settings-permissions.png"><img src="Screenshots/settings-permissions.png" alt="Settings: Permissions tab"></a><br><sub>Permissions</sub></td>
+</tr>
+</table>
+
 ## Download
 
 **[Download the latest release](https://github.com/conrader/plainsay/releases/latest)**
