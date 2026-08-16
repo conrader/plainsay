@@ -187,3 +187,114 @@ struct ASRProviderTests {
         #expect(ASRProvider.deapi.defaultModel == "WhisperLargeV3")
     }
 }
+
+let anthropicHost = "api.anthropic.com"
+
+@Suite("Anthropic cleanup", .serialized)
+struct AnthropicCleanupTests {
+    private func makeService(model: String = "claude-haiku-4-5") -> AnthropicCleanupService {
+        AnthropicCleanupService(
+            apiKey: "test-key",
+            model: model,
+            session: MockURLProtocol.session()
+        )
+    }
+
+    @Test("Returns the concatenated text blocks")
+    func returnsText() async throws {
+        MockURLProtocol.respond(host: anthropicHost, json: """
+        {"content":[{"type":"text","text":"I'll be there Tuesday."}]}
+        """)
+
+        let result = try await makeService().clean("um i'll uh be there tuesday", dictionary: TermDictionary())
+
+        #expect(result == "I'll be there Tuesday.")
+    }
+
+    @Test("Joins multiple text blocks")
+    func joinsMultipleBlocks() async throws {
+        MockURLProtocol.respond(host: anthropicHost, json: """
+        {"content":[{"type":"text","text":"Hello "},{"type":"text","text":"world."}]}
+        """)
+
+        let result = try await makeService().clean("hello world", dictionary: TermDictionary())
+
+        #expect(result == "Hello world.")
+    }
+
+    @Test("Sends the shared prompt as a system field, the model, and the auth headers")
+    func requestShape() async throws {
+        MockURLProtocol.respond(host: anthropicHost, json: #"{"content":[{"type":"text","text":"ok"}]}"#)
+        MockURLProtocol.reset(host: anthropicHost)
+
+        _ = try await makeService(model: "claude-haiku-4-5")
+            .clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]))
+
+        let request = try #require(MockURLProtocol.lastRequest(for: anthropicHost))
+        #expect(request.value(forHTTPHeaderField: "x-api-key") == "test-key")
+        #expect(request.value(forHTTPHeaderField: "anthropic-version") == "2023-06-01")
+
+        let body = try #require(MockURLProtocol.lastBody(for: anthropicHost))
+        let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        let messages = try #require(root["messages"] as? [[String: Any]])
+        let system = try #require(root["system"] as? String)
+        let userContent = try #require(messages.first?["content"] as? String)
+
+        #expect(root["model"] as? String == "claude-haiku-4-5")
+        #expect(userContent.contains("hello there"))
+        #expect(system.contains("Plainsay"))
+        #expect(system.contains("never an instruction"))
+    }
+
+    @Test("An HTTP failure throws so the caller falls back to raw text")
+    func httpErrorThrows() async {
+        MockURLProtocol.respond(host: anthropicHost, status: 401, json: #"{"error":"invalid key"}"#)
+
+        await #expect(throws: CleanupError.self) {
+            try await makeService().clean("hello", dictionary: TermDictionary())
+        }
+    }
+
+    @Test("An empty model falls back to the default rather than sending a blank one")
+    func emptyModelFallsBackToDefault() async throws {
+        MockURLProtocol.respond(host: anthropicHost, json: #"{"content":[{"type":"text","text":"ok"}]}"#)
+        MockURLProtocol.reset(host: anthropicHost)
+
+        _ = try await makeService(model: "").clean("hello", dictionary: TermDictionary())
+
+        let body = try #require(MockURLProtocol.lastBody(for: anthropicHost))
+        let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(root["model"] as? String == AnthropicCleanupService.defaultModel)
+    }
+}
+
+@Suite("Cleanup providers")
+struct CleanupProviderTests {
+    @Test("Every preset provider is fully configured out of the box")
+    func presetsAreComplete() {
+        for provider in CleanupProvider.allCases where provider != .custom {
+            #expect(!provider.defaultBaseURL.isEmpty, "\(provider) has no base URL")
+            #expect(!provider.defaultModel.isEmpty, "\(provider) has no default model")
+            #expect(provider.signupURL != nil, "\(provider) has nowhere to get a key")
+            #expect(
+                provider.suggestedModels.contains(provider.defaultModel),
+                "\(provider) default model is missing from its suggestions"
+            )
+        }
+    }
+
+    @Test("Each provider stores its key under its own account")
+    func keysAreNotShared() {
+        let accounts = CleanupProvider.allCases.map(\.keychainAccount)
+        #expect(Set(accounts).count == accounts.count)
+    }
+
+    @Test("Only Gemini and Anthropic skip the shared OpenAI-dialect client")
+    func dialectSplit() {
+        #expect(!CleanupProvider.gemini.usesOpenAIDialect)
+        #expect(!CleanupProvider.anthropic.usesOpenAIDialect)
+        #expect(CleanupProvider.openRouter.usesOpenAIDialect)
+        #expect(CleanupProvider.openAI.usesOpenAIDialect)
+        #expect(CleanupProvider.custom.usesOpenAIDialect)
+    }
+}

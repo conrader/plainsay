@@ -9,7 +9,7 @@ struct SettingsView: View {
     let coordinator: DictationCoordinator
     let permissionStatus: PermissionStatus
 
-    private enum Tab: Hashable { case speech, general, cleanup, history, permissions }
+    private enum Tab: Hashable { case speech, general, history, permissions }
     @State private var selection: Tab = .speech
 
     var body: some View {
@@ -26,10 +26,6 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "keyboard") }
                 .tag(Tab.general)
 
-            CleanupSettings(settings: settings)
-                .tabItem { Label("Cleanup", systemImage: "wand.and.sparkles") }
-                .tag(Tab.cleanup)
-
             HistoryView(history: coordinator.history)
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)
@@ -38,10 +34,10 @@ struct SettingsView: View {
                 .tabItem { Label("Permissions", systemImage: "lock.shield") }
                 .tag(Tab.permissions)
         }
-        // Wide enough that five tabs fit on the toolbar. Below roughly 600pt
-        // macOS collapses them into an overflow menu in the corner, which turns
-        // every settings change into a two-click hunt.
-        .frame(minWidth: 660, idealWidth: 660, minHeight: 520, idealHeight: 520)
+        // Below roughly 600pt macOS collapses tabs into an overflow menu in
+        // the corner, which turns every settings change into a two-click
+        // hunt — stay comfortably above that regardless of tab count.
+        .frame(minWidth: 660, idealWidth: 660, minHeight: 560, idealHeight: 560)
     }
 }
 
@@ -108,6 +104,7 @@ private struct SpeechSettings: View {
     let coordinator: DictationCoordinator
     @State private var newTerm = ""
     @State private var asrKeyRevision = 0
+    @State private var editingKeyRevision = 0
 
     var body: some View {
         Form {
@@ -194,6 +191,61 @@ private struct SpeechSettings: View {
                 }
             }
 
+            Section {
+                Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
+            } header: {
+                Text("Editing")
+            } footer: {
+                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            if settings.cleanupEnabled {
+                Section("Editing provider") {
+                    Picker("Service", selection: $settings.cleanupProvider) {
+                        ForEach(CleanupProvider.allCases) { provider in
+                            Text(provider.displayName).tag(provider)
+                        }
+                    }
+
+                    if settings.cleanupProvider == .custom {
+                        TextField(
+                            "Base URL",
+                            text: $settings.cleanupBaseURL,
+                            prompt: Text("https://example.com/v1")
+                        )
+                        .textFieldStyle(.roundedBorder)
+                    }
+
+                    ModelField(
+                        label: "Model",
+                        suggestions: settings.cleanupProvider.suggestedModels,
+                        placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                            ? "model name"
+                            : settings.cleanupProvider.defaultModel,
+                        value: $settings.cleanupModel
+                    )
+
+                    APIKeyField(
+                        title: "\(settings.cleanupProvider.displayName) API key",
+                        signupURL: settings.cleanupProvider.signupURL,
+                        currentKey: settings.apiKey(for: settings.cleanupProvider),
+                        onSave: { key in
+                            settings.setAPIKey(key, for: settings.cleanupProvider)
+                            editingKeyRevision += 1
+                        }
+                    )
+                    .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
+                }
+
+                Section {
+                    Text(editingStatusLine)
+                        .font(.callout)
+                        .foregroundStyle(settings.cleanupIsConfigured ? Color.secondary : Color.orange)
+                }
+            }
+
             Section("Vocabulary") {
                 HStack {
                     TextField("Add a name or term", text: $newTerm)
@@ -249,6 +301,13 @@ private struct SpeechSettings: View {
         }
     }
 
+    private var editingStatusLine: String {
+        guard settings.cleanupIsConfigured else {
+            return "Not configured — Plainsay will insert the raw transcript until a key is saved."
+        }
+        return "Editing runs through \(settings.cleanupProvider.displayName) using \(settings.resolvedCleanupModel). A failure always falls back to the raw transcript."
+    }
+
     private var vocabularyExplanation: String {
         if settings.transcriptionSource == .onDevice && !settings.model.supportsDecoderPrompt {
             return "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay uses these terms during cleanup when cleanup is enabled."
@@ -268,77 +327,6 @@ private struct SpeechSettings: View {
     }
 }
 
-// MARK: - Cleanup
-
-private struct CleanupSettings: View {
-    @Bindable var settings: PlainsaySettings
-    @State private var keyRevision = 0
-
-    var body: some View {
-        Form {
-            Section {
-                Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
-            } footer: {
-                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-
-            if settings.cleanupEnabled {
-                Section("Provider") {
-                    Picker("Service", selection: $settings.cleanupProvider) {
-                        ForEach(CleanupProvider.allCases) { provider in
-                            Text(provider.displayName).tag(provider)
-                        }
-                    }
-
-                    if settings.cleanupProvider == .custom {
-                        TextField(
-                            "Base URL",
-                            text: $settings.cleanupBaseURL,
-                            prompt: Text("https://example.com/v1")
-                        )
-                        .textFieldStyle(.roundedBorder)
-                    }
-
-                    ModelField(
-                        label: "Model",
-                        suggestions: settings.cleanupProvider.suggestedModels,
-                        placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                            ? "model name"
-                            : settings.cleanupProvider.defaultModel,
-                        value: $settings.cleanupModel
-                    )
-
-                    APIKeyField(
-                        title: "\(settings.cleanupProvider.displayName) API key",
-                        signupURL: settings.cleanupProvider.signupURL,
-                        currentKey: settings.apiKey(for: settings.cleanupProvider),
-                        onSave: { key in
-                            settings.setAPIKey(key, for: settings.cleanupProvider)
-                            keyRevision += 1
-                        }
-                    )
-                    .id("\(settings.cleanupProvider.rawValue)-\(keyRevision)")
-                }
-
-                Section {
-                    Text(statusLine)
-                        .font(.callout)
-                        .foregroundStyle(settings.cleanupIsConfigured ? Color.secondary : Color.orange)
-                }
-            }
-        }
-        .formStyle(.grouped)
-    }
-
-    private var statusLine: String {
-        guard settings.cleanupIsConfigured else {
-            return "Not configured — Plainsay will insert the raw transcript until a key is saved."
-        }
-        return "Cleanup runs through \(settings.cleanupProvider.displayName) using \(settings.resolvedCleanupModel). A failure always falls back to the raw transcript."
-    }
-}
 
 // MARK: - Permissions
 

@@ -234,6 +234,9 @@ private struct SpeechSetupStep: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     @Binding var asrKeyRevision: Int
+    // Doesn't gate Continue — cleanup is optional and falls back to the raw
+    // transcript without a key — so unlike asrKeyRevision this stays local.
+    @State private var editingKeyRevision = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -302,7 +305,7 @@ private struct SpeechSetupStep: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Use my own cloud API")
                             .foregroundStyle(.primary)
-                        Text("Advanced · configure a compatible provider and key in Speech settings")
+                        Text("Advanced · pick a compatible provider and enter its key")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -323,7 +326,66 @@ private struct SpeechSetupStep: View {
                 }
             }
             .buttonStyle(.plain)
+
+            // Cloud bundles its own editing pass; only local and BYO
+            // transcription need a separate editing provider chosen here.
+            if source != .cloud {
+                editingDetails
+            }
         }
+    }
+
+    private var editingDetails: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle("Rewrite as written text (removes filler words, fixes punctuation)", isOn: $settings.cleanupEnabled)
+                .font(.callout)
+
+            if settings.cleanupEnabled {
+                Picker("Editing service", selection: $settings.cleanupProvider) {
+                    ForEach(CleanupProvider.allCases) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+                .labelsHidden()
+
+                if settings.cleanupProvider == .custom {
+                    TextField(
+                        "Base URL",
+                        text: $settings.cleanupBaseURL,
+                        prompt: Text("https://example.com/v1")
+                    )
+                    .textFieldStyle(.roundedBorder)
+                }
+
+                ModelField(
+                    label: "Model",
+                    suggestions: settings.cleanupProvider.suggestedModels,
+                    placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                        ? "model name"
+                        : settings.cleanupProvider.defaultModel,
+                    value: $settings.cleanupModel
+                )
+
+                APIKeyField(
+                    title: "\(settings.cleanupProvider.displayName) API key",
+                    signupURL: settings.cleanupProvider.signupURL,
+                    currentKey: settings.apiKey(for: settings.cleanupProvider),
+                    onSave: { key in
+                        settings.setAPIKey(key, for: settings.cleanupProvider)
+                        editingKeyRevision += 1
+                    }
+                )
+                .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
+
+                if !settings.cleanupIsConfigured {
+                    Text("No key yet — Plainsay will insert the raw transcript until one is saved.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .padding(15)
+        .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var cloudDetails: some View {

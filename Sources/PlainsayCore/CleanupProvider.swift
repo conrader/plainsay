@@ -2,11 +2,13 @@ import Foundation
 
 /// Where the cleanup pass runs.
 ///
-/// Everything except Gemini speaks the OpenAI chat-completions dialect, so one
-/// client covers OpenRouter, OpenAI, Groq, Together, a local Ollama, or
-/// anything else that implements `/v1/chat/completions`.
+/// OpenRouter, OpenAI, and custom speak the OpenAI chat-completions dialect,
+/// so one client covers OpenRouter, OpenAI, Groq, Together, a local Ollama, or
+/// anything else that implements `/v1/chat/completions`. Gemini and Anthropic
+/// each have their own REST shape and get their own client.
 public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     case gemini
+    case anthropic
     case openRouter
     case openAI
     case custom
@@ -16,6 +18,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     public var displayName: String {
         switch self {
         case .gemini: "Google Gemini"
+        case .anthropic: "Anthropic Claude"
         case .openRouter: "OpenRouter"
         case .openAI: "OpenAI"
         case .custom: "Custom (OpenAI-compatible)"
@@ -26,6 +29,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     public var defaultBaseURL: String {
         switch self {
         case .gemini: "https://generativelanguage.googleapis.com/v1beta"
+        case .anthropic: "https://api.anthropic.com/v1"
         case .openRouter: "https://openrouter.ai/api/v1"
         case .openAI: "https://api.openai.com/v1"
         case .custom: ""
@@ -35,6 +39,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     public var defaultModel: String {
         switch self {
         case .gemini: "gemini-3.1-flash-lite"
+        case .anthropic: AnthropicCleanupService.defaultModel
         case .openRouter: "google/gemini-3.1-flash-lite"
         case .openAI: "gpt-5-mini"
         case .custom: ""
@@ -48,6 +53,8 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
         switch self {
         case .gemini:
             ["gemini-3.1-flash-lite", "gemini-3.1-flash"]
+        case .anthropic:
+            ["claude-haiku-4-5", "claude-haiku-4-5-20251001"]
         case .openRouter:
             [
                 "google/gemini-3.1-flash-lite",
@@ -66,6 +73,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     public var keychainAccount: String {
         switch self {
         case .gemini: "gemini-api-key"
+        case .anthropic: "anthropic-api-key"
         case .openRouter: "openrouter-api-key"
         case .openAI: "openai-api-key"
         case .custom: "custom-cleanup-api-key"
@@ -75,12 +83,16 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     public var signupURL: String? {
         switch self {
         case .gemini: "https://aistudio.google.com/apikey"
+        case .anthropic: "https://console.anthropic.com/settings/keys"
         case .openRouter: "https://openrouter.ai/keys"
         case .openAI: "https://platform.openai.com/api-keys"
         case .custom: nil
         }
     }
 
-    /// Gemini has its own REST shape; everything else shares one client.
-    public var usesOpenAIDialect: Bool { self != .gemini }
+    /// Gemini and Anthropic each have their own REST shape; everything else
+    /// shares one OpenAI-dialect client.
+    public var usesOpenAIDialect: Bool {
+        self != .gemini && self != .anthropic
+    }
 }

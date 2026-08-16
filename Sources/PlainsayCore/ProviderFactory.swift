@@ -44,6 +44,13 @@ public enum ProviderFactory {
             )
         }
 
+        if provider == .anthropic {
+            return AnthropicCleanupService(
+                apiKey: key,
+                model: settings.resolvedCleanupModel
+            )
+        }
+
         return GeminiCleanupService(
             apiKey: key,
             model: settings.resolvedCleanupModel
