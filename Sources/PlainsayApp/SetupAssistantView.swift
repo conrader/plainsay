@@ -46,6 +46,8 @@ struct SetupAssistantView: View {
 
     private enum Step: Int, CaseIterable, Identifiable {
         case speech
+        case configure
+        case language
         case shortcut
         case permissions
         case ready
@@ -55,6 +57,8 @@ struct SetupAssistantView: View {
         var title: String {
             switch self {
             case .speech: "Speech"
+            case .configure: "Configure"
+            case .language: "Refine"
             case .shortcut: "Shortcut"
             case .permissions: "Permissions"
             case .ready: "Ready"
@@ -74,13 +78,17 @@ struct SetupAssistantView: View {
                 Group {
                     switch step {
                     case .speech:
-                        SpeechSetupStep(
+                        SpeechSetupStep(source: $speechSource)
+                    case .configure:
+                        ConfigureSpeechSetupStep(
                             source: $speechSource,
                             model: $speechModel,
                             settings: settings,
                             coordinator: coordinator,
                             asrKeyRevision: $asrKeyRevision
                         )
+                    case .language:
+                        LanguageSetupStep(settings: settings)
                     case .shortcut:
                         ShortcutSetupStep(settings: settings)
                     case .permissions:
@@ -172,7 +180,7 @@ struct SetupAssistantView: View {
                     }
 
                     Button(continueTitle) {
-                        let leavingSpeech = step == .speech
+                        let leavingConfigure = step == .configure
                         guard let next = Step(rawValue: step.rawValue + 1) else { return }
                         step = next
 
@@ -183,7 +191,7 @@ struct SetupAssistantView: View {
                             settings.onboardingVersion = PlainsaySettings.currentOnboardingVersion
                         }
 
-                        if leavingSpeech {
+                        if leavingConfigure {
                             // Only this explicit transition commits the draft.
                             // It also avoids reloading an unchanged source or model.
                             let changed = speechSource != settings.transcriptionSource
@@ -203,7 +211,7 @@ struct SetupAssistantView: View {
     }
 
     private var continueRequirement: String? {
-        guard step == .speech else { return nil }
+        guard step == .configure else { return nil }
         switch speechSource {
         case .cloud:
             return coordinator.cloud.account?.isActive == true
@@ -211,7 +219,7 @@ struct SetupAssistantView: View {
                 : "Sign in and activate Cloud above to continue"
         case .remote:
             return settings.apiKey(for: settings.asrProvider).isEmpty
-                ? "Add your provider key in Speech settings first"
+                ? "Add your provider key above to continue"
                 : nil
         case .onDevice:
             return nil
@@ -219,7 +227,7 @@ struct SetupAssistantView: View {
     }
 
     private var continueTitle: String {
-        guard step == .speech else { return "Continue" }
+        guard step == .speech || step == .configure else { return "Continue" }
         return switch speechSource {
         case .cloud: "Continue with Cloud"
         case .onDevice: "Continue with Local"
@@ -230,13 +238,6 @@ struct SetupAssistantView: View {
 
 private struct SpeechSetupStep: View {
     @Binding var source: TranscriptionSource
-    @Binding var model: OnDeviceModel
-    @Bindable var settings: PlainsaySettings
-    let coordinator: DictationCoordinator
-    @Binding var asrKeyRevision: Int
-    // Doesn't gate Continue — cleanup is optional and falls back to the raw
-    // transcript without a key — so unlike asrKeyRevision this stays local.
-    @State private var editingKeyRevision = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -244,7 +245,7 @@ private struct SpeechSetupStep: View {
                 icon: "waveform.badge.mic",
                 colors: [.indigo, .blue],
                 title: "Choose your Plainsay experience",
-                detail: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac."
+                detail: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
             )
 
             HStack(alignment: .top, spacing: 14) {
@@ -287,17 +288,6 @@ private struct SpeechSetupStep: View {
                 )
             }
 
-            switch source {
-            case .cloud:
-                cloudDetails
-            case .onDevice:
-                localDetails
-            case .remote:
-                ownAPIDetails
-            }
-
-            languagesDetails
-
             Button {
                 source = .remote
             } label: {
@@ -328,105 +318,76 @@ private struct SpeechSetupStep: View {
                 }
             }
             .buttonStyle(.plain)
+        }
+    }
+}
 
-            // Cloud bundles its own editing pass; only local and BYO
-            // transcription need a separate editing provider chosen here.
-            if source != .cloud {
-                editingDetails
+/// Configures whichever method was picked on the Speech step. Split out for
+/// the same reason as `LanguageSetupStep`: combined with the plan cards, this
+/// much detail forced scrolling on a step no other page in the assistant
+/// needs — and "pick a method" and "configure that method" are naturally
+/// separate decisions anyway.
+private struct ConfigureSpeechSetupStep: View {
+    @Binding var source: TranscriptionSource
+    @Binding var model: OnDeviceModel
+    @Bindable var settings: PlainsaySettings
+    let coordinator: DictationCoordinator
+    @Binding var asrKeyRevision: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: headingIcon,
+                colors: headingColors,
+                title: headingTitle,
+                detail: headingDetail
+            )
+
+            switch source {
+            case .cloud:
+                cloudDetails
+            case .onDevice:
+                localDetails
+            case .remote:
+                ownAPIDetails
             }
         }
     }
 
-    private var languagesDetails: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("Languages you speak", systemImage: "globe")
-                .font(.headline)
-
-            SpokenLanguagesField(languages: $settings.spokenLanguages)
-
-            Text("Leave empty to auto-detect across every language the model knows. Adding the ones you actually use stops a stray sound from being misheard as a language you don't speak.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+    private var headingIcon: String {
+        switch source {
+        case .cloud: "sparkles"
+        case .onDevice: "lock.shield.fill"
+        case .remote: "key.horizontal.fill"
         }
-        .padding(15)
-        .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private var editingDetails: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Toggle("Rewrite as written text (removes filler words, fixes punctuation)", isOn: $settings.cleanupEnabled)
-                .font(.callout)
-
-            if settings.cleanupEnabled {
-                Picker("Editing service", selection: $settings.cleanupProvider) {
-                    ForEach(CleanupProvider.allCases) { provider in
-                        Text(provider.displayName).tag(provider)
-                    }
-                }
-                .labelsHidden()
-
-                if settings.cleanupProvider == .custom {
-                    TextField(
-                        "Base URL",
-                        text: $settings.cleanupBaseURL,
-                        prompt: Text("https://example.com/v1")
-                    )
-                    .textFieldStyle(.roundedBorder)
-                }
-
-                ModelField(
-                    label: "Model",
-                    suggestions: settings.cleanupProvider.suggestedModels,
-                    placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                        ? "model name"
-                        : settings.cleanupProvider.defaultModel,
-                    value: $settings.cleanupModel
-                )
-
-                APIKeyField(
-                    title: "\(settings.cleanupProvider.displayName) API key",
-                    signupURL: settings.cleanupProvider.signupURL,
-                    currentKey: settings.apiKey(for: settings.cleanupProvider),
-                    onSave: { key in
-                        settings.setAPIKey(key, for: settings.cleanupProvider)
-                        editingKeyRevision += 1
-                    }
-                )
-                .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
-
-                if !settings.cleanupIsConfigured {
-                    Text("No key yet — Plainsay will insert the raw transcript until one is saved.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-            }
+    private var headingColors: [Color] {
+        switch source {
+        case .cloud: [.indigo, .blue]
+        case .onDevice: [.green, .mint]
+        case .remote: [.purple, .blue]
         }
-        .padding(15)
-        .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var headingTitle: String {
+        switch source {
+        case .cloud: "Set up Plainsay Cloud"
+        case .onDevice: "Choose a local model"
+        case .remote: "Bring your own provider"
+        }
+    }
+
+    private var headingDetail: String {
+        switch source {
+        case .cloud: "Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac."
+        case .onDevice: "Recommended multilingual models need about 475–632 MB and can take several minutes to download and prepare the first time."
+        case .remote: "Audio leaves this Mac and provider charges may apply."
+        }
     }
 
     private var cloudDetails: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.indigo)
-                    .frame(width: 34, height: 34)
-                    .background(Color.indigo.opacity(0.11), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Everything handled for you")
-                        .font(.headline)
-                    Text("Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            Divider()
-
             CloudSettingsView(cloud: coordinator.cloud) {
                 // Signing in should wake an already-selected Cloud setup. On
                 // first run Cloud is still only a draft, so leave the current
@@ -456,21 +417,6 @@ private struct SpeechSetupStep: View {
 
     private var localDetails: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Choose a local model")
-                        .font(.headline)
-                    Text("Recommended multilingual models need about 475–632 MB and can take several minutes to download and prepare the first time.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 12)
-                Label("One-time setup", systemImage: "arrow.down.circle")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-
             ModelChoiceCard(
                 isSelected: model == .parakeetTDT06BV3,
                 isEnabled: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware,
@@ -566,12 +512,6 @@ private struct SpeechSetupStep: View {
 
     private var ownAPIDetails: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("Bring your own provider", systemImage: "key.horizontal.fill")
-                .font(.headline)
-            Text("Audio leaves this Mac and provider charges may apply.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
             Picker("Service", selection: $settings.asrProvider) {
                 ForEach(ASRProvider.allCases) { provider in
                     Text(provider.displayName).tag(provider)
@@ -632,6 +572,108 @@ private struct SpeechSetupStep: View {
         case .largeV3Turbo: "Large v3 Turbo · multilingual · 632 MB"
         case .parakeetTDT06BV3: model.displayName
         }
+    }
+}
+
+/// Split out from the Speech step, which had grown tall enough — two plan
+/// cards, their details, and this — to force scrolling on a step no other
+/// page in the assistant needs. Language and editing are also a genuinely
+/// separate decision from *how* audio gets transcribed.
+private struct LanguageSetupStep: View {
+    @Bindable var settings: PlainsaySettings
+    // Doesn't gate Continue — cleanup is optional and falls back to the raw
+    // transcript without a key.
+    @State private var editingKeyRevision = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: "character.bubble.fill",
+                colors: [.purple, .pink],
+                title: "Language & editing",
+                detail: "Tell Plainsay which languages you actually speak, and how it should tidy up the words before inserting them."
+            )
+
+            languagesDetails
+
+            // Cloud bundles its own editing pass; only local and BYO
+            // transcription need a separate editing provider chosen here.
+            if settings.transcriptionSource != .cloud {
+                editingDetails
+            }
+        }
+    }
+
+    private var languagesDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Languages you speak", systemImage: "globe")
+                .font(.headline)
+
+            SpokenLanguagesField(languages: $settings.spokenLanguages)
+
+            Text("Leave empty to auto-detect across every language the model knows. Adding the ones you actually use stops a stray sound from being misheard as a language you don't speak.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var editingDetails: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Editing", systemImage: "pencil.and.outline")
+                .font(.headline)
+
+            Toggle("Rewrite as written text (removes filler words, fixes punctuation)", isOn: $settings.cleanupEnabled)
+                .font(.callout)
+
+            if settings.cleanupEnabled {
+                Picker("Editing service", selection: $settings.cleanupProvider) {
+                    ForEach(CleanupProvider.allCases) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+                .labelsHidden()
+
+                if settings.cleanupProvider == .custom {
+                    TextField(
+                        "Base URL",
+                        text: $settings.cleanupBaseURL,
+                        prompt: Text("https://example.com/v1")
+                    )
+                    .textFieldStyle(.roundedBorder)
+                }
+
+                ModelField(
+                    label: "Model",
+                    suggestions: settings.cleanupProvider.suggestedModels,
+                    placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                        ? "model name"
+                        : settings.cleanupProvider.defaultModel,
+                    value: $settings.cleanupModel
+                )
+
+                APIKeyField(
+                    title: "\(settings.cleanupProvider.displayName) API key",
+                    signupURL: settings.cleanupProvider.signupURL,
+                    currentKey: settings.apiKey(for: settings.cleanupProvider),
+                    onSave: { key in
+                        settings.setAPIKey(key, for: settings.cleanupProvider)
+                        editingKeyRevision += 1
+                    }
+                )
+                .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
+
+                if !settings.cleanupIsConfigured {
+                    Text("No key yet — Plainsay will insert the raw transcript until one is saved.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+        .padding(18)
+        .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
