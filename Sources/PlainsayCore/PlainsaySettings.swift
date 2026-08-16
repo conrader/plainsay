@@ -140,7 +140,12 @@ public final class PlainsaySettings {
         binding = decode(.binding, HotkeyBinding.rightCommandKey)
         hotkeyMode = decode(.hotkeyMode, HotkeyMode.hybrid)
         model = decode(.model, OnDeviceModel.largeV3Turbo)
-        dictionary = decode(.dictionary, TermDictionary())
+        // "Plainsay" is a made-up word, and Whisper mishears made-up words —
+        // seeded by default so a fresh install spells its own name correctly
+        // without the user having to notice and add it themselves. Only
+        // applies when no dictionary was ever saved; an existing user's
+        // dictionary, even an empty one, is never overwritten.
+        dictionary = decode(.dictionary, TermDictionary(terms: ["Plainsay"]))
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)

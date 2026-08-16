@@ -6,6 +6,11 @@
 # Builds, zips, signs the zip with the Sparkle EdDSA key from the Keychain,
 # regenerates the appcast, and uploads both to the update host. The private
 # signing key never leaves this Mac — the server only ever sees signatures.
+#
+# Also publishes a GitHub Release with the same notarized build attached and
+# tags it, so github.com/conrader/plainsay/releases/latest always resolves to
+# whatever this script last shipped, and the Releases page is the changelog —
+# one call, not a second thing to remember to update.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -18,6 +23,7 @@ FEED_URL="https://api.plainsay.app"
 
 SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 [ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
+command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
 
 # CFBundleVersion must increase monotonically; Sparkle compares it, not the
 # marketing string. Derived from the version so they cannot drift apart.
@@ -97,7 +103,21 @@ scp -q "$ZIP" "$HOST:$REMOTE_DIR/releases/"
 scp -q dist/appcast.xml "$HOST:$REMOTE_DIR/appcast.xml"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
+echo "==> Publishing GitHub Release v$VERSION"
+# Plain text for the release body: GitHub's own markdown renderer is what
+# displays it, not Sparkle's CDATA-wrapped HTML — reusing the HTML string
+# as-is would show literal <p> tags on the Releases page.
+BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</?p>##g')
+if gh release view "v$VERSION" >/dev/null 2>&1; then
+	echo "    v$VERSION already exists on GitHub — skipping (release.sh does not overwrite a tag)"
+else
+	gh release create "v$VERSION" "$ZIP" \
+		--title "$VERSION" \
+		--notes "$BODY"
+fi
+
 echo
 echo "Published $VERSION"
-echo "  feed:    $FEED_URL/appcast.xml"
-echo "  package: $FEED_URL/releases/Plainsay-$VERSION.zip"
+echo "  feed:     $FEED_URL/appcast.xml"
+echo "  package:  $FEED_URL/releases/Plainsay-$VERSION.zip"
+echo "  download: $(gh repo view --json url --jq .url)/releases/latest"

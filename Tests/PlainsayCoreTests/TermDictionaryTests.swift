@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import PlainsayCore
 
@@ -102,5 +103,32 @@ struct SignalDetectionTests {
     @Test("Room tone alone does not count as signal")
     func roomToneIsNotSignal() {
         #expect(!WhisperKitEngine.hasSignal([Float](repeating: 0.005, count: 16_000)))
+    }
+}
+
+@Suite("Default vocabulary")
+@MainActor
+struct DefaultVocabularyTests {
+    @Test("A fresh install already knows its own name")
+    func plainsayIsSeededByDefault() {
+        // Whisper mishears made-up words, and "Plainsay" is one — seeded so
+        // a new user's first dictation of the app's own name spells correctly
+        // without them having to notice and add it themselves.
+        let defaults = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: defaults)
+
+        #expect(settings.dictionary.normalizedTerms.contains("Plainsay"))
+    }
+
+    @Test("An existing dictionary, even an empty one, is never overwritten")
+    func existingDictionaryIsRespected() {
+        let defaults = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        // Simulate a returning user who already saved an empty dictionary —
+        // decode() must not treat that key as absent and fall back to seeding.
+        let first = PlainsaySettings(defaults: defaults)
+        first.dictionary = TermDictionary(terms: [])
+
+        let second = PlainsaySettings(defaults: defaults)
+        #expect(second.dictionary.normalizedTerms.isEmpty)
     }
 }

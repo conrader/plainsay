@@ -10,6 +10,17 @@ Both use Core ML and Apple silicon acceleration.
 A Gemini Flash Lite pass then turns spoken language into written language:
 filler words out, punctuation in, your wording intact.
 
+## Download
+
+**[Download the latest release](https://github.com/conrader/plainsay/releases/latest)**
+— a notarized, ready-to-run `Plainsay.app`. That link always resolves to
+whatever `Scripts/release.sh` shipped most recently, so it never needs
+updating by hand. The [Releases page](https://github.com/conrader/plainsay/releases)
+is the changelog: every version's notes, oldest to newest.
+
+Already running Plainsay? It checks for updates itself — no need to
+re-download. See **Check for Updates…** in the menu bar.
+
 ## Build and run
 
 ```bash
