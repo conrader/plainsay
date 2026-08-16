@@ -18,11 +18,28 @@ struct TermDictionaryTests {
         #expect(TermDictionary(terms: ["  "]).cleanupHint() == nil)
     }
 
-    @Test("The ASR prompt reads as prose, not a bare list")
+    @Test("The ASR prompt reads as prose, not a label the decoder can echo")
     func asrPromptShape() throws {
+        // Not "Glossary: Anthropic, Gemini." — a colon-led label line is
+        // exactly the shape of a speaker-label line in the subtitle data
+        // Whisper trained on, and it was observed pasting a garbled version
+        // of "Glossary" onto real dictations as a fake name/prefix.
         let prompt = try #require(TermDictionary(terms: ["Anthropic", "Gemini"]).asrPrompt())
 
-        #expect(prompt == "Glossary: Anthropic, Gemini.")
+        #expect(prompt == "This recording may mention Anthropic and Gemini.")
+        #expect(!prompt.contains(":"))
+    }
+
+    @Test("Three or more terms join with a serial comma, not just 'and'")
+    func asrPromptJoinsThreeOrMore() throws {
+        let prompt = try #require(TermDictionary(terms: ["Anthropic", "Gemini", "OpenRouter"]).asrPrompt())
+
+        #expect(prompt == "This recording may mention Anthropic, Gemini, and OpenRouter.")
+    }
+
+    @Test("A single term reads as a plain sentence")
+    func asrPromptSingleTerm() throws {
+        #expect(TermDictionary(terms: ["Plainsay"]).asrPrompt() == "This recording may mention Plainsay.")
     }
 
     @Test("The ASR prompt is capped so it cannot crowd out the audio context")
@@ -30,8 +47,8 @@ struct TermDictionaryTests {
         let many = (0..<500).map { "Term\($0)" }
         let prompt = try #require(TermDictionary(terms: many).asrPrompt(maxCharacters: 100))
 
-        #expect(prompt.count <= 120)
-        #expect(prompt.hasPrefix("Glossary: Term0, Term1"))
+        #expect(prompt.count <= 140)
+        #expect(prompt.contains("Term0, Term1"))
     }
 
     @Test("The cleanup hint lists every term")

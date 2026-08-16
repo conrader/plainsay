@@ -344,7 +344,7 @@ struct PipelineTests {
         harness.dictate()
         try await harness.settle()
 
-        #expect(harness.engine.receivedPrompt == "Glossary: Anthropic, Plainsay.")
+        #expect(harness.engine.receivedPrompt == "This recording may mention Anthropic and Plainsay.")
     }
 
     @Test("Dictation is refused while the speech model is still loading")
