@@ -310,7 +310,7 @@ public final class DictationCoordinator {
         // Tests inject `makeEngine`; production goes through the factory, which
         // is the only thing that knows about remote providers.
         let engine = usesInjectedEngine
-            ? makeEngine(settings.model, settings.language, onState)
+            ? makeEngine(settings.model, settings.primaryLanguage, onState)
             : ProviderFactory.makeEngine(settings, onState: onState)
         guard !Task.isCancelled, generation == modelLoadGeneration else { return }
         self.engine = engine

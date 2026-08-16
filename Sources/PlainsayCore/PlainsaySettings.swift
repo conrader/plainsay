@@ -47,8 +47,14 @@ public final class PlainsaySettings {
     /// Leave the dictation on the clipboard instead of restoring what was there.
     /// Insurance for apps that silently swallow a synthetic ⌘V.
     public var keepOnClipboard: Bool { didSet { defaults.set(keepOnClipboard, forKey: Key.keepOnClipboard.rawValue) } }
-    /// Speech-model language code, or nil for automatic multilingual decoding.
-    public var language: String? { didSet { defaults.set(language, forKey: Key.language.rawValue) } }
+    /// Languages the user actually speaks, most-used first. Empty means fully
+    /// automatic multilingual decoding across everything Whisper knows.
+    public var spokenLanguages: [String] { didSet { persist(spokenLanguages, .language) } }
+
+    /// The single language to force on engines that cannot retry a
+    /// mismatched auto-detection (remote/cloud ASR). Nil leaves those
+    /// engines on full auto-detect, same as an empty `spokenLanguages`.
+    public var primaryLanguage: String? { spokenLanguages.first }
 
     public var geminiAPIKey: String {
         get { Keychain.get(account: Keychain.geminiKeyAccount) ?? "" }
@@ -158,7 +164,7 @@ public final class PlainsaySettings {
         asrProvider = decode(.asrProvider, ASRProvider.groq)
         asrModel = defaults.string(forKey: Key.asrModel.rawValue) ?? ""
         asrBaseURL = defaults.string(forKey: Key.asrBaseURL.rawValue) ?? ""
-        language = defaults.string(forKey: Key.language.rawValue)
+        spokenLanguages = decode(.language, [])
     }
 
     private func persist<T: Encodable>(_ value: T, _ key: Key) {

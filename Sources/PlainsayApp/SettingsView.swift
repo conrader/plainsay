@@ -192,6 +192,16 @@ private struct SpeechSettings: View {
             }
 
             Section {
+                SpokenLanguagesField(languages: $settings.spokenLanguages)
+            } header: {
+                Text("Languages you speak")
+            } footer: {
+                Text("Add the languages you actually use so the model stops guessing among ones you don't — for example, a stray sound read as Russian. Leave empty for full auto-detect.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
             } header: {
                 Text("Editing")
@@ -284,6 +294,9 @@ private struct SpeechSettings: View {
             Task { await coordinator.reloadModel() }
         }
         .onChange(of: settings.asrProvider) {
+            Task { await coordinator.reloadModel() }
+        }
+        .onChange(of: settings.spokenLanguages) {
             Task { await coordinator.reloadModel() }
         }
     }

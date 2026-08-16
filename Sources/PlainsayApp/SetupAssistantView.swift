@@ -296,6 +296,8 @@ private struct SpeechSetupStep: View {
                 ownAPIDetails
             }
 
+            languagesDetails
+
             Button {
                 source = .remote
             } label: {
@@ -333,6 +335,22 @@ private struct SpeechSetupStep: View {
                 editingDetails
             }
         }
+    }
+
+    private var languagesDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Languages you speak", systemImage: "globe")
+                .font(.headline)
+
+            SpokenLanguagesField(languages: $settings.spokenLanguages)
+
+            Text("Leave empty to auto-detect across every language the model knows. Adding the ones you actually use stops a stray sound from being misheard as a language you don't speak.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(15)
+        .background(Color.secondary.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var editingDetails: some View {

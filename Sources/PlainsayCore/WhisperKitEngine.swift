@@ -10,22 +10,26 @@ public actor WhisperKitEngine: TranscriptionEngine {
 
     private var kit: WhisperKit?
     private let model: OnDeviceModel
-    private let language: String?
+    private let spokenLanguages: [String]
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
     private var activeLoadID: UUID?
     private var isDownloading = false
 
     /// - Parameters:
-    ///   - language: BCP-47-ish Whisper code (`"en"`), or nil to auto-detect.
+    ///   - spokenLanguages: Whisper codes (`["pl", "en"]`) the user actually
+    ///     speaks, most-used first, or empty to auto-detect across every
+    ///     language Whisper knows. Detection still runs first either way; a
+    ///     non-empty list only triggers a forced retry when the detected
+    ///     language falls outside it.
     ///   - onStateChange: progress reporting for the menu bar and settings UI.
     public init(
         model: OnDeviceModel = .largeV3Turbo,
-        language: String? = nil,
+        spokenLanguages: [String] = [],
         onStateChange: @escaping @Sendable (LoadState) -> Void = { _ in }
     ) {
         self.model = model
-        self.language = language
+        self.spokenLanguages = spokenLanguages
         self.onStateChange = onStateChange
     }
 
@@ -119,15 +123,38 @@ public actor WhisperKitEngine: TranscriptionEngine {
     private static let windowSeconds: Double = 30
 
     public func transcribe(samples: [Float], prompt: String?) async throws -> String {
-        let text = try await run(samples: samples, prompt: prompt, relaxed: false)
-        guard text.isEmpty else { return text }
+        var result = try await run(samples: samples, prompt: prompt, relaxed: false, forceLanguage: nil)
 
-        // An empty result on audio that clearly contained speech is a decoder
-        // suppression, not silence. Retrying with the silence heuristics turned
-        // off costs a second in the rare failure case and saves the dictation.
-        guard Self.hasSignal(samples) else { return text }
-        Log.model.info("empty transcript despite audible input — retrying with silence detection off")
-        return try await run(samples: samples, prompt: prompt, relaxed: true)
+        if result.text.isEmpty, Self.hasSignal(samples) {
+            // An empty result on audio that clearly contained speech is a
+            // decoder suppression, not silence. Retrying with the silence
+            // heuristics off costs a second in the rare failure case and
+            // saves the dictation.
+            Log.model.info("empty transcript despite audible input — retrying with silence detection off")
+            result = try await run(samples: samples, prompt: prompt, relaxed: true, forceLanguage: nil)
+        }
+
+        if !result.text.isEmpty, let forced = languageToForce(detected: result.language) {
+            // Whisper auto-detection occasionally lands on a language the
+            // user never speaks (a few misheard syllables read as Russian,
+            // say). Retrying forced to a language they actually use is worth
+            // the extra pass — silently keeping a wrong-language transcript
+            // is worse.
+            Log.model.info("detected \(result.language), outside spoken-languages list — retrying forced to \(forced)")
+            let retried = try await run(samples: samples, prompt: prompt, relaxed: false, forceLanguage: forced)
+            if !retried.text.isEmpty { return retried.text }
+        }
+
+        return result.text
+    }
+
+    /// The language to force-retry with, or nil if `detected` is already
+    /// acceptable (list is empty, or the language is already on it).
+    private func languageToForce(detected: String) -> String? {
+        guard let primary = spokenLanguages.first else { return nil }
+        let allowed = Set(spokenLanguages.map(SupportedLanguage.primaryCode))
+        guard !allowed.contains(SupportedLanguage.primaryCode(detected)) else { return nil }
+        return primary
     }
 
     /// True when the audio is loud enough that a human would hear speech.
@@ -137,7 +164,12 @@ public actor WhisperKitEngine: TranscriptionEngine {
         return peak > threshold
     }
 
-    private func run(samples: [Float], prompt: String?, relaxed: Bool) async throws -> String {
+    private func run(
+        samples: [Float],
+        prompt: String?,
+        relaxed: Bool,
+        forceLanguage: String?
+    ) async throws -> (text: String, language: String) {
         guard let kit else { throw TranscriptionError.modelNotLoaded }
 
         // VAD chunking exists to split audio longer than the model's window.
@@ -148,10 +180,10 @@ public actor WhisperKitEngine: TranscriptionEngine {
         var options = DecodingOptions(
             verbose: false,
             task: .transcribe,
-            language: model.isEnglishOnly ? "en" : language,
+            language: model.isEnglishOnly ? "en" : forceLanguage,
             temperature: 0,
             usePrefillPrompt: true,
-            detectLanguage: model.isEnglishOnly ? false : (language == nil),
+            detectLanguage: model.isEnglishOnly ? false : (forceLanguage == nil),
             skipSpecialTokens: true,
             withoutTimestamps: true,
             // Quiet, close-mic dictation sits near these thresholds, and both
@@ -176,7 +208,8 @@ public actor WhisperKitEngine: TranscriptionEngine {
         do {
             let results = try await kit.transcribe(audioArray: samples, decodeOptions: options)
             let joined = results.map(\.text).joined(separator: " ")
-            return normalizeTranscript(joined)
+            let detected = forceLanguage ?? results.first?.language ?? "en"
+            return (normalizeTranscript(joined), detected)
         } catch {
             throw TranscriptionError.failed(error.localizedDescription)
         }

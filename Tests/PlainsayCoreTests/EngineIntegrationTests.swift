@@ -57,7 +57,7 @@ struct EngineIntegrationTests {
         let samples = try synthesizeSpeech("The quick brown fox jumps over the lazy dog.")
         #expect(samples.count > Int(whisperSampleRate))
 
-        let engine = WhisperKitEngine(model: .largeV3Turbo, language: "en")
+        let engine = WhisperKitEngine(model: .largeV3Turbo, spokenLanguages: ["en"])
         try await engine.prepare()
 
         let transcript = try await engine.transcribe(samples: samples, prompt: nil)
@@ -75,7 +75,7 @@ struct EngineIntegrationTests {
         let peak = loud.map(abs).max() ?? 1
         let quiet = loud.map { $0 * (0.11 / max(peak, 0.0001)) }
 
-        let engine = WhisperKitEngine(model: .largeV3Turbo, language: "en")
+        let engine = WhisperKitEngine(model: .largeV3Turbo, spokenLanguages: ["en"])
         try await engine.prepare()
         let transcript = try await engine.transcribe(samples: quiet, prompt: nil)
 
@@ -87,7 +87,7 @@ struct EngineIntegrationTests {
     func silenceProducesNothing() async throws {
         let silence = [Float](repeating: 0, count: Int(whisperSampleRate * 2))
 
-        let engine = WhisperKitEngine(model: .largeV3Turbo, language: "en")
+        let engine = WhisperKitEngine(model: .largeV3Turbo, spokenLanguages: ["en"])
         try await engine.prepare()
 
         let transcript = try await engine.transcribe(samples: silence, prompt: nil)

@@ -81,7 +81,7 @@ public enum ProviderFactory {
             return CloudTranscriptionEngine(
                 baseURL: PlainsayCloudClient.defaultBaseURL,
                 sessionToken: token,
-                language: settings.language
+                language: settings.primaryLanguage
             )
 
         case .remote:
@@ -101,7 +101,7 @@ public enum ProviderFactory {
                 baseURL: settings.resolvedASRBaseURL,
                 apiKey: key,
                 model: settings.resolvedASRModel,
-                language: settings.language,
+                language: settings.primaryLanguage,
                 uploadFormat: provider.uploadFormat
             )
         }
@@ -114,13 +114,13 @@ public enum ProviderFactory {
         switch settings.model {
         case .parakeetTDT06BV3:
             ParakeetEngine(
-                language: settings.language,
+                language: settings.primaryLanguage,
                 onStateChange: onState
             )
         default:
             WhisperKitEngine(
                 model: settings.model,
-                language: settings.language,
+                spokenLanguages: settings.spokenLanguages,
                 onStateChange: onState
             )
         }
