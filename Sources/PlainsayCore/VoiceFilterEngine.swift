@@ -114,8 +114,12 @@ public enum VoiceFilterError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .notReady: "Voice filter model is not loaded yet."
-        case .sampleTooShort: "That recording was too short to learn a voice from."
+        case .notReady:
+            Localization.coreString("voiceFilter.notReady", fallback: "Voice filter model is not loaded yet.")
+        case .sampleTooShort:
+            Localization.coreString(
+                "voiceFilter.sampleTooShort", fallback: "That recording was too short to learn a voice from."
+            )
         }
     }
 }

@@ -108,13 +108,13 @@ struct HUDView: View {
 
     private var label: String {
         switch state.phase {
-        case .recording: "LISTENING"
-        case .transcribing: "TRANSCRIBING"
-        case .cleaning: "POLISHING"
-        case .modelLoading: "PREPARING MODEL"
-        case .insertedRaw: "INSERTED · RAW"
-        case .savedToClipboard: "SAVED TO CLIPBOARD"
-        case .error: "ERROR"
+        case .recording: Localization.appString("hud.label.listening", fallback: "LISTENING")
+        case .transcribing: Localization.appString("hud.label.transcribing", fallback: "TRANSCRIBING")
+        case .cleaning: Localization.appString("hud.label.polishing", fallback: "POLISHING")
+        case .modelLoading: Localization.appString("hud.label.preparingModel", fallback: "PREPARING MODEL")
+        case .insertedRaw: Localization.appString("hud.label.insertedRaw", fallback: "INSERTED · RAW")
+        case .savedToClipboard: Localization.appString("hud.label.savedToClipboard", fallback: "SAVED TO CLIPBOARD")
+        case .error: Localization.appString("hud.label.error", fallback: "ERROR")
         case .idle: ""
         }
     }
@@ -143,33 +143,45 @@ struct HUDView: View {
 
     private var accessibilityLabel: String {
         switch state.phase {
-        case .recording: "Listening, \(Int(state.elapsed)) seconds"
-        case .transcribing: "Transcribing"
-        case .cleaning: "Polishing transcript"
+        case .recording:
+            Localization.appFormat("hud.a11y.listening", fallback: "Listening, %d seconds", Int(state.elapsed))
+        case .transcribing: Localization.appString("hud.a11y.transcribing", fallback: "Transcribing")
+        case .cleaning: Localization.appString("hud.a11y.polishing", fallback: "Polishing transcript")
         case .modelLoading: modelAccessibilityLabel
-        case .insertedRaw: "Inserted raw transcript, cleanup unavailable"
-        case .savedToClipboard: "Nothing was focused to paste into. Dictation saved to the clipboard — press Command V to paste it."
-        case .error(let message): "Error: \(message)"
-        case .idle: "Idle"
+        case .insertedRaw:
+            Localization.appString("hud.a11y.insertedRaw", fallback: "Inserted raw transcript, cleanup unavailable")
+        case .savedToClipboard:
+            Localization.appString(
+                "hud.a11y.savedToClipboard",
+                fallback: "Nothing was focused to paste into. Dictation saved to the clipboard — press Command V to paste it."
+            )
+        case .error(let message):
+            Localization.appFormat("hud.a11y.error", fallback: "Error: %@", message)
+        case .idle: Localization.appString("hud.a11y.idle", fallback: "Idle")
         }
     }
 
     private var modelAccessibilityLabel: String {
         switch state.modelState {
         case .idle:
-            "Starting speech model"
+            Localization.appString("hud.a11y.model.starting", fallback: "Starting speech model")
         case .downloading(let progress):
-            "Downloading speech model, \(percentage(progress)) percent"
+            Localization.appFormat(
+                "hud.a11y.model.downloading", fallback: "Downloading speech model, %d percent", percentage(progress)
+            )
         case .loading(let progress):
             if let progress {
-                "Preparing speech model, \(percentage(progress)) percent"
+                Localization.appFormat(
+                    "hud.a11y.model.preparingWithProgress", fallback: "Preparing speech model, %d percent",
+                    percentage(progress)
+                )
             } else {
-                "Preparing speech model"
+                Localization.appString("hud.a11y.model.preparing", fallback: "Preparing speech model")
             }
         case .ready:
-            "Speech model ready"
+            Localization.appString("hud.a11y.model.ready", fallback: "Speech model ready")
         case .failed(let message):
-            "Speech model failed to load: \(message)"
+            Localization.appFormat("hud.a11y.model.failed", fallback: "Speech model failed to load: %@", message)
         }
     }
 
@@ -194,7 +206,7 @@ private struct HUDModelProgressView: View {
                     .foregroundStyle(labelColor)
                 Spacer(minLength: 8)
                 if let percentage {
-                    Text("\(percentage)%")
+                    Text(Localization.appFormat("hud.progress.percentage", fallback: "%d%%", percentage))
                         .font(.hudTimer)
                         .foregroundStyle(Palette.slate)
                         .monospacedDigit()
@@ -229,11 +241,11 @@ private struct HUDModelProgressView: View {
 
     private var label: String {
         switch state {
-        case .idle: "STARTING MODEL"
-        case .downloading: "DOWNLOADING MODEL"
-        case .loading: "PREPARING MODEL"
-        case .ready: "MODEL READY"
-        case .failed: "MODEL ERROR"
+        case .idle: Localization.appString("hud.progress.starting", fallback: "STARTING MODEL")
+        case .downloading: Localization.appString("hud.progress.downloading", fallback: "DOWNLOADING MODEL")
+        case .loading: Localization.appString("hud.progress.preparing", fallback: "PREPARING MODEL")
+        case .ready: Localization.appString("hud.progress.ready", fallback: "MODEL READY")
+        case .failed: Localization.appString("hud.progress.error", fallback: "MODEL ERROR")
         }
     }
 
@@ -330,7 +342,10 @@ struct HUDContainer: View {
             }
             if case .savedToClipboard = state.phase {
                 HUDErrorView(
-                    message: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it.",
+                    message: Localization.appString(
+                        "hud.error.clipboard",
+                        fallback: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it."
+                    ),
                     tint: Palette.signal
                 )
             }

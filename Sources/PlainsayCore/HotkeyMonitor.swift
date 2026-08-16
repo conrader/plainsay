@@ -8,7 +8,10 @@ public enum HotkeyMonitorError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .tapCreationFailed:
-            "Could not listen for the hotkey. Grant Plainsay access in System Settings › Privacy & Security › Input Monitoring, then restart it."
+            Localization.coreString(
+                "hotkey.tapCreationFailed",
+                fallback: "Could not listen for the hotkey. Grant Plainsay access in System Settings › Privacy & Security › Input Monitoring, then restart it."
+            )
         }
     }
 }

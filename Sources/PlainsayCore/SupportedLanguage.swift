@@ -125,8 +125,18 @@ public struct SupportedLanguage: Identifiable, Hashable, Sendable {
         SupportedLanguage(code: "yue", name: "Cantonese"),
     ].sorted { $0.name < $1.name }
 
+    /// `name` shown in whatever language Plainsay's own interface is
+    /// currently in — e.g. "niemiecki" rather than "German" once the
+    /// interface language is Polish — rather than a name hand-translated
+    /// into however many languages this list has entries in. macOS already
+    /// ships every one of these translated; reuse that instead of a second,
+    /// hand-maintained copy.
+    public var localizedName: String {
+        Locale(identifier: Localization.resolvedCode).localizedString(forLanguageCode: code) ?? name
+    }
+
     public static func named(_ code: String) -> String {
         let primary = primaryCode(code)
-        return all.first { $0.code == primary }?.name ?? code
+        return all.first { $0.code == primary }?.localizedName ?? code
     }
 }

@@ -46,7 +46,7 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Set Up Plainsay"
+            window.title = Localization.appString("window.setupTitle", fallback: "Set Up Plainsay")
             window.contentView = NSHostingView(
                 rootView: SetupAssistantView(
                     settings: settings,

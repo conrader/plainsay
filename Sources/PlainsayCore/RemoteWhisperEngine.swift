@@ -16,9 +16,12 @@ public enum TranscriptionSource: String, Codable, CaseIterable, Sendable, Identi
 
     public var displayName: String {
         switch self {
-        case .onDevice: "On this Mac (free, local speech)"
-        case .remote: "Cloud API (your own key)"
-        case .cloud: "Plainsay Cloud (subscription)"
+        case .onDevice:
+            Localization.coreString("source.displayName.onDevice", fallback: "On this Mac (free, local speech)")
+        case .remote:
+            Localization.coreString("source.displayName.remote", fallback: "Cloud API (your own key)")
+        case .cloud:
+            Localization.coreString("source.displayName.cloud", fallback: "Plainsay Cloud (subscription)")
         }
     }
 
@@ -37,10 +40,11 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
 
     public var displayName: String {
         switch self {
-        case .groq: "Groq"
-        case .deapi: "deAPI"
-        case .openAI: "OpenAI"
-        case .custom: "Custom (OpenAI-compatible)"
+        case .groq: Localization.coreString("asrProvider.displayName.groq", fallback: "Groq")
+        case .deapi: Localization.coreString("asrProvider.displayName.deapi", fallback: "deAPI")
+        case .openAI: Localization.coreString("asrProvider.displayName.openai", fallback: "OpenAI")
+        case .custom:
+            Localization.coreString("asrProvider.displayName.custom", fallback: "Custom (OpenAI-compatible)")
         }
     }
 
@@ -111,9 +115,12 @@ public enum ASRProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     /// the spread between providers is more than an order of magnitude.
     public var approximateCostPerHour: String? {
         switch self {
-        case .groq: "~$0.04/hour of audio"
-        case .deapi: "~$0.021/hour of audio · $5 free credit to start"
-        case .openAI: "~$0.36/hour of audio"
+        case .groq: Localization.coreString("asrProvider.cost.groq", fallback: "~$0.04/hour of audio")
+        case .deapi:
+            Localization.coreString(
+                "asrProvider.cost.deapi", fallback: "~$0.021/hour of audio · $5 free credit to start"
+            )
+        case .openAI: Localization.coreString("asrProvider.cost.openai", fallback: "~$0.36/hour of audio")
         case .custom: nil
         }
     }
@@ -153,17 +160,33 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
 
     /// Nothing to load — the point of this engine is that there is no model.
     public func prepare() async throws {
-        guard !apiKey.isEmpty else { throw TranscriptionError.failed("No API key for the transcription service") }
-        guard !model.isEmpty else { throw TranscriptionError.failed("No transcription model selected") }
+        guard !apiKey.isEmpty else {
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.noApiKey", fallback: "No API key for the transcription service")
+            )
+        }
+        guard !model.isEmpty else {
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.noModelSelected", fallback: "No transcription model selected")
+            )
+        }
         guard URL(string: "\(baseURL)/audio/transcriptions") != nil else {
-            throw TranscriptionError.failed("Invalid transcription endpoint: \(baseURL)")
+            throw TranscriptionError.failed(
+                Localization.coreFormat(
+                    "engine.invalidEndpoint", fallback: "Invalid transcription endpoint: %@", baseURL
+                )
+            )
         }
     }
 
     public func transcribe(samples: [Float], prompt: String?) async throws -> String {
         guard !samples.isEmpty else { return "" }
         guard let url = URL(string: "\(baseURL)/audio/transcriptions") else {
-            throw TranscriptionError.failed("Invalid transcription endpoint: \(baseURL)")
+            throw TranscriptionError.failed(
+                Localization.coreFormat(
+                    "engine.invalidEndpoint", fallback: "Invalid transcription endpoint: %@", baseURL
+                )
+            )
         }
 
         let boundary = "plainsay-\(UUID().uuidString)"
@@ -203,22 +226,36 @@ public actor RemoteWhisperEngine: TranscriptionEngine {
         do {
             (data, response) = try await session.data(for: request)
         } catch let error as URLError where error.code == .timedOut {
-            throw TranscriptionError.failed("Transcription service timed out")
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.timedOut", fallback: "Transcription service timed out")
+            )
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw TranscriptionError.failed("No response from the transcription service")
+            throw TranscriptionError.failed(
+                Localization.coreString(
+                    "engine.noResponse", fallback: "No response from the transcription service"
+                )
+            )
         }
         guard (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
-            throw TranscriptionError.failed("HTTP \(http.statusCode): \(body.prefix(200))")
+            throw TranscriptionError.failed(
+                Localization.coreFormat(
+                    "engine.httpError", fallback: "HTTP %d: %@", http.statusCode, String(body.prefix(200))
+                )
+            )
         }
 
         guard
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let text = root["text"] as? String
         else {
-            throw TranscriptionError.failed("Unexpected response from the transcription service")
+            throw TranscriptionError.failed(
+                Localization.coreString(
+                    "engine.unexpectedResponse", fallback: "Unexpected response from the transcription service"
+                )
+            )
         }
 
         return normalizeTranscript(text)

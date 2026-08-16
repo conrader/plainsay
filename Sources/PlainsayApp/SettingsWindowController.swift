@@ -41,7 +41,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
                 defer: false
             )
             window.contentMinSize = NSSize(width: 660, height: 460)
-            window.title = "Plainsay Settings"
+            window.title = Localization.appString("window.settingsTitle", fallback: "Plainsay Settings")
             window.contentView = NSHostingView(
                 rootView: SettingsView(
                     settings: settings,

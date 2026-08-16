@@ -28,6 +28,27 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BINARY" "$APP/Contents/MacOS/PlainsayApp"
 cp Scripts/Info.plist "$APP/Contents/Info.plist"
 cp Scripts/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# `swift build` copies each target's .xcstrings into its own resource bundle
+# as-is — unlike Xcode, the SwiftPM command-line build does not compile it
+# into per-language .strings tables. Do that here instead, straight into
+# Contents/Resources/<lang>.lproj/, which is also what makes plain SwiftUI
+# `Text("literal")` calls pick up a translation via Bundle.main with no
+# further wiring (see Sources/PlainsayCore/Localization.swift). Both
+# catalogs merge into the same lproj folders without colliding: they use
+# different table names (Localizable vs CoreLocalizable), so this is a
+# real merge, not an overwrite.
+echo "==> Compiling String Catalogs"
+STRINGS_TMP=$(mktemp -d)
+xcrun xcstringstool compile Sources/PlainsayApp/Resources/Localizable.xcstrings --output-directory "$STRINGS_TMP/app"
+xcrun xcstringstool compile Sources/PlainsayCore/Resources/CoreLocalizable.xcstrings --output-directory "$STRINGS_TMP/core"
+for lproj in "$STRINGS_TMP"/app/*.lproj "$STRINGS_TMP"/core/*.lproj; do
+	[ -d "$lproj" ] || continue
+	name=$(basename "$lproj")
+	mkdir -p "$APP/Contents/Resources/$name"
+	cp -R "$lproj/." "$APP/Contents/Resources/$name/"
+done
+rm -rf "$STRINGS_TMP"
 cp LICENSE "$APP/Contents/Resources/Plainsay-MIT.txt"
 cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/"
 mkdir -p "$APP/Contents/Resources/ThirdPartyLicenses"

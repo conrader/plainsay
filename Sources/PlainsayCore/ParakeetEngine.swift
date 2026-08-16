@@ -83,7 +83,9 @@ public actor ParakeetEngine: TranscriptionEngine {
         try Task.checkCancellation()
 
         #if !arch(arm64)
-        let message = "NVIDIA Parakeet requires a Mac with Apple silicon."
+        let message = Localization.coreString(
+            "engine.parakeetNeedsAppleSilicon", fallback: "NVIDIA Parakeet requires a Mac with Apple silicon."
+        )
         setState(.failed(message))
         throw TranscriptionError.failed(message)
         #else

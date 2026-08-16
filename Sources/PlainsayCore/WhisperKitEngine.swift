@@ -55,7 +55,9 @@ public actor WhisperKitEngine: TranscriptionEngine {
         try Task.checkCancellation()
 
         guard let modelID = model.whisperKitModelID else {
-            let message = "\(model.displayName) is not a WhisperKit model."
+            let message = Localization.coreFormat(
+                "engine.notWhisperKitModel", fallback: "%@ is not a WhisperKit model.", model.displayName
+            )
             setState(.failed(message))
             throw TranscriptionError.failed(message)
         }

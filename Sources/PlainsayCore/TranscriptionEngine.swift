@@ -27,8 +27,10 @@ public enum TranscriptionError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .modelNotLoaded: "Speech model is not loaded yet."
-        case .failed(let message): "Transcription failed: \(message)"
+        case .modelNotLoaded:
+            Localization.coreString("engine.modelNotLoaded", fallback: "Speech model is not loaded yet.")
+        case .failed(let message):
+            Localization.coreFormat("engine.transcriptionFailed", fallback: "Transcription failed: %@", message)
         }
     }
 }
@@ -67,21 +69,34 @@ public enum OnDeviceModel: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .baseEN: "Base (English) — fastest, least accurate"
-        case .smallEN: "Small (English) — good balance"
-        case .distilLargeV3Turbo: "Whisper Distil Large v3 Turbo — fast, multilingual"
-        case .largeV3Turbo: "Whisper Large v3 Turbo — accurate, multilingual"
-        case .parakeetTDT06BV3: "NVIDIA Parakeet TDT 0.6B v3 — recommended for Polish + English"
+        case .baseEN:
+            Localization.coreString("model.displayName.base", fallback: "Base (English) — fastest, least accurate")
+        case .smallEN:
+            Localization.coreString("model.displayName.small", fallback: "Small (English) — good balance")
+        case .distilLargeV3Turbo:
+            Localization.coreString(
+                "model.displayName.distilLargeV3Turbo",
+                fallback: "Whisper Distil Large v3 Turbo — fast, multilingual"
+            )
+        case .largeV3Turbo:
+            Localization.coreString(
+                "model.displayName.largeV3Turbo", fallback: "Whisper Large v3 Turbo — accurate, multilingual"
+            )
+        case .parakeetTDT06BV3:
+            Localization.coreString(
+                "model.displayName.parakeetTDT06BV3",
+                fallback: "NVIDIA Parakeet TDT 0.6B v3 — recommended for Polish + English"
+            )
         }
     }
 
     public var approximateSize: String {
         switch self {
-        case .baseEN: "150 MB"
-        case .smallEN: "480 MB"
-        case .distilLargeV3Turbo: "600 MB"
-        case .largeV3Turbo: "632 MB"
-        case .parakeetTDT06BV3: "~475 MB"
+        case .baseEN: Localization.coreString("model.size.base", fallback: "150 MB")
+        case .smallEN: Localization.coreString("model.size.small", fallback: "480 MB")
+        case .distilLargeV3Turbo: Localization.coreString("model.size.distilLargeV3Turbo", fallback: "600 MB")
+        case .largeV3Turbo: Localization.coreString("model.size.largeV3Turbo", fallback: "632 MB")
+        case .parakeetTDT06BV3: Localization.coreString("model.size.parakeetTDT06BV3", fallback: "~475 MB")
         }
     }
 

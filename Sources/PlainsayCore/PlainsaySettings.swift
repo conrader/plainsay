@@ -65,6 +65,17 @@ public final class PlainsaySettings {
     /// automatic multilingual decoding across everything Whisper knows.
     public var spokenLanguages: [String] { didSet { persist(spokenLanguages, .language) } }
 
+    /// Overrides Plainsay's own interface language (menus, Settings, the
+    /// Setup Assistant, the HUD) — separate from `spokenLanguages`, which is
+    /// about what the speech models listen for. Nil follows the system
+    /// language, same as any app without this setting.
+    public var interfaceLanguage: String? {
+        didSet {
+            defaults.set(interfaceLanguage, forKey: Key.interfaceLanguage.rawValue)
+            Localization.setOverride(interfaceLanguage)
+        }
+    }
+
     /// The single language to force on engines that cannot retry a
     /// mismatched auto-detection (remote/cloud ASR). Nil leaves those
     /// engines on full auto-detect, same as an empty `spokenLanguages`.
@@ -144,6 +155,7 @@ public final class PlainsaySettings {
         case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
+        case interfaceLanguage
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -184,6 +196,8 @@ public final class PlainsaySettings {
         asrModel = defaults.string(forKey: Key.asrModel.rawValue) ?? ""
         asrBaseURL = defaults.string(forKey: Key.asrBaseURL.rawValue) ?? ""
         spokenLanguages = decode(.language, [])
+        interfaceLanguage = defaults.string(forKey: Key.interfaceLanguage.rawValue)
+        Localization.setOverride(interfaceLanguage)
     }
 
     private func persist<T: Encodable>(_ value: T, _ key: Key) {

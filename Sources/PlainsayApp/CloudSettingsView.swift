@@ -84,15 +84,22 @@ struct CloudSettingsView: View {
     @ViewBuilder
     private var signedIn: some View {
         if let account = cloud.account {
-            LabeledContent("Account", value: account.email ?? "signed in")
+            LabeledContent(
+                "Account",
+                value: account.email ?? Localization.appString("cloud.signedIn", fallback: "signed in")
+            )
             LabeledContent("Subscription") {
                 if account.isActive {
                     Label(account.status, systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 } else {
-                    Label(account.status == "none" ? "not subscribed" : account.status,
-                          systemImage: "exclamationmark.circle.fill")
-                        .foregroundStyle(.orange)
+                    Label(
+                        account.status == "none"
+                            ? Localization.appString("cloud.notSubscribed", fallback: "not subscribed")
+                            : account.status,
+                        systemImage: "exclamationmark.circle.fill"
+                    )
+                    .foregroundStyle(.orange)
                 }
             }
 
@@ -102,9 +109,14 @@ struct CloudSettingsView: View {
                         value: Double(account.usedSeconds),
                         total: Double(account.limitSeconds)
                     )
-                    Text("\(account.usedSeconds / 60) of \(account.limitSeconds / 60) minutes this month")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Text(
+                        Localization.appFormat(
+                            "cloud.minutesUsed", fallback: "%d of %d minutes this month",
+                            account.usedSeconds / 60, account.limitSeconds / 60
+                        )
+                    )
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
                 }
             }
 
@@ -129,9 +141,13 @@ struct CloudSettingsView: View {
                     Image(systemName: "exclamationmark.circle")
                         .foregroundStyle(.orange)
                 }
-                Text(busy || message == nil ? "Checking your subscription…" : "Account status is unavailable")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Text(
+                    busy || message == nil
+                        ? Localization.appString("cloud.checking", fallback: "Checking your subscription…")
+                        : Localization.appString("cloud.unavailable", fallback: "Account status is unavailable")
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
                 Spacer()
                 Button("Retry") { Task { await refresh() } }
                     .disabled(busy)
@@ -145,7 +161,7 @@ struct CloudSettingsView: View {
     // MARK: - Actions
 
     private func requestCode() async {
-        await run("Code sent. Check your email.") {
+        await run(Localization.appString("cloud.codeSent", fallback: "Code sent. Check your email.")) {
             try await cloud.requestEmailCode(email)
             awaitingCode = true
         }
@@ -161,7 +177,11 @@ struct CloudSettingsView: View {
     }
 
     private func subscribe(annual: Bool) async {
-        await run("Finish in your browser, then come back — this updates on its own.") {
+        await run(
+            Localization.appString(
+                "cloud.finishInBrowser", fallback: "Finish in your browser, then come back — this updates on its own."
+            )
+        ) {
             NSWorkspace.shared.open(try await cloud.checkoutURL(annual: annual))
         }
     }

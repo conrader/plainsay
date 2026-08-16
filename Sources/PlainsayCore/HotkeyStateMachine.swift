@@ -11,9 +11,9 @@ public enum HotkeyMode: String, Codable, Sendable, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .hybrid: "Hold or tap (recommended)"
-        case .holdOnly: "Hold to talk"
-        case .toggleOnly: "Tap to toggle"
+        case .hybrid: Localization.coreString("hotkeyMode.displayName.hybrid", fallback: "Hold or tap (recommended)")
+        case .holdOnly: Localization.coreString("hotkeyMode.displayName.holdOnly", fallback: "Hold to talk")
+        case .toggleOnly: Localization.coreString("hotkeyMode.displayName.toggleOnly", fallback: "Tap to toggle")
         }
     }
 }

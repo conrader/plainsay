@@ -20,8 +20,13 @@ struct APIKeyField: View {
                 SecureField(title, text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(save)
-                Button(saved ? "Saved" : "Save", action: save)
-                    .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button(
+                    saved
+                        ? Localization.appString("apiKey.saved", fallback: "Saved")
+                        : Localization.appString("apiKey.save", fallback: "Save"),
+                    action: save
+                )
+                .disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
             }
 
             HStack(spacing: 10) {
@@ -87,14 +92,18 @@ struct SpokenLanguagesField: View {
                             Image(systemName: "minus.circle")
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel("Remove \(SupportedLanguage.named(code))")
+                        .accessibilityLabel(
+                            Localization.appFormat(
+                                "spokenLanguages.remove", fallback: "Remove %@", SupportedLanguage.named(code)
+                            )
+                        )
                     }
                 }
             }
 
             Menu {
                 ForEach(SupportedLanguage.all.filter { !languages.contains($0.code) }) { language in
-                    Button(language.name) { languages.append(language.code) }
+                    Button(language.localizedName) { languages.append(language.code) }
                 }
             } label: {
                 Label("Add a language", systemImage: "plus.circle")

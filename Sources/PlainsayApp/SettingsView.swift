@@ -39,6 +39,10 @@ struct SettingsView: View {
         // the corner, which turns every settings change into a two-click
         // hunt — stay comfortably above that regardless of tab count.
         .frame(minWidth: 660, idealWidth: 660, minHeight: 560, idealHeight: 560)
+        // Overrides the window's locale so a language chosen here (rather
+        // than the system's) takes effect immediately, no relaunch needed —
+        // reads the `@Observable` setting directly so this stays reactive.
+        .environment(\.locale, Locale(identifier: Localization.resolvedCode(override: settings.interfaceLanguage)))
     }
 }
 
@@ -52,9 +56,21 @@ private struct GeneralSettings: View {
     var body: some View {
         Form {
             Section {
+                Picker("Interface language", selection: $settings.interfaceLanguage) {
+                    ForEach(AppLanguage.all) { language in
+                        Text(language.displayName).tag(language.code)
+                    }
+                }
+            } footer: {
+                Text("Changes the language Plainsay's own menus and windows use — separate from the languages you speak, set under Speech. Applies right away; a window already open may need to be closed and reopened.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Picker("Hotkey", selection: $settings.binding) {
                     ForEach(HotkeyBinding.presets) { preset in
-                        Text(preset.displayName).tag(preset)
+                        Text(preset.localizedDisplayName).tag(preset)
                     }
                 }
 
@@ -85,7 +101,7 @@ private struct GeneralSettings: View {
             Section {
                 Toggle("Automatically check for updates", isOn: $updates.automaticallyChecks)
                 HStack {
-                    Text("Plainsay \(updates.currentVersion)")
+                    Text(Localization.appFormat("settings.version", fallback: "Plainsay %@", updates.currentVersion))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button("Check for Updates…") {
@@ -96,9 +112,15 @@ private struct GeneralSettings: View {
             } header: {
                 Text("Updates")
             } footer: {
-                Text("Last checked: \(updates.lastCheckDescription). Plainsay is distributed outside the App Store, so it has to check for its own updates.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Text(
+                    Localization.appFormat(
+                        "settings.updates.lastChecked",
+                        fallback: "Last checked: %@. Plainsay is distributed outside the App Store, so it has to check for its own updates.",
+                        updates.lastCheckDescription
+                    )
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -109,11 +131,23 @@ private struct GeneralSettings: View {
     private var behaviorHint: String {
         switch settings.hotkeyMode {
         case .hybrid:
-            "Hold \(settings.binding.displayName) and speak, or tap it once to keep recording and tap again to stop."
+            Localization.appFormat(
+                "settings.behaviorHint.holdOrTap",
+                fallback: "Hold %@ and speak, or tap it once to keep recording and tap again to stop.",
+                settings.binding.localizedDisplayName
+            )
         case .holdOnly:
-            "Hold \(settings.binding.displayName) and speak. Recording ends when you let go."
+            Localization.appFormat(
+                "settings.behaviorHint.hold",
+                fallback: "Hold %@ and speak. Recording ends when you let go.",
+                settings.binding.localizedDisplayName
+            )
         case .toggleOnly:
-            "Tap \(settings.binding.displayName) to start recording, tap again to stop."
+            Localization.appFormat(
+                "settings.behaviorHint.tap",
+                fallback: "Tap %@ to start recording, tap again to stop.",
+                settings.binding.localizedDisplayName
+            )
         }
     }
 }
@@ -150,7 +184,12 @@ private struct SpeechSettings: View {
                         }
                     }
                     ModelLoadStatusView(state: coordinator.modelState)
-                    Text("\(settings.model.approximateSize) download, then it runs entirely on this Mac.")
+                    Text(
+                        Localization.appFormat(
+                            "settings.modelDownloadNote", fallback: "%@ download, then it runs entirely on this Mac.",
+                            settings.model.approximateSize
+                        )
+                    )
                         .font(.callout)
                         .foregroundStyle(.secondary)
 
@@ -192,16 +231,18 @@ private struct SpeechSettings: View {
                     }
 
                     ModelField(
-                        label: "Model",
+                        label: Localization.appString("settings.modelLabel", fallback: "Model"),
                         suggestions: settings.asrProvider.suggestedModels,
                         placeholder: settings.asrProvider.defaultModel.isEmpty
-                            ? "model name"
+                            ? Localization.appString("settings.modelPlaceholder", fallback: "model name")
                             : settings.asrProvider.defaultModel,
                         value: $settings.asrModel
                     )
 
                     APIKeyField(
-                        title: "\(settings.asrProvider.displayName) API key",
+                        title: Localization.appFormat(
+                            "settings.apiKeyTitle", fallback: "%@ API key", settings.asrProvider.displayName
+                        ),
                         signupURL: settings.asrProvider.signupURL,
                         currentKey: settings.apiKey(for: settings.asrProvider),
                         onSave: { key in
@@ -264,16 +305,18 @@ private struct SpeechSettings: View {
                     }
 
                     ModelField(
-                        label: "Model",
+                        label: Localization.appString("settings.modelLabel", fallback: "Model"),
                         suggestions: settings.cleanupProvider.suggestedModels,
                         placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                            ? "model name"
+                            ? Localization.appString("settings.modelPlaceholder", fallback: "model name")
                             : settings.cleanupProvider.defaultModel,
                         value: $settings.cleanupModel
                     )
 
                     APIKeyField(
-                        title: "\(settings.cleanupProvider.displayName) API key",
+                        title: Localization.appFormat(
+                            "settings.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
+                        ),
                         signupURL: settings.cleanupProvider.signupURL,
                         currentKey: settings.apiKey(for: settings.cleanupProvider),
                         onSave: { key in
@@ -315,7 +358,9 @@ private struct SpeechSettings: View {
                                 Image(systemName: "minus.circle")
                             }
                             .buttonStyle(.borderless)
-                            .accessibilityLabel("Remove \(term)")
+                            .accessibilityLabel(
+                                Localization.appFormat("settings.vocabulary.remove", fallback: "Remove %@", term)
+                            )
                         }
                     }
                 }
@@ -344,26 +389,48 @@ private struct SpeechSettings: View {
     private var sourceExplanation: String {
         switch settings.transcriptionSource {
         case .onDevice:
-            "Recorded audio stays on this Mac. Local speech needs a model download and uses Mac storage and memory; optional cleanup may still send transcript text to its configured provider."
+            Localization.appString(
+                "settings.sourceExplanation.local",
+                fallback: "Recorded audio stays on this Mac. Local speech needs a model download and uses Mac storage and memory; optional cleanup may still send transcript text to its configured provider."
+            )
         case .remote:
-            "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+            Localization.appString(
+                "settings.sourceExplanation.remote",
+                fallback: "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+            )
         case .cloud:
-            "About $3/month: transcription and cleanup are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
+            Localization.appString(
+                "settings.sourceExplanation.cloud",
+                fallback: "About $3/month: transcription and cleanup are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
+            )
         }
     }
 
     private var editingStatusLine: String {
         guard settings.cleanupIsConfigured else {
-            return "Not configured — Plainsay will insert the raw transcript until a key is saved."
+            return Localization.appString(
+                "settings.editingStatus.notConfigured",
+                fallback: "Not configured — Plainsay will insert the raw transcript until a key is saved."
+            )
         }
-        return "Editing runs through \(settings.cleanupProvider.displayName) using \(settings.resolvedCleanupModel). A failure always falls back to the raw transcript."
+        return Localization.appFormat(
+            "settings.editingStatus.configured",
+            fallback: "Editing runs through %@ using %@. A failure always falls back to the raw transcript.",
+            settings.cleanupProvider.displayName, settings.resolvedCleanupModel
+        )
     }
 
     private var vocabularyExplanation: String {
         if settings.transcriptionSource == .onDevice && !settings.model.supportsDecoderPrompt {
-            return "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay corrects these spellings itself right after transcribing, whether or not editing is on."
+            return Localization.appString(
+                "settings.vocabulary.explanation.parakeet",
+                fallback: "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay corrects these spellings itself right after transcribing, whether or not editing is on."
+            )
         }
-        return "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model, then corrects any spellings it still gets wrong."
+        return Localization.appString(
+            "settings.vocabulary.explanation.other",
+            fallback: "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model, then corrects any spellings it still gets wrong."
+        )
     }
 
     private func addTerm() {

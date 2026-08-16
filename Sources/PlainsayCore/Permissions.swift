@@ -15,17 +15,28 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
 
     public var title: String {
         switch self {
-        case .microphone: "Microphone"
-        case .accessibility: "Accessibility"
-        case .inputMonitoring: "Input Monitoring"
+        case .microphone: Localization.coreString("permission.title.microphone", fallback: "Microphone")
+        case .accessibility: Localization.coreString("permission.title.accessibility", fallback: "Accessibility")
+        case .inputMonitoring: Localization.coreString("permission.title.inputMonitoring", fallback: "Input Monitoring")
         }
     }
 
     public var reason: String {
         switch self {
-        case .microphone: "To record your voice while the hotkey is held."
-        case .accessibility: "To paste the transcribed text into the app you're using."
-        case .inputMonitoring: "To notice the hotkey while another app is focused."
+        case .microphone:
+            Localization.coreString(
+                "permission.reason.microphone", fallback: "To record your voice while the hotkey is held."
+            )
+        case .accessibility:
+            Localization.coreString(
+                "permission.reason.accessibility",
+                fallback: "To paste the transcribed text into the app you're using."
+            )
+        case .inputMonitoring:
+            Localization.coreString(
+                "permission.reason.inputMonitoring",
+                fallback: "To notice the hotkey while another app is focused."
+            )
         }
     }
 

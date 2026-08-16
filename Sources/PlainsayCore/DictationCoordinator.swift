@@ -408,7 +408,11 @@ public final class DictationCoordinator {
         case .ready:
             scheduleReset(after: .seconds(1))
         case .failed(let message):
-            flashError("Speech model failed to load: \(message)")
+            flashError(
+                Localization.coreFormat(
+                    "coordinator.modelStatus.failed", fallback: "Speech model failed to load: %@", message
+                )
+            )
         case .idle, .downloading, .loading:
             break
         }
@@ -432,17 +436,26 @@ public final class DictationCoordinator {
     private var modelStatusMessage: String {
         switch modelState {
         case .idle:
-            "Starting the speech model…"
+            Localization.coreString("coordinator.modelStatus.starting", fallback: "Starting the speech model…")
         case .downloading:
-            "Downloading the speech model (\(settings.model.approximateSize)). This happens once."
+            Localization.coreFormat(
+                "coordinator.modelStatus.downloading",
+                fallback: "Downloading the speech model (%@). This happens once.",
+                settings.model.approximateSize
+            )
         case .loading:
             // The Neural Engine compile runs once per model and takes minutes.
             // Quitting restarts it from scratch, so say not to.
-            "Preparing the speech model for the Neural Engine. This takes a few minutes the first time — leave Plainsay running."
+            Localization.coreString(
+                "coordinator.modelStatus.preparing",
+                fallback: "Preparing the speech model for the Neural Engine. This takes a few minutes the first time — leave Plainsay running."
+            )
         case .ready:
-            "Ready"
+            Localization.coreString("coordinator.modelStatus.ready", fallback: "Ready")
         case .failed(let message):
-            "Speech model failed to load: \(message)"
+            Localization.coreFormat(
+                "coordinator.modelStatus.failed", fallback: "Speech model failed to load: %@", message
+            )
         }
     }
 
@@ -492,7 +505,9 @@ public final class DictationCoordinator {
         // guarantees that the sentence being spoken is lost. The setup and
         // Settings permission buttons own that interaction.
         guard AudioRecorder.microphoneAuthorized() else {
-            flashError("Plainsay needs microphone access")
+            flashError(
+                Localization.coreString("coordinator.needsMicrophone", fallback: "Plainsay needs microphone access")
+            )
             machine.reset()
             return
         }
@@ -579,7 +594,7 @@ public final class DictationCoordinator {
 
         guard let engine else {
             record(text: "", raw: "", outcome: .modelNotReady, duration: duration)
-            flashError("Speech model not loaded")
+            flashError(Localization.coreString("coordinator.modelNotLoaded", fallback: "Speech model not loaded"))
             return
         }
 

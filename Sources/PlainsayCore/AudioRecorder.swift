@@ -13,13 +13,19 @@ public enum AudioRecorderError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .microphoneDenied:
-            "Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."
+            Localization.coreString(
+                "audio.microphoneDenied",
+                fallback: "Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."
+            )
         case .noInputDevice:
-            "No audio input device available."
+            Localization.coreString("audio.noInputDevice", fallback: "No audio input device available.")
         case .converterUnavailable(let sampleRate):
-            "Cannot convert audio from \(sampleRate)Hz to 16kHz mono."
+            Localization.coreFormat(
+                "audio.converterUnavailable", fallback: "Cannot convert audio from %@Hz to 16kHz mono.",
+                String(sampleRate)
+            )
         case .engineFailed(let message):
-            "Audio engine failed: \(message)"
+            Localization.coreFormat("audio.engineFailed", fallback: "Audio engine failed: %@", message)
         }
     }
 }

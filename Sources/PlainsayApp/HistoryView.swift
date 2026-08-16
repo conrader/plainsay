@@ -41,9 +41,13 @@ struct HistoryView: View {
                 .searchable(text: $query, prompt: "Search dictations")
 
                 HStack {
-                    Text("\(history.records.count) saved on this Mac")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Text(
+                        Localization.appFormat(
+                            "history.savedCount", fallback: "%d saved on this Mac", history.records.count
+                        )
+                    )
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
                     Spacer()
                     Button("Clear history", role: .destructive) {
                         history.clear()
@@ -69,7 +73,12 @@ private struct HistoryRow: View {
             HStack(spacing: 8) {
                 Text(record.date.formatted(date: .abbreviated, time: .shortened))
                 Text("·")
-                Text("\(record.durationSeconds, format: .number.precision(.fractionLength(1)))s")
+                Text(
+                    Localization.appFormat(
+                        "history.durationSeconds", fallback: "%@s",
+                        record.durationSeconds.formatted(.number.precision(.fractionLength(1)))
+                    )
+                )
                 if let app = record.targetApp {
                     Text("·")
                     Text(app.split(separator: ".").last.map(String.init) ?? app)
@@ -80,8 +89,13 @@ private struct HistoryRow: View {
                     Text("raw").foregroundStyle(.orange)
                 }
                 Spacer()
-                Button(justCopied ? "Copied" : "Copy", action: onCopy)
-                    .buttonStyle(.borderless)
+                Button(
+                    justCopied
+                        ? Localization.appString("history.copied", fallback: "Copied")
+                        : Localization.appString("history.copy", fallback: "Copy"),
+                    action: onCopy
+                )
+                .buttonStyle(.borderless)
             }
             .font(.caption)
             .foregroundStyle(.secondary)

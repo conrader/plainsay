@@ -66,4 +66,24 @@ public struct HotkeyBinding: Codable, Sendable, Hashable, Identifiable {
         guard let modifierMask else { return false }
         return flags & modifierMask != 0
     }
+
+    /// `displayName` stays a stored, English literal: it round-trips through
+    /// `Codable` as part of `PlainsaySettings.binding`'s persisted JSON, so
+    /// turning it into a computed lookup would either break decoding an
+    /// existing user's saved hotkey or require a hand-written `Codable`
+    /// conformance just to ignore it. This is the one other code should
+    /// display instead — keyed by `keyCode`, so it works for any of the
+    /// presets above regardless of which `displayName` an older save has.
+    public var localizedDisplayName: String {
+        switch keyCode {
+        case Self.rightCommandKey.keyCode: Localization.coreString("hotkey.name.rightCommand", fallback: "Right ⌘")
+        case Self.leftCommandKey.keyCode: Localization.coreString("hotkey.name.leftCommand", fallback: "Left ⌘")
+        case Self.rightOptionKey.keyCode: Localization.coreString("hotkey.name.rightOption", fallback: "Right ⌥")
+        case Self.leftOptionKey.keyCode: Localization.coreString("hotkey.name.leftOption", fallback: "Left ⌥")
+        case Self.rightControlKey.keyCode: Localization.coreString("hotkey.name.rightControl", fallback: "Right ⌃")
+        case Self.fnKey.keyCode: Localization.coreString("hotkey.name.fn", fallback: "Fn (Globe)")
+        case Self.f13Key.keyCode: Localization.coreString("hotkey.name.f13", fallback: "F13")
+        default: displayName
+        }
+    }
 }

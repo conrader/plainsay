@@ -32,17 +32,29 @@ public enum CloudError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .notSignedIn:
-            "Sign in to Plainsay Cloud in Settings › Speech."
+            Localization.coreString(
+                "cloud.signInRequired", fallback: "Sign in to Plainsay Cloud in Settings › Speech."
+            )
         case .noSubscription(let status):
             status == "none"
-                ? "Plainsay Cloud needs an active subscription."
-                : "Your Plainsay Cloud subscription is \(status)."
+                ? Localization.coreString(
+                    "cloud.noSubscription", fallback: "Plainsay Cloud needs an active subscription."
+                )
+                : Localization.coreFormat(
+                    "cloud.subscriptionStatus", fallback: "Your Plainsay Cloud subscription is %@.", status
+                )
         case .http(let status, let message):
-            message.isEmpty ? "Plainsay Cloud returned HTTP \(status)." : message
+            message.isEmpty
+                ? Localization.coreFormat(
+                    "cloud.httpError", fallback: "Plainsay Cloud returned HTTP %d.", status
+                )
+                : message
         case .malformedResponse:
-            "Plainsay Cloud sent something unexpected."
+            Localization.coreString(
+                "cloud.malformedResponse", fallback: "Plainsay Cloud sent something unexpected."
+            )
         case .network(let message):
-            "Could not reach Plainsay Cloud: \(message)"
+            Localization.coreFormat("cloud.networkError", fallback: "Could not reach Plainsay Cloud: %@", message)
         }
     }
 }

@@ -12,7 +12,7 @@ struct ModelLoadStatusView: View {
                 statusLabel
                 Spacer(minLength: 12)
                 if let percentage {
-                    Text("\(percentage)%")
+                    Text(Localization.appFormat("modelStatus.percentage", fallback: "%d%%", percentage))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
@@ -84,16 +84,23 @@ struct ModelLoadStatusView: View {
 
     private var accessibilityLabel: String {
         switch state {
-        case .downloading: "Downloading speech model"
-        case .loading: "Preparing speech model"
-        case .idle: "Speech model not ready"
-        case .ready: "Speech model ready"
-        case .failed: "Speech model failed to load"
+        case .downloading:
+            Localization.appString("modelStatus.a11y.downloading", fallback: "Downloading speech model")
+        case .loading:
+            Localization.appString("modelStatus.a11y.preparing", fallback: "Preparing speech model")
+        case .idle:
+            Localization.appString("modelStatus.a11y.notReady", fallback: "Speech model not ready")
+        case .ready:
+            Localization.appString("modelStatus.a11y.ready", fallback: "Speech model ready")
+        case .failed:
+            Localization.appString("modelStatus.a11y.failed", fallback: "Speech model failed to load")
         }
     }
 
     private var accessibilityValue: String {
-        percentage.map { "\($0) percent" } ?? "In progress"
+        percentage.map {
+            Localization.appFormat("modelStatus.a11y.percent", fallback: "%d percent", $0)
+        } ?? Localization.appString("modelStatus.a11y.inProgress", fallback: "In progress")
     }
 
     private func normalized(_ value: Double) -> Double {

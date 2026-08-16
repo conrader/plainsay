@@ -71,7 +71,9 @@ public enum ProviderFactory {
                 // rather than silently transcribing on-device: the user picked
                 // Cloud, and quietly doing something else hides a billing
                 // problem behind working dictation.
-                let message = "Sign in to Plainsay Cloud in Settings › Speech"
+                let message = Localization.coreString(
+                    "cloud.signInRequired", fallback: "Sign in to Plainsay Cloud in Settings › Speech."
+                )
                 onState(.failed(message))
                 return UnavailableTranscriptionEngine(message: message)
             }
@@ -90,7 +92,9 @@ public enum ProviderFactory {
             guard !key.isEmpty else {
                 // Falling back silently would be worse: dictation would keep
                 // working while quietly ignoring the setting you chose.
-                let message = "No API key for \(provider.displayName)"
+                let message = Localization.coreFormat(
+                    "engine.noApiKeyFor", fallback: "No API key for %@", provider.displayName
+                )
                 onState(.failed(message))
                 return UnavailableTranscriptionEngine(message: message)
             }

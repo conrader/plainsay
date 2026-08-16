@@ -16,12 +16,23 @@ public enum CleanupError: LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .missingAPIKey: "No API key configured for the cleanup provider"
-        case .missingModel: "No cleanup model selected"
-        case .invalidEndpoint(let url): "Invalid cleanup endpoint: \(url)"
-        case .http(let status, let body): "Cleanup provider returned HTTP \(status): \(body.prefix(200))"
-        case .emptyResponse: "Cleanup provider returned no text"
-        case .timedOut: "Cleanup timed out"
+        case .missingAPIKey:
+            Localization.coreString(
+                "cleanup.noApiKey", fallback: "No API key configured for the cleanup provider"
+            )
+        case .missingModel:
+            Localization.coreString("cleanup.noModel", fallback: "No cleanup model selected")
+        case .invalidEndpoint(let url):
+            Localization.coreFormat("cleanup.invalidEndpoint", fallback: "Invalid cleanup endpoint: %@", url)
+        case .http(let status, let body):
+            Localization.coreFormat(
+                "cleanup.httpError", fallback: "Cleanup provider returned HTTP %d: %@", status,
+                String(body.prefix(200))
+            )
+        case .emptyResponse:
+            Localization.coreString("cleanup.emptyResponse", fallback: "Cleanup provider returned no text")
+        case .timedOut:
+            Localization.coreString("cleanup.timedOut", fallback: "Cleanup timed out")
         }
     }
 }

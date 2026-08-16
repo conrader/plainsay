@@ -1,4 +1,5 @@
 import Observation
+import PlainsayCore
 import Sparkle
 import SwiftUI
 
@@ -40,7 +41,9 @@ final class UpdateController {
 
     /// Human-readable time of the last check, for the settings screen.
     var lastCheckDescription: String {
-        guard let date = updater.updater.lastUpdateCheckDate else { return "Never" }
+        guard let date = updater.updater.lastUpdateCheckDate else {
+            return Localization.appString("updates.never", fallback: "Never")
+        }
         return date.formatted(date: .abbreviated, time: .shortened)
     }
 

@@ -45,7 +45,9 @@ public actor CloudTranscriptionEngine: TranscriptionEngine {
         let durationSeconds = Double(samples.count) / whisperSampleRate
 
         guard let audio = AACEncoder.encode(samples: samples) else {
-            throw TranscriptionError.failed("Could not encode audio for upload")
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.cloud.encodeFailed", fallback: "Could not encode audio for upload")
+            )
         }
 
         var components = URLComponents(string: "\(baseURL)/v1/transcribe")
@@ -55,7 +57,11 @@ public actor CloudTranscriptionEngine: TranscriptionEngine {
         components?.queryItems = items
 
         guard let url = components?.url else {
-            throw TranscriptionError.failed("Invalid transcription endpoint: \(baseURL)")
+            throw TranscriptionError.failed(
+                Localization.coreFormat(
+                    "engine.invalidEndpoint", fallback: "Invalid transcription endpoint: %@", baseURL
+                )
+            )
         }
 
         var request = URLRequest(url: url)
@@ -70,28 +76,49 @@ public actor CloudTranscriptionEngine: TranscriptionEngine {
         do {
             (data, response) = try await session.data(for: request)
         } catch let error as URLError where error.code == .timedOut {
-            throw TranscriptionError.failed("Plainsay Cloud timed out")
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.cloud.timedOut", fallback: "Plainsay Cloud timed out")
+            )
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw TranscriptionError.failed("No response from Plainsay Cloud")
+            throw TranscriptionError.failed(
+                Localization.coreString("engine.cloud.noResponse", fallback: "No response from Plainsay Cloud")
+            )
         }
         guard (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? ""
             if http.statusCode == 402 {
-                throw TranscriptionError.failed("Plainsay Cloud subscription is not active")
+                throw TranscriptionError.failed(
+                    Localization.coreString(
+                        "engine.cloud.subscriptionInactive", fallback: "Plainsay Cloud subscription is not active"
+                    )
+                )
             }
             if http.statusCode == 429 {
-                throw TranscriptionError.failed("Plainsay Cloud monthly limit reached")
+                throw TranscriptionError.failed(
+                    Localization.coreString(
+                        "engine.cloud.limitReached", fallback: "Plainsay Cloud monthly limit reached"
+                    )
+                )
             }
-            throw TranscriptionError.failed("Plainsay Cloud HTTP \(http.statusCode): \(body.prefix(200))")
+            throw TranscriptionError.failed(
+                Localization.coreFormat(
+                    "engine.cloud.httpError", fallback: "Plainsay Cloud HTTP %d: %@", http.statusCode,
+                    String(body.prefix(200))
+                )
+            )
         }
 
         guard
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let text = root["text"] as? String
         else {
-            throw TranscriptionError.failed("Unexpected response from Plainsay Cloud")
+            throw TranscriptionError.failed(
+                Localization.coreString(
+                    "engine.cloud.unexpectedResponse", fallback: "Unexpected response from Plainsay Cloud"
+                )
+            )
         }
         return normalizeTranscript(text)
     }

@@ -26,12 +26,21 @@ struct VoiceEnrollmentView: View {
                     Image(systemName: "waveform")
                         .foregroundStyle(.red)
                         .symbolEffect(.pulse, options: .repeating)
-                    Text("Recording — keep talking for \(secondsRemaining)s…")
+                    Text(
+                        Localization.appFormat(
+                            "voice.recordingCountdown", fallback: "Recording — keep talking for %ds…",
+                            secondsRemaining
+                        )
+                    )
                 }
                 .font(.callout)
             } else {
                 HStack(spacing: 10) {
-                    Button(settings.voiceEmbedding == nil ? "Record my voice…" : "Re-record my voice…") {
+                    Button(
+                        settings.voiceEmbedding == nil
+                            ? Localization.appString("voice.recordButton", fallback: "Record my voice…")
+                            : Localization.appString("voice.reRecordButton", fallback: "Re-record my voice…")
+                    ) {
                         record()
                     }
                     if settings.voiceEmbedding != nil {
@@ -80,7 +89,9 @@ struct VoiceEnrollmentView: View {
                     settings.voiceEmbedding = embedding
                     settings.voiceFilterEnabled = true
                 } else {
-                    errorMessage = "That was too quiet or too short — try again and speak clearly."
+                    errorMessage = Localization.appString(
+                        "voice.tooQuiet", fallback: "That was too quiet or too short — try again and speak clearly."
+                    )
                 }
             } catch is CancellationError {
                 enrollment.cancel()

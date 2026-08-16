@@ -17,11 +17,15 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
 
     public var displayName: String {
         switch self {
-        case .gemini: "Google Gemini"
-        case .anthropic: "Anthropic Claude"
-        case .openRouter: "OpenRouter"
-        case .openAI: "OpenAI"
-        case .custom: "Custom (OpenAI-compatible)"
+        case .gemini: Localization.coreString("cleanupProvider.displayName.gemini", fallback: "Google Gemini")
+        case .anthropic:
+            Localization.coreString("cleanupProvider.displayName.claude", fallback: "Anthropic Claude")
+        case .openRouter: Localization.coreString("cleanupProvider.displayName.openrouter", fallback: "OpenRouter")
+        case .openAI: Localization.coreString("cleanupProvider.displayName.openai", fallback: "OpenAI")
+        case .custom:
+            Localization.coreString(
+                "cleanupProvider.displayName.custom", fallback: "Custom (OpenAI-compatible)"
+            )
         }
     }
 

@@ -8,7 +8,7 @@ struct SetupAssistantView: View {
     let onSpeechConfirmed: @MainActor (Bool) -> Void
     let onFinish: @MainActor () -> Void
 
-    @State private var step: Step = .speech
+    @State private var step: Step = .interfaceLanguage
     // Lives here, not in SpeechSetupStep: `continueRequirement` below reads
     // settings.apiKey(for:), a Keychain read SwiftUI's observation can't see.
     // A child's local @State can't invalidate this parent's body, so the
@@ -45,6 +45,7 @@ struct SetupAssistantView: View {
     }
 
     private enum Step: Int, CaseIterable, Identifiable {
+        case interfaceLanguage
         case speech
         case configure
         case language
@@ -57,13 +58,14 @@ struct SetupAssistantView: View {
 
         var title: String {
             switch self {
-            case .speech: "Speech"
-            case .configure: "Configure"
-            case .language: "Refine"
-            case .voice: "Voice"
-            case .shortcut: "Shortcut"
-            case .permissions: "Permissions"
-            case .ready: "Ready"
+            case .interfaceLanguage: Localization.appString("wizard.step.interfaceLanguage", fallback: "Interface")
+            case .speech: Localization.appString("wizard.step.speech", fallback: "Speech")
+            case .configure: Localization.appString("wizard.step.configure", fallback: "Configure")
+            case .language: Localization.appString("wizard.step.refine", fallback: "Refine")
+            case .voice: Localization.appString("wizard.step.voice", fallback: "Voice")
+            case .shortcut: Localization.appString("wizard.step.shortcut", fallback: "Shortcut")
+            case .permissions: Localization.appString("wizard.step.permissions", fallback: "Permissions")
+            case .ready: Localization.appString("wizard.step.ready", fallback: "Ready")
             }
         }
     }
@@ -79,6 +81,8 @@ struct SetupAssistantView: View {
             ScrollView {
                 Group {
                     switch step {
+                    case .interfaceLanguage:
+                        InterfaceLanguageSetupStep(settings: settings)
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .configure:
@@ -120,6 +124,7 @@ struct SetupAssistantView: View {
         .frame(minWidth: 700, minHeight: 660)
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
+        .environment(\.locale, Locale(identifier: Localization.resolvedCode(override: settings.interfaceLanguage)))
     }
 
     private var stepIndicator: some View {
@@ -149,7 +154,11 @@ struct SetupAssistantView: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Step \(item.rawValue + 1), \(item.title)")
+                .accessibilityLabel(
+                    Localization.appFormat(
+                        "wizard.step.a11y", fallback: "Step %d, %@", item.rawValue + 1, item.title
+                    )
+                )
 
                 if item != Step.allCases.last {
                     Capsule()
@@ -166,7 +175,7 @@ struct SetupAssistantView: View {
                 guard let previous = Step(rawValue: step.rawValue - 1) else { return }
                 step = previous
             }
-            .disabled(step == .speech)
+            .disabled(step == .interfaceLanguage)
 
             Spacer()
 
@@ -220,10 +229,14 @@ struct SetupAssistantView: View {
         case .cloud:
             return coordinator.cloud.account?.isActive == true
                 ? nil
-                : "Sign in and activate Cloud above to continue"
+                : Localization.appString(
+                    "wizard.continueRequirement.cloud", fallback: "Sign in and activate Cloud above to continue"
+                )
         case .remote:
             return settings.apiKey(for: settings.asrProvider).isEmpty
-                ? "Add your provider key above to continue"
+                ? Localization.appString(
+                    "wizard.continueRequirement.byok", fallback: "Add your provider key above to continue"
+                )
                 : nil
         case .onDevice:
             return nil
@@ -231,11 +244,13 @@ struct SetupAssistantView: View {
     }
 
     private var continueTitle: String {
-        guard step == .speech || step == .configure else { return "Continue" }
+        guard step == .speech || step == .configure else {
+            return Localization.appString("wizard.continueTitle.default", fallback: "Continue")
+        }
         return switch speechSource {
-        case .cloud: "Continue with Cloud"
-        case .onDevice: "Continue with Local"
-        case .remote: "Continue with my API"
+        case .cloud: Localization.appString("wizard.continueTitle.cloud", fallback: "Continue with Cloud")
+        case .onDevice: Localization.appString("wizard.continueTitle.local", fallback: "Continue with Local")
+        case .remote: Localization.appString("wizard.continueTitle.byok", fallback: "Continue with my API")
         }
     }
 }
@@ -248,8 +263,11 @@ private struct SpeechSetupStep: View {
             SetupHeading(
                 icon: "waveform.badge.mic",
                 colors: [.indigo, .blue],
-                title: "Choose your Plainsay experience",
-                detail: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
+                title: Localization.appString("wizard.speech.title", fallback: "Choose your Plainsay experience"),
+                detail: Localization.appString(
+                    "wizard.speech.detail",
+                    fallback: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
+                )
             )
 
             HStack(alignment: .top, spacing: 14) {
@@ -257,17 +275,24 @@ private struct SpeechSetupStep: View {
                     isSelected: source == .cloud,
                     icon: "cloud.fill",
                     colors: [.indigo, .blue],
-                    eyebrow: "RECOMMENDED",
-                    title: "Plainsay Cloud",
-                    price: "≈ $3 / month",
+                    eyebrow: Localization.appString("wizard.plan.cloud.eyebrow", fallback: "RECOMMENDED"),
+                    title: Localization.appString("wizard.plan.cloud.title", fallback: "Plainsay Cloud"),
+                    price: Localization.appString("wizard.plan.cloud.price", fallback: "≈ $3 / month"),
                     features: [
-                        "No model download or preparation",
-                        "Transcription and cleanup included",
-                        "No API keys to configure",
+                        Localization.appString(
+                            "wizard.plan.cloud.feature1", fallback: "No model download or preparation"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.cloud.feature2", fallback: "Transcription and cleanup included"
+                        ),
+                        Localization.appString("wizard.plan.cloud.feature3", fallback: "No API keys to configure"),
                     ],
                     caveats: [
-                        "Needs an internet connection",
-                        "Audio is sent to Plainsay Cloud to be transcribed",
+                        Localization.appString("wizard.plan.cloud.caveat1", fallback: "Needs an internet connection"),
+                        Localization.appString(
+                            "wizard.plan.cloud.caveat2",
+                            fallback: "Audio is sent to Plainsay Cloud to be transcribed"
+                        ),
                     ],
                     action: { source = .cloud }
                 )
@@ -276,17 +301,28 @@ private struct SpeechSetupStep: View {
                     isSelected: source == .onDevice,
                     icon: "lock.shield.fill",
                     colors: [.green, .mint],
-                    eyebrow: "LOCAL SPEECH",
-                    title: "On this Mac",
-                    price: "Free",
+                    eyebrow: Localization.appString("wizard.plan.local.eyebrow", fallback: "LOCAL SPEECH"),
+                    title: Localization.appString("wizard.plan.local.title", fallback: "On this Mac"),
+                    price: Localization.appString("wizard.plan.local.price", fallback: "Free"),
                     features: [
-                        "Recorded audio never leaves this Mac",
-                        "Works without internet after setup",
+                        Localization.appString(
+                            "wizard.plan.local.feature1", fallback: "Recorded audio never leaves this Mac"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.local.feature2", fallback: "Works without internet after setup"
+                        ),
                     ],
                     caveats: [
-                        "Needs storage for the model, downloaded once",
-                        "Keeps using memory the whole time Plainsay is running, not just while dictating",
-                        "May slightly slow this Mac down",
+                        Localization.appString(
+                            "wizard.plan.local.caveat1", fallback: "Needs storage for the model, downloaded once"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.local.caveat2",
+                            fallback: "Keeps using memory the whole time Plainsay is running, not just while dictating"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.local.caveat3", fallback: "May slightly slow this Mac down"
+                        ),
                     ],
                     action: { source = .onDevice }
                 )
@@ -376,17 +412,28 @@ private struct ConfigureSpeechSetupStep: View {
 
     private var headingTitle: String {
         switch source {
-        case .cloud: "Set up Plainsay Cloud"
-        case .onDevice: "Choose a local model"
-        case .remote: "Bring your own provider"
+        case .cloud: Localization.appString("wizard.configure.title.cloud", fallback: "Set up Plainsay Cloud")
+        case .onDevice: Localization.appString("wizard.configure.title.local", fallback: "Choose a local model")
+        case .remote: Localization.appString("wizard.configure.title.byok", fallback: "Bring your own provider")
         }
     }
 
     private var headingDetail: String {
         switch source {
-        case .cloud: "Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac."
-        case .onDevice: "Recommended multilingual models need about 475–632 MB and can take several minutes to download and prepare the first time."
-        case .remote: "Audio leaves this Mac and provider charges may apply."
+        case .cloud:
+            Localization.appString(
+                "wizard.configure.detail.cloud",
+                fallback: "Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac."
+            )
+        case .onDevice:
+            Localization.appString(
+                "wizard.configure.detail.local",
+                fallback: "Recommended multilingual models need about 475–632 MB and can take several minutes to download and prepare the first time."
+            )
+        case .remote:
+            Localization.appString(
+                "wizard.configure.detail.byok", fallback: "Audio leaves this Mac and provider charges may apply."
+            )
         }
     }
 
@@ -426,12 +473,17 @@ private struct ConfigureSpeechSetupStep: View {
                 isEnabled: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware,
                 icon: "bird.fill",
                 colors: [.green, .mint],
-                brand: "NVIDIA",
-                name: "Parakeet TDT 0.6B v3",
-                badge: "RECOMMENDED",
+                brand: Localization.appString("wizard.model.parakeet.brand", fallback: "NVIDIA"),
+                name: Localization.appString("wizard.model.parakeet.name", fallback: "Parakeet TDT 0.6B v3"),
+                badge: Localization.appString("wizard.model.parakeet.badge", fallback: "RECOMMENDED"),
                 detail: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
-                    ? "Best fit for Polish + English · multilingual · ~475 MB"
-                    : "Requires an Apple silicon Mac",
+                    ? Localization.appString(
+                        "wizard.model.parakeet.detail.fit",
+                        fallback: "Best fit for Polish + English · multilingual · ~475 MB"
+                    )
+                    : Localization.appString(
+                        "wizard.model.parakeet.detail.unsupported", fallback: "Requires an Apple silicon Mac"
+                    ),
                 action: { model = .parakeetTDT06BV3 }
             )
 
@@ -535,16 +587,18 @@ private struct ConfigureSpeechSetupStep: View {
             }
 
             ModelField(
-                label: "Model",
+                label: Localization.appString("wizard.modelLabel", fallback: "Model"),
                 suggestions: settings.asrProvider.suggestedModels,
                 placeholder: settings.asrProvider.defaultModel.isEmpty
-                    ? "model name"
+                    ? Localization.appString("wizard.modelPlaceholder", fallback: "model name")
                     : settings.asrProvider.defaultModel,
                 value: $settings.asrModel
             )
 
             APIKeyField(
-                title: "\(settings.asrProvider.displayName) API key",
+                title: Localization.appFormat(
+                    "wizard.apiKeyTitle", fallback: "%@ API key", settings.asrProvider.displayName
+                ),
                 signupURL: settings.asrProvider.signupURL,
                 currentKey: settings.apiKey(for: settings.asrProvider),
                 onSave: { key in
@@ -570,11 +624,54 @@ private struct ConfigureSpeechSetupStep: View {
 
     private func whisperTitle(_ model: OnDeviceModel) -> String {
         switch model {
-        case .baseEN: "Base · English only · 150 MB"
-        case .smallEN: "Small · English only · 480 MB"
-        case .distilLargeV3Turbo: "Distil Large v3 Turbo · multilingual · 600 MB"
-        case .largeV3Turbo: "Large v3 Turbo · multilingual · 632 MB"
+        case .baseEN:
+            Localization.appString("wizard.whisper.base", fallback: "Base · English only · 150 MB")
+        case .smallEN:
+            Localization.appString("wizard.whisper.small", fallback: "Small · English only · 480 MB")
+        case .distilLargeV3Turbo:
+            Localization.appString(
+                "wizard.whisper.distilLargeV3Turbo", fallback: "Distil Large v3 Turbo · multilingual · 600 MB"
+            )
+        case .largeV3Turbo:
+            Localization.appString(
+                "wizard.whisper.largeV3Turbo", fallback: "Large v3 Turbo · multilingual · 632 MB"
+            )
         case .parakeetTDT06BV3: model.displayName
+        }
+    }
+}
+
+/// The very first step, deliberately: everything after it — including this
+/// wizard's own remaining pages — renders through `.environment(\.locale, ...)`
+/// on `SetupAssistantView`, so picking a language here changes what the rest
+/// of setup looks like immediately. Distinct from `LanguageSetupStep` below,
+/// which is about what the speech models listen for, not what the app shows.
+private struct InterfaceLanguageSetupStep: View {
+    @Bindable var settings: PlainsaySettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: "globe",
+                colors: [.blue, .mint],
+                title: Localization.appString("wizard.interfaceLanguage.title", fallback: "Choose a language"),
+                detail: Localization.appString(
+                    "wizard.interfaceLanguage.detail",
+                    fallback: "Plainsay's menus, windows, and messages can show in any of these. You can change this later in Settings › General."
+                )
+            )
+
+            VStack(alignment: .leading, spacing: 10) {
+                Picker("Interface language", selection: $settings.interfaceLanguage) {
+                    ForEach(AppLanguage.all) { language in
+                        Text(language.displayName).tag(language.code)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+            }
+            .padding(18)
+            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
         }
     }
 }
@@ -594,8 +691,11 @@ private struct LanguageSetupStep: View {
             SetupHeading(
                 icon: "character.bubble.fill",
                 colors: [.purple, .pink],
-                title: "Language & editing",
-                detail: "Tell Plainsay which languages you actually speak, and how it should tidy up the words before inserting them."
+                title: Localization.appString("wizard.language.title", fallback: "Language & editing"),
+                detail: Localization.appString(
+                    "wizard.language.detail",
+                    fallback: "Tell Plainsay which languages you actually speak, and how it should tidy up the words before inserting them."
+                )
             )
 
             languagesDetails
@@ -650,16 +750,18 @@ private struct LanguageSetupStep: View {
                 }
 
                 ModelField(
-                    label: "Model",
+                    label: Localization.appString("wizard.modelLabel", fallback: "Model"),
                     suggestions: settings.cleanupProvider.suggestedModels,
                     placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                        ? "model name"
+                        ? Localization.appString("wizard.modelPlaceholder", fallback: "model name")
                         : settings.cleanupProvider.defaultModel,
                     value: $settings.cleanupModel
                 )
 
                 APIKeyField(
-                    title: "\(settings.cleanupProvider.displayName) API key",
+                    title: Localization.appFormat(
+                        "wizard.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
+                    ),
                     signupURL: settings.cleanupProvider.signupURL,
                     currentKey: settings.apiKey(for: settings.cleanupProvider),
                     onSave: { key in
@@ -691,8 +793,11 @@ private struct VoiceSetupStep: View {
             SetupHeading(
                 icon: "person.wave.2.fill",
                 colors: [.teal, .cyan],
-                title: "Ignore other voices (optional)",
-                detail: "If you often dictate somewhere with other people talking, Plainsay can learn your voice and filter everyone else out before transcription."
+                title: Localization.appString("wizard.voice.title", fallback: "Ignore other voices (optional)"),
+                detail: Localization.appString(
+                    "wizard.voice.detail",
+                    fallback: "If you often dictate somewhere with other people talking, Plainsay can learn your voice and filter everyone else out before transcription."
+                )
             )
 
             VStack(alignment: .leading, spacing: 12) {
@@ -875,8 +980,11 @@ private struct ShortcutSetupStep: View {
             SetupHeading(
                 icon: "keyboard.fill",
                 colors: [.orange, .pink],
-                title: "Pick a shortcut",
-                detail: "Use one key from any app. Plainsay listens only while dictation is active."
+                title: Localization.appString("wizard.shortcut.title", fallback: "Pick a shortcut"),
+                detail: Localization.appString(
+                    "wizard.shortcut.detail",
+                    fallback: "Use one key from any app. Plainsay listens only while dictation is active."
+                )
             )
 
             VStack(alignment: .leading, spacing: 18) {
@@ -886,7 +994,7 @@ private struct ShortcutSetupStep: View {
                         .foregroundStyle(.orange)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(settings.binding.displayName)
+                        Text(settings.binding.localizedDisplayName)
                             .font(.title2.bold())
                         Text("Your dictation shortcut")
                             .foregroundStyle(.secondary)
@@ -898,7 +1006,7 @@ private struct ShortcutSetupStep: View {
                 Form {
                     Picker("Hotkey", selection: $settings.binding) {
                         ForEach(HotkeyBinding.presets) { preset in
-                            Text(preset.displayName).tag(preset)
+                            Text(preset.localizedDisplayName).tag(preset)
                         }
                     }
 
@@ -924,11 +1032,21 @@ private struct ShortcutSetupStep: View {
     private var behaviorHint: String {
         switch settings.hotkeyMode {
         case .hybrid:
-            "Hold \(settings.binding.displayName) while speaking, or tap once to keep recording and tap again to stop."
+            Localization.appFormat(
+                "wizard.shortcut.hint.holdOrTap",
+                fallback: "Hold %@ while speaking, or tap once to keep recording and tap again to stop.",
+                settings.binding.localizedDisplayName
+            )
         case .holdOnly:
-            "Hold \(settings.binding.displayName) while speaking. Release it to stop."
+            Localization.appFormat(
+                "wizard.shortcut.hint.hold", fallback: "Hold %@ while speaking. Release it to stop.",
+                settings.binding.localizedDisplayName
+            )
         case .toggleOnly:
-            "Tap \(settings.binding.displayName) to start, then tap it again to stop."
+            Localization.appFormat(
+                "wizard.shortcut.hint.tap", fallback: "Tap %@ to start, then tap it again to stop.",
+                settings.binding.localizedDisplayName
+            )
         }
     }
 }
@@ -941,8 +1059,11 @@ private struct PermissionsSetupStep: View {
             SetupHeading(
                 icon: "lock.shield.fill",
                 colors: [.teal, .blue],
-                title: "Allow the essentials",
-                detail: "Each permission has one narrow job. Choose Grant when you are ready; you can continue even if you finish these later."
+                title: Localization.appString("wizard.permissions.title", fallback: "Allow the essentials"),
+                detail: Localization.appString(
+                    "wizard.permissions.detail",
+                    fallback: "Each permission has one narrow job. Choose Grant when you are ready; you can continue even if you finish these later."
+                )
             )
 
             VStack(spacing: 15) {
@@ -987,7 +1108,9 @@ private struct ReadySetupStep: View {
             SetupHeading(
                 icon: canDictate ? "checkmark.circle.fill" : readinessIcon,
                 colors: canDictate ? [.green, .mint] : [.orange, .yellow],
-                title: canDictate ? "Plainsay is ready" : readinessTitle,
+                title: canDictate
+                    ? Localization.appString("wizard.ready.titleReady", fallback: "Plainsay is ready")
+                    : readinessTitle,
                 detail: readyDetail
             )
 
@@ -1044,25 +1167,46 @@ private struct ReadySetupStep: View {
     }
 
     private var readinessTitle: String {
-        if case .error = coordinator.phase { return "Plainsay needs attention" }
-        return "Plainsay is getting ready"
+        if case .error = coordinator.phase {
+            return Localization.appString("wizard.ready.title.needsAttention", fallback: "Plainsay needs attention")
+        }
+        return Localization.appString("wizard.ready.title.gettingReady", fallback: "Plainsay is getting ready")
     }
 
     private var readyDetail: String {
         if canDictate {
-            return "You can dictate into any app. Settings are always available from the menu bar."
+            return Localization.appString(
+                "wizard.ready.detail.ready",
+                fallback: "You can dictate into any app. Settings are always available from the menu bar."
+            )
         }
         if case .error = coordinator.phase {
-            return "Finish the item below before dictation can start. Your setup choice has been saved."
+            return Localization.appString(
+                "wizard.ready.detail.needsAttention",
+                fallback: "Finish the item below before dictation can start. Your setup choice has been saved."
+            )
         }
-        return "You can finish setup now. Preparation continues in the background, and the menu bar shows when dictation is available."
+        return Localization.appString(
+            "wizard.ready.detail.finishInBackground",
+            fallback: "You can finish setup now. Preparation continues in the background, and the menu bar shows when dictation is available."
+        )
     }
 
     private var dictationInstruction: String {
         switch settings.hotkeyMode {
-        case .holdOnly: "Hold \(settings.binding.displayName) to dictate"
-        case .toggleOnly: "Tap \(settings.binding.displayName) to start and stop"
-        case .hybrid: "Hold or tap \(settings.binding.displayName) to dictate"
+        case .holdOnly:
+            Localization.appFormat(
+                "wizard.ready.instruction.hold", fallback: "Hold %@ to dictate", settings.binding.localizedDisplayName
+            )
+        case .toggleOnly:
+            Localization.appFormat(
+                "wizard.ready.instruction.tap", fallback: "Tap %@ to start and stop", settings.binding.localizedDisplayName
+            )
+        case .hybrid:
+            Localization.appFormat(
+                "wizard.ready.instruction.holdOrTap", fallback: "Hold or tap %@ to dictate",
+                settings.binding.localizedDisplayName
+            )
         }
     }
 
@@ -1071,17 +1215,31 @@ private struct ReadySetupStep: View {
         // states the full model name, so "NVIDIA Parakeet" / "Whisper by
         // OpenAI" here would say the model twice in two consecutive lines.
         switch settings.transcriptionSource {
-        case .onDevice: settings.model == .parakeetTDT06BV3 ? "NVIDIA" : "OpenAI"
+        case .onDevice:
+            settings.model == .parakeetTDT06BV3
+                ? Localization.appString("wizard.ready.speechConfig.title.nvidia", fallback: "NVIDIA")
+                : Localization.appString("wizard.ready.speechConfig.title.openai", fallback: "OpenAI")
         case .remote: settings.asrProvider.displayName
-        case .cloud: "Plainsay Cloud"
+        case .cloud: Localization.appString("wizard.ready.speechConfig.title.cloud", fallback: "Plainsay Cloud")
         }
     }
 
     private var speechConfigurationDetail: String {
         switch settings.transcriptionSource {
-        case .onDevice: "\(settings.model.displayName) · \(settings.model.approximateSize)"
-        case .remote: "Your API · \(settings.resolvedASRModel)"
-        case .cloud: "About $3/month · transcription and cleanup included"
+        case .onDevice:
+            Localization.appFormat(
+                "wizard.ready.speechConfig.detail.onDevice", fallback: "%@ · %@",
+                settings.model.displayName, settings.model.approximateSize
+            )
+        case .remote:
+            Localization.appFormat(
+                "wizard.ready.speechConfig.detail.byok", fallback: "Your API · %@", settings.resolvedASRModel
+            )
+        case .cloud:
+            Localization.appString(
+                "wizard.ready.speechConfig.detail.cloud",
+                fallback: "About $3/month · transcription and cleanup included"
+            )
         }
     }
 

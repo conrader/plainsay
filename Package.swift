@@ -21,14 +21,16 @@ let package = Package(
             dependencies: [
                 .product(name: "WhisperKit", package: "WhisperKit"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
-            ]
+            ],
+            resources: [.process("Resources/CoreLocalizable.xcstrings")]
         ),
         .executableTarget(
             name: "PlainsayApp",
             dependencies: [
                 "PlainsayCore",
                 .product(name: "Sparkle", package: "Sparkle"),
-            ]
+            ],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .testTarget(
             name: "PlainsayCoreTests",
