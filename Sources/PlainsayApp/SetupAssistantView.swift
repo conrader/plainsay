@@ -9,6 +9,11 @@ struct SetupAssistantView: View {
     let onFinish: @MainActor () -> Void
 
     @State private var step: Step = .speech
+    // Lives here, not in SpeechSetupStep: `continueRequirement` below reads
+    // settings.apiKey(for:), a Keychain read SwiftUI's observation can't see.
+    // A child's local @State can't invalidate this parent's body, so the
+    // revision has to be owned where the thing that depends on it lives.
+    @State private var asrKeyRevision = 0
     @State private var speechSource: TranscriptionSource
     @State private var speechModel: OnDeviceModel
 
@@ -73,7 +78,8 @@ struct SetupAssistantView: View {
                             source: $speechSource,
                             model: $speechModel,
                             settings: settings,
-                            coordinator: coordinator
+                            coordinator: coordinator,
+                            asrKeyRevision: $asrKeyRevision
                         )
                     case .shortcut:
                         ShortcutSetupStep(settings: settings)
@@ -225,8 +231,9 @@ struct SetupAssistantView: View {
 private struct SpeechSetupStep: View {
     @Binding var source: TranscriptionSource
     @Binding var model: OnDeviceModel
-    let settings: PlainsaySettings
+    @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
+    @Binding var asrKeyRevision: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -469,13 +476,51 @@ private struct SpeechSetupStep: View {
     }
 
     private var ownAPIDetails: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 14) {
             Label("Bring your own provider", systemImage: "key.horizontal.fill")
                 .font(.headline)
-            Text("Plainsay will use \(settings.asrProvider.displayName) with the model and API key saved in Speech settings. Audio leaves this Mac and provider charges may apply.")
+            Text("Audio leaves this Mac and provider charges may apply.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+
+            Picker("Service", selection: $settings.asrProvider) {
+                ForEach(ASRProvider.allCases) { provider in
+                    Text(provider.displayName).tag(provider)
+                }
+            }
+
+            if settings.asrProvider == .custom {
+                // The one field this step used to be missing entirely — with
+                // no way to name a host, "bring your own provider" meant
+                // nothing for anyone not using a preset (Groq/OpenAI/deAPI).
+                TextField(
+                    "Base URL",
+                    text: $settings.asrBaseURL,
+                    prompt: Text("https://example.com/v1")
+                )
+                .textFieldStyle(.roundedBorder)
+            }
+
+            ModelField(
+                label: "Model",
+                suggestions: settings.asrProvider.suggestedModels,
+                placeholder: settings.asrProvider.defaultModel.isEmpty
+                    ? "model name"
+                    : settings.asrProvider.defaultModel,
+                value: $settings.asrModel
+            )
+
+            APIKeyField(
+                title: "\(settings.asrProvider.displayName) API key",
+                signupURL: settings.asrProvider.signupURL,
+                currentKey: settings.apiKey(for: settings.asrProvider),
+                onSave: { key in
+                    settings.setAPIKey(key, for: settings.asrProvider)
+                    asrKeyRevision += 1
+                    Task { await coordinator.reloadModel() }
+                }
+            )
+            .id("\(settings.asrProvider.rawValue)-\(asrKeyRevision)")
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
