@@ -273,6 +273,22 @@
       </div>
     </header>
 
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Открытый код, прозрачность, безопасность</h2>
+      <p class="lede">Доверие здесь — не заявление, а то, что можно самому прочитать. Весь клиент распространяется по лицензии MIT и открыт: конвейер обработки, HUD, настройки — всё целиком. Не «open core» и не «открыто сейчас, закрыто потом» — форкать, изменять и размещать у себя можно бессрочно и свободно.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">ЧТО ОТКРЫТО</span>
+          <p>Весь клиент диктовки целиком — расшифровка, редактирование, HUD, Настройки, Ассистент настройки. Работая локально, Plainsay не делает ни одного сетевого запроса, который вы сами не инициировали: никакой аналитики, никакой телеметрии, никаких тайных обращений домой.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">ЧТО НЕ ОТКРЫТО</span>
+          <p>Биллинговый бэкенд платного тарифа Cloud — он хранит данные платежей и учётные данные провайдеров, и именно поэтому остаётся отдельным и приватным. Сам процесс диктовки, которым вы реально пользуетесь, полностью открыт.</p>
+        </div>
+      </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — прочитайте каждую строку</p>
+    </section>
+
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">Как это выглядит</h2>
       <figure class="hud-figure">
@@ -315,28 +331,6 @@
       <div class="reasons" id="reasons"></div>
     </section>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Открытый код, прозрачность, безопасность</h2>
-      <p class="lede">Доверие здесь — не заявление, а то, что можно самому прочитать. Весь клиент распространяется по лицензии MIT и открыт: конвейер обработки, HUD, настройки — всё целиком. Не «open core» и не «открыто сейчас, закрыто потом» — форкать, изменять и размещать у себя можно бессрочно и свободно.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">ЧТО ОТКРЫТО</span>
-          <p>Весь клиент диктовки целиком — расшифровка, редактирование, HUD, Настройки, Ассистент настройки. Работая локально, Plainsay не делает ни одного сетевого запроса, который вы сами не инициировали: никакой аналитики, никакой телеметрии, никаких тайных обращений домой.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">ЧТО НЕ ОТКРЫТО</span>
-          <p>Биллинговый бэкенд платного тарифа Cloud — он хранит данные платежей и учётные данные провайдеров, и именно поэтому остаётся отдельным и приватным. Сам процесс диктовки, которым вы реально пользуетесь, полностью открыт.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — прочитайте каждую строку</p>
-    </section>
-
-    <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">Три способа использования</h2>
-      <p class="lede">Plainsay Cloud — самый простой способ начать: не нужно скачивать модель, нечего настраивать. Предпочитаете держать всё на своём Mac? Локальный тариф бесплатен и полностью функционален, ценой одного дополнительного шага настройки.</p>
-      <div class="plans" id="plans"></div>
-    </section>
-
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -360,6 +354,12 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <h2 class="kicker" style="margin-bottom: 8px;">Три способа использования</h2>
+      <p class="lede">Plainsay Cloud — самый простой способ начать: не нужно скачивать модель, нечего настраивать. Предпочитаете держать всё на своём Mac? Локальный тариф бесплатен и полностью функционален, ценой одного дополнительного шага настройки.</p>
+      <div class="plans" id="plans"></div>
+    </section>
+
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
       <p class="headline">Начните диктовать примерно за две минуты.</p>
@@ -374,6 +374,8 @@
       <span class="text">Plainsay · диктовка для macOS · Лицензия MIT</span>
       <span class="spacer"></span>
       <div class="links">
+        <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+        <a href="/why-on-device/">Why on-device</a>
         <a href="https://github.com/conrader/plainsay">Исходный код</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">Релизы</a>
       </div>

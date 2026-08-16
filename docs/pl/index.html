@@ -273,6 +273,22 @@
       </div>
     </header>
 
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, przejrzyste, bezpieczne</h2>
+      <p class="lede">Zaufanie to tutaj nie deklaracja — to coś, co możesz sam przeczytać. Cały klient ma licencję MIT i jest publiczny: potok przetwarzania, HUD, ustawienia, wszystko. Nie „open core” i nie „otwarte teraz, zamknięte później” — możesz forkować, modyfikować i hostować u siebie bez ograniczeń w czasie.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">CO JEST OTWARTE</span>
+          <p>Cały klient dyktowania — transkrypcja, edycja, HUD, Ustawienia, Asystent konfiguracji. Działając lokalnie, Plainsay nie wykonuje żadnego połączenia sieciowego, o które nie poprosiłeś: brak analityki, brak telemetrii, brak łączenia się bez wiedzy.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">CO NIE JEST</span>
+          <p>Backend rozliczeniowy dla płatnego planu Cloud — przechowuje dane płatności i dane dostawców, i właśnie dlatego pozostaje oddzielny i prywatny. Sam proces dyktowania, z którego korzystasz, jest w pełni otwarty.</p>
+        </div>
+      </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — przeczytaj każdą linię</p>
+    </section>
+
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">Zobacz jak to działa</h2>
       <figure class="hud-figure">
@@ -315,28 +331,6 @@
       <div class="reasons" id="reasons"></div>
     </section>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, przejrzyste, bezpieczne</h2>
-      <p class="lede">Zaufanie to tutaj nie deklaracja — to coś, co możesz sam przeczytać. Cały klient ma licencję MIT i jest publiczny: potok przetwarzania, HUD, ustawienia, wszystko. Nie „open core” i nie „otwarte teraz, zamknięte później” — możesz forkować, modyfikować i hostować u siebie bez ograniczeń w czasie.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">CO JEST OTWARTE</span>
-          <p>Cały klient dyktowania — transkrypcja, edycja, HUD, Ustawienia, Asystent konfiguracji. Działając lokalnie, Plainsay nie wykonuje żadnego połączenia sieciowego, o które nie poprosiłeś: brak analityki, brak telemetrii, brak łączenia się bez wiedzy.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">CO NIE JEST</span>
-          <p>Backend rozliczeniowy dla płatnego planu Cloud — przechowuje dane płatności i dane dostawców, i właśnie dlatego pozostaje oddzielny i prywatny. Sam proces dyktowania, z którego korzystasz, jest w pełni otwarty.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — przeczytaj każdą linię</p>
-    </section>
-
-    <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">Trzy sposoby uruchomienia</h2>
-      <p class="lede">Plainsay Cloud to najprostszy sposób na start — bez pobierania modelu, bez konfiguracji. Wolisz mieć wszystko na swoim Macu? Plan lokalny jest darmowy i w pełni funkcjonalny, kosztem jednego dodatkowego kroku konfiguracji.</p>
-      <div class="plans" id="plans"></div>
-    </section>
-
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -360,6 +354,12 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <h2 class="kicker" style="margin-bottom: 8px;">Trzy sposoby uruchomienia</h2>
+      <p class="lede">Plainsay Cloud to najprostszy sposób na start — bez pobierania modelu, bez konfiguracji. Wolisz mieć wszystko na swoim Macu? Plan lokalny jest darmowy i w pełni funkcjonalny, kosztem jednego dodatkowego kroku konfiguracji.</p>
+      <div class="plans" id="plans"></div>
+    </section>
+
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
       <p class="headline">Zacznij dyktować w około dwie minuty.</p>
@@ -374,6 +374,8 @@
       <span class="text">Plainsay · dyktowanie na macOS · Licencja MIT</span>
       <span class="spacer"></span>
       <div class="links">
+        <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+        <a href="/why-on-device/">Why on-device</a>
         <a href="https://github.com/conrader/plainsay">Kod źródłowy</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">Wydania</a>
       </div>

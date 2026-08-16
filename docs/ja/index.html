@@ -273,6 +273,22 @@
       </div>
     </header>
 
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">オープンソース、透明、安全</h2>
+      <p class="lede">ここでの信頼は主張ではなく、実際に読みに行けるものです。クライアント全体がMITライセンスで公開されています——パイプライン、HUD、設定、すべてです。「オープンコア」でも「今はオープンで後で閉じる」でもありません。フォークも、改変も、期限なくセルフホストするのも自由です。</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">公開されているもの</span>
+          <p>口述筆記クライアントのすべて——文字起こし、編集、HUD、設定、セットアップアシスタント。オンデバイスで動作し、Plainsayはあなたが依頼していないネットワーク通信を一切行いません：アナリティクスなし、テレメトリーなし、こっそりした通信もなし。</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">公開されていないもの</span>
+          <p>有料のCloudプラン向けの課金バックエンドです——支払い情報とプロバイダーの認証情報を保持するため、まさにそれが理由で分離され非公開になっています。あなたが実際に使う口述筆記の体験自体は、完全にオープンです。</p>
+        </div>
+      </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——すべての行を読む</p>
+    </section>
+
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">実際の画面</h2>
       <figure class="hud-figure">
@@ -315,28 +331,6 @@
       <div class="reasons" id="reasons"></div>
     </section>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">オープンソース、透明、安全</h2>
-      <p class="lede">ここでの信頼は主張ではなく、実際に読みに行けるものです。クライアント全体がMITライセンスで公開されています——パイプライン、HUD、設定、すべてです。「オープンコア」でも「今はオープンで後で閉じる」でもありません。フォークも、改変も、期限なくセルフホストするのも自由です。</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">公開されているもの</span>
-          <p>口述筆記クライアントのすべて——文字起こし、編集、HUD、設定、セットアップアシスタント。オンデバイスで動作し、Plainsayはあなたが依頼していないネットワーク通信を一切行いません：アナリティクスなし、テレメトリーなし、こっそりした通信もなし。</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">公開されていないもの</span>
-          <p>有料のCloudプラン向けの課金バックエンドです——支払い情報とプロバイダーの認証情報を保持するため、まさにそれが理由で分離され非公開になっています。あなたが実際に使う口述筆記の体験自体は、完全にオープンです。</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——すべての行を読む</p>
-    </section>
-
-    <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">3つの使い方</h2>
-      <p class="lede">Plainsay Cloudなら最も簡単に始められます——モデルのダウンロードも設定も不要です。すべてMac上で完結させたい方には、ローカル版が無料でフル機能、設定の手間が一つ増えるだけです。</p>
-      <div class="plans" id="plans"></div>
-    </section>
-
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -360,6 +354,12 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <h2 class="kicker" style="margin-bottom: 8px;">3つの使い方</h2>
+      <p class="lede">Plainsay Cloudなら最も簡単に始められます——モデルのダウンロードも設定も不要です。すべてMac上で完結させたい方には、ローカル版が無料でフル機能、設定の手間が一つ増えるだけです。</p>
+      <div class="plans" id="plans"></div>
+    </section>
+
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
       <p class="headline">約2分で口述筆記を始められます。</p>
@@ -374,6 +374,8 @@
       <span class="text">Plainsay · macOS向け口述筆記 · MITライセンス</span>
       <span class="spacer"></span>
       <div class="links">
+        <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+        <a href="/why-on-device/">Why on-device</a>
         <a href="https://github.com/conrader/plainsay">ソースコード</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">リリース</a>
       </div>

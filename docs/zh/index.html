@@ -273,6 +273,22 @@
       </div>
     </header>
 
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">开源、透明、安全</h2>
+      <p class="lede">在这里，信任不是一句口号——而是你可以亲自去读的东西。整个客户端都以 MIT 许可开源公开：处理流程、HUD、设置，全部都是。不是「开源核心」，也不是「现在开放、以后关闭」——你可以自由地 fork、修改，并无限期自行托管。</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
+          <p>整个听写客户端——转录、编辑、HUD、设置、设置助理。在设备端运行的 Plainsay 不会发起任何你未主动要求的网络请求：没有数据分析、没有遥测、没有偷偷回传。</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
+          <p>付费 Cloud 套餐的计费后端——它保存着支付凭证和服务商凭证，正因如此才需要保持独立和私密。你实际使用的听写体验本身是完全开放的。</p>
+        </div>
+      </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——逐行阅读源码</p>
+    </section>
+
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">实际界面</h2>
       <figure class="hud-figure">
@@ -315,28 +331,6 @@
       <div class="reasons" id="reasons"></div>
     </section>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">开源、透明、安全</h2>
-      <p class="lede">在这里，信任不是一句口号——而是你可以亲自去读的东西。整个客户端都以 MIT 许可开源公开：处理流程、HUD、设置，全部都是。不是「开源核心」，也不是「现在开放、以后关闭」——你可以自由地 fork、修改，并无限期自行托管。</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
-          <p>整个听写客户端——转录、编辑、HUD、设置、设置助理。在设备端运行的 Plainsay 不会发起任何你未主动要求的网络请求：没有数据分析、没有遥测、没有偷偷回传。</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
-          <p>付费 Cloud 套餐的计费后端——它保存着支付凭证和服务商凭证，正因如此才需要保持独立和私密。你实际使用的听写体验本身是完全开放的。</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——逐行阅读源码</p>
-    </section>
-
-    <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">三种使用方式</h2>
-      <p class="lede">Plainsay Cloud 是最简单的上手方式——无需下载模型，也无需任何配置。更愿意一切都留在 Mac 本地？本地版免费且功能完整，只是多一个设置步骤。</p>
-      <div class="plans" id="plans"></div>
-    </section>
-
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -360,6 +354,12 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <h2 class="kicker" style="margin-bottom: 8px;">三种使用方式</h2>
+      <p class="lede">Plainsay Cloud 是最简单的上手方式——无需下载模型，也无需任何配置。更愿意一切都留在 Mac 本地？本地版免费且功能完整，只是多一个设置步骤。</p>
+      <div class="plans" id="plans"></div>
+    </section>
+
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
       <p class="headline">大约两分钟即可开始听写。</p>
@@ -374,6 +374,8 @@
       <span class="text">Plainsay · macOS 听写工具 · MIT 许可</span>
       <span class="spacer"></span>
       <div class="links">
+        <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+        <a href="/why-on-device/">Why on-device</a>
         <a href="https://github.com/conrader/plainsay">源代码</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">发行版</a>
       </div>

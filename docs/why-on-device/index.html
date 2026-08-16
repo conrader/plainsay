@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why on-device — Plainsay keeps your voice on your Mac</title>
+<meta name="description" content="Plainsay transcribes your voice on your Mac, not in the cloud. What that means exactly, why it matters, and the one place data can leave — stated precisely, not as a slogan.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/why-on-device/">
+<style>
+  :root{
+    --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
+    --sys-accent:#0a84ff; --hairline:rgba(255,255,255,0.16); --label-secondary:#a8aebd;
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,monospace; --radius-card:18px; --radius-pill:999px;
+    --ease-out:cubic-bezier(0,0,0.58,1); --dur-phase:180ms;
+    --win:rgba(111,211,199,0.10); --win-line:rgba(111,211,199,0.30);
+    --warn:rgba(232,137,107,0.10); --warn-line:rgba(232,137,107,0.32);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--bone);text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--bone)}
+  a:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .page{min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:760px;padding:0 32px;display:flex;flex-direction:column}
+  @media(max-width:620px){.wrap{padding:0 20px}}
+  nav.top{display:flex;align-items:center;gap:10px;padding:30px 0;width:100%;max-width:920px}
+  nav.top .word{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+  nav.top .word a{text-decoration:none;color:var(--bone)}
+  nav.top .spacer{flex:1}
+  nav.top .links{display:flex;align-items:center;gap:22px;font-size:13px}
+  nav.top .links a{text-decoration:none;color:var(--bone);opacity:.9}
+  nav.top .links a:hover{opacity:1;text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35)}
+  @media(max-width:480px){nav.top .links{gap:14px}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-ui);font-weight:500;line-height:1;text-decoration:none;cursor:pointer;transition:filter var(--dur-phase) var(--ease-out);height:30px;padding:0 16px;border-radius:7px;font-size:13px;background:var(--sys-accent);border:1px solid transparent;color:#fff}
+  .btn:hover{filter:brightness(1.08)}
+  header.hero{padding:64px 0 20px;display:flex;flex-direction:column;gap:18px}
+  header.hero .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
+  header.hero h1{margin:0;font-size:44px;line-height:1.13;font-weight:700;letter-spacing:-1px;text-wrap:balance}
+  header.hero .sub{margin:0;font-size:18px;line-height:1.6;color:var(--label-secondary);text-wrap:pretty}
+  @media(max-width:620px){header.hero h1{font-size:32px}}
+  section{border-top:1px solid var(--hairline);padding:40px 0 44px}
+  section:first-of-type{border-top:none}
+  h2.big{margin:0 0 12px;font-size:23px;font-weight:650;letter-spacing:-0.4px}
+  p{font-size:16px;line-height:1.7;color:var(--bone)}
+  p.dim{color:var(--label-secondary)}
+  .kicker{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--slate)}
+  .flow{display:flex;flex-direction:column;gap:0;border:1px solid var(--hairline);border-radius:var(--radius-card);overflow:hidden;margin:18px 0;font-family:var(--font-mono);font-size:13px}
+  .flow .step{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-bottom:1px solid var(--hairline)}
+  .flow .step:last-child{border-bottom:none}
+  .flow .where{flex:0 0 96px;font-weight:600;letter-spacing:0.5px}
+  .flow .where.local{color:var(--signal)}
+  .flow .where.cloud{color:var(--ember)}
+  .flow .what{color:var(--label-secondary);line-height:1.55}
+  .callout{border:1px solid var(--warn-line);background:var(--warn);border-radius:var(--radius-card);padding:18px 20px;margin:18px 0;font-size:15px;line-height:1.65}
+  .callout.win{border-color:var(--win-line);background:var(--win)}
+  .callout .t{font-weight:650;margin-bottom:5px}
+  ul.plain{padding-left:22px;margin:12px 0}
+  ul.plain li{margin:10px 0;font-size:16px;line-height:1.65}
+  ul.plain li b{color:var(--signal)}
+  .final{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 0 56px}
+  .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
+  .final .req{font-size:12px;color:var(--slate)}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;width:100%;max-width:920px}
+  footer .text{font-size:12px;color:var(--slate)}
+  footer .spacer{flex:1}
+  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links a{color:var(--slate);text-decoration:none}
+  footer .links a:hover{color:var(--bone)}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="top">
+    <img src="/assets/logo.svg" alt="" width="28" height="28" style="display:block">
+    <span class="word"><a href="/">Plainsay</a></span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+      <a href="https://github.com/conrader/plainsay">GitHub</a>
+      <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <header class="hero">
+      <div class="eyebrow">Why on-device</div>
+      <h1>Your voice should never have to leave your Mac.</h1>
+      <p class="sub">Most dictation tools upload everything you say to a server before you see a single word. Plainsay doesn't. Here's exactly what runs where — stated precisely, not as a slogan.</p>
+    </header>
+
+    <section>
+      <h2 class="big">What actually happens when you dictate</h2>
+      <p class="dim">Two steps, and only one of them can ever touch the network:</p>
+      <div class="flow">
+        <div class="step"><span class="where local">ON YOUR MAC</span><span class="what">You hold the key and speak. Audio is captured and transcribed locally — Whisper or NVIDIA Parakeet, running through Core ML on Apple silicon. No account. No upload. This step never needs the network.</span></div>
+        <div class="step"><span class="where cloud">YOUR CHOICE</span><span class="what">An optional cleanup pass removes fillers and false starts and fixes punctuation. By default this calls an AI model in the cloud — but you can turn it off, bring your own API key, or use a local model. Switched off, the raw transcript is what you get, and nothing leaves the Mac at all.</span></div>
+      </div>
+      <div class="callout">
+        <div class="t">The honest line</div>
+        Plainsay's <strong>transcription is guaranteed local</strong>. The one optional step that can leave the Mac — cleanup — is <strong>your choice</strong>, not locked to one vendor's cloud. We don't claim “100% offline,” because if you leave cloud cleanup on, that one step isn't. We tell you exactly where the line is, and you decide where to draw it.
+      </div>
+    </section>
+
+    <section>
+      <h2 class="big">Why it's worth it</h2>
+      <ul class="plain">
+        <li><b>Privacy that isn't a checkbox.</b> Your voice is often the most sensitive thing you type — passwords read aloud, medical notes, half-formed ideas, other people's names. When transcription is local, that audio never becomes someone else's server log, training set, or breach.</li>
+        <li><b>It's faster.</b> No round trip to a data center and back. On Apple silicon, a short dictation is transcribed in a fraction of the time an upload alone would take — and it works the same on a plane, a train, or a bad hotel Wi-Fi.</li>
+        <li><b>It works offline.</b> A cloud dictation app is a paperweight without a connection. Local transcription doesn't care.</li>
+        <li><b>No lock-in.</b> Whisper or Parakeet for transcription; your choice of provider (or none) for cleanup. Nothing is hard-wired to one AI vendor's pricing or availability.</li>
+        <li><b>No meter running.</b> Local dictation is free and unmetered — no per-word caps, no monthly subscription for the core function.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="big">You don't have to take our word for it</h2>
+      <p>A closed cloud app can promise anything in a privacy policy. Plainsay's entire client is <strong>MIT licensed and public</strong> — you, or anyone you trust, can read exactly what it does with your audio: where it goes, when it goes anywhere, and what happens if you turn cleanup off. There is no hidden telemetry and nothing phones home. If that mattered enough to read this page, it's worth reading the source.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — the whole thing, every line</p>
+    </section>
+
+    <section>
+      <h2 class="big">The contrast, in one sentence</h2>
+      <p>Tools like Wispr Flow state plainly that <em>“transcription always happens in the cloud”</em> — every word leaves your device by design. Plainsay flips the default: local first, cloud only for the one optional step you control. <a href="/vs/wispr-flow/">See the full comparison →</a></p>
+    </section>
+
+    <div class="final">
+      <p class="headline">Keep your voice on your Mac.</p>
+      <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
+      <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
+    </div>
+
+  </div>
+
+  <footer>
+    <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
+    <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/vs/wispr-flow/">vs Wispr Flow</a>
+      <a href="https://github.com/conrader/plainsay">Source</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

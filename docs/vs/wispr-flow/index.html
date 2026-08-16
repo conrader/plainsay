@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plainsay vs Wispr Flow — free, open source, on-device</title>
+<meta name="description" content="Plainsay is a free, MIT-licensed, on-device dictation app for Mac. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/vs/wispr-flow/">
+<style>
+  :root{
+    --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
+    --sys-accent:#0a84ff; --hairline:rgba(255,255,255,0.16); --label-secondary:#a8aebd;
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,monospace; --radius-card:18px; --radius-pill:999px;
+    --ease-out:cubic-bezier(0,0,0.58,1); --dur-phase:180ms;
+    --win:rgba(111,211,199,0.10); --win-line:rgba(111,211,199,0.30);
+    --warn:rgba(232,137,107,0.10); --warn-line:rgba(232,137,107,0.32);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--bone);text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--bone)}
+  a:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .page{min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:920px;padding:0 32px;display:flex;flex-direction:column}
+  @media(max-width:620px){.wrap{padding:0 20px}}
+  nav.top{display:flex;align-items:center;gap:10px;padding:30px 0}
+  nav.top .word{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+  nav.top .word a{text-decoration:none;color:var(--bone)}
+  nav.top .spacer{flex:1}
+  nav.top .links{display:flex;align-items:center;gap:22px;font-size:13px}
+  nav.top .links a{text-decoration:none;color:var(--bone);opacity:.9}
+  nav.top .links a:hover{opacity:1;text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35)}
+  @media(max-width:480px){nav.top .links{gap:14px}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-ui);font-weight:500;line-height:1;text-decoration:none;cursor:pointer;transition:filter var(--dur-phase) var(--ease-out);height:30px;padding:0 16px;border-radius:7px;font-size:13px;background:var(--sys-accent);border:1px solid transparent;color:#fff}
+  .btn:hover{filter:brightness(1.08)}
+  header.hero{padding:70px 0 36px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px}
+  header.hero .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
+  header.hero h1{margin:0;font-size:46px;line-height:1.12;font-weight:700;letter-spacing:-1px;max-width:16ch;text-wrap:balance}
+  header.hero .sub{margin:0;font-size:17px;line-height:1.6;color:var(--label-secondary);max-width:54ch;text-wrap:pretty}
+  @media(max-width:620px){header.hero h1{font-size:34px}}
+  section{border-top:1px solid var(--hairline);padding:48px 0 52px}
+  section .kicker{margin:0 0 18px;font-size:13px;font-weight:600;color:var(--slate)}
+  section .lede{margin:0 0 18px;font-size:15px;line-height:1.65;color:var(--label-secondary);max-width:64ch}
+  h2.big{margin:0 0 6px;font-size:24px;font-weight:650;letter-spacing:-0.4px}
+  p{font-size:15px;line-height:1.65}
+  .tablewrap{overflow-x:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);margin:6px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--hairline);vertical-align:top}
+  thead th{font-family:var(--font-mono);font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--slate);font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.axis{color:var(--slate);font-weight:600;white-space:nowrap}
+  td.plainsay{color:var(--bone)}
+  td.plainsay b{color:var(--signal)}
+  td.wispr{color:var(--label-secondary)}
+  .col-plainsay{background:var(--win)}
+  .mono-src{font-family:var(--font-mono);font-size:11px;color:var(--slate)}
+  .callout{border:1px solid var(--warn-line);background:var(--warn);border-radius:var(--radius-card);padding:18px 20px;margin:18px 0;font-size:14px;line-height:1.6}
+  .callout.win{border-color:var(--win-line);background:var(--win)}
+  .callout .t{font-weight:650;margin-bottom:5px}
+  .cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--hairline);border-radius:var(--radius-card);padding:18px 18px}
+  .card .h{font-size:15px;font-weight:650;margin:0 0 6px}
+  .card p{margin:0;font-size:13.5px;color:var(--label-secondary);line-height:1.6}
+  .card .num{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--signal)}
+  .card .num.dim{color:var(--ember)}
+  ul.plain{padding-left:20px;margin:10px 0}
+  ul.plain li{margin:7px 0;font-size:14.5px;line-height:1.6;color:var(--label-secondary)}
+  .final{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:56px 0 64px}
+  .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
+  .final .req{font-size:12px;color:var(--slate)}
+  .sources{font-size:12.5px;color:var(--slate);line-height:1.9}
+  .sources a{color:var(--slate)}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px}
+  footer .text{font-size:12px;color:var(--slate)}
+  footer .spacer{flex:1}
+  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links a{color:var(--slate);text-decoration:none}
+  footer .links a:hover{color:var(--bone)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+
+    <nav class="top">
+      <img src="/assets/logo.svg" alt="" width="28" height="28" style="display:block">
+      <span class="word"><a href="/">Plainsay</a></span>
+      <span class="spacer"></span>
+      <div class="links">
+        <a href="/why-on-device/">Why on-device</a>
+        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="eyebrow">Plainsay vs Wispr Flow</div>
+      <h1>Same idea. One costs $0 and never sees your voice.</h1>
+      <p class="sub">Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on your Mac with Whisper or Parakeet — no account, no network call required to dictate. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
+    </header>
+
+    <section>
+      <h2 class="kicker">The short version</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="h">Price</div>
+          <div class="num">$0</div>
+          <p>Local dictation is free forever. Plainsay Cloud is about $3/month. Wispr Flow is $15/month, or $12/month billed annually — <b>$144/year</b>, with no free-to-own option.</p>
+          <p class="mono-src" style="margin-top:8px;">Wispr's free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</p>
+        </div>
+        <div class="card">
+          <div class="h">Your voice</div>
+          <div class="num">Stays local</div>
+          <p>Plainsay transcribes on the Mac. Wispr's own docs: <em>“transcription always happens in the cloud.”</em> Every word leaves your device.</p>
+        </div>
+        <div class="card">
+          <div class="h">The code</div>
+          <div class="num">MIT, public</div>
+          <p>Read exactly what Plainsay does with your audio. Wispr Flow is closed source — you get a privacy policy, not the code.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="kicker">Side by side</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>Wispr Flow</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="axis">Price</td>
+              <td class="plainsay col-plainsay"><b>Free</b> on-device, forever. Plainsay Cloud ≈ $3/mo. No word caps.</td>
+              <td class="wispr">$15/mo, or $12/mo billed annually = $144/yr. No lifetime or one-time tier. Free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</td>
+            </tr>
+            <tr>
+              <td class="axis">Transcription</td>
+              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet through Core ML. No account, no network call needed to dictate.</td>
+              <td class="wispr">“Transcription always happens in the cloud” (Wispr's own words). No offline mode by design.</td>
+            </tr>
+            <tr>
+              <td class="axis">Openness</td>
+              <td class="plainsay col-plainsay"><b>MIT licensed</b>, whole client public and auditable — read what leaves the Mac and when.</td>
+              <td class="wispr">Closed source — you get a privacy policy to trust, not the code to read.</td>
+            </tr>
+            <tr>
+              <td class="axis">Account</td>
+              <td class="plainsay col-plainsay"><b>None required</b> to dictate locally.</td>
+              <td class="wispr">Login required.</td>
+            </tr>
+            <tr>
+              <td class="axis">Engine</td>
+              <td class="plainsay col-plainsay">Your choice — Whisper (breadth of language) or Parakeet-tdt-0.6b-v3 (fast, strong Polish + English).</td>
+              <td class="wispr">Wispr's cloud pipeline. No choice.</td>
+            </tr>
+            <tr>
+              <td class="axis">Platform</td>
+              <td class="plainsay col-plainsay">macOS (Apple silicon).</td>
+              <td class="wispr">macOS, Windows, iOS, Android.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mono-src">Wispr figures from wisprflow.ai/pricing and wisprflow.ai/privacy, 2026. Prices change — check the source links below.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Price</h2>
+      <p class="lede">Wispr Flow is subscription-only: $15/month, or $12/month billed annually — <strong>$144 a year</strong>, every year, with no way to simply own it. Over three years that's more than $430.</p>
+      <p>Plainsay running locally on your Mac is <strong>free</strong>, forever, with no word limits and no account. If you'd rather not download a model or manage a key, Plainsay Cloud is about <strong>$3 a month</strong> — roughly a fifth of Wispr Pro — and the local option stays free and fully capable, not a crippled trial.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Your voice never has to leave the Mac</h2>
+      <p class="lede">This is the difference that doesn't show up on a pricing page. Wispr Flow's own privacy documentation states that <em>“transcription always happens in the cloud.”</em> There is no offline mode — every word you dictate is uploaded, transcribed on someone else's servers, and returned.</p>
+      <p>Plainsay's transcription runs on your Mac through Core ML, on Whisper or NVIDIA Parakeet. Dictating needs no account and makes no network call you didn't ask for. Your voice — often the most sensitive thing you type — stays on the machine in your hands.</p>
+      <div class="callout">
+        <div class="t">Honest about the one place data can leave</div>
+        Plainsay's <em>transcription</em> is always local. The optional <em>cleanup</em> pass — the step that removes fillers and fixes punctuation — uses an AI model, and by default that's a cloud API. You can switch it off entirely, point it at your own API key, or use a local model. So the honest claim isn't “100% offline” — it's: <strong>your raw transcription is guaranteed local, and the one optional step that isn't is your choice, not locked to one vendor's cloud.</strong> Wispr gives you no such choice.
+      </div>
+    </section>
+
+    <section>
+      <h2 class="big">Open, so you don't have to take our word for it</h2>
+      <p class="lede">A closed-source cloud app asks you to trust a privacy policy. An open one lets you read the code.</p>
+      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. You (or anyone) can read exactly what happens to your audio, fork it, and self-host it indefinitely. Wispr Flow is closed source — its answer to “what happens to my voice” is a privacy policy you're asked to trust. With Plainsay, the answer is the source code.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
+    </section>
+
+    <section>
+      <h2 class="kicker">Where Wispr Flow is the better pick — honestly</h2>
+      <ul class="plain">
+        <li>You need <strong>Windows, iOS, or Android</strong> — Plainsay is macOS-only today.</li>
+        <li>You want a single cloud account that syncs across all your devices out of the box.</li>
+        <li>You'd rather never see a model download or an API key, and $144/year is fine for that convenience.</li>
+      </ul>
+      <p>If instead you want dictation that's free, that you can read the source of, and that keeps your voice on your Mac — that's Plainsay.</p>
+    </section>
+
+    <section class="final">
+      <img src="/assets/logo.svg" alt="" width="40" height="40" style="display:block">
+      <p class="headline">Try the free, open one.</p>
+      <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
+      <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
+    </section>
+
+    <section>
+      <h2 class="kicker">Sources</h2>
+      <p class="sources">
+        Wispr Flow pricing — <a href="https://wisprflow.ai/pricing">wisprflow.ai/pricing</a><br>
+        Wispr Flow privacy (“transcription always happens in the cloud”) — <a href="https://wisprflow.ai/privacy">wisprflow.ai/privacy</a><br>
+        Plainsay source — <a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a><br>
+        <span class="mono-src">All Wispr figures were current as of 2026 and are quoted from Wispr's own pages. Wispr ships often — verify at the links above.</span>
+      </p>
+    </section>
+
+    <footer>
+      <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
+      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <span class="spacer"></span>
+      <div class="links">
+        <a href="/">Home</a>
+        <a href="/why-on-device/">Why on-device</a>
+        <a href="https://github.com/conrader/plainsay">Source</a>
+      </div>
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>
