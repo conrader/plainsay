@@ -1,14 +1,22 @@
 # Plainsay
 
-[plainsay.app](https://plainsay.app) · On-device voice dictation for macOS. Hold a key, speak, release — cleaned-up
-written text lands in whatever app you're using.
+**Plainsay is a free, MIT-licensed dictation app for Mac.** Transcription runs
+on-device with Whisper or Parakeet — never in the cloud, never behind a
+login. An optional LLM cleanup pass uses a key you control. No subscription.
+No account required. [plainsay.app](https://plainsay.app)
+
+The free, open-source, on-device [Wispr Flow](https://plainsay.app/vs/wispr-flow/).
+Hold a key, speak, release — cleaned-up written text lands in whatever app
+you're using.
 
 Transcription runs entirely on your Mac. Choose Whisper via
 [WhisperKit](https://github.com/argmaxinc/WhisperKit), or multilingual NVIDIA
 Parakeet TDT 0.6B v3 via [FluidAudio](https://github.com/FluidInference/FluidAudio).
 Both run as Core ML models on Apple silicon, accelerated by the Neural Engine.
 A Gemini Flash Lite pass then turns spoken language into written language:
-filler words out, punctuation in, your wording intact.
+filler words out, punctuation in, your wording intact — see
+[why on-device](https://plainsay.app/why-on-device/) for exactly what that
+means.
 
 ## Screenshots
 
