@@ -168,6 +168,10 @@
   .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
   @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
 
+  .hud-figure { margin: 0 0 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .hud-figure img { width: 100%; max-width: 420px; height: auto; display: block; border-radius: 20px; }
+  .hud-figure figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -271,6 +275,10 @@
 
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">Así funciona</h2>
+      <figure class="hud-figure">
+        <img src="../assets/screenshots/hud-listening.svg" alt="El HUD — justo donde ya estás escribiendo" loading="lazy" width="420" height="140">
+        <figcaption>El HUD — justo donde ya estás escribiendo</figcaption>
+      </figure>
       <div class="screens">
         <figure>
           <img src="../assets/screenshots/setup-speech.webp" alt="Elige Plainsay Cloud o quédate totalmente en local" loading="lazy" width="896" height="960">

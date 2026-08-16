@@ -6,11 +6,16 @@ written text lands in whatever app you're using.
 Transcription runs entirely on your Mac. Choose Whisper via
 [WhisperKit](https://github.com/argmaxinc/WhisperKit), or multilingual NVIDIA
 Parakeet TDT 0.6B v3 via [FluidAudio](https://github.com/FluidInference/FluidAudio).
-Both use Core ML and Apple silicon acceleration.
+Both run as Core ML models on Apple silicon, accelerated by the Neural Engine.
 A Gemini Flash Lite pass then turns spoken language into written language:
 filler words out, punctuation in, your wording intact.
 
 ## Screenshots
+
+<p align="center">
+  <img src="Screenshots/hud-listening.svg" alt="Plainsay's HUD while listening" width="420">
+  <br><sub>The HUD, right where you're already typing</sub>
+</p>
 
 **Setup Assistant** — walks through everything on first run:
 

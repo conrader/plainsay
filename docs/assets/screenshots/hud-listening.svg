@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="140" viewBox="0 0 420 140">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#1b1e24"/>
+      <stop offset="100%" stop-color="#14161a"/>
+    </radialGradient>
+    <filter id="hudShadow" x="-40%" y="-60%" width="180%" height="260%">
+      <feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="420" height="140" rx="20" fill="url(#bg)"/>
+
+  <g filter="url(#hudShadow)">
+    <rect x="40" y="46" width="340" height="48" rx="14" fill="#1c1e24" fill-opacity="0.92" stroke="rgba(255,255,255,0.09)" stroke-width="1"/>
+
+    <!-- waveform, right-aligned within its 198px track (x 54-252) -->
+    <g>
+      <rect x="192.00" y="66.43" width="2" height="7.13" rx="1" fill="rgba(242,239,233,0.280)"/>
+      <rect x="196.00" y="63.23" width="2" height="13.54" rx="1" fill="rgba(242,239,233,0.331)"/>
+      <rect x="200.00" y="60.59" width="2" height="18.82" rx="1" fill="rgba(242,239,233,0.383)"/>
+      <rect x="204.00" y="62.31" width="2" height="15.39" rx="1" fill="rgba(242,239,233,0.434)"/>
+      <rect x="208.00" y="65.26" width="2" height="9.47" rx="1" fill="rgba(242,239,233,0.486)"/>
+      <rect x="212.00" y="61.43" width="2" height="17.14" rx="1" fill="rgba(242,239,233,0.537)"/>
+      <rect x="216.00" y="59.78" width="2" height="20.44" rx="1" fill="rgba(242,239,233,0.589)"/>
+      <rect x="220.00" y="63.23" width="2" height="13.54" rx="1" fill="rgba(242,239,233,0.640)"/>
+      <rect x="224.00" y="65.83" width="2" height="8.34" rx="1" fill="rgba(242,239,233,0.691)"/>
+      <rect x="228.00" y="62.31" width="2" height="15.39" rx="1" fill="rgba(242,239,233,0.743)"/>
+      <rect x="232.00" y="64.21" width="2" height="11.58" rx="1" fill="rgba(242,239,233,0.794)"/>
+      <rect x="236.00" y="61.01" width="2" height="17.99" rx="1" fill="rgba(242,239,233,0.846)"/>
+      <rect x="240.00" y="62.76" width="2" height="14.48" rx="1" fill="rgba(242,239,233,0.897)"/>
+      <rect x="244.00" y="65.26" width="2" height="9.47" rx="1" fill="rgba(242,239,233,0.949)"/>
+      <rect x="248.00" y="61.86" width="2" height="16.27" rx="1" fill="rgba(242,239,233,1.000)"/>
+    </g>
+
+    <text x="264" y="74" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="9.5" font-weight="600" letter-spacing="1.1" fill="#f2efe9">LISTENING</text>
+    <text x="366" y="74" text-anchor="end" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="11" font-weight="500" fill="#7a8194">0:14</text>
+  </g>
+</svg>
