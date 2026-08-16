@@ -334,7 +334,7 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">The free local tier is the default recommendation, not a funnel. Cloud exists for people who want zero setup — not because local is hobbled.</p>
+      <p class="lede">Plainsay Cloud is the easiest way to start — no model download, nothing to configure. Prefer everything on your Mac? Local is free and fully capable, one extra setup step.</p>
       <div class="plans" id="plans"></div>
     </section>
 
@@ -437,13 +437,13 @@
   // -----------------------------------------------------------------
   var PLANS = [
     {
-      id: "local", eyebrow: "RECOMMENDED", title: "On this Mac", price: "Free",
+      id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
       features: ["Whisper or Parakeet, on-device", "Nothing leaves the Mac", "No account, no subscription"],
       caveats: ["One-time model download, 475–632 MB", "Keeps using memory while Plainsay is running"]
     },
     {
-      id: "cloud", eyebrow: "ZERO SETUP", title: "Plainsay Cloud", price: "≈ $3 / month",
+      id: "cloud", eyebrow: "RECOMMENDED", title: "Plainsay Cloud", price: "≈ $3 / month",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["No model download, no keys", "Transcription and editing included"],
       caveats: ["Audio is sent to Plainsay Cloud to be transcribed"]
@@ -456,7 +456,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "local";
+  var selectedPlan = "cloud";
 
   function renderPlans() {
     plansEl.innerHTML = "";
