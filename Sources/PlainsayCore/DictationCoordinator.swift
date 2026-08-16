@@ -96,6 +96,11 @@ public final class DictationCoordinator {
     private var machine: HotkeyStateMachine
     private var meterTask: Task<Void, Never>?
     private var previewTask: Task<Void, Never>?
+    private var voiceFilter: VoiceFilterEngine?
+    /// Independent of `modelState`: a failed or still-loading voice filter
+    /// must never block dictation. It only ever gates whether filtering is
+    /// applied — see `applyVoiceFilterIfNeeded`.
+    public private(set) var voiceFilterState: SpeechModelLoadState = .idle
     private var resetTask: Task<Void, Never>?
     private var targetApp: NSRunningApplication?
 
@@ -151,6 +156,7 @@ public final class DictationCoordinator {
             phase = .error(error.localizedDescription)
         }
         await reloadModel()
+        await reloadVoiceFilterIfNeeded()
         await recoverInterruptedAudio()
     }
 
@@ -226,6 +232,49 @@ public final class DictationCoordinator {
     public func settingsChanged() {
         hotkeys.binding = settings.binding
         machine.mode = settings.hotkeyMode
+    }
+
+    /// Loads or releases the voice filter to match `settings.voiceFilterEnabled`.
+    /// Safe to call repeatedly — a no-op once the current state already
+    /// matches the setting.
+    public func reloadVoiceFilterIfNeeded() async {
+        guard settings.voiceFilterEnabled else {
+            let filter = voiceFilter
+            voiceFilter = nil
+            voiceFilterState = .idle
+            await filter?.shutdown()
+            return
+        }
+        guard voiceFilter == nil else { return }
+
+        let filter = VoiceFilterEngine(onStateChange: { [weak self] state in
+            Task { @MainActor [weak self] in self?.voiceFilterState = state }
+        })
+        voiceFilter = filter
+        do {
+            try await filter.prepare()
+        } catch {
+            Log.model.error("voice filter failed to load: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Filters `samples` down to the enrolled voice when the feature is on
+    /// and actually ready. Fails open on any problem — an unloaded filter, a
+    /// missing enrollment, or a diarization error all just mean "transcribe
+    /// what was recorded," the same as if filtering were off.
+    private func applyVoiceFilterIfNeeded(_ samples: [Float]) async -> [Float] {
+        guard settings.voiceFilterEnabled,
+              let embedding = settings.voiceEmbedding,
+              let voiceFilter,
+              await voiceFilter.isReady
+        else { return samples }
+
+        do {
+            return try await voiceFilter.filtered(samples: samples, matching: embedding)
+        } catch {
+            Log.pipeline.error("voice filter failed, using unfiltered audio: \(error.localizedDescription, privacy: .public)")
+            return samples
+        }
     }
 
     public func reloadModel() async {
@@ -536,11 +585,15 @@ public final class DictationCoordinator {
 
         phase = .transcribing
         let prompt = settings.dictionary.asrPrompt()
+        // Filtering happens on the full recording, before transcription and
+        // before anything leaves this Mac for a remote/Cloud engine — a
+        // second voice in the room is removed here, not redacted afterward.
+        let filteredSamples = await applyVoiceFilterIfNeeded(samples)
 
         let started = Date()
         let transcript: String
         do {
-            transcript = try await engine.transcribe(samples: samples, prompt: prompt)
+            transcript = try await engine.transcribe(samples: filteredSamples, prompt: prompt)
         } catch {
             Log.pipeline.error("transcription failed: \(error.localizedDescription, privacy: .public)")
             record(text: "", raw: "", outcome: .transcriptionFailed, duration: duration)

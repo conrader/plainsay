@@ -353,6 +353,22 @@ struct PipelineTests {
         #expect(harness.coordinator.livePreviewText.isEmpty)
     }
 
+    @Test("Voice filtering enabled but not yet loaded fails open — dictation still works")
+    func voiceFilterFailsOpenWhenNotLoaded() async throws {
+        let harness = Harness()
+        harness.settings.voiceFilterEnabled = true
+        // Never enrolled, never loaded — this is what every dictation sees
+        // in the window between flipping the toggle and the filter actually
+        // finishing its own model download.
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.inserter.inserted == ["The thing is, it works."])
+        #expect(harness.coordinator.phase == .idle)
+    }
+
     @Test("Cleanup failure inserts the raw transcript instead of losing it")
     func cleanupFailureFallsBackToRaw() async throws {
         let harness = Harness()

@@ -231,6 +231,12 @@ private struct SpeechSettings: View {
             }
 
             Section {
+                VoiceEnrollmentView(settings: settings)
+            } header: {
+                Text("Voice recognition")
+            }
+
+            Section {
                 Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
             } header: {
                 Text("Editing")
@@ -327,6 +333,9 @@ private struct SpeechSettings: View {
         }
         .onChange(of: settings.spokenLanguages) {
             Task { await coordinator.reloadModel() }
+        }
+        .onChange(of: settings.voiceFilterEnabled) {
+            Task { await coordinator.reloadVoiceFilterIfNeeded() }
         }
     }
 

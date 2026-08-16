@@ -53,6 +53,14 @@ public final class PlainsaySettings {
     /// scratch once you stop. On-device only: a partial call every couple of
     /// seconds would be far too slow and costly against a paid API.
     public var livePreviewEnabled: Bool { didSet { defaults.set(livePreviewEnabled, forKey: Key.livePreviewEnabled.rawValue) } }
+
+    /// Filters out any voice that doesn't match `voiceEmbedding` before
+    /// transcription, so a second person in the room never reaches the
+    /// speech model. Only takes effect once a sample has been enrolled.
+    public var voiceFilterEnabled: Bool { didSet { defaults.set(voiceFilterEnabled, forKey: Key.voiceFilterEnabled.rawValue) } }
+    /// 256-dimensional voice embedding from FluidAudio's diarizer, captured
+    /// once during enrollment. Nil means no one has enrolled a voice yet.
+    public var voiceEmbedding: [Float]? { didSet { persist(voiceEmbedding, .voiceEmbedding) } }
     /// Languages the user actually speaks, most-used first. Empty means fully
     /// automatic multilingual decoding across everything Whisper knows.
     public var spokenLanguages: [String] { didSet { persist(spokenLanguages, .language) } }
@@ -132,6 +140,7 @@ public final class PlainsaySettings {
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
         case livePreviewEnabled
+        case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
@@ -165,6 +174,8 @@ public final class PlainsaySettings {
         onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false
+        voiceFilterEnabled = defaults.object(forKey: Key.voiceFilterEnabled.rawValue) as? Bool ?? false
+        voiceEmbedding = decode(.voiceEmbedding, [Float]?.none)
         cleanupProvider = decode(.cleanupProvider, CleanupProvider.gemini)
         cleanupModel = defaults.string(forKey: Key.cleanupModel.rawValue) ?? ""
         cleanupBaseURL = defaults.string(forKey: Key.cleanupBaseURL.rawValue) ?? ""
@@ -192,6 +203,7 @@ public final class PlainsaySettings {
         .language,
         .keepOnClipboard,
         .livePreviewEnabled,
+        .voiceFilterEnabled,
         .cleanupProvider,
         .cleanupModel,
         .cleanupBaseURL,

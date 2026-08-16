@@ -48,6 +48,7 @@ struct SetupAssistantView: View {
         case speech
         case configure
         case language
+        case voice
         case shortcut
         case permissions
         case ready
@@ -59,6 +60,7 @@ struct SetupAssistantView: View {
             case .speech: "Speech"
             case .configure: "Configure"
             case .language: "Refine"
+            case .voice: "Voice"
             case .shortcut: "Shortcut"
             case .permissions: "Permissions"
             case .ready: "Ready"
@@ -89,6 +91,8 @@ struct SetupAssistantView: View {
                         )
                     case .language:
                         LanguageSetupStep(settings: settings)
+                    case .voice:
+                        VoiceSetupStep(settings: settings)
                     case .shortcut:
                         ShortcutSetupStep(settings: settings)
                     case .permissions:
@@ -674,6 +678,37 @@ private struct LanguageSetupStep: View {
         }
         .padding(18)
         .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+/// Optional and skippable — voice filtering only helps in a shared room, and
+/// nobody should have to record a sample just to get through setup.
+private struct VoiceSetupStep: View {
+    @Bindable var settings: PlainsaySettings
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SetupHeading(
+                icon: "person.wave.2.fill",
+                colors: [.teal, .cyan],
+                title: "Ignore other voices (optional)",
+                detail: "If you often dictate somewhere with other people talking, Plainsay can learn your voice and filter everyone else out before transcription."
+            )
+
+            VStack(alignment: .leading, spacing: 12) {
+                VoiceEnrollmentView(settings: settings)
+            }
+            .padding(18)
+            .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+
+            Label(
+                "Skip this if you usually dictate alone — it's off by default and can be set up later in Settings › Speech.",
+                systemImage: "info.circle"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
