@@ -58,6 +58,61 @@ struct TermDictionaryTests {
 
         #expect(hint == "Plainsay, Whisper")
     }
+
+    @Test("An empty dictionary or empty text leaves the transcript untouched")
+    func correctionsNoOpWhenNothingToDo() {
+        #expect(TermDictionary().applyCorrections(to: "hello there") == "hello there")
+        #expect(TermDictionary(terms: ["Plainsay"]).applyCorrections(to: "") == "")
+    }
+
+    @Test("A correctly-spelled term gets re-cased to the dictionary's spelling")
+    func correctionsFixCasing() {
+        let dictionary = TermDictionary(terms: ["Plainsay"])
+
+        #expect(dictionary.applyCorrections(to: "I love plainsay so much") == "I love Plainsay so much")
+    }
+
+    @Test("A one-word term the model split into two words gets merged back")
+    func correctionsMergeSplitWord() {
+        // Parakeet has no decoder prompt, so a made-up word like "Plainsay"
+        // reliably comes out as two real words instead.
+        let dictionary = TermDictionary(terms: ["Plainsay"])
+
+        #expect(dictionary.applyCorrections(to: "I use plain say daily.") == "I use Plainsay daily.")
+    }
+
+    @Test("A multi-word term still merges across a wider window")
+    func correctionsMergeMultiWordTerm() {
+        let dictionary = TermDictionary(terms: ["Plainsay Cloud"])
+
+        #expect(
+            dictionary.applyCorrections(to: "I subscribed to plain say cloud yesterday")
+                == "I subscribed to Plainsay Cloud yesterday"
+        )
+    }
+
+    @Test("A close phonetic mishearing within tolerance is corrected")
+    func correctionsFixCloseMishearing() {
+        let dictionary = TermDictionary(terms: ["Anthropic"])
+
+        #expect(dictionary.applyCorrections(to: "I asked Anthropik about it") == "I asked Anthropic about it")
+    }
+
+    @Test("An unrelated word is left alone rather than over-corrected")
+    func correctionsDoNotOverfire() {
+        let dictionary = TermDictionary(terms: ["Anthropic"])
+
+        #expect(dictionary.applyCorrections(to: "I saw an octopus today") == "I saw an octopus today")
+    }
+
+    @Test("A short term only ever matches an exact fold, never fuzzily")
+    func correctionsRequireExactMatchForShortTerms() {
+        // "AI" is one edit away from "hi" — fuzzy-matching a two-letter term
+        // would rewrite ordinary words throughout a transcript.
+        let dictionary = TermDictionary(terms: ["AI"])
+
+        #expect(dictionary.applyCorrections(to: "hi there") == "hi there")
+    }
 }
 
 @Suite("Transcript normalization")

@@ -450,6 +450,22 @@ struct PipelineTests {
         #expect(harness.engine.receivedPrompt == "This recording may mention Anthropic and Plainsay.")
     }
 
+    @Test("Vocabulary corrections apply to the transcript before editing ever sees it")
+    func vocabularyCorrectsTranscriptBeforeEditing() async throws {
+        // Parakeet has no decoder prompt at all, so this correction is the
+        // only path a dictionary term has to a fixed spelling once editing
+        // is off — and running it unconditionally, before editing, means
+        // editing also benefits from the corrected spelling when it is on.
+        let harness = Harness(terms: ["Plainsay"])
+        harness.engine.transcript = "i use plain say daily"
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.cleaner.received == "i use Plainsay daily")
+    }
+
     @Test("Dictation is refused while the speech model is still loading")
     func refusesBeforeModelIsReady() async throws {
         let harness = Harness()

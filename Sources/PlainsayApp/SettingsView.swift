@@ -361,9 +361,9 @@ private struct SpeechSettings: View {
 
     private var vocabularyExplanation: String {
         if settings.transcriptionSource == .onDevice && !settings.model.supportsDecoderPrompt {
-            return "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay uses these terms during cleanup when cleanup is enabled."
+            return "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay corrects these spellings itself right after transcribing, whether or not editing is on."
         }
-        return "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model and uses them to fix spellings afterwards."
+        return "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model, then corrects any spellings it still gets wrong."
     }
 
     private func addTerm() {

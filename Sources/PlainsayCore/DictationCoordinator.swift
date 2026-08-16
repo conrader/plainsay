@@ -591,7 +591,7 @@ public final class DictationCoordinator {
         let filteredSamples = await applyVoiceFilterIfNeeded(samples)
 
         let started = Date()
-        let transcript: String
+        var transcript: String
         do {
             transcript = try await engine.transcribe(samples: filteredSamples, prompt: prompt)
         } catch {
@@ -613,6 +613,11 @@ public final class DictationCoordinator {
             phase = .idle
             return
         }
+
+        // Local, deterministic, and unconditional: engines that don't accept
+        // decoder hints (Parakeet) otherwise have no path to vocabulary
+        // corrections at all unless editing happens to catch them too.
+        transcript = settings.dictionary.applyCorrections(to: transcript)
 
         phase = .cleaning
         let dictionary = settings.dictionary
