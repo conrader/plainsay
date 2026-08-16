@@ -275,6 +275,7 @@ public final class DictationCoordinator {
     private func refreshCloudCredentialsIfNeeded() async {
         guard settings.transcriptionSource == .cloud, cloud.isSignedIn else {
             ProviderFactory.cloudCredentials = nil
+            ProviderFactory.cloudSessionToken = nil
             return
         }
 
@@ -282,13 +283,19 @@ public final class DictationCoordinator {
             let account = try await cloud.refreshAccount()
             guard account.isActive else {
                 ProviderFactory.cloudCredentials = nil
+                ProviderFactory.cloudSessionToken = nil
                 Log.model.info("Plainsay Cloud subscription is \(account.status, privacy: .public)")
                 return
             }
             ProviderFactory.cloudCredentials = try await cloud.refreshCredentials()
+            // The transcription engine authenticates with this directly, so
+            // both have to land together — a stale token with fresh
+            // credentials would make transcription fail while cleanup works.
+            ProviderFactory.cloudSessionToken = cloud.sessionToken
             Log.model.info("Plainsay Cloud credentials loaded into memory")
         } catch {
             ProviderFactory.cloudCredentials = nil
+            ProviderFactory.cloudSessionToken = nil
             Log.model.error("Plainsay Cloud unavailable: \(error.localizedDescription, privacy: .public)")
         }
     }

@@ -12,6 +12,10 @@ public enum ProviderFactory {
     /// settings write through to `UserDefaults`, and the deAPI key in here is
     /// shared between every subscriber.
     public static var cloudCredentials: CloudCredentials?
+    /// Session token for `CloudTranscriptionEngine`. Set alongside
+    /// `cloudCredentials` — kept separate because it authenticates a proxy
+    /// call to our own server, not a direct call to a provider.
+    public static var cloudSessionToken: String?
 
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
         guard settings.cleanupEnabled else { return NoCleanup() }
@@ -55,7 +59,7 @@ public enum ProviderFactory {
             return makeOnDeviceEngine(settings, onState: onState)
 
         case .cloud:
-            guard let cloud = cloudCredentials else {
+            guard cloudCredentials != nil, let token = cloudSessionToken else {
                 // Signed out, unsubscribed, or the key fetch failed. Say so
                 // rather than silently transcribing on-device: the user picked
                 // Cloud, and quietly doing something else hides a billing
@@ -65,13 +69,12 @@ public enum ProviderFactory {
                 return UnavailableTranscriptionEngine(message: message)
             }
             onState(.ready)
-            return RemoteWhisperEngine(
-                baseURL: cloud.transcription.baseURL,
-                apiKey: cloud.transcription.key,
-                model: cloud.transcription.model,
-                language: settings.language,
-                // The hosted plan transcribes through deAPI, which needs m4a.
-                uploadFormat: .m4a
+            // Proxied through Plainsay's own server, not deAPI directly — see
+            // CloudTranscriptionEngine for why.
+            return CloudTranscriptionEngine(
+                baseURL: PlainsayCloudClient.defaultBaseURL,
+                sessionToken: token,
+                language: settings.language
             )
 
         case .remote:

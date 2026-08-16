@@ -9,6 +9,10 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
     nonisolated(unsafe) private static var handlers:
         [String: @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)] = [:]
     nonisolated(unsafe) private static var bodies: [String: Data] = [:]
+    // Headers and the URL (with its query items) aren't part of the body, so
+    // tests that need to assert on those — auth headers, content type,
+    // query-encoded parameters — need the request itself, not just its bytes.
+    nonisolated(unsafe) private static var requests: [String: URLRequest] = [:]
     private static let lock = NSLock()
 
     static func handler(for host: String) -> (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))? {
@@ -19,8 +23,15 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
         lock.withLock { bodies[host] }
     }
 
+    static func lastRequest(for host: String) -> URLRequest? {
+        lock.withLock { requests[host] }
+    }
+
     static func reset(host: String) {
-        lock.withLock { bodies[host] = nil }
+        lock.withLock {
+            bodies[host] = nil
+            requests[host] = nil
+        }
     }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -64,7 +75,10 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
 
     private static func record(_ data: Data?, for request: URLRequest) {
         guard let host = request.url?.host() else { return }
-        lock.withLock { bodies[host] = data }
+        lock.withLock {
+            bodies[host] = data
+            requests[host] = request
+        }
     }
 
     static func session() -> URLSession {

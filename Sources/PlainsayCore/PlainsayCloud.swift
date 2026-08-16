@@ -4,10 +4,14 @@ import Observation
 /// Credentials handed out by the Plainsay service for the current session.
 ///
 /// Held in memory and nowhere else. Not the Keychain, not `UserDefaults`, not
-/// a cache file — they are re-fetched on every launch. The deAPI key in here is
-/// shared between all subscribers, so the shorter its life on any one Mac, the
-/// smaller the window in which a stolen disk image or a crash dump contains a
-/// working credential.
+/// a cache file — they are re-fetched on every launch.
+///
+/// Transcription is deliberately absent here. deAPI does not yet support
+/// minting a key per subscriber the way OpenRouter does, so there is no safe
+/// individual credential to hand out — only one key shared by everyone. Hand
+/// that out and its life on any one Mac becomes the size of the leak surface.
+/// Transcription is proxied through `CloudTranscriptionEngine` instead, using
+/// the session token below; the deAPI key never reaches the client.
 public struct CloudCredentials: Sendable, Equatable {
     public struct Endpoint: Sendable, Equatable {
         public let baseURL: String
@@ -15,7 +19,6 @@ public struct CloudCredentials: Sendable, Equatable {
         public let key: String
     }
 
-    public let transcription: Endpoint
     public let cleanup: Endpoint
 }
 
@@ -65,12 +68,18 @@ public final class PlainsayCloudClient {
         }
     }
 
-    private let baseURL: String
+    /// Single source of truth for the service host, so `ProviderFactory`
+    /// doesn't carry a second hardcoded copy that could drift from this one.
+    public nonisolated static let defaultBaseURL = "https://api.plainsay.app"
+
+    /// Exposed so `CloudTranscriptionEngine` talks to the same host this
+    /// client was configured for, rather than a second hardcoded copy of it.
+    public let baseURL: String
     private let session: URLSession
     private let tokenStore: CloudTokenStoring
 
     public init(
-        baseURL: String = "https://api.plainsay.app",
+        baseURL: String = PlainsayCloudClient.defaultBaseURL,
         tokenStore: CloudTokenStoring = KeychainCloudTokenStore(),
         session: URLSession = .shared
     ) {
@@ -80,6 +89,11 @@ public final class PlainsayCloudClient {
     }
 
     public var isSignedIn: Bool { tokenStore.token?.isEmpty == false }
+
+    /// The bearer token `CloudTranscriptionEngine` authenticates with. Only
+    /// identifies the account and is revocable server-side — unlike a
+    /// provider key, it cannot itself be spent against anyone else's bill.
+    public var sessionToken: String? { tokenStore.token }
 
     public func signOut() {
         tokenStore.token = nil
@@ -139,10 +153,7 @@ public final class PlainsayCloudClient {
             return .init(baseURL: baseURL, model: model, key: apiKey)
         }
 
-        let credentials = CloudCredentials(
-            transcription: try endpoint("transcription"),
-            cleanup: try endpoint("cleanup")
-        )
+        let credentials = CloudCredentials(cleanup: try endpoint("cleanup"))
         self.credentials = credentials
         return credentials
     }

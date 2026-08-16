@@ -27,17 +27,18 @@ struct PlainsayCloudTests {
         )
     }
 
-    @Test("Credentials arrive for both stages and are held in memory")
+    @Test("Cleanup credentials arrive and are held in memory")
     func fetchesCredentials() async throws {
+        // No "transcription" object: transcription is proxied through our own
+        // server with the session token, not a direct provider credential —
+        // deAPI has no per-subscriber key to hand out.
         MockURLProtocol.respond(host: cloudHost, json: """
-        {"transcription":{"baseURL":"https://oai.deapi.ai/v1","model":"WhisperLargeV3","key":"dpn-sk-shared"},
-         "cleanup":{"baseURL":"https://openrouter.ai/api/v1","model":"google/gemini-3.1-flash-lite","key":"sk-or-minted"}}
+        {"cleanup":{"baseURL":"https://openrouter.ai/api/v1","model":"google/gemini-3.1-flash-lite","key":"sk-or-minted"}}
         """)
 
         let client = makeClient()
         let credentials = try await client.refreshCredentials()
 
-        #expect(credentials.transcription.key == "dpn-sk-shared")
         #expect(credentials.cleanup.key == "sk-or-minted")
         #expect(credentials.cleanup.model == "google/gemini-3.1-flash-lite")
         #expect(client.credentials == credentials)
@@ -163,14 +164,85 @@ struct OnDeviceDefaultTests {
         settings.transcriptionSource = .cloud
 
         ProviderFactory.cloudCredentials = CloudCredentials(
-            transcription: .init(baseURL: "u", model: "m", key: "dpn-sk-secret"),
             cleanup: .init(baseURL: "u", model: "m", key: "sk-or-secret")
         )
-        defer { ProviderFactory.cloudCredentials = nil }
+        ProviderFactory.cloudSessionToken = "psk_secret"
+        defer {
+            ProviderFactory.cloudCredentials = nil
+            ProviderFactory.cloudSessionToken = nil
+        }
 
-        // The shared deAPI key must not survive a restart on disk.
+        // Neither the minted OpenRouter key nor the session token that
+        // authenticates transcription must survive a restart on disk.
         let dump = defaults.dictionaryRepresentation().description
-        #expect(!dump.contains("dpn-sk-secret"))
         #expect(!dump.contains("sk-or-secret"))
+        #expect(!dump.contains("psk_secret"))
+    }
+}
+
+let cloudTranscribeHost = "cloud-transcribe.plainsay.test"
+
+@Suite("Cloud transcription engine", .serialized)
+struct CloudTranscriptionEngineTests {
+    private func tone(seconds: Double = 1.0) -> [Float] {
+        let count = Int(seconds * whisperSampleRate)
+        return (0..<count).map { i in sin(2 * .pi * 440 * Float(i) / Float(whisperSampleRate)) * 0.3 }
+    }
+
+    private func makeEngine(language: String? = nil) -> CloudTranscriptionEngine {
+        CloudTranscriptionEngine(
+            baseURL: "https://\(cloudTranscribeHost)",
+            sessionToken: "psk_test",
+            language: language,
+            session: MockURLProtocol.session()
+        )
+    }
+
+    @Test("Posts AAC audio with the session token and the client's own duration")
+    func requestShape() async throws {
+        MockURLProtocol.respond(host: cloudTranscribeHost, json: #"{"text":"hello there"}"#)
+        MockURLProtocol.reset(host: cloudTranscribeHost)
+
+        _ = try await makeEngine(language: "pl").transcribe(samples: tone(seconds: 2), prompt: "Plainsay")
+
+        let request = try #require(MockURLProtocol.lastRequest(for: cloudTranscribeHost))
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer psk_test")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == AudioUploadFormat.m4a.mimeType)
+
+        let url = try #require(request.url)
+        let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+        #expect(query.first { $0.name == "language" }?.value == "pl")
+        #expect(query.first { $0.name == "prompt" }?.value == "Plainsay")
+        // Duration comes from the sample count the client actually recorded,
+        // not from re-parsing the encoded upload — the server trusts this
+        // value for both the fair-use cap and its own usage accounting.
+        let seconds = try #require(query.first { $0.name == "durationSeconds" }?.value).flatMap(Double.init)
+        #expect(abs(seconds! - 2.0) < 0.01)
+    }
+
+    @Test("A 402 reports the subscription as the problem")
+    func mapsSubscriptionRequired() async {
+        MockURLProtocol.respond(host: cloudTranscribeHost, status: 402, json: #"{"error":"No active subscription"}"#)
+
+        await #expect(throws: TranscriptionError.self) {
+            try await self.makeEngine().transcribe(samples: tone(), prompt: nil)
+        }
+    }
+
+    @Test("A 429 reports the fair-use limit as the problem")
+    func mapsFairUseLimit() async {
+        MockURLProtocol.respond(host: cloudTranscribeHost, status: 429, json: #"{"error":"limit reached"}"#)
+
+        await #expect(throws: TranscriptionError.self) {
+            try await self.makeEngine().transcribe(samples: tone(), prompt: nil)
+        }
+    }
+
+    @Test("Empty audio never reaches the network")
+    func emptyAudioSkipsUpload() async throws {
+        MockURLProtocol.reset(host: cloudTranscribeHost)
+        let text = try await makeEngine().transcribe(samples: [], prompt: nil)
+        #expect(text.isEmpty)
+        #expect(MockURLProtocol.lastRequest(for: cloudTranscribeHost) == nil)
     }
 }
