@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plainsay — On-device voice dictation for macOS</title>
+<meta name="description" content="Hold a key, speak, release — clean written text lands in whatever app you're using. Transcription can run entirely on your Mac. Open source, MIT licensed.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+<style>
+  /* Single, deliberate dark world — the same reason the app's own HUD never
+     adapts to Light/Dark Mode: it's an instrument, not a document. Every
+     color is still explicit so the page holds on either host ground. */
+  :root {
+    --ink: #14161a;
+    --ink-2: #1b1e24;
+    --ink-3: #20242b;
+    --bone: #f2efe9;
+    --slate: #9aa1b0;
+    --slate-dim: #6b7185;
+    --signal: #6fd3c7;
+    --signal-dim: rgba(111, 211, 199, 0.14);
+    --hair: rgba(255, 255, 255, 0.09);
+    --hair-strong: rgba(255, 255, 255, 0.16);
+    --shadow: rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+  }
+
+  a { color: inherit; }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 28px; }
+  .wide { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  ::selection { background: var(--signal-dim); color: var(--bone); }
+
+  /* ---------------------------------------------------------------
+     Nav
+  ----------------------------------------------------------------- */
+  nav {
+    position: sticky; top: 0; z-index: 30;
+    background: color-mix(in srgb, var(--ink) 82%, transparent);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--hair);
+  }
+  nav .wide { display: flex; align-items: center; height: 60px; gap: 20px; }
+  nav .word { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  nav .spacer { flex: 1 1 auto; }
+  nav a.nav-link {
+    font-size: 13px; color: var(--slate); text-decoration: none; font-weight: 500;
+    display: none;
+  }
+  nav a.nav-link:hover { color: var(--bone); }
+  nav a.btn-download {
+    font-size: 13px; font-weight: 600; color: var(--ink);
+    background: var(--signal); padding: 8px 15px; border-radius: 7px; text-decoration: none;
+    white-space: nowrap;
+  }
+  nav a.btn-download:hover { background: #85dcd2; }
+  @media (min-width: 640px) { nav a.nav-link { display: inline; } }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+  }
+
+  /* ---------------------------------------------------------------
+     Hero
+  ----------------------------------------------------------------- */
+  header.hero {
+    position: relative;
+    padding: 108px 0 88px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--hair);
+  }
+  header.hero canvas#ambient {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  header.hero .wrap { position: relative; z-index: 2; }
+
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--signal);
+    display: flex; align-items: center; gap: 9px;
+    margin: 0 0 22px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--signal);
+    box-shadow: 0 0 0 4px var(--signal-dim);
+  }
+
+  h1.headline {
+    font-size: clamp(40px, 6.6vw, 74px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.03;
+    margin: 0 0 26px;
+    text-wrap: balance;
+    max-width: 15ch;
+  }
+
+  p.sub {
+    font-size: clamp(17px, 2vw, 19px);
+    color: var(--slate);
+    max-width: 46ch;
+    margin: 0 0 40px;
+  }
+  p.sub strong { color: var(--bone); font-weight: 600; }
+
+  .cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-bottom: 46px; }
+  a.btn-primary {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--signal); color: var(--ink);
+    font-size: 15px; font-weight: 700;
+    padding: 13px 22px; border-radius: 9px; text-decoration: none;
+  }
+  a.btn-primary:hover { background: #85dcd2; }
+  a.btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--bone); font-size: 14.5px; font-weight: 600;
+    text-decoration: none; border-bottom: 1px solid var(--hair-strong); padding-bottom: 2px;
+  }
+  a.btn-secondary:hover { border-color: var(--bone); }
+
+  .req-strip {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11.5px; color: var(--slate-dim); letter-spacing: 0.02em;
+  }
+  .req-strip span { white-space: nowrap; }
+
+  /* Instrument: a real recreation of the app's own HUD, cycling states */
+  .instrument {
+    margin-top: 56px;
+    background: var(--ink-2);
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 420px;
+    box-shadow: 0 24px 60px var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .instrument .row { display: flex; align-items: center; gap: 12px; height: 22px; }
+  .instrument .bars {
+    flex: 1 1 auto; height: 22px; display: flex; align-items: center; gap: 2px; overflow: hidden;
+  }
+  .instrument .bars span { flex: 0 0 2px; width: 2px; background: var(--bone); border-radius: 1px; }
+  .instrument .state-label {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.11em; white-space: nowrap; transition: color 0.2s;
+  }
+  .instrument .timer {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 11px; color: var(--slate-dim);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .instrument .sweep-track { position: absolute; left: 1px; right: 1px; bottom: 1px; height: 1.5px; overflow: hidden; }
+  .instrument .sweep {
+    position: absolute; top: 0; height: 100%; width: 35%;
+    background: linear-gradient(90deg, transparent, var(--signal), transparent);
+    animation: sweep 1.4s linear infinite;
+    opacity: 0;
+  }
+  @keyframes sweep { from { left: -35%; } to { left: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .instrument .sweep { animation: none; } }
+
+  /* ---------------------------------------------------------------
+     Section rhythm
+  ----------------------------------------------------------------- */
+  section { padding: 96px 0; border-bottom: 1px solid var(--hair); }
+  section:last-of-type { border-bottom: none; }
+  .kicker {
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--signal); margin: 0 0 16px;
+  }
+  h2.sect-title {
+    font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; letter-spacing: -0.015em;
+    margin: 0 0 18px; text-wrap: balance; max-width: 20ch;
+  }
+  p.sect-lede { font-size: 16px; color: var(--slate); max-width: 56ch; margin: 0; }
+
+  /* ---------------------------------------------------------------
+     How it works
+  ----------------------------------------------------------------- */
+  .steps { margin-top: 56px; display: grid; gap: 0; }
+  .step-row {
+    display: grid; grid-template-columns: 120px 1fr; gap: 28px;
+    padding: 30px 0; border-top: 1px solid var(--hair); align-items: start;
+  }
+  .step-row:last-child { border-bottom: 1px solid var(--hair); }
+  .step-row .phase {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.1em; color: var(--signal); padding-top: 3px;
+  }
+  .step-row h3 { font-size: 19px; margin: 0 0 8px; }
+  .step-row p { margin: 0; color: var(--slate); font-size: 14.5px; max-width: 52ch; }
+
+  /* ---------------------------------------------------------------
+     Never lost
+  ----------------------------------------------------------------- */
+  .guarantee-grid {
+    margin-top: 50px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px;
+    background: var(--hair);
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .guarantee {
+    background: var(--ink); padding: 26px 24px;
+  }
+  .guarantee .g-mark {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 10px; color: var(--signal);
+    margin-bottom: 12px;
+  }
+  .guarantee h4 { font-size: 15.5px; margin: 0 0 8px; }
+  .guarantee p { font-size: 13.5px; color: var(--slate); margin: 0; }
+
+  /* ---------------------------------------------------------------
+     Choice cards (real plan copy)
+  ----------------------------------------------------------------- */
+  .plan-row {
+    margin-top: 50px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+  }
+  .plan {
+    border: 1px solid var(--hair); border-radius: 16px; padding: 26px;
+    background: var(--ink-2);
+    display: flex; flex-direction: column;
+  }
+  .plan.featured { border-color: color-mix(in srgb, var(--signal) 55%, transparent); background: linear-gradient(160deg, var(--signal-dim), transparent 60%); }
+  .plan .p-eyebrow { font-family: ui-monospace, "SF Mono", monospace; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--signal); margin-bottom: 10px; }
+  .plan h4 { font-size: 19px; margin: 0 0 4px; }
+  .plan .price { font-size: 17px; font-weight: 700; color: var(--slate); margin: 0 0 18px; }
+  .plan ul { list-style: none; margin: 0 0 14px; padding: 0; font-size: 13px; color: var(--slate); }
+  .plan ul li { display: flex; gap: 8px; padding: 4px 0; }
+  .plan ul.caveats { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--hair); }
+  .plan ul.caveats li { color: var(--slate-dim); }
+
+  /* ---------------------------------------------------------------
+     Open source
+  ----------------------------------------------------------------- */
+  .oss-grid { margin-top: 46px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 48px; align-items: start; }
+  @media (max-width: 760px) { .oss-grid { grid-template-columns: 1fr; } }
+  .oss-grid p { color: var(--slate); font-size: 15px; max-width: 52ch; }
+  .provider-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .provider-strip span {
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 11.5px; color: var(--bone);
+    background: var(--ink-3); border: 1px solid var(--hair); border-radius: 999px; padding: 5px 12px;
+  }
+  .code-card {
+    background: var(--ink-3); border: 1px solid var(--hair); border-radius: 12px; padding: 20px 22px;
+    font-family: ui-monospace, "SF Mono", monospace; font-size: 12.5px; line-height: 1.75; color: var(--slate);
+    overflow-x: auto;
+  }
+  .code-card .c-key { color: var(--signal); }
+  .code-card .c-str { color: var(--bone); }
+
+  /* ---------------------------------------------------------------
+     Final CTA
+  ----------------------------------------------------------------- */
+  section.final {
+    text-align: left;
+    padding: 110px 0;
+  }
+  section.final h2 { font-size: clamp(30px, 4.2vw, 46px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; max-width: 16ch; text-wrap: balance; }
+  section.final p { font-size: 16px; color: var(--slate); max-width: 48ch; margin: 0 0 38px; }
+
+  footer { padding: 40px 0 60px; }
+  footer .wide {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;
+    font-size: 12.5px; color: var(--slate-dim);
+  }
+  footer a { color: var(--slate); text-decoration: none; }
+  footer a:hover { color: var(--bone); }
+  footer .flinks { display: flex; gap: 18px; }
+
+  @media (max-width: 600px) {
+    header.hero { padding: 84px 0 64px; }
+    section { padding: 72px 0; }
+    .step-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wide">
+    <span class="word">Plainsay</span>
+    <span class="spacer"></span>
+    <a class="nav-link" href="#how">How it works</a>
+    <a class="nav-link" href="#never-lost">Reliability</a>
+    <a class="nav-link" href="#choose">Pricing</a>
+    <a class="nav-link" href="https://github.com/conrader/plainsay">Source</a>
+    <a class="btn-download" href="https://github.com/conrader/plainsay/releases/latest">Download</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <canvas id="ambient" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <p class="eyebrow"><span class="dot"></span>OPEN SOURCE · MACOS</p>
+    <h1 class="headline">Hold a key. Speak. Get written text.</h1>
+    <p class="sub">Plainsay turns speech into clean, punctuated text in whatever app you're already using. Transcription can run <strong>entirely on your Mac</strong> — nothing you say has to leave it.</p>
+
+    <div class="cta-row">
+      <a class="btn-primary" href="https://github.com/conrader/plainsay/releases/latest">
+        ⌘ Download for macOS
+      </a>
+      <a class="btn-secondary" href="https://github.com/conrader/plainsay">View source on GitHub →</a>
+    </div>
+
+    <div class="req-strip">
+      <span>MACOS 15+</span>
+      <span>APPLE SILICON</span>
+      <span>MIT LICENSED</span>
+      <span>NOTARIZED</span>
+    </div>
+
+    <div class="instrument" role="img" aria-label="Plainsay's HUD, cycling through listening, transcribing, and polishing">
+      <div class="row">
+        <div class="bars" id="heroBars"></div>
+        <span class="state-label" id="heroLabel">LISTENING</span>
+        <span class="timer mono" id="heroTimer">0:04</span>
+      </div>
+      <div class="sweep-track"><span class="sweep" id="heroSweep"></span></div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <p class="kicker">01 — How it works</p>
+    <h2 class="sect-title">Three phases, no menus in the middle.</h2>
+    <p class="sect-lede">The whole interaction is the hotkey. Everything else — model, provider, cleanup — is a choice you make once in Settings, not every time you dictate.</p>
+
+    <div class="steps">
+      <div class="step-row">
+        <span class="phase mono">LISTENING</span>
+        <div>
+          <h3>Hold, or tap once</h3>
+          <p>Hold your hotkey and speak — release when you're done. Or tap once to latch recording on and tap again to stop, if holding a key while talking isn't comfortable.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <span class="phase mono">TRANSCRIBING</span>
+        <div>
+          <h3>Whisper or Parakeet, on this Mac</h3>
+          <p>OpenAI Whisper via WhisperKit, or NVIDIA's multilingual Parakeet TDT via FluidAudio — both run through Core ML on Apple silicon. Or skip the download entirely with Plainsay Cloud or your own API key.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <span class="phase mono">POLISHING</span>
+        <div>
+          <h3>Filler words out, your wording in</h3>
+          <p>An editing pass removes "um"s and false starts and fixes punctuation — without rewriting what you actually said. Turn it off entirely and you get the raw transcript instead.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="never-lost">
+  <div class="wrap">
+    <p class="kicker">02 — Reliability</p>
+    <h2 class="sect-title">A dictation is never quietly lost.</h2>
+    <p class="sect-lede">Every failure mode in the pipeline has a fallback that keeps your words, even when something downstream doesn't cooperate.</p>
+
+    <div class="guarantee-grid">
+      <div class="guarantee">
+        <div class="g-mark mono">→ EDITING FAILS</div>
+        <h4>Falls back to raw</h4>
+        <p>No key, no network, a timeout, an HTTP error — you still get the unedited transcript, and the HUD says it fell back. Editing is best-effort by design.</p>
+      </div>
+      <div class="guarantee">
+        <div class="g-mark mono">→ PASTE HAS NOWHERE TO LAND</div>
+        <h4>Stays on your clipboard</h4>
+        <p>If nothing was focused to paste into, Plainsay leaves the text on the clipboard instead of silently discarding it — and says so.</p>
+      </div>
+      <div class="guarantee">
+        <div class="g-mark mono">→ THE APP QUITS MID-RECORDING</div>
+        <h4>Recovered on next launch</h4>
+        <p>Audio is written to disk before transcription starts. A crash or force-quit mid-dictation gets picked back up and transcribed the next time Plainsay opens.</p>
+      </div>
+      <div class="guarantee">
+        <div class="g-mark mono">→ A WORD GETS MISHEARD</div>
+        <h4>You teach it</h4>
+        <p>Add names and jargon to your vocabulary once. Whisper and hosted models use them as decoder hints; every model uses them again during editing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="choose">
+  <div class="wrap">
+    <p class="kicker">03 — Choose how it runs</p>
+    <h2 class="sect-title">Local, hosted, or your own key.</h2>
+    <p class="sect-lede">Every provider — transcription and editing both — is a swappable protocol underneath, not a hard-coded assumption. Pick based on what you're optimizing for.</p>
+
+    <div class="plan-row">
+      <div class="plan featured">
+        <p class="p-eyebrow">RECOMMENDED</p>
+        <h4>Plainsay Cloud</h4>
+        <p class="price">≈ $3 / month</p>
+        <ul>
+          <li>+ No model download or preparation</li>
+          <li>+ Transcription and editing included</li>
+          <li>+ No API keys to configure</li>
+        </ul>
+        <ul class="caveats">
+          <li>− Needs an internet connection</li>
+          <li>− Audio is sent to Plainsay Cloud</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <p class="p-eyebrow" style="color:#7fe0a8">LOCAL SPEECH</p>
+        <h4>On this Mac</h4>
+        <p class="price">Free</p>
+        <ul>
+          <li>+ Recorded audio never leaves this Mac</li>
+          <li>+ Works without internet after setup</li>
+        </ul>
+        <ul class="caveats">
+          <li>− Needs storage for the model, once</li>
+          <li>− Uses memory while Plainsay is running</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <p class="p-eyebrow" style="color:#c9b8ff">ADVANCED</p>
+        <h4>Your own API key</h4>
+        <p class="price">Provider's rates</p>
+        <ul>
+          <li>+ Groq, OpenAI, deAPI, or any compatible host</li>
+          <li>+ You control the model and the bill</li>
+        </ul>
+        <ul class="caveats">
+          <li>− Audio leaves this Mac</li>
+          <li>− Provider charges may apply</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="source">
+  <div class="wrap">
+    <div class="oss-grid">
+      <div>
+        <p class="kicker">04 — Made of open parts</p>
+        <h2 class="sect-title">MIT licensed. Read every line.</h2>
+        <p>The pipeline, the HUD, the settings — all of it is one public repository, built on published models rather than a black box. Swap the transcription engine or the editing model without touching anything else; both are protocols underneath.</p>
+        <p>Editing runs through whichever provider you connect:</p>
+        <div class="provider-strip">
+          <span>Gemini</span><span>OpenRouter</span><span>OpenAI</span><span>Anthropic Claude</span><span>Custom</span>
+        </div>
+      </div>
+      <div class="code-card">
+        <div><span class="c-key">engine</span>: WhisperKit <span class="c-str">| FluidAudio</span></div>
+        <div><span class="c-key">compute</span>: Core ML, Apple silicon</div>
+        <div><span class="c-key">editing</span>: <span class="c-str">TextCleaning protocol</span></div>
+        <div><span class="c-key">insertion</span>: pasteboard snapshot → ⌘V → restore</div>
+        <div><span class="c-key">license</span>: <span class="c-str">MIT</span></div>
+        <div><span class="c-key">updates</span>: Sparkle, notarized, signed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Say it once. Get it in writing.</h2>
+    <p>Download the notarized build, or clone the repository and run it yourself.</p>
+    <div class="cta-row" style="margin-bottom:0;">
+      <a class="btn-primary" href="https://github.com/conrader/plainsay/releases/latest">⌘ Download for macOS</a>
+      <a class="btn-secondary" href="https://github.com/conrader/plainsay">View source on GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wide">
+    <span>Plainsay — MIT licensed.</span>
+    <div class="flinks">
+      <a href="https://github.com/conrader/plainsay">GitHub</a>
+      <a href="https://github.com/conrader/plainsay/releases">Releases</a>
+      <a href="https://github.com/conrader/plainsay/blob/main/THIRD_PARTY_NOTICES.md">Third-party notices</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function envelope(n, seed) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      var t = i / n;
+      var e = Math.sin(t * Math.PI * 3.1 + seed) * 0.5 + 0.5;
+      var syll = Math.abs(Math.sin(t * Math.PI * 22 + seed));
+      var breath = (t > 0.44 && t < 0.54) ? 0.08 : 1.0;
+      var v = Math.min(1, e * syll * breath * 1.25);
+      out.push(Math.max(0.05, Math.pow(v, 0.7)));
+    }
+    return out;
+  }
+
+  function paintBars(el, n, animate) {
+    if (!el) return;
+    var levels = envelope(n, 0);
+    var frag = document.createDocumentFragment();
+    levels.forEach(function (v, i) {
+      var bar = document.createElement("span");
+      var h = Math.max(2, Math.round(v * (el.clientHeight || 20)));
+      bar.style.height = h + "px";
+      var age = i / (n - 1);
+      bar.style.opacity = animate ? (0.28 + 0.72 * age) : 0.3;
+      frag.appendChild(bar);
+    });
+    el.innerHTML = "";
+    el.appendChild(frag);
+  }
+
+  paintBars(document.getElementById("heroBars"), 44, true);
+
+  // Cycle the hero instrument through the app's real phases, so the one
+  // animated thing on the page is a true product demo, not decoration.
+  var label = document.getElementById("heroLabel");
+  var timerEl = document.getElementById("heroTimer");
+  var sweep = document.getElementById("heroSweep");
+  var bars = document.getElementById("heroBars");
+
+  var COOL = "#f2efe9";
+  var phases = [
+    { name: "LISTENING", color: COOL, sweep: false, dur: 3600 },
+    { name: "TRANSCRIBING", color: "#7a8194", sweep: true, dur: 1400 },
+    { name: "POLISHING", color: "#7a8194", sweep: true, dur: 1200 },
+  ];
+
+  if (!reduceMotion) {
+    var pIndex = 0, t = 4, tickId, phaseTimeout;
+
+    function applyPhase() {
+      var p = phases[pIndex];
+      label.textContent = p.name;
+      label.style.color = p.color;
+      sweep.style.opacity = p.sweep ? "1" : "0";
+      if (p.sweep) { bars.style.opacity = "0.3"; timerEl.style.visibility = "hidden"; }
+      else { bars.style.opacity = "1"; timerEl.style.visibility = "visible"; }
+      phaseTimeout = setTimeout(function () {
+        pIndex = (pIndex + 1) % phases.length;
+        applyPhase();
+      }, p.dur);
+    }
+    applyPhase();
+
+    tickId = setInterval(function () {
+      if (label.textContent !== "LISTENING") return;
+      t += 1;
+      if (t > 40) t = 0;
+      var m = Math.floor(t / 60), s = t % 60;
+      timerEl.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+    }, 1000);
+  }
+
+  // Ambient waveform field behind the hero — the product's own signature
+  // element, at scale, instead of a stock gradient blob.
+  var canvas = document.getElementById("ambient");
+  if (canvas && !reduceMotion) {
+    var ctx = canvas.getContext("2d");
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var raf;
+
+    function resize() {
+      var hero = canvas.parentElement;
+      canvas.width = hero.clientWidth * dpr;
+      canvas.height = hero.clientHeight * dpr;
+      canvas.style.width = hero.clientWidth + "px";
+      canvas.style.height = hero.clientHeight + "px";
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    var barW = 3 * dpr, gap = 5 * dpr;
+    function draw(ts) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var n = Math.ceil(canvas.width / (barW + gap));
+      var midY = canvas.height * 0.62;
+      var maxH = canvas.height * 0.30;
+      for (var i = 0; i < n; i++) {
+        var x = i * (barW + gap);
+        var phase = (ts || 0) * 0.0006 + i * 0.34;
+        var v = (Math.sin(phase) * 0.5 + 0.5) * Math.abs(Math.sin(i * 0.12 + (ts || 0) * 0.0002));
+        var h = Math.max(2 * dpr, v * maxH);
+        var fade = 0.05 + 0.10 * (1 - Math.abs((i / n) - 0.5) * 2);
+        ctx.fillStyle = "rgba(242,239,233," + fade.toFixed(3) + ")";
+        ctx.fillRect(x, midY - h / 2, barW, h);
+      }
+      raf = requestAnimationFrame(draw);
+    }
+    raf = requestAnimationFrame(draw);
+  }
+})();
+</script>
+</body>
+</html>
