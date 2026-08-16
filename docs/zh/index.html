@@ -1,32 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh">
 <head>
 <meta charset="utf-8">
-<script>
-(function () {
-  try {
-    var SUPPORTED = ["pl", "de", "fr", "es", "it", "pt", "nl", "ja", "ko", "zh", "ru", "uk"];
-    var stored = localStorage.getItem("plainsay-path");
-    if (stored) {
-      if (stored !== "/") location.replace(stored);
-      return;
-    }
-    var langs = navigator.languages || [navigator.language || ""];
-    for (var i = 0; i < langs.length; i++) {
-      var primary = (langs[i] || "").split("-")[0].toLowerCase();
-      if (SUPPORTED.indexOf(primary) !== -1) {
-        location.replace("/" + primary + "/");
-        return;
-      }
-    }
-  } catch (e) {}
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay — On-device voice dictation for macOS</title>
-<meta name="description" content="Hold a key, speak, release — clean written text lands in whatever app you&#x27;re using. Transcription can run entirely on your Mac. Open source, MIT licensed.">
-<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/">
+<title>Plainsay — 面向 Mac 的本地设备端语音听写</title>
+<meta name="description" content="按住一个键，说话，松开——干净的文字会输入到你正在使用的任何应用中。转录可以完全在你的 Mac 上运行。开源，MIT 许可。">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/zh/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
 <link rel="alternate" hreflang="pl" href="https://plainsay.app/pl/">
 <link rel="alternate" hreflang="de" href="https://plainsay.app/de/">
@@ -253,112 +233,112 @@
   <div class="wrap">
 
     <nav class="top">
-      <img src="assets/logo.svg" alt="" width="28" height="28" style="display:block">
+      <img src="../assets/logo.svg" alt="" width="28" height="28" style="display:block">
       <span class="word">Plainsay</span>
       <span class="spacer"></span>
       <div class="links">
-        <a href="#pricing">Pricing</a>
+        <a href="#pricing">定价</a>
         <a href="https://github.com/conrader/plainsay">GitHub</a>
-        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
-        <select class="lang-switch" aria-label="Language" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/" selected>English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
+        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">下载</a>
+        <select class="lang-switch" aria-label="语言" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/" selected>中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
     </nav>
 
     <header class="hero">
-      <h1>Hold a key, speak, release.</h1>
-      <p class="sub">Clean written text lands in whatever app you&#x27;re using. Transcription can run entirely on your Mac — recorded audio never has to leave it.</p>
+      <h1>按住一个键，说话，松开。</h1>
+      <p class="sub">干净的文字会输入到你正在使用的任何应用中。转录可以完全在你的 Mac 上运行——录制的音频完全不需要离开你的电脑。</p>
       <div class="trust-row">
-        <span class="trust-badge"><span class="dot"></span>Open source</span>
-        <span class="trust-badge"><span class="dot"></span>Transparent</span>
-        <span class="trust-badge"><span class="dot"></span>Safe by design</span>
+        <span class="trust-badge"><span class="dot"></span>开源</span>
+        <span class="trust-badge"><span class="dot"></span>透明</span>
+        <span class="trust-badge"><span class="dot"></span>设计上就是安全的</span>
       </div>
       <div class="cta">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-        <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
+        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">下载 macOS 版</a>
+        <span class="req">免费 · MIT 许可 · macOS 15 及以上，Apple silicon</span>
       </div>
     </header>
 
     <section id="how">
-      <h2 class="kicker">Spoken in, written out</h2>
+      <h2 class="kicker">说出来，写下来</h2>
       <div class="compare">
         <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">YOU SAID</span>
-          <p style="color: var(--slate);">um so basically can we uh move the standup to like ten thirty tomorrow because i have a a dentist thing in the morning</p>
+          <span class="eyebrow" style="color: var(--slate);">你说的</span>
+          <p style="color: var(--slate);">呃就是那个我们能不能把明天的站会挪到十点半左右因为我早上有个看牙医的事</p>
         </div>
         <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">PLAINSAY TYPED</span>
-          <p>Can we move the standup to 10:30 tomorrow? I have a dentist appointment in the morning.</p>
+          <span class="eyebrow" style="color: var(--signal);">Plainsay 写下的</span>
+          <p>我们能把明天的站会挪到 10:30 吗？我早上有个牙医预约。</p>
         </div>
       </div>
-      <p class="compare-note">The cleanup pass removes fillers and false starts, fixes punctuation, and keeps your actual wording — it is not a rewrite. Provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
+      <p class="compare-note">清理这一步会去掉口头禅和重新起头的话，修正标点，并保留你实际说的措辞——它不是重写。转录/编辑的提供方可以更换（Gemini、OpenRouter、OpenAI、Claude，或自定义端点），也可以完全关闭，一旦失败就会回退到原始转录文本，而不是让整次听写失败。</p>
     </section>
 
     <section id="why">
-      <h2 class="kicker" style="margin-bottom: 32px;">Why Plainsay</h2>
+      <h2 class="kicker" style="margin-bottom: 32px;">为什么选择 Plainsay</h2>
       <div class="reasons" id="reasons"></div>
     </section>
 
     <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
-      <p class="lede">Trust isn&#x27;t a claim here — it&#x27;s something you can go read. The whole client is MIT licensed and public: the pipeline, the HUD, the settings, all of it. Not open core, and not “open now, closed later” — free to fork, modify, and self-host indefinitely.</p>
+      <h2 class="kicker" style="margin-bottom: 8px;">开源、透明、安全</h2>
+      <p class="lede">在这里，信任不是一句口号——而是你可以亲自去读的东西。整个客户端都以 MIT 许可开源公开：处理流程、HUD、设置，全部都是。不是「开源核心」，也不是「现在开放、以后关闭」——你可以自由地 fork、修改，并无限期自行托管。</p>
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
-          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. On-device, Plainsay makes no network call you didn&#x27;t ask for: no analytics, no telemetry, no phoning home.</p>
+          <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
+          <p>整个听写客户端——转录、编辑、HUD、设置、设置助理。在设备端运行的 Plainsay 不会发起任何你未主动要求的网络请求：没有数据分析、没有遥测、没有偷偷回传。</p>
         </div>
         <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
-          <p>The billing backend for the paid Cloud tier — it holds payment and provider credentials, which is exactly why it stays separate and private. The dictation experience you actually use is fully open.</p>
+          <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
+          <p>付费 Cloud 套餐的计费后端——它保存着支付凭证和服务商凭证，正因如此才需要保持独立和私密。你实际使用的听写体验本身是完全开放的。</p>
         </div>
       </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——逐行阅读源码</p>
     </section>
 
     <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Plainsay Cloud is the easiest way to start — no model download, nothing to configure. Prefer everything on your Mac? Local is free and fully capable, one extra setup step.</p>
+      <h2 class="kicker" style="margin-bottom: 8px;">三种使用方式</h2>
+      <p class="lede">Plainsay Cloud 是最简单的上手方式——无需下载模型，也无需任何配置。更愿意一切都留在 Mac 本地？本地版免费且功能完整，只是多一个设置步骤。</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <h2 class="kicker" style="margin:0;">Reliability</h2>
-          <p class="headline">A dictation is never silently lost.</p>
+          <h2 class="kicker" style="margin:0;">可靠性</h2>
+          <p class="headline">一次听写绝不会悄悄丢失。</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">Editing fails — no key, no network, a timeout</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
-          <div class="failure"><span class="when">Nothing was focused to paste into</span><p class="then">Text stays on the clipboard, with a HUD prompt to press ⌘V.</p></div>
-          <div class="failure"><span class="when">Crash or force-quit mid-recording</span><p class="then">Audio is staged to disk before transcription, and recovered on next launch.</p></div>
-          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">The dictation is already in local history — written there before insertion was attempted.</p></div>
+          <div class="failure"><span class="when">编辑失败——没有密钥、没有网络、超时</span><p class="then">自动回退到原始转录文本，并在 HUD 中提示。</p></div>
+          <div class="failure"><span class="when">没有可粘贴的焦点位置</span><p class="then">文字会保留在剪贴板中，HUD 会提示按 ⌘V。</p></div>
+          <div class="failure"><span class="when">录音过程中崩溃或被强制退出</span><p class="then">音频会在转录前先暂存到磁盘，并在下次启动时恢复。</p></div>
+          <div class="failure"><span class="when">粘贴因其他原因失败</span><p class="then">听写内容早已写入本地历史记录——写入时间早于尝试插入之前。</p></div>
         </div>
       </div>
     </section>
 
     <section id="coming">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Coming</h2>
-        <p>Full live typing — words landing in your document as you speak. Today&#x27;s HUD live preview is the deliberate first step; true live typing trades away the “clean, then insert once” guarantee, so it ships separately.</p>
-        <p class="dim">Also: continued work on language auto-detection, and default-model changes as local models improve.</p>
+        <h2 class="kicker" style="margin:0 0 10px;">即将推出</h2>
+        <p>完整的实时输入——你说话的同时，文字直接落在文档里。今天的 HUD 实时预览是刻意迈出的第一步；真正的实时输入会放弃“先清理、再一次性插入”这一保证，因此会单独发布。</p>
+        <p class="dim">此外：语言自动检测方面的持续工作，以及随着本地模型不断进步而调整的默认模型。</p>
       </div>
     </section>
 
     <section class="final">
-      <img src="assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Start dictating in about two minutes.</p>
-      <p class="sub">The Setup Assistant walks you through everything on first run.</p>
+      <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
+      <p class="headline">大约两分钟即可开始听写。</p>
+      <p class="sub">首次运行时，设置助理会引导你完成一切。</p>
       <div style="margin-top:6px;">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
+        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">下载 macOS 版</a>
       </div>
     </section>
 
     <footer>
-      <img src="assets/logo.svg" alt="" width="18" height="18" style="display:block">
-      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <img src="../assets/logo.svg" alt="" width="18" height="18" style="display:block">
+      <span class="text">Plainsay · macOS 听写工具 · MIT 许可</span>
       <span class="spacer"></span>
       <div class="links">
-        <a href="https://github.com/conrader/plainsay">Source</a>
-        <a href="https://github.com/conrader/plainsay/releases/latest">Releases</a>
+        <a href="https://github.com/conrader/plainsay">源代码</a>
+        <a href="https://github.com/conrader/plainsay/releases/latest">发行版</a>
       </div>
     </footer>
 
@@ -413,12 +393,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "MIT licensed, whole client public — every line of the pipeline, the HUD, the settings. A permanent commitment, not a current state. Read exactly what happens to your voice." },
-    { icon: "lock.shield.fill", title: "Transparent by default", body: "Whisper or NVIDIA Parakeet run locally through Core ML. Recorded audio never has to leave the Mac — not a checkbox, the default. No hidden telemetry, no phoning home." },
-    { icon: "clock.arrow.circlepath", title: "Safe: never silently lost", body: "Every dictation is saved to local history before insertion is even attempted. Failures are recoverable states, not vanished text." },
-    { icon: "gearshape.2", title: "No vendor lock-in", body: "Five ways to transcribe, five ways to edit — pick any combination, including your own API key and endpoint. Nothing is hard-coded to one AI vendor." },
-    { icon: "waveform.badge.mic", title: "Voice filtering", body: "Enroll your voice once; other speakers in the room are filtered out locally, before transcription even runs." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is about $3/month. The local tier is free, fully capable, and needs no account — the same product, not a crippled one." }
+    { icon: "text.quote", title: "开源", body: "MIT 许可，整个客户端公开——处理流程、HUD、设置的每一行代码都可查阅。这是一项永久承诺，而不是一时的状态。你可以准确读到你的声音发生了什么。" },
+    { icon: "lock.shield.fill", title: "默认透明", body: "Whisper 或 NVIDIA Parakeet 通过 Core ML 在本地运行。录制的音频完全不需要离开 Mac——这不是一个可勾选的选项，而是默认行为。没有隐藏的遥测，没有偷偷回传数据。" },
+    { icon: "clock.arrow.circlepath", title: "安全：绝不会悄悄丢失", body: "每一次听写在尝试插入之前就已保存到本地历史记录。失败是可恢复的状态，而不是消失的文字。" },
+    { icon: "gearshape.2", title: "不绑定单一供应商", body: "五种转录方式，五种编辑方式——任意组合，包括使用你自己的 API 密钥和端点。没有任何部分被硬编码绑定到某一家 AI 供应商。" },
+    { icon: "waveform.badge.mic", title: "人声过滤", body: "只需注册一次你的声音；房间里的其他说话者会在本地被过滤掉，甚至在转录开始之前就已完成。" },
+    { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐大约每月 3 美元。本地版免费、功能完整、无需账号——是同一款产品，而不是阉割版。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -434,22 +414,22 @@
   // -----------------------------------------------------------------
   var PLANS = [
     {
-      id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
+      id: "local", eyebrow: "本地语音", title: "在这台 Mac 上", price: "免费",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper or Parakeet, on-device", "Nothing leaves the Mac", "No account, no subscription"],
-      caveats: ["One-time model download, 475–632 MB", "Keeps using memory while Plainsay is running"]
+      features: ["Whisper 或 Parakeet，设备端运行", "什么都不会离开 Mac", "无需账号，无需订阅"],
+      caveats: ["一次性模型下载，475–632 MB", "Plainsay 运行期间会持续占用内存"]
     },
     {
-      id: "cloud", eyebrow: "RECOMMENDED", title: "Plainsay Cloud", price: "≈ $3 / month",
+      id: "cloud", eyebrow: "推荐", title: "Plainsay Cloud", price: "约 3 美元 / 月",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["No model download, no keys", "Transcription and editing included"],
-      caveats: ["Audio is sent to Plainsay Cloud to be transcribed"]
+      features: ["无需下载模型，无需密钥", "包含转录与编辑"],
+      caveats: ["音频会被发送到 Plainsay Cloud 进行转录"]
     },
     {
-      id: "byok", eyebrow: "YOUR PROVIDER", title: "Bring your own key", price: "Provider rates",
+      id: "byok", eyebrow: "自带供应商", title: "使用你自己的密钥", price: "按供应商费率",
       icon: "key.horizontal.fill", pair: ["#FF9F0A", "#FF375F"],
-      features: ["Groq, OpenAI, deAPI, or any OpenAI-compatible endpoint", "You control the model and the bill"],
-      caveats: ["Audio goes to the provider you choose"]
+      features: ["Groq、OpenAI、deAPI，或任何兼容 OpenAI 的端点", "模型和账单由你自己掌控"],
+      caveats: ["音频会发送到你选择的供应商"]
     }
   ];
   var plansEl = document.getElementById("plans");

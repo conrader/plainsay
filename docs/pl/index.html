@@ -1,32 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="utf-8">
-<script>
-(function () {
-  try {
-    var SUPPORTED = ["pl", "de", "fr", "es", "it", "pt", "nl", "ja", "ko", "zh", "ru", "uk"];
-    var stored = localStorage.getItem("plainsay-path");
-    if (stored) {
-      if (stored !== "/") location.replace(stored);
-      return;
-    }
-    var langs = navigator.languages || [navigator.language || ""];
-    for (var i = 0; i < langs.length; i++) {
-      var primary = (langs[i] || "").split("-")[0].toLowerCase();
-      if (SUPPORTED.indexOf(primary) !== -1) {
-        location.replace("/" + primary + "/");
-        return;
-      }
-    }
-  } catch (e) {}
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay — On-device voice dictation for macOS</title>
-<meta name="description" content="Hold a key, speak, release — clean written text lands in whatever app you&#x27;re using. Transcription can run entirely on your Mac. Open source, MIT licensed.">
-<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/">
+<title>Plainsay — dyktowanie głosowe na Macu, lokalnie na urządzeniu</title>
+<meta name="description" content="Przytrzymaj klawisz, powiedz, puść — czysty tekst ląduje w dowolnej aplikacji. Transkrypcja może działać w całości na Twoim Macu. Open source, licencja MIT.">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/pl/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
 <link rel="alternate" hreflang="pl" href="https://plainsay.app/pl/">
 <link rel="alternate" hreflang="de" href="https://plainsay.app/de/">
@@ -253,112 +233,112 @@
   <div class="wrap">
 
     <nav class="top">
-      <img src="assets/logo.svg" alt="" width="28" height="28" style="display:block">
+      <img src="../assets/logo.svg" alt="" width="28" height="28" style="display:block">
       <span class="word">Plainsay</span>
       <span class="spacer"></span>
       <div class="links">
-        <a href="#pricing">Pricing</a>
+        <a href="#pricing">Cennik</a>
         <a href="https://github.com/conrader/plainsay">GitHub</a>
-        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
-        <select class="lang-switch" aria-label="Language" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/" selected>English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
+        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Pobierz</a>
+        <select class="lang-switch" aria-label="Język" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/" selected>Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
     </nav>
 
     <header class="hero">
-      <h1>Hold a key, speak, release.</h1>
-      <p class="sub">Clean written text lands in whatever app you&#x27;re using. Transcription can run entirely on your Mac — recorded audio never has to leave it.</p>
+      <h1>Przytrzymaj klawisz, powiedz, puść.</h1>
+      <p class="sub">Czysty, napisany tekst ląduje w dowolnej aplikacji, z której korzystasz. Transkrypcja może działać w całości na Twoim Macu — nagrane audio nie musi go nigdy opuszczać.</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>Open source</span>
-        <span class="trust-badge"><span class="dot"></span>Transparent</span>
-        <span class="trust-badge"><span class="dot"></span>Safe by design</span>
+        <span class="trust-badge"><span class="dot"></span>Przejrzyste</span>
+        <span class="trust-badge"><span class="dot"></span>Bezpieczne z założenia</span>
       </div>
       <div class="cta">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-        <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
+        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Pobierz na macOS</a>
+        <span class="req">Za darmo · Licencja MIT · macOS 15+, Apple silicon</span>
       </div>
     </header>
 
     <section id="how">
-      <h2 class="kicker">Spoken in, written out</h2>
+      <h2 class="kicker">Powiedziane, zapisane</h2>
       <div class="compare">
         <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">YOU SAID</span>
-          <p style="color: var(--slate);">um so basically can we uh move the standup to like ten thirty tomorrow because i have a a dentist thing in the morning</p>
+          <span class="eyebrow" style="color: var(--slate);">POWIEDZIAŁEŚ</span>
+          <p style="color: var(--slate);">yyy no więc czy moglibyśmy no przesunąć spotkanie zespołu na tak dziesiątą trzydzieści jutro, bo mam rano taką no wizytę u dentysty</p>
         </div>
         <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">PLAINSAY TYPED</span>
-          <p>Can we move the standup to 10:30 tomorrow? I have a dentist appointment in the morning.</p>
+          <span class="eyebrow" style="color: var(--signal);">PLAINSAY ZAPISAŁ</span>
+          <p>Czy możemy przesunąć spotkanie zespołu na jutro na 10:30? Mam rano wizytę u dentysty.</p>
         </div>
       </div>
-      <p class="compare-note">The cleanup pass removes fillers and false starts, fixes punctuation, and keeps your actual wording — it is not a rewrite. Provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
+      <p class="compare-note">Etap czyszczenia usuwa wtrącenia i fałszywe starty, poprawia interpunkcję i zachowuje Twoje właściwe słowa — to nie jest przepisywanie od nowa. Dostawcę można zmienić (Gemini, OpenRouter, OpenAI, Claude lub własny endpoint), można go też całkowicie wyłączyć, a każdy błąd kończy się powrotem do surowego transkryptu zamiast przerwania dyktowania.</p>
     </section>
 
     <section id="why">
-      <h2 class="kicker" style="margin-bottom: 32px;">Why Plainsay</h2>
+      <h2 class="kicker" style="margin-bottom: 32px;">Dlaczego Plainsay</h2>
       <div class="reasons" id="reasons"></div>
     </section>
 
     <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
-      <p class="lede">Trust isn&#x27;t a claim here — it&#x27;s something you can go read. The whole client is MIT licensed and public: the pipeline, the HUD, the settings, all of it. Not open core, and not “open now, closed later” — free to fork, modify, and self-host indefinitely.</p>
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, przejrzyste, bezpieczne</h2>
+      <p class="lede">Zaufanie to tutaj nie deklaracja — to coś, co możesz sam przeczytać. Cały klient ma licencję MIT i jest publiczny: potok przetwarzania, HUD, ustawienia, wszystko. Nie „open core” i nie „otwarte teraz, zamknięte później” — możesz forkować, modyfikować i hostować u siebie bez ograniczeń w czasie.</p>
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
-          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. On-device, Plainsay makes no network call you didn&#x27;t ask for: no analytics, no telemetry, no phoning home.</p>
+          <span class="eyebrow" style="color: var(--signal);">CO JEST OTWARTE</span>
+          <p>Cały klient dyktowania — transkrypcja, edycja, HUD, Ustawienia, Asystent konfiguracji. Działając lokalnie, Plainsay nie wykonuje żadnego połączenia sieciowego, o które nie poprosiłeś: brak analityki, brak telemetrii, brak łączenia się bez wiedzy.</p>
         </div>
         <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
-          <p>The billing backend for the paid Cloud tier — it holds payment and provider credentials, which is exactly why it stays separate and private. The dictation experience you actually use is fully open.</p>
+          <span class="eyebrow" style="color: var(--slate);">CO NIE JEST</span>
+          <p>Backend rozliczeniowy dla płatnego planu Cloud — przechowuje dane płatności i dane dostawców, i właśnie dlatego pozostaje oddzielny i prywatny. Sam proces dyktowania, z którego korzystasz, jest w pełni otwarty.</p>
         </div>
       </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — przeczytaj każdą linię</p>
     </section>
 
     <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Plainsay Cloud is the easiest way to start — no model download, nothing to configure. Prefer everything on your Mac? Local is free and fully capable, one extra setup step.</p>
+      <h2 class="kicker" style="margin-bottom: 8px;">Trzy sposoby uruchomienia</h2>
+      <p class="lede">Plainsay Cloud to najprostszy sposób na start — bez pobierania modelu, bez konfiguracji. Wolisz mieć wszystko na swoim Macu? Plan lokalny jest darmowy i w pełni funkcjonalny, kosztem jednego dodatkowego kroku konfiguracji.</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section id="reliability">
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
-          <h2 class="kicker" style="margin:0;">Reliability</h2>
-          <p class="headline">A dictation is never silently lost.</p>
+          <h2 class="kicker" style="margin:0;">Niezawodność</h2>
+          <p class="headline">Dyktowanie nigdy nie ginie po cichu.</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">Editing fails — no key, no network, a timeout</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
-          <div class="failure"><span class="when">Nothing was focused to paste into</span><p class="then">Text stays on the clipboard, with a HUD prompt to press ⌘V.</p></div>
-          <div class="failure"><span class="when">Crash or force-quit mid-recording</span><p class="then">Audio is staged to disk before transcription, and recovered on next launch.</p></div>
-          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">The dictation is already in local history — written there before insertion was attempted.</p></div>
+          <div class="failure"><span class="when">Edycja się nie udaje — brak klucza, brak sieci, timeout</span><p class="then">Automatyczny powrót do surowego transkryptu, z powiadomieniem w HUD-zie.</p></div>
+          <div class="failure"><span class="when">Nic nie było aktywne, by wkleić tekst</span><p class="then">Tekst zostaje w schowku, z podpowiedzią w HUD-zie, by nacisnąć ⌘V.</p></div>
+          <div class="failure"><span class="when">Awaria lub wymuszone zamknięcie w trakcie nagrywania</span><p class="then">Audio jest zapisywane na dysku jeszcze przed transkrypcją i odzyskiwane przy kolejnym uruchomieniu.</p></div>
+          <div class="failure"><span class="when">Wklejenie nie powiedzie się z innego powodu</span><p class="then">Dyktowanie jest już w lokalnej historii — zapisane tam, zanim w ogóle spróbowano je wstawić.</p></div>
         </div>
       </div>
     </section>
 
     <section id="coming">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Coming</h2>
-        <p>Full live typing — words landing in your document as you speak. Today&#x27;s HUD live preview is the deliberate first step; true live typing trades away the “clean, then insert once” guarantee, so it ships separately.</p>
-        <p class="dim">Also: continued work on language auto-detection, and default-model changes as local models improve.</p>
+        <h2 class="kicker" style="margin:0 0 10px;">Nadchodzi</h2>
+        <p>Pełne pisanie na żywo — słowa lądujące w dokumencie w trakcie mówienia. Dzisiejszy podgląd na żywo w HUD-zie to celowy pierwszy krok; prawdziwe pisanie na żywo rezygnuje z gwarancji „oczyść, potem wstaw raz”, więc trafi do osobnego wydania.</p>
+        <p class="dim">Poza tym: dalsza praca nad automatycznym wykrywaniem języka oraz zmiany domyślnego modelu w miarę rozwoju modeli lokalnych.</p>
       </div>
     </section>
 
     <section class="final">
-      <img src="assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Start dictating in about two minutes.</p>
-      <p class="sub">The Setup Assistant walks you through everything on first run.</p>
+      <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
+      <p class="headline">Zacznij dyktować w około dwie minuty.</p>
+      <p class="sub">Asystent konfiguracji przeprowadzi Cię przez wszystko przy pierwszym uruchomieniu.</p>
       <div style="margin-top:6px;">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
+        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Pobierz na macOS</a>
       </div>
     </section>
 
     <footer>
-      <img src="assets/logo.svg" alt="" width="18" height="18" style="display:block">
-      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <img src="../assets/logo.svg" alt="" width="18" height="18" style="display:block">
+      <span class="text">Plainsay · dyktowanie na macOS · Licencja MIT</span>
       <span class="spacer"></span>
       <div class="links">
-        <a href="https://github.com/conrader/plainsay">Source</a>
-        <a href="https://github.com/conrader/plainsay/releases/latest">Releases</a>
+        <a href="https://github.com/conrader/plainsay">Kod źródłowy</a>
+        <a href="https://github.com/conrader/plainsay/releases/latest">Wydania</a>
       </div>
     </footer>
 
@@ -413,12 +393,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "MIT licensed, whole client public — every line of the pipeline, the HUD, the settings. A permanent commitment, not a current state. Read exactly what happens to your voice." },
-    { icon: "lock.shield.fill", title: "Transparent by default", body: "Whisper or NVIDIA Parakeet run locally through Core ML. Recorded audio never has to leave the Mac — not a checkbox, the default. No hidden telemetry, no phoning home." },
-    { icon: "clock.arrow.circlepath", title: "Safe: never silently lost", body: "Every dictation is saved to local history before insertion is even attempted. Failures are recoverable states, not vanished text." },
-    { icon: "gearshape.2", title: "No vendor lock-in", body: "Five ways to transcribe, five ways to edit — pick any combination, including your own API key and endpoint. Nothing is hard-coded to one AI vendor." },
-    { icon: "waveform.badge.mic", title: "Voice filtering", body: "Enroll your voice once; other speakers in the room are filtered out locally, before transcription even runs." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is about $3/month. The local tier is free, fully capable, and needs no account — the same product, not a crippled one." }
+    { icon: "text.quote", title: "Open source", body: "Licencja MIT, cały klient publiczny — każda linia potoku przetwarzania, HUD-u, ustawień. Trwałe zobowiązanie, nie chwilowy stan. Sprawdź dokładnie, co dzieje się z Twoim głosem." },
+    { icon: "lock.shield.fill", title: "Przejrzyste domyślnie", body: "Whisper lub NVIDIA Parakeet działają lokalnie przez Core ML. Nagrane audio nie musi nigdy opuścić Maca — to nie opcja do zaznaczenia, to domyślne zachowanie. Żadnej ukrytej telemetrii, żadnego łączenia się bez wiedzy." },
+    { icon: "clock.arrow.circlepath", title: "Bezpieczne: nic nie ginie po cichu", body: "Każde dyktowanie trafia do lokalnej historii, zanim w ogóle spróbujemy je wstawić. Błędy to stany do odzyskania, a nie zniknięty tekst." },
+    { icon: "gearshape.2", title: "Bez uzależnienia od dostawcy", body: "Pięć sposobów na transkrypcję, pięć sposobów na edycję — wybierz dowolną kombinację, w tym własny klucz API i endpoint. Nic nie jest przypisane na sztywno do jednego dostawcy AI." },
+    { icon: "waveform.badge.mic", title: "Filtrowanie głosu", body: "Zarejestruj swój głos raz; pozostałe osoby w pomieszczeniu są odfiltrowywane lokalnie, jeszcze zanim ruszy transkrypcja." },
+    { icon: "checkmark.circle.fill", title: "Uczciwy cennik", body: "Plan hostowany kosztuje około 3 dolarów miesięcznie. Plan lokalny jest darmowy, w pełni funkcjonalny i nie wymaga konta — to ten sam produkt, nie okrojona wersja." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -434,22 +414,22 @@
   // -----------------------------------------------------------------
   var PLANS = [
     {
-      id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
+      id: "local", eyebrow: "LOKALNA MOWA", title: "Na tym Macu", price: "Za darmo",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper or Parakeet, on-device", "Nothing leaves the Mac", "No account, no subscription"],
-      caveats: ["One-time model download, 475–632 MB", "Keeps using memory while Plainsay is running"]
+      features: ["Whisper lub Parakeet, na urządzeniu", "Nic nie opuszcza Maca", "Bez konta, bez subskrypcji"],
+      caveats: ["Jednorazowe pobranie modelu, 475–632 MB", "Zajmuje pamięć, dopóki Plainsay działa"]
     },
     {
-      id: "cloud", eyebrow: "RECOMMENDED", title: "Plainsay Cloud", price: "≈ $3 / month",
+      id: "cloud", eyebrow: "POLECANE", title: "Plainsay Cloud", price: "≈ 3 USD / miesiąc",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["No model download, no keys", "Transcription and editing included"],
-      caveats: ["Audio is sent to Plainsay Cloud to be transcribed"]
+      features: ["Bez pobierania modelu, bez kluczy", "Transkrypcja i edycja w cenie"],
+      caveats: ["Audio jest wysyłane do Plainsay Cloud w celu transkrypcji"]
     },
     {
-      id: "byok", eyebrow: "YOUR PROVIDER", title: "Bring your own key", price: "Provider rates",
+      id: "byok", eyebrow: "TWÓJ DOSTAWCA", title: "Użyj własnego klucza", price: "Stawki dostawcy",
       icon: "key.horizontal.fill", pair: ["#FF9F0A", "#FF375F"],
-      features: ["Groq, OpenAI, deAPI, or any OpenAI-compatible endpoint", "You control the model and the bill"],
-      caveats: ["Audio goes to the provider you choose"]
+      features: ["Groq, OpenAI, deAPI lub dowolny endpoint kompatybilny z OpenAI", "Ty kontrolujesz model i rachunek"],
+      caveats: ["Audio trafia do wybranego przez Ciebie dostawcy"]
     }
   ];
   var plansEl = document.getElementById("plans");
