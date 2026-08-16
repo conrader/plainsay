@@ -37,7 +37,8 @@ final class AppModel {
         self.settingsWindow = SettingsWindowController(
             settings: settings,
             coordinator: coordinator,
-            permissionStatus: permissionStatus
+            permissionStatus: permissionStatus,
+            updates: updates
         )
     }
 

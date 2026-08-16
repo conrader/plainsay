@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     let permissionStatus: PermissionStatus
+    let updates: UpdateController
 
     private enum Tab: Hashable { case speech, general, history, permissions }
     @State private var selection: Tab = .speech
@@ -22,7 +23,7 @@ struct SettingsView: View {
                 .tabItem { Label("Speech", systemImage: "waveform") }
                 .tag(Tab.speech)
 
-            GeneralSettings(settings: settings, coordinator: coordinator)
+            GeneralSettings(settings: settings, coordinator: coordinator, updates: updates)
                 .tabItem { Label("General", systemImage: "keyboard") }
                 .tag(Tab.general)
 
@@ -46,6 +47,7 @@ struct SettingsView: View {
 private struct GeneralSettings: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
+    @Bindable var updates: UpdateController
 
     var body: some View {
         Form {
@@ -76,6 +78,25 @@ private struct GeneralSettings: View {
                     openSetupAssistant()
                 }
                 Text("Choose a speech model, shortcut, and review the permissions Plainsay needs.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Automatically check for updates", isOn: $updates.automaticallyChecks)
+                HStack {
+                    Text("Plainsay \(updates.currentVersion)")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Check for Updates…") {
+                        updates.checkForUpdates()
+                    }
+                    .disabled(!updates.canCheck)
+                }
+            } header: {
+                Text("Updates")
+            } footer: {
+                Text("Last checked: \(updates.lastCheckDescription). Plainsay is distributed outside the App Store, so it has to check for its own updates.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
