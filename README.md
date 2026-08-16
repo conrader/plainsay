@@ -58,6 +58,13 @@ whatever `Scripts/release.sh` shipped most recently, so it never needs
 updating by hand. The [Releases page](https://github.com/conrader/plainsay/releases)
 is the changelog: every version's notes, oldest to newest.
 
+Or via Homebrew:
+
+```sh
+brew tap conrader/plainsay
+brew install --cask plainsay
+```
+
 Already running Plainsay? It checks for updates itself — no need to
 re-download. See **Check for Updates…** in the menu bar.
 
