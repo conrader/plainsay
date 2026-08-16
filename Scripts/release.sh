@@ -70,6 +70,28 @@ echo "==> Signing $ZIP ($LENGTH bytes)"
 SIGNATURE=$("$SIGN_UPDATE" "$ZIP" | sed -E 's/.*sparkle:edSignature="([^"]+)".*/\1/')
 [ -n "$SIGNATURE" ] || { echo "signing produced nothing" >&2; exit 1; }
 
+# A DMG for GitHub is a nicer first download than a zip: Finder mounts it and
+# shows a drag-to-Applications window, the pattern every Mac user already
+# knows. Sparkle still ships the zip above — DMGs aren't what it expects.
+echo "==> Building DMG"
+DMG="dist/Plainsay-$VERSION.dmg"
+DMG_STAGING=$(mktemp -d)
+trap 'rm -rf "$DMG_STAGING"' EXIT
+ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
+ln -s /Applications "$DMG_STAGING/Applications"
+rm -f "$DMG"
+hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG" >/dev/null
+rm -rf "$DMG_STAGING"
+
+if [ "${NOTARIZE:-1}" = "1" ]; then
+	# The app inside is already stapled, but Gatekeeper also checks the DMG
+	# container itself on first mount — an unnotarized DMG still prompts a
+	# warning even though the app inside would pass on its own.
+	xcrun notarytool submit "$DMG" --keychain-profile "plainsay-notary" --wait --timeout 20m >/dev/null
+	xcrun stapler staple "$DMG" >/dev/null
+	xcrun stapler validate "$DMG" >/dev/null
+fi
+
 PUBDATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
 
 cat > dist/appcast.xml <<XML
@@ -106,12 +128,14 @@ ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $
 echo "==> Publishing GitHub Release v$VERSION"
 # Plain text for the release body: GitHub's own markdown renderer is what
 # displays it, not Sparkle's CDATA-wrapped HTML — reusing the HTML string
-# as-is would show literal <p> tags on the Releases page.
-BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</?p>##g')
+# as-is would show literal <p> tags on the Releases page. Closing tags become
+# a blank line so multi-paragraph notes still read as separate paragraphs
+# instead of running together into one sentence.
+BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</p>#\n\n#g; s#<p>##g')
 if gh release view "v$VERSION" >/dev/null 2>&1; then
 	echo "    v$VERSION already exists on GitHub — skipping (release.sh does not overwrite a tag)"
 else
-	gh release create "v$VERSION" "$ZIP" \
+	gh release create "v$VERSION" "$ZIP" "$DMG" \
 		--title "$VERSION" \
 		--notes "$BODY"
 fi
