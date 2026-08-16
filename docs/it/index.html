@@ -157,6 +157,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -258,6 +269,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">Guardalo in azione</h2>
+      <div class="screens">
+        <figure>
+          <img src="../assets/screenshots/setup-speech.webp" alt="Scegli Plainsay Cloud oppure resta interamente in locale" loading="lazy" width="896" height="960">
+          <figcaption>Scegli Plainsay Cloud oppure resta interamente in locale</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/settings-general.webp" alt="13 lingue dell&#x27;interfaccia, applicate all&#x27;istante" loading="lazy" width="960" height="910">
+          <figcaption>13 lingue dell&#x27;interfaccia, applicate all&#x27;istante</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/setup-permissions.webp" alt="Tre permessi, ciascuno con un unico compito preciso" loading="lazy" width="900" height="960">
+          <figcaption>Tre permessi, ciascuno con un unico compito preciso</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">Detto a voce, scritto pulito</h2>
       <div class="compare">
@@ -318,7 +347,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">In arrivo</h2>
-        <p>Scrittura in tempo reale completa — le parole arrivano nel documento mentre parli. L&#x27;anteprima live dell&#x27;HUD di oggi è il primo passo deliberato; la vera scrittura live rinuncia alla garanzia “prima pulisci, poi inserisci una volta sola”, quindi uscirà separatamente.</p>
+        <p>Scrittura in tempo reale completa — le parole arrivano direttamente nel documento mentre parli, senza un passaggio di inserimento separato. L&#x27;anteprima live dell&#x27;HUD mostra già oggi una bozza approssimativa di ciò che viene ascoltato mentre parli; la vera scrittura live va oltre e rinuncia alla garanzia “prima pulisci, poi inserisci una volta sola”, quindi uscirà separatamente.</p>
         <p class="dim">Inoltre: lavoro continuo sul rilevamento automatico della lingua, e cambi al modello predefinito man mano che i modelli locali migliorano.</p>
       </div>
     </section>

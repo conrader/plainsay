@@ -157,6 +157,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -258,6 +269,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">実際の画面</h2>
+      <div class="screens">
+        <figure>
+          <img src="../assets/screenshots/setup-speech.webp" alt="Plainsay Cloudを選ぶか、完全にローカルのままにするか" loading="lazy" width="896" height="960">
+          <figcaption>Plainsay Cloudを選ぶか、完全にローカルのままにするか</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/settings-general.webp" alt="13のインターフェース言語、切り替えは即座に反映" loading="lazy" width="960" height="910">
+          <figcaption>13のインターフェース言語、切り替えは即座に反映</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/setup-permissions.webp" alt="3つの権限、それぞれ役割はひとつだけ" loading="lazy" width="900" height="960">
+          <figcaption>3つの権限、それぞれ役割はひとつだけ</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">話した言葉が、そのまま文章に</h2>
       <div class="compare">
@@ -318,7 +347,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">今後の予定</h2>
-        <p>完全なライブタイピング——話しながら単語がそのまま文書に入力される機能です。現在のHUDライブプレビューは意図的な第一歩であり、真のライブタイピングは「まずクリーンにしてから一度だけ挿入する」という保証を手放すため、別途リリースされます。</p>
+        <p>完全なライブタイピング——話しながら単語がそのまま文書に直接入力され、別途挿入する手順は不要になります。HUDのライブプレビューは、話している間に聞き取っている内容の大まかな下書きを今すでに表示しています。真のライブタイピングはさらに踏み込み、「まずクリーンにしてから一度だけ挿入する」という保証を手放すため、別途リリースされます。</p>
         <p class="dim">また、言語の自動検出への継続的な取り組みと、ローカルモデルの向上に伴うデフォルトモデルの変更も予定しています。</p>
       </div>
     </section>

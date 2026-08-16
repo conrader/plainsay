@@ -177,6 +177,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -278,6 +289,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">See it in action</h2>
+      <div class="screens">
+        <figure>
+          <img src="assets/screenshots/setup-speech.webp" alt="Choose Plainsay Cloud or keep everything local" loading="lazy" width="896" height="960">
+          <figcaption>Choose Plainsay Cloud or keep everything local</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/screenshots/settings-general.webp" alt="13 interface languages, applied instantly" loading="lazy" width="960" height="910">
+          <figcaption>13 interface languages, applied instantly</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/screenshots/setup-permissions.webp" alt="Three permissions, each with one narrow job" loading="lazy" width="900" height="960">
+          <figcaption>Three permissions, each with one narrow job</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">Spoken in, written out</h2>
       <div class="compare">
@@ -338,7 +367,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Coming</h2>
-        <p>Full live typing — words landing in your document as you speak. Today&#x27;s HUD live preview is the deliberate first step; true live typing trades away the “clean, then insert once” guarantee, so it ships separately.</p>
+        <p>Full live typing — words landing directly in your document as you speak, no separate insert step. The HUD&#x27;s live preview already shows a rough draft of what&#x27;s being heard while you talk; true live typing goes further and trades away the “clean, then insert once” guarantee, so it ships on its own timeline.</p>
         <p class="dim">Also: continued work on language auto-detection, and default-model changes as local models improve.</p>
       </div>
     </section>

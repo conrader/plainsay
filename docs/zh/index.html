@@ -157,6 +157,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -258,6 +269,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">实际界面</h2>
+      <div class="screens">
+        <figure>
+          <img src="../assets/screenshots/setup-speech.webp" alt="选择 Plainsay Cloud，或者完全留在本地" loading="lazy" width="896" height="960">
+          <figcaption>选择 Plainsay Cloud，或者完全留在本地</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/settings-general.webp" alt="13 种界面语言，切换立即生效" loading="lazy" width="960" height="910">
+          <figcaption>13 种界面语言，切换立即生效</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/setup-permissions.webp" alt="三项权限，每项只做一件明确的事" loading="lazy" width="900" height="960">
+          <figcaption>三项权限，每项只做一件明确的事</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">说出来，写下来</h2>
       <div class="compare">
@@ -318,7 +347,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">即将推出</h2>
-        <p>完整的实时输入——你说话的同时，文字直接落在文档里。今天的 HUD 实时预览是刻意迈出的第一步；真正的实时输入会放弃“先清理、再一次性插入”这一保证，因此会单独发布。</p>
+        <p>完整的实时输入——你说话的同时，文字直接落在文档里，无需单独的插入步骤。HUD 的实时预览如今已经能展示正在听到内容的大致草稿；真正的实时输入则更进一步，放弃“先清理、再一次性插入”的保证，因此会单独发布。</p>
         <p class="dim">此外：语言自动检测方面的持续工作，以及随着本地模型不断进步而调整的默认模型。</p>
       </div>
     </section>

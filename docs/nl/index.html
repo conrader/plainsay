@@ -157,6 +157,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -258,6 +269,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">Zo ziet het eruit</h2>
+      <div class="screens">
+        <figure>
+          <img src="../assets/screenshots/setup-speech.webp" alt="Kies Plainsay Cloud of blijf volledig lokaal" loading="lazy" width="896" height="960">
+          <figcaption>Kies Plainsay Cloud of blijf volledig lokaal</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/settings-general.webp" alt="13 interfacetalen, direct van kracht" loading="lazy" width="960" height="910">
+          <figcaption>13 interfacetalen, direct van kracht</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/setup-permissions.webp" alt="Drie machtigingen, elk met precies één taak" loading="lazy" width="900" height="960">
+          <figcaption>Drie machtigingen, elk met precies één taak</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">Gesproken, geschreven</h2>
       <div class="compare">
@@ -318,7 +347,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Binnenkort</h2>
-        <p>Volledig live typen — woorden verschijnen in je document terwijl je spreekt. De huidige live HUD-preview is de bewuste eerste stap; echt live typen laat de garantie “eerst opschonen, dan één keer invoegen” los, dus dat komt apart uit.</p>
+        <p>Volledig live typen — woorden verschijnen rechtstreeks in je document terwijl je spreekt, zonder aparte invoegstap. De live-preview in de HUD laat nu al een ruwe versie zien van wat er wordt gehoord terwijl je spreekt; echt live typen gaat verder en laat de garantie “eerst opschonen, dan één keer invoegen” los, dus dat komt apart uit.</p>
         <p class="dim">Ook: doorlopend werk aan automatische taaldetectie, en wijzigingen in het standaardmodel naarmate lokale modellen beter worden.</p>
       </div>
     </section>

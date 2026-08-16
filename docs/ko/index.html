@@ -157,6 +157,17 @@
   .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
   @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
 
+  /* Screenshots */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .screens img {
+    width: 100%; height: auto; display: block;
+    border-radius: var(--radius-card); border: 1px solid var(--hairline);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
+  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
+
   /* Why Plainsay */
   .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .reason { display: flex; gap: 16px; align-items: flex-start; }
@@ -258,6 +269,24 @@
       </div>
     </header>
 
+    <section id="screenshots">
+      <h2 class="kicker" style="margin-bottom: 28px;">실제 화면</h2>
+      <div class="screens">
+        <figure>
+          <img src="../assets/screenshots/setup-speech.webp" alt="Plainsay Cloud를 선택하거나 완전히 로컬로 유지" loading="lazy" width="896" height="960">
+          <figcaption>Plainsay Cloud를 선택하거나 완전히 로컬로 유지</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/settings-general.webp" alt="13개 인터페이스 언어, 전환 즉시 적용" loading="lazy" width="960" height="910">
+          <figcaption>13개 인터페이스 언어, 전환 즉시 적용</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/screenshots/setup-permissions.webp" alt="세 가지 권한, 각각 하나의 역할만" loading="lazy" width="900" height="960">
+          <figcaption>세 가지 권한, 각각 하나의 역할만</figcaption>
+        </figure>
+      </div>
+    </section>
+
     <section id="how">
       <h2 class="kicker">말한 대로, 글로 정리</h2>
       <div class="compare">
@@ -318,7 +347,7 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">예정된 기능</h2>
-        <p>완전한 실시간 타이핑 — 말하는 동안 단어가 바로 문서에 입력됩니다. 현재의 HUD 실시간 미리보기는 의도된 첫 단계이며, 진짜 실시간 타이핑은 “정리 후 한 번에 삽입”이라는 보장을 포기하는 방식이라 별도로 출시됩니다.</p>
+        <p>완전한 실시간 타이핑 — 별도의 삽입 단계 없이, 말하는 동안 단어가 바로 문서에 입력됩니다. HUD의 실시간 미리보기는 지금도 말하는 동안 듣고 있는 내용의 대략적인 초안을 보여줍니다. 진짜 실시간 타이핑은 한 걸음 더 나아가 “정리 후 한 번에 삽입”이라는 보장을 포기하는 방식이라 별도로 출시됩니다.</p>
         <p class="dim">그 외에도: 언어 자동 감지 기능을 계속 개선하고, 로컬 모델이 발전함에 따라 기본 모델도 변경할 예정입니다.</p>
       </div>
     </section>
