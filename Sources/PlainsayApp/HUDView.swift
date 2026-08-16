@@ -10,17 +10,20 @@ struct HUDState: Equatable {
     var modelState: SpeechModelLoadState = .idle
     var levelHistory: [Float] = []
     var elapsed: TimeInterval = 0
+    var livePreviewText: String = ""
 
     init(
         phase: DictationCoordinator.Phase = .idle,
         modelState: SpeechModelLoadState = .idle,
         levelHistory: [Float] = [],
-        elapsed: TimeInterval = 0
+        elapsed: TimeInterval = 0,
+        livePreviewText: String = ""
     ) {
         self.phase = phase
         self.modelState = modelState
         self.levelHistory = levelHistory
         self.elapsed = elapsed
+        self.livePreviewText = livePreviewText
     }
 
     @MainActor
@@ -29,6 +32,7 @@ struct HUDState: Equatable {
         modelState = coordinator.modelState
         levelHistory = coordinator.levelHistory
         elapsed = coordinator.elapsed
+        livePreviewText = coordinator.livePreviewText
     }
 }
 
@@ -273,6 +277,9 @@ private struct HUDModelProgressView: View {
 struct HUDErrorView: View {
     let message: String
     var tint: Color = Palette.ember
+    /// `.head` for a live preview, so the words just spoken stay visible as
+    /// the sentence grows past two lines instead of scrolling out of view.
+    var truncationMode: Text.TruncationMode = .tail
 
     var body: some View {
         Text(message)
@@ -280,6 +287,7 @@ struct HUDErrorView: View {
             .foregroundStyle(Palette.bone.opacity(0.9))
             .multilineTextAlignment(.center)
             .lineLimit(2)
+            .truncationMode(truncationMode)
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
             .frame(maxWidth: Metrics.hudWidth)
@@ -325,6 +333,9 @@ struct HUDContainer: View {
                     message: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it.",
                     tint: Palette.signal
                 )
+            }
+            if state.phase == .recording, !state.livePreviewText.isEmpty {
+                HUDErrorView(message: state.livePreviewText, tint: Palette.slate, truncationMode: .head)
             }
         }
         .padding(24)

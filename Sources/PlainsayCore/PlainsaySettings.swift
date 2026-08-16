@@ -47,6 +47,12 @@ public final class PlainsaySettings {
     /// Leave the dictation on the clipboard instead of restoring what was there.
     /// Insurance for apps that silently swallow a synthetic ⌘V.
     public var keepOnClipboard: Bool { didSet { defaults.set(keepOnClipboard, forKey: Key.keepOnClipboard.rawValue) } }
+    /// Shows a running, unedited preview of what's being heard while
+    /// recording, in the HUD. Never changes what gets inserted — the final
+    /// pipeline still transcribes and cleans the complete recording from
+    /// scratch once you stop. On-device only: a partial call every couple of
+    /// seconds would be far too slow and costly against a paid API.
+    public var livePreviewEnabled: Bool { didSet { defaults.set(livePreviewEnabled, forKey: Key.livePreviewEnabled.rawValue) } }
     /// Languages the user actually speaks, most-used first. Empty means fully
     /// automatic multilingual decoding across everything Whisper knows.
     public var spokenLanguages: [String] { didSet { persist(spokenLanguages, .language) } }
@@ -125,6 +131,7 @@ public final class PlainsaySettings {
 
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
+        case livePreviewEnabled
         case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
@@ -157,6 +164,7 @@ public final class PlainsaySettings {
         onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
         onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
+        livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false
         cleanupProvider = decode(.cleanupProvider, CleanupProvider.gemini)
         cleanupModel = defaults.string(forKey: Key.cleanupModel.rawValue) ?? ""
         cleanupBaseURL = defaults.string(forKey: Key.cleanupBaseURL.rawValue) ?? ""
@@ -183,6 +191,7 @@ public final class PlainsaySettings {
         .playFeedbackSounds,
         .language,
         .keepOnClipboard,
+        .livePreviewEnabled,
         .cleanupProvider,
         .cleanupModel,
         .cleanupBaseURL,

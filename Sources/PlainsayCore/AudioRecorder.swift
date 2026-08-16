@@ -87,6 +87,9 @@ public protocol AudioRecording: AnyObject {
     @discardableResult func stop() -> [Float]
     /// Stops and throws the audio away.
     func cancel()
+    /// Everything captured so far, without stopping. Safe to call repeatedly
+    /// mid-recording — for a live transcription preview, not for `stop()`.
+    func peek() -> [Float]
 }
 
 /// Captures microphone audio as 16kHz mono float samples.
@@ -275,5 +278,11 @@ public final class AudioRecorder: AudioRecording {
     public func cancel() {
         _ = stop()
         sink.reset()
+    }
+
+    /// `AudioSampleSink.drain()` only copies what's written; it never resets
+    /// the write cursor, so calling it mid-recording is exactly a peek.
+    public func peek() -> [Float] {
+        sink.drain()
     }
 }

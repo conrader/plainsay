@@ -30,6 +30,11 @@ final class FakeRecorder: AudioRecording {
         isRecording = false
         cancelCount += 1
     }
+
+    func peek() -> [Float] {
+        guard isRecording else { return [] }
+        return [Float](repeating: 0.1, count: Int(duration * whisperSampleRate))
+    }
 }
 
 final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
@@ -267,7 +272,11 @@ private struct Harness {
 
 // MARK: - Tests
 
-@Suite("Dictation pipeline")
+// `.serialized`: a couple of tests below tune the shared, module-wide
+// `DictationCoordinator.previewInterval` for the duration of one test rather
+// than waiting out its real 1.5s cadence — concurrent tests mutating it would
+// race.
+@Suite("Dictation pipeline", .serialized)
 @MainActor
 struct PipelineTests {
     @Test("A dictation is transcribed, cleaned, and inserted")
@@ -281,6 +290,67 @@ struct PipelineTests {
         #expect(harness.cleaner.received == "um so the thing is uh it works")
         #expect(harness.inserter.inserted == ["The thing is, it works."])
         #expect(harness.coordinator.phase == .idle)
+    }
+
+    @Test("Live preview stays off by default, even while recording")
+    func livePreviewOffByDefault() async throws {
+        let harness = Harness()
+        harness.recorder.duration = 3
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.coordinator.livePreviewText.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+    }
+
+    @Test("Live preview stays off for a remote provider even when enabled")
+    func livePreviewSkipsRemoteSources() async throws {
+        let harness = Harness()
+        harness.settings.livePreviewEnabled = true
+        harness.settings.transcriptionSource = .remote
+        harness.recorder.duration = 3
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.coordinator.livePreviewText.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+    }
+
+    @Test("Live preview updates while recording, then clears once it stops")
+    func livePreviewUpdatesWhileRecording() async throws {
+        let harness = Harness()
+        harness.settings.livePreviewEnabled = true
+        harness.recorder.duration = 3
+        harness.engine.transcript = "hello there"
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(harness.coordinator.phase == .recording)
+
+        try await Task.sleep(for: .milliseconds(80))
+        #expect(harness.coordinator.livePreviewText == "hello there")
+        // Purely a HUD readout — the loop never touches what's actually
+        // inserted or written to history.
+        #expect(harness.inserter.inserted.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+
+        #expect(harness.coordinator.livePreviewText.isEmpty)
     }
 
     @Test("Cleanup failure inserts the raw transcript instead of losing it")

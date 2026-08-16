@@ -139,6 +139,14 @@ private struct SpeechSettings: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                Section {
+                    Toggle("Live preview (experimental)", isOn: $settings.livePreviewEnabled)
+                } footer: {
+                    Text("Shows a rough, unedited preview of what Plainsay is hearing while you speak, in the floating HUD. Runs an extra transcription pass every couple of seconds; never changes what actually gets inserted.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
             } else if settings.transcriptionSource == .cloud {
                 Section("Plainsay Cloud") {
                     CloudSettingsView(cloud: coordinator.cloud) {

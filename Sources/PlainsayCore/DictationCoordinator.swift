@@ -34,6 +34,10 @@ public final class DictationCoordinator {
 
     /// Anything shorter than this was a mis-tap, not a dictation.
     static let minimumDuration: TimeInterval = 0.3
+    /// How often the live preview re-transcribes the growing recording.
+    /// A `var`, not `let`, so tests can shrink it rather than waiting out a
+    /// real 1.5s cadence.
+    static var previewInterval: Duration = .milliseconds(1500)
 
     public private(set) var phase: Phase = .idle
     /// 0...1, drives the HUD level meter.
@@ -42,6 +46,11 @@ public final class DictationCoordinator {
     /// ribbon so you can see the shape of the sentence you just spoke.
     public private(set) var levelHistory: [Float] = []
     public private(set) var elapsed: TimeInterval = 0
+    /// A rough, unedited preview of what's being heard while recording.
+    /// Purely a HUD readout — never recorded to history and never what
+    /// actually gets inserted; the final pipeline re-transcribes and cleans
+    /// the complete recording from scratch once you stop.
+    public private(set) var livePreviewText: String = ""
 
     /// How many samples the ribbon shows — about four seconds at 30fps.
     public static let levelHistoryLength = 120
@@ -86,6 +95,7 @@ public final class DictationCoordinator {
     private let hotkeys: HotkeyMonitor
     private var machine: HotkeyStateMachine
     private var meterTask: Task<Void, Never>?
+    private var previewTask: Task<Void, Never>?
     private var resetTask: Task<Void, Never>?
     private var targetApp: NSRunningApplication?
 
@@ -205,6 +215,7 @@ public final class DictationCoordinator {
         let stoppedDuringRecording = phase == .recording && recorder.isRecording
         hotkeys.stop()
         meterTask?.cancel()
+        stopLivePreview()
         recorder.cancel()
         machine.reset()
         phase = .idle
@@ -457,10 +468,12 @@ public final class DictationCoordinator {
         levelHistory = []
         playSound("Tink")
         startMetering()
+        startLivePreview()
     }
 
     private func endRecording() {
         stopMetering()
+        stopLivePreview()
         let samples = recorder.stop()
         guard phase == .recording else { return }
 
@@ -635,8 +648,44 @@ public final class DictationCoordinator {
         level = 0
     }
 
+    /// Re-transcribes the growing recording every couple of seconds so the
+    /// HUD can show a rough live readout. Deliberately not streaming: each
+    /// pass is a fresh full-buffer call through the same engine `stop()`
+    /// will use, so a pass still in flight when recording stops simply
+    /// finishes first — the engine actor serializes both, adding at most
+    /// one preview pass's worth of latency to the real transcription.
+    private func startLivePreview() {
+        guard settings.livePreviewEnabled, settings.transcriptionSource == .onDevice else { return }
+        livePreviewText = ""
+        previewTask?.cancel()
+        previewTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: Self.previewInterval)
+                guard !Task.isCancelled, let self,
+                      self.phase == .recording, self.recorder.isRecording,
+                      let engine = self.engine
+                else { return }
+
+                let samples = self.recorder.peek()
+                guard Double(samples.count) / whisperSampleRate >= Self.minimumDuration else { continue }
+
+                let prompt = self.settings.dictionary.asrPrompt()
+                let text = (try? await engine.transcribe(samples: samples, prompt: prompt)) ?? ""
+                guard !Task.isCancelled, self.phase == .recording, !text.isEmpty else { continue }
+                self.livePreviewText = text
+            }
+        }
+    }
+
+    private func stopLivePreview() {
+        previewTask?.cancel()
+        previewTask = nil
+        livePreviewText = ""
+    }
+
     private func flashError(_ message: String) {
         stopMetering()
+        stopLivePreview()
         recorder.cancel()
         phase = .error(message)
         scheduleReset(after: .seconds(4))

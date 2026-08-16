@@ -12,6 +12,10 @@ final class HUDController {
     private let coordinator: DictationCoordinator
     private var panel: NSPanel?
     private var observationTask: Task<Void, Never>?
+    /// Only running while `.recording`: the live preview grows the panel by a
+    /// second line without changing `phase`, so it needs its own trigger to
+    /// resize the panel.
+    private var previewObservationTask: Task<Void, Never>?
 
     init(coordinator: DictationCoordinator) {
         self.coordinator = coordinator
@@ -23,6 +27,7 @@ final class HUDController {
 
     func stop() {
         observationTask?.cancel()
+        previewObservationTask?.cancel()
         hide()
     }
 
@@ -127,6 +132,37 @@ final class HUDController {
             show()
             // Error text changes the panel's height.
             if let panel { position(panel) }
+        }
+
+        if phase == .recording {
+            observeLivePreview()
+        } else {
+            previewObservationTask?.cancel()
+            previewObservationTask = nil
+        }
+    }
+
+    /// Repositions/resizes the panel as the live preview line appears and
+    /// grows, since none of that changes `phase` itself.
+    private func observeLivePreview() {
+        guard previewObservationTask == nil else { return }
+        previewObservationTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                _ = withObservationTracking {
+                    self.coordinator.livePreviewText
+                } onChange: {
+                    // Intentionally empty: re-read on the next loop pass.
+                }
+                if let panel = self.panel { self.position(panel) }
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = self.coordinator.livePreviewText
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
+            }
         }
     }
 }

@@ -487,6 +487,15 @@ private struct SpeechSetupStep: View {
 
             whisperChoice
 
+            Divider()
+
+            Toggle("Live preview (experimental)", isOn: $settings.livePreviewEnabled)
+                .font(.callout)
+            Text("Shows a rough preview of what Plainsay is hearing while you speak, in the HUD. Never changes what actually gets inserted.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             Label(
                 "Local refers to speech recognition and recorded audio. If transcript cleanup is enabled with a cloud provider, transcript text may still be sent to that provider; turn cleanup off for a fully local text path.",
                 systemImage: "info.circle"
