@@ -33,6 +33,7 @@ struct HUDPreview: View {
             modelState: .loading(progress: nil)
         )),
         ("Cleanup unavailable", HUDState(phase: .insertedRaw, levelHistory: sampleLevels)),
+        ("Saved to clipboard", HUDState(phase: .savedToClipboard, levelHistory: sampleLevels)),
         ("Error", HUDState(
             phase: .error("Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."),
             levelHistory: []

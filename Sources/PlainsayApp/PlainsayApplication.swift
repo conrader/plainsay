@@ -44,7 +44,7 @@ private struct MenuBarIcon: View {
         case .recording: "waveform.circle.fill"
         case .transcribing, .cleaning, .modelLoading: "waveform.circle"
         case .error: "waveform.slash"
-        case .insertedRaw: canDictate ? "waveform" : unavailableSymbol
+        case .insertedRaw, .savedToClipboard: canDictate ? "waveform" : unavailableSymbol
         case .idle:
             canDictate ? "waveform" : unavailableSymbol
         }
@@ -69,6 +69,7 @@ private struct MenuBarIcon: View {
         case .modelLoading: modelAccessibilityLabel
         case .error(let message): "Plainsay error: \(message)"
         case .insertedRaw: "Plainsay inserted an unpolished transcript"
+        case .savedToClipboard: "Plainsay saved the dictation to the clipboard — nothing was focused to paste into"
         case .idle: readinessAccessibilityLabel
         }
     }

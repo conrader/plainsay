@@ -43,11 +43,22 @@ public struct PasteboardSnapshot: Sendable {
     }
 }
 
+public enum TextInsertionOutcome: Sendable, Equatable {
+    /// ⌘V was sent into a focused element. This does not guarantee the target
+    /// app actually consumed it — nothing can, short of reading its contents
+    /// back — but it is the normal, expected case.
+    case inserted
+    /// The Accessibility API positively reports no focused UI element (or
+    /// Accessibility isn't granted at all), so a synthetic ⌘V has nowhere to
+    /// land. The text was left on the clipboard either way.
+    case noFocusedElement
+}
+
 public protocol TextInserting: Sendable {
     /// - Parameter keepOnClipboard: leave the dictation on the clipboard rather
     ///   than restoring the previous contents, so a swallowed ⌘V costs one
     ///   manual paste instead of the whole dictation.
-    @MainActor func insert(_ text: String, keepOnClipboard: Bool) async
+    @MainActor func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome
 }
 
 /// Inserts text by writing it to the pasteboard and synthesizing ⌘V.
@@ -74,8 +85,8 @@ public struct PasteboardTextInserter: TextInserting {
     }
 
     @MainActor
-    public func insert(_ text: String, keepOnClipboard: Bool) async {
-        guard !text.isEmpty else { return }
+    public func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
+        guard !text.isEmpty else { return .inserted }
 
         // Without Accessibility, `CGEvent.post` is silently dropped: the
         // pasteboard gets the text, no ⌘V ever arrives, and we then restore the
@@ -92,6 +103,18 @@ public struct PasteboardTextInserter: TextInserting {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
+        // Nothing focused anywhere means a synthetic ⌘V has nowhere to land.
+        // Sending it anyway risks it reaching some unrelated responder, and
+        // the pasteboard write above already keeps the dictation safe either
+        // way, so leave it there instead of restoring the old clipboard over
+        // it — that restore is exactly how a dictation used to vanish.
+        guard trusted, Self.hasFocusedElement() else {
+            Log.insertion.info(
+                "no focused element — left \(text.count, privacy: .public) chars on the clipboard"
+            )
+            return .noFocusedElement
+        }
+
         try? await Task.sleep(for: pasteDelay)
         Self.sendCommandV()
 
@@ -103,6 +126,21 @@ public struct PasteboardTextInserter: TextInserting {
         Log.insertion.info(
             "inserted \(text.count, privacy: .public) chars, accessibility=\(trusted, privacy: .public)"
         )
+        return .inserted
+    }
+
+    /// Best-effort: only reports "no focus" when the Accessibility API
+    /// positively confirms it. Any error, timeout, or app that simply doesn't
+    /// answer this query reports a focus, so a paste that would have worked
+    /// is never second-guessed into a false "nothing focused" warning.
+    @MainActor
+    private static func hasFocusedElement() -> Bool {
+        let systemWide = AXUIElementCreateSystemWide()
+        var focused: AnyObject?
+        let result = AXUIElementCopyAttributeValue(
+            systemWide, kAXFocusedUIElementAttribute as CFString, &focused
+        )
+        return result == .success && focused != nil
     }
 
     /// Virtual keycode for `v` on any layout (ANSI position-based).

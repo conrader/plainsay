@@ -19,12 +19,15 @@ public final class DictationCoordinator {
         case modelLoading
         /// Finished, but cleanup fell back to the raw transcript.
         case insertedRaw
+        /// Nothing was focused to paste into. The text is safe on the
+        /// clipboard, but it did not land anywhere on its own.
+        case savedToClipboard
         case error(String)
 
         public var isBusy: Bool {
             switch self {
             case .recording, .transcribing, .cleaning: true
-            case .idle, .modelLoading, .insertedRaw, .error: false
+            case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .error: false
             }
         }
     }
@@ -571,11 +574,19 @@ public final class DictationCoordinator {
             duration: duration
         )
 
-        await insert(finalText)
+        let outcome = await insert(finalText)
 
-        phase = usedRaw ? .insertedRaw : .idle
+        switch outcome {
+        case .inserted:
+            phase = usedRaw ? .insertedRaw : .idle
+            scheduleReset()
+        case .noFocusedElement:
+            // Longer than the normal reset: this is the one outcome that
+            // needs the user to actually read and act on it before it fades.
+            phase = .savedToClipboard
+            scheduleReset(after: .seconds(5))
+        }
         playSound("Pop")
-        scheduleReset()
     }
 
     private func record(text: String, raw: String, outcome: DictationOutcome, duration: Double) {
@@ -588,14 +599,15 @@ public final class DictationCoordinator {
         ))
     }
 
-    private func insert(_ text: String) async {
+    private func insert(_ text: String) async -> TextInsertionOutcome {
         if let targetApp, NSWorkspace.shared.frontmostApplication?.bundleIdentifier != targetApp.bundleIdentifier {
             // The user switched apps mid-dictation. Paste where they are now —
             // stealing focus back would be more surprising than a stray paste.
             NSLog("[Plainsay] frontmost app changed during dictation; inserting into current app")
         }
-        await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
+        let outcome = await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
         targetApp = nil
+        return outcome
     }
 
     // MARK: - HUD feed

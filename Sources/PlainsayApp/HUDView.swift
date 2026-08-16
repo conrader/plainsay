@@ -109,6 +109,7 @@ struct HUDView: View {
         case .cleaning: "POLISHING"
         case .modelLoading: "PREPARING MODEL"
         case .insertedRaw: "INSERTED · RAW"
+        case .savedToClipboard: "SAVED TO CLIPBOARD"
         case .error: "ERROR"
         case .idle: ""
         }
@@ -118,6 +119,7 @@ struct HUDView: View {
         switch state.phase {
         case .recording: Palette.bone
         case .insertedRaw, .error: Palette.ember
+        case .savedToClipboard: Palette.signal
         default: Palette.slate
         }
     }
@@ -125,6 +127,7 @@ struct HUDView: View {
     private var borderColor: Color {
         switch state.phase {
         case .error, .insertedRaw: Palette.ember.opacity(0.45)
+        case .savedToClipboard: Palette.signal.opacity(0.45)
         default: Palette.veil
         }
     }
@@ -141,6 +144,7 @@ struct HUDView: View {
         case .cleaning: "Polishing transcript"
         case .modelLoading: modelAccessibilityLabel
         case .insertedRaw: "Inserted raw transcript, cleanup unavailable"
+        case .savedToClipboard: "Nothing was focused to paste into. Dictation saved to the clipboard — press Command V to paste it."
         case .error(let message): "Error: \(message)"
         case .idle: "Idle"
         }
@@ -263,10 +267,12 @@ private struct HUDModelProgressView: View {
     }
 }
 
-/// Error text is too long for the readout row, so failures get their own line
-/// below the HUD rather than truncating in it.
+/// Explanatory text too long for the readout row gets its own line below the
+/// HUD rather than truncating in it — failures and the clipboard-fallback
+/// notice both use this, distinguished only by tint.
 struct HUDErrorView: View {
     let message: String
+    var tint: Color = Palette.ember
 
     var body: some View {
         Text(message)
@@ -286,7 +292,7 @@ struct HUDErrorView: View {
             .clipShape(.rect(cornerRadius: 9))
             .overlay {
                 RoundedRectangle(cornerRadius: 9)
-                    .strokeBorder(Palette.ember.opacity(0.35), lineWidth: 1)
+                    .strokeBorder(tint.opacity(0.35), lineWidth: 1)
             }
             .shadow(color: .black.opacity(0.35), radius: 12, y: 4)
     }
@@ -313,6 +319,12 @@ struct HUDContainer: View {
             HUDView(state: state)
             if case .error(let message) = state.phase {
                 HUDErrorView(message: message)
+            }
+            if case .savedToClipboard = state.phase {
+                HUDErrorView(
+                    message: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it.",
+                    tint: Palette.signal
+                )
             }
         }
         .padding(24)

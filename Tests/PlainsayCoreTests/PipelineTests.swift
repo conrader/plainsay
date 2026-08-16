@@ -192,9 +192,11 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
 @MainActor
 final class FakeInserter: TextInserting {
     private(set) var inserted: [String] = []
+    var outcome: TextInsertionOutcome = .inserted
 
-    func insert(_ text: String, keepOnClipboard: Bool) async {
+    func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
         inserted.append(text)
+        return outcome
     }
 }
 
@@ -293,6 +295,21 @@ struct PipelineTests {
         #expect(harness.inserter.inserted == ["um so the thing is uh it works"])
         // The HUD says so, rather than failing silently.
         #expect(harness.coordinator.phase == .insertedRaw)
+    }
+
+    @Test("No focused element saves the dictation to the clipboard instead of losing it")
+    func noFocusedElementSavesToClipboard() async throws {
+        let harness = Harness()
+        harness.inserter.outcome = .noFocusedElement
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        // Still written to the clipboard and to history — only where it
+        // landed changes, not whether the dictation survived.
+        #expect(harness.inserter.inserted == ["The thing is, it works."])
+        #expect(harness.coordinator.phase == .savedToClipboard)
     }
 
     @Test("A stray tap shorter than the minimum inserts nothing")
