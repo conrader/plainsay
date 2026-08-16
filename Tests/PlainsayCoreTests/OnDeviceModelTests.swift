@@ -63,4 +63,27 @@ struct OnDeviceModelTests {
         #expect(!model.supportsDecoderPrompt)
         #expect(model.approximateSize.contains("475"))
     }
+
+    @Test("No languages chosen yet recommends Parakeet")
+    func recommendsParakeetByDefault() {
+        #expect(OnDeviceModel.recommended(for: []) == .parakeetTDT06BV3)
+    }
+
+    @Test("Languages Parakeet actually covers still recommend Parakeet")
+    func recommendsParakeetWhenCovered() {
+        #expect(OnDeviceModel.recommended(for: ["pl", "en"]) == .parakeetTDT06BV3)
+        #expect(OnDeviceModel.recommended(for: ["de"]) == .parakeetTDT06BV3)
+        // Region-qualified codes match on the primary subtag, same as
+        // SupportedLanguage.primaryCode elsewhere.
+        #expect(OnDeviceModel.recommended(for: ["pt-BR"]) == .parakeetTDT06BV3)
+    }
+
+    @Test("A language outside Parakeet's coverage recommends Whisper instead")
+    func recommendsWhisperWhenUncovered() {
+        #expect(OnDeviceModel.recommended(for: ["ja"]) == .largeV3Turbo)
+        #expect(OnDeviceModel.recommended(for: ["ar"]) == .largeV3Turbo)
+        // Mixed: even one unsupported language should move the whole
+        // recommendation to Whisper, since Parakeet can't cover all of them.
+        #expect(OnDeviceModel.recommended(for: ["en", "hi"]) == .largeV3Turbo)
+    }
 }

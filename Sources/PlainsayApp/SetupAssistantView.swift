@@ -16,6 +16,10 @@ struct SetupAssistantView: View {
     @State private var asrKeyRevision = 0
     @State private var speechSource: TranscriptionSource
     @State private var speechModel: OnDeviceModel
+    // Set the moment someone taps a model card directly, so the
+    // language-based recommendation (applied when entering .configure)
+    // never overwrites a choice they already made themselves.
+    @State private var speechModelWasManuallyChosen = false
 
     init(
         settings: PlainsaySettings,
@@ -40,14 +44,20 @@ struct SetupAssistantView: View {
             initialValue: preferCloudOnFirstPresentation
                 && OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
                 ? .parakeetTDT06BV3
-                : settings.model
+                // A fresh setup has no real choice to respect yet — recommend
+                // based on whatever languages are already on file (usually
+                // none, which the recommendation treats the same as Parakeet).
+                // A returning user's own settings.model is left untouched.
+                : settings.needsOnboarding
+                    ? OnDeviceModel.recommended(for: settings.spokenLanguages)
+                    : settings.model
         )
     }
 
     private enum Step: Int, CaseIterable, Identifiable {
         case speech
-        case configure
         case language
+        case configure
         case voice
         case shortcut
         case permissions
@@ -88,16 +98,17 @@ struct SetupAssistantView: View {
                     switch step {
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
+                    case .language:
+                        LanguageSetupStep(settings: settings)
                     case .configure:
                         ConfigureSpeechSetupStep(
                             source: $speechSource,
                             model: $speechModel,
+                            modelWasManuallyChosen: $speechModelWasManuallyChosen,
                             settings: settings,
                             coordinator: coordinator,
                             asrKeyRevision: $asrKeyRevision
                         )
-                    case .language:
-                        LanguageSetupStep(settings: settings)
                     case .voice:
                         VoiceSetupStep(settings: settings)
                     case .shortcut:
@@ -127,6 +138,16 @@ struct SetupAssistantView: View {
         .frame(minWidth: 700, minHeight: 660)
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
+        .onChange(of: step) { _, newStep in
+            // Refine (spoken languages) now comes before Configure, so by the
+            // time someone reaches it, the recommendation reflects languages
+            // they just chose — but only for a still-fresh setup, and only if
+            // they haven't already tapped a model card themselves.
+            guard newStep == .configure, settings.needsOnboarding, speechSource == .onDevice,
+                  !speechModelWasManuallyChosen
+            else { return }
+            speechModel = OnDeviceModel.recommended(for: settings.spokenLanguages)
+        }
         .environment(\.locale, Locale(identifier: Localization.resolvedCode(override: settings.interfaceLanguage)))
     }
 
@@ -395,6 +416,7 @@ private struct SpeechSetupStep: View {
 private struct ConfigureSpeechSetupStep: View {
     @Binding var source: TranscriptionSource
     @Binding var model: OnDeviceModel
+    @Binding var modelWasManuallyChosen: Bool
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     @Binding var asrKeyRevision: Int
@@ -491,6 +513,12 @@ private struct ConfigureSpeechSetupStep: View {
         )
     }
 
+    /// What actually fits `settings.spokenLanguages` right now — recomputed
+    /// live as the Refine step (now earlier in the wizard) changes that list.
+    private var recommendedModel: OnDeviceModel {
+        OnDeviceModel.recommended(for: settings.spokenLanguages)
+    }
+
     private var localDetails: some View {
         VStack(alignment: .leading, spacing: 14) {
             ModelChoiceCard(
@@ -500,7 +528,8 @@ private struct ConfigureSpeechSetupStep: View {
                 colors: [.green, .mint],
                 brand: Localization.appString("wizard.model.parakeet.brand", fallback: "NVIDIA"),
                 name: Localization.appString("wizard.model.parakeet.name", fallback: "Parakeet TDT 0.6B v3"),
-                badge: Localization.appString("wizard.model.parakeet.badge", fallback: "RECOMMENDED"),
+                badge: recommendedModel == .parakeetTDT06BV3
+                    ? Localization.appString("wizard.model.parakeet.badge", fallback: "RECOMMENDED") : "",
                 detail: OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
                     ? Localization.appString(
                         "wizard.model.parakeet.detail.fit",
@@ -509,7 +538,10 @@ private struct ConfigureSpeechSetupStep: View {
                     : Localization.appString(
                         "wizard.model.parakeet.detail.unsupported", fallback: "Requires an Apple silicon Mac"
                     ),
-                action: { model = .parakeetTDT06BV3 }
+                action: {
+                    model = .parakeetTDT06BV3
+                    modelWasManuallyChosen = true
+                }
             )
 
             whisperChoice
@@ -541,6 +573,7 @@ private struct ConfigureSpeechSetupStep: View {
                 if model == .parakeetTDT06BV3 {
                     model = .largeV3Turbo
                 }
+                modelWasManuallyChosen = true
             } label: {
                 HStack(spacing: 14) {
                     ModelMark(icon: "waveform", colors: [.indigo, .purple])
@@ -550,10 +583,20 @@ private struct ConfigureSpeechSetupStep: View {
                         // this should say the same thing at the same altitude,
                         // not repeat the model family name that the headline
                         // right below it already states.
-                        Text("OPENAI")
-                            .font(.caption2.bold())
-                            .tracking(1)
-                            .foregroundStyle(.indigo)
+                        HStack(spacing: 8) {
+                            Text("OPENAI")
+                                .font(.caption2.bold())
+                                .tracking(1)
+                                .foregroundStyle(.indigo)
+                            if recommendedModel != .parakeetTDT06BV3 {
+                                Text(Localization.appString("wizard.model.parakeet.badge", fallback: "RECOMMENDED"))
+                                    .font(.caption2.bold())
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background(Color.indigo.opacity(0.13), in: Capsule())
+                                    .foregroundStyle(.indigo)
+                            }
+                        }
                         Text("Whisper")
                             .font(.headline)
                             .foregroundStyle(.primary)
@@ -575,7 +618,13 @@ private struct ConfigureSpeechSetupStep: View {
             if isWhisperSelected {
                 Divider()
 
-                Picker("Whisper variant", selection: $model) {
+                Picker(
+                    "Whisper variant",
+                    selection: Binding(
+                        get: { model },
+                        set: { model = $0; modelWasManuallyChosen = true }
+                    )
+                ) {
                     ForEach(whisperModels, id: \.self) { option in
                         Text(whisperTitle(option)).tag(option)
                     }
@@ -909,12 +958,14 @@ private struct ModelChoiceCard: View {
                             .font(.caption2.bold())
                             .tracking(1)
                             .foregroundStyle(colors[0])
-                        Text(badge)
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(colors[0].opacity(0.13), in: Capsule())
-                            .foregroundStyle(colors[0])
+                        if !badge.isEmpty {
+                            Text(badge)
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(colors[0].opacity(0.13), in: Capsule())
+                                .foregroundStyle(colors[0])
+                        }
                     }
                     Text(name)
                         .font(.headline)
