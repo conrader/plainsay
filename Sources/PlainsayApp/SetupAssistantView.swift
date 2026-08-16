@@ -89,7 +89,7 @@ struct SetupAssistantView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .padding(.horizontal, 42)
-                .padding(.vertical, 28)
+                .padding(.vertical, 22)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -99,7 +99,7 @@ struct SetupAssistantView: View {
                 .padding(.horizontal, 28)
                 .padding(.vertical, 16)
         }
-        .frame(minWidth: 700, minHeight: 570)
+        .frame(minWidth: 700, minHeight: 660)
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
     }
@@ -250,6 +250,10 @@ private struct SpeechSetupStep: View {
                         "Transcription and cleanup included",
                         "No API keys to configure",
                     ],
+                    caveats: [
+                        "Needs an internet connection",
+                        "Audio is sent to Plainsay Cloud to be transcribed",
+                    ],
                     action: { source = .cloud }
                 )
 
@@ -263,7 +267,11 @@ private struct SpeechSetupStep: View {
                     features: [
                         "Recorded audio never leaves this Mac",
                         "Works without internet after setup",
-                        "Uses Mac storage and memory while active",
+                    ],
+                    caveats: [
+                        "Needs storage for the model, downloaded once",
+                        "Keeps using memory the whole time Plainsay is running, not just while dictating",
+                        "May slightly slow this Mac down",
                     ],
                     action: { source = .onDevice }
                 )
@@ -415,7 +423,11 @@ private struct SpeechSetupStep: View {
                     ModelMark(icon: "waveform", colors: [.indigo, .purple])
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("WHISPER BY OPENAI")
+                        // "NVIDIA" above names the vendor on the Parakeet card;
+                        // this should say the same thing at the same altitude,
+                        // not repeat the model family name that the headline
+                        // right below it already states.
+                        Text("OPENAI")
                             .font(.caption2.bold())
                             .tracking(1)
                             .foregroundStyle(.indigo)
@@ -497,13 +509,18 @@ private struct PlanCard: View {
     let title: String
     let price: String
     let features: [String]
+    /// Real costs of this choice, shown with their own icon rather than a
+    /// checkmark. A checkmark reads as "this is good" — putting a tradeoff
+    /// like memory use under one would present it as a benefit, which is
+    /// exactly the complaint a card that hides its downsides earns.
+    var caveats: [String] = []
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top) {
-                    ModelMark(icon: icon, colors: colors, size: 56)
+                    ModelMark(icon: icon, colors: colors, size: 52)
                     Spacer()
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                         .font(.title2)
@@ -523,15 +540,25 @@ private struct PlanCard: View {
                         .foregroundStyle(.primary)
                 }
 
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(features, id: \.self) { feature in
                         Label(feature, systemImage: "checkmark")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                if !caveats.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(caveats, id: \.self) { caveat in
+                            Label(caveat, systemImage: "minus.circle")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, minHeight: 220, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
             .padding(18)
             .contentShape(Rectangle())
         }
@@ -829,8 +856,11 @@ private struct ReadySetupStep: View {
     }
 
     private var speechConfigurationTitle: String {
+        // Bare vendor name: speechConfigurationDetail right below already
+        // states the full model name, so "NVIDIA Parakeet" / "Whisper by
+        // OpenAI" here would say the model twice in two consecutive lines.
         switch settings.transcriptionSource {
-        case .onDevice: settings.model == .parakeetTDT06BV3 ? "NVIDIA Parakeet" : "Whisper by OpenAI"
+        case .onDevice: settings.model == .parakeetTDT06BV3 ? "NVIDIA" : "OpenAI"
         case .remote: settings.asrProvider.displayName
         case .cloud: "Plainsay Cloud"
         }

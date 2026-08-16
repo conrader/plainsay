@@ -34,8 +34,13 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
         settings.onboardingWasPresented = true
 
         if window == nil {
+            // 640pt was sized before Cloud and Parakeet existed; with both
+            // plan cards, the on-device model list, and their tradeoffs on
+            // screen at once, the Speech step no longer fits without
+            // scrolling. 760pt clears it with room to spare on any display
+            // this app's macOS 15+ requirement runs on.
             let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 760, height: 640),
+                contentRect: NSRect(x: 0, y: 0, width: 760, height: 760),
                 styleMask: [.titled, .closable, .resizable],
                 backing: .buffered,
                 defer: false
@@ -51,8 +56,8 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
                     onFinish: { [weak self] in self?.finish() }
                 )
             )
-            window.minSize = NSSize(width: 700, height: 570)
-            window.setContentSize(NSSize(width: 760, height: 640))
+            window.minSize = NSSize(width: 700, height: 660)
+            window.setContentSize(NSSize(width: 760, height: 760))
             window.isReleasedWhenClosed = false
             window.center()
             window.delegate = self
