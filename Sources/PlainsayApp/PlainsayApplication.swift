@@ -33,10 +33,21 @@ private struct MenuBarIcon: View {
     let permissionStatus: PermissionStatus
 
     var body: some View {
-        Image(systemName: symbol)
-            .symbolRenderingMode(.hierarchical)
-            .accessibilityLabel(accessibilityLabel)
-            .help(accessibilityLabel)
+        Group {
+            // The brand mark replaces the plain "waveform" glyph for the one
+            // state most people see the most: ready and idle. Every other
+            // state (recording, working, error, unavailable) keeps its
+            // existing SF Symbol — those already carry meaning through shape
+            // alone, which a single static mark can't add to.
+            if symbol == "waveform" {
+                TrayMarkView()
+            } else {
+                Image(systemName: symbol)
+                    .symbolRenderingMode(.hierarchical)
+            }
+        }
+        .accessibilityLabel(accessibilityLabel)
+        .help(accessibilityLabel)
     }
 
     private var symbol: String {
