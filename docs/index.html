@@ -80,15 +80,9 @@
   @media (max-width: 480px) { nav.top .links { gap: 14px; } }
 
   /* ---------------------------------------------------------------
-     Icon (mirrors components/core/Icon.jsx: SF Symbol name -> Lucide mask)
+     Icon (mirrors components/core/Icon.jsx: SF Symbol name -> inline Lucide SVG)
   ----------------------------------------------------------------- */
-  .ico {
-    display: inline-block;
-    flex: 0 0 auto;
-    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-    -webkit-mask-position: center; mask-position: center;
-    -webkit-mask-size: contain; mask-size: contain;
-  }
+  .ico { display: inline-block; flex: 0 0 auto; }
 
   /* ---------------------------------------------------------------
      Button (mirrors components/core/Button.jsx)
@@ -330,7 +324,10 @@
 (function () {
   "use strict";
 
-  var LUCIDE = "https://unpkg.com/lucide-static@0.460.0/icons/";
+  // Inlined rather than loaded from a CDN as a CSS mask: cross-origin SVG
+  // masks are unreliable across browsers (silently blank in some), and every
+  // icon this page uses fits in a few hundred bytes anyway. Paths are
+  // Lucide's (ISC licensed), unmodified.
   var SF_TO_LUCIDE = {
     "lock.shield.fill": "shield-check",
     "cloud.fill": "cloud",
@@ -344,15 +341,27 @@
     "minus.circle": "circle-minus",
     "circle": "circle"
   };
+  var ICON_PATHS = {
+    "shield-check": '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+    "cloud": '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+    "key-round": '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
+    "quote": '<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>',
+    "settings": '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+    "history": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+    "mic": '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
+    "circle-check": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+    "check": '<path d="M20 6 9 17l-5-5"/>',
+    "circle-minus": '<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>',
+    "circle": '<circle cx="12" cy="12" r="10"/>'
+  };
 
-  function iconStyle(name, size, color) {
-    var slug = SF_TO_LUCIDE[name] || name;
-    var url = "url(\"" + LUCIDE + slug + ".svg\")";
-    return "width:" + size + "px;height:" + size + "px;background-color:" + color +
-      ";-webkit-mask-image:" + url + ";mask-image:" + url + ";";
-  }
   function icon(name, size, color, extra) {
-    return '<span class="ico" aria-hidden="true" style="' + iconStyle(name, size, color) + (extra || "") + '"></span>';
+    var slug = SF_TO_LUCIDE[name] || name;
+    var inner = ICON_PATHS[slug] || "";
+    return '<svg class="ico" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+      'style="width:' + size + 'px;height:' + size + 'px;color:' + color + ';' + (extra || "") + '">' +
+      inner + '</svg>';
   }
 
   // -----------------------------------------------------------------
