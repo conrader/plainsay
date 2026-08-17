@@ -260,6 +260,19 @@ private struct Harness {
         coordinator.handleHotkeyEdge(.up(at: seconds))
     }
 
+    /// Polls until `predicate` is true or `timeout` elapses, instead of a
+    /// fixed sleep racing the live-preview loop. A fixed sleep long enough
+    /// to be reliable on a fast local machine is still too tight on a loaded
+    /// CI runner — see the "Live preview updates while recording" CI
+    /// failures this replaced.
+    func waitUntil(timeout: Duration = .seconds(2), _ predicate: () -> Bool) async throws {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if predicate() { return }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
     /// The pipeline runs in a detached task; wait for it to settle.
     func settle(timeout: Duration = .seconds(2)) async throws {
         let deadline = ContinuousClock.now + timeout
@@ -346,7 +359,7 @@ struct PipelineTests {
         harness.coordinator.handleHotkeyEdge(.down(at: 0))
         #expect(harness.coordinator.phase == .recording)
 
-        try await Task.sleep(for: .milliseconds(80))
+        try await harness.waitUntil { harness.coordinator.livePreviewText == "hello there" }
         #expect(harness.coordinator.livePreviewText == "hello there")
         // Purely a HUD readout — the loop never touches what's actually
         // inserted or written to history.
@@ -397,7 +410,7 @@ struct PipelineTests {
         defer { DictationCoordinator.previewInterval = previous }
 
         harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await Task.sleep(for: .milliseconds(60))
+        try await harness.waitUntil { harness.inserter.inserted.contains("hello there") }
         // The raw preview pass typed directly into the document — no HUD
         // preview needed, since live typing doesn't require livePreviewEnabled.
         #expect(harness.inserter.inserted.contains("hello there"))
@@ -426,7 +439,7 @@ struct PipelineTests {
         defer { DictationCoordinator.previewInterval = previous }
 
         harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await Task.sleep(for: .milliseconds(60))
+        try await harness.waitUntil { harness.inserter.inserted.contains("the cat sat") }
         #expect(harness.inserter.inserted.contains("the cat sat"))
 
         harness.coordinator.handleHotkeyEdge(.up(at: 1))
