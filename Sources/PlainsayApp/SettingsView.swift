@@ -211,7 +211,7 @@ private struct SpeechSettings: View {
                 Section {
                     Toggle("Live typing (experimental)", isOn: $settings.liveTypingEnabled)
                 } footer: {
-                    Text("Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document.")
+                    Text("Types each rough pass directly into whatever you're dictating into, live, instead of pasting once you stop. Turns off Editing above — there's no rewrite pass to reconcile against.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -287,12 +287,17 @@ private struct SpeechSettings: View {
 
             Section {
                 Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
+                    .disabled(settings.liveTypingEnabled)
             } header: {
                 Text("Editing")
             } footer: {
-                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Text(
+                    settings.liveTypingEnabled
+                        ? "Unavailable while Live typing is on, under Speech — words land as heard, with no rewrite pass afterward."
+                        : "Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript."
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
             }
 
             if settings.cleanupEnabled {

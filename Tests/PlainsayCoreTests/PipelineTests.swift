@@ -972,3 +972,38 @@ struct LiveTypingDiffTests {
         #expect(result.insertText.isEmpty)
     }
 }
+
+@Suite("Live typing / cleanup exclusivity")
+@MainActor
+struct LiveTypingCleanupExclusivityTests {
+    @Test("Turning on live typing forces cleanup off")
+    func liveTypingForcesCleanupOff() {
+        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: suite)
+        settings.cleanupEnabled = true
+
+        settings.liveTypingEnabled = true
+        #expect(settings.cleanupEnabled == false)
+    }
+
+    @Test("Turning live typing back off does not silently re-enable cleanup")
+    func liveTypingOffDoesNotRestoreCleanup() {
+        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: suite)
+        settings.cleanupEnabled = true
+        settings.liveTypingEnabled = true
+        #expect(settings.cleanupEnabled == false)
+
+        settings.liveTypingEnabled = false
+        #expect(settings.cleanupEnabled == false)
+    }
+
+    @Test("Turning on cleanup does not affect live typing")
+    func cleanupDoesNotForceLiveTypingOff() {
+        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: suite)
+        settings.liveTypingEnabled = false
+        settings.cleanupEnabled = true
+        #expect(settings.liveTypingEnabled == false)
+    }
+}

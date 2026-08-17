@@ -54,13 +54,23 @@ public final class PlainsaySettings {
     /// seconds would be far too slow and costly against a paid API.
     public var livePreviewEnabled: Bool { didSet { defaults.set(livePreviewEnabled, forKey: Key.livePreviewEnabled.rawValue) } }
     /// Types each live-preview pass into the focused document as it arrives,
-    /// then reconciles it to the cleaned transcript once you stop — instead
-    /// of one paste at the end. Trades the "clean, then insert once"
-    /// guarantee for a live feel: raw, unedited words land while you're still
-    /// speaking, and get corrected in place afterward. Off by default. Same
-    /// on-device requirement as `livePreviewEnabled`, since it drives the same
-    /// periodic pass.
-    public var liveTypingEnabled: Bool { didSet { defaults.set(liveTypingEnabled, forKey: Key.liveTypingEnabled.rawValue) } }
+    /// then reconciles it to the final transcript once you stop — instead of
+    /// one paste at the end. Trades the "clean, then insert once" guarantee
+    /// for a live feel: raw, unedited words land while you're still
+    /// speaking. Off by default. Same on-device requirement as
+    /// `livePreviewEnabled`, since it drives the same periodic pass.
+    ///
+    /// Mutually exclusive with `cleanupEnabled`: reconciling live-typed text
+    /// against a rewritten transcript would mean visibly rewriting words the
+    /// user just watched themselves type, which defeats the "live feel" this
+    /// exists for. Turning this on forces cleanup off; it does not turn back
+    /// on by itself if this is later turned off.
+    public var liveTypingEnabled: Bool {
+        didSet {
+            defaults.set(liveTypingEnabled, forKey: Key.liveTypingEnabled.rawValue)
+            if liveTypingEnabled { cleanupEnabled = false }
+        }
+    }
 
     /// Filters out any voice that doesn't match `voiceEmbedding` before
     /// transcription, so a second person in the room never reaches the

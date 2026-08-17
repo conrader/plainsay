@@ -1477,6 +1477,88 @@
         }
       }
     },
+    "Clear": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effacer"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancella"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消去"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지우기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wissen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyczyść"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limpar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистити"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除"
+          }
+        }
+      }
+    },
     "Clear history": {
       "localizations": {
         "de": {
@@ -1555,6 +1637,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "清除历史记录"
+          }
+        }
+      }
+    },
+    "Click below, then use your dictation shortcut. Flip Live typing above and try again to feel the difference.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicke unten hinein und benutze dann deine Diktier-Tastenkombination. Schalte Live-Tippen oben um und probiere es erneut, um den Unterschied zu spüren."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click below, then use your dictation shortcut. Flip Live typing above and try again to feel the difference."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz clic abajo y usa tu atajo de dictado. Activa o desactiva Escritura en vivo arriba y vuelve a intentarlo para notar la diferencia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez ci-dessous, puis utilisez votre raccourci de dictée. Activez ou désactivez la Frappe en direct ci-dessus et réessayez pour sentir la différence."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fai clic qui sotto, poi usa la tua scorciatoia di dettatura. Attiva o disattiva la Scrittura dal vivo qui sopra e riprova per sentire la differenza."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下の欄をクリックしてから、ディクテーションのショートカットを使ってください。上のライブタイピングを切り替えてもう一度試すと、違いを体感できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아래를 클릭한 다음 받아쓰기 단축키를 사용해 보세요. 위의 실시간 타이핑을 켜고 꺼보면서 다시 시도하면 차이를 느낄 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klik hieronder en gebruik dan je dicteersneltoets. Zet Live typen hierboven aan of uit en probeer het opnieuw om het verschil te voelen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kliknij poniżej, a potem użyj swojego skrótu dyktowania. Przełącz powyższe Pisanie na żywo i spróbuj ponownie, aby poczuć różnicę."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clica abaixo e depois usa o teu atalho de ditado. Ativa ou desativa a Digitação ao vivo acima e tenta novamente para sentir a diferença."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите ниже, затем воспользуйтесь сочетанием клавиш для диктовки. Переключите Ввод в реальном времени выше и попробуйте снова, чтобы почувствовать разницу."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Натисніть нижче, а потім скористайтеся своїм сполученням клавіш для диктування. Перемкніть Живий набір вище і спробуйте ще раз, щоб відчути різницю."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击下方,然后使用你的听写快捷键。切换上方的实时输入开关,再试一次,感受两者的差别。"
+          }
+        }
+      }
+    },
+    "Click below, then use your dictation shortcut. This only works once setup finishes — permissions and the speech model need to be ready first.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicke unten hinein und benutze dann deine Diktier-Tastenkombination. Das funktioniert erst, wenn die Einrichtung abgeschlossen ist – Berechtigungen und das Sprachmodell müssen zuerst bereit sein."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click below, then use your dictation shortcut. This only works once setup finishes — permissions and the speech model need to be ready first."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz clic abajo y usa tu atajo de dictado. Esto solo funciona cuando termina la configuración: primero deben estar listos los permisos y el modelo de voz."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez ci-dessous, puis utilisez votre raccourci de dictée. Cela ne fonctionne qu'une fois la configuration terminée — les autorisations et le modèle vocal doivent d'abord être prêts."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fai clic qui sotto, poi usa la tua scorciatoia di dettatura. Funziona solo una volta completata la configurazione: prima devono essere pronti i permessi e il modello vocale."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下の欄をクリックしてから、ディクテーションのショートカットを使ってください。これはセットアップが完了して初めて機能します。まず権限と音声モデルの準備が整う必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아래를 클릭한 다음 받아쓰기 단축키를 사용해 보세요. 이 기능은 설정이 끝나야 작동합니다 — 먼저 권한과 음성 모델이 준비되어야 합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klik hieronder en gebruik dan je dicteersneltoets. Dit werkt pas zodra de installatie is voltooid — machtigingen en het spraakmodel moeten eerst gereed zijn."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kliknij poniżej, a potem użyj swojego skrótu dyktowania. Zadziała to dopiero po zakończeniu konfiguracji — najpierw muszą być gotowe uprawnienia i model mowy."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clica abaixo e depois usa o teu atalho de ditado. Isto só funciona depois de a configuração terminar — as permissões e o modelo de voz têm de estar prontos primeiro."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите ниже, затем воспользуйтесь сочетанием клавиш для диктовки. Это заработает только после завершения настройки — сначала должны быть готовы разрешения и модель распознавания речи."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Натисніть нижче, а потім скористайтеся своїм сполученням клавіш для диктування. Це запрацює лише після завершення налаштування — спочатку мають бути готові дозволи та мовна модель."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击下方,然后使用你的听写快捷键。只有设置完成后才能使用——需要先准备好权限和语音模型。"
           }
         }
       }
@@ -6643,84 +6889,412 @@
         }
       }
     },
-    "Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document.": {
+    "Try it": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tippt jeden groben Durchlauf sofort in das Dokument, in das du gerade diktierst, und korrigiert ihn an Ort und Stelle, sobald die Bereinigung abgeschlossen ist – statt einmal am Ende einzufügen. Verzichtet auf die Garantie, dass in deinem Dokument nur bereinigter Text landet."
+            "value": "Ausprobieren"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document."
+            "value": "Try it"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escribe cada pasada aproximada directamente en el documento en el que estás dictando, en vivo, y la corrige en el mismo lugar en cuanto termina la limpieza, en lugar de pegar todo al final. Renuncia a la garantía de que solo el texto limpio llega a tu documento."
+            "value": "Pruébalo"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tape chaque passe approximative directement dans le document où vous dictez, en direct, puis la corrige sur place une fois le nettoyage terminé — au lieu d'un seul collage à la fin. Renonce à la garantie que seul le texte nettoyé atterrit dans votre document."
+            "value": "Essayez"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Digita ogni passaggio approssimativo direttamente nel documento in cui stai dettando, dal vivo, per poi correggerlo sul posto non appena la pulizia è completata, invece di un unico incolla finale. Rinuncia alla garanzia che nel documento arrivi solo testo pulito."
+            "value": "Provalo"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "大まかな結果をその都度、ディクテーション中のドキュメントへリアルタイムで直接入力し、クリーンアップが完了した時点でその場で修正します。最後に一度だけ貼り付ける方式とは異なります。ドキュメントに届くのが必ずクリーンなテキストだけである、という保証は失われます。"
+            "value": "試してみる"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "받아쓰는 문서에 대략적인 결과를 실시간으로 바로 입력한 다음, 정리가 끝나면 그 자리에서 수정합니다 — 끝에 한 번에 붙여넣는 대신입니다. 문서에 항상 정리된 텍스트만 들어간다는 보장은 포기하게 됩니다."
+            "value": "직접 해보기"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Typt elke ruwe doorloop direct, live, in het document waarin je dicteert, en corrigeert dat ter plekke zodra het opschonen klaar is — in plaats van één keer plakken aan het einde. Doet daarmee afstand van de garantie dat er alleen opgeschoonde tekst in je document terechtkomt."
+            "value": "Probeer het"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wpisuje każdy zgrubny fragment na żywo bezpośrednio do dokumentu, do którego dyktujesz, a po zakończeniu czyszczenia poprawia go w tym samym miejscu — zamiast wklejać całość na końcu. Rezygnuje z gwarancji, że w dokumencie ląduje wyłącznie oczyszczony tekst."
+            "value": "Wypróbuj"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escreve cada passagem aproximada diretamente no documento onde estás a ditar, ao vivo, e corrige-a no mesmo local assim que a limpeza terminar — em vez de colar tudo no final. Abdica da garantia de que só texto limpo chega ao teu documento."
+            "value": "Experimenta"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Печатает каждый черновой проход прямо в документ, в который вы диктуете, в реальном времени, а затем исправляет его на месте, как только завершится очистка — вместо одной вставки в конце. Отказывается от гарантии, что в документ попадает только очищенный текст."
+            "value": "Попробуйте"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Друкує кожен чорновий прохід прямо в документ, у який ви диктуєте, наживо, а потім виправляє його на місці, щойно завершиться очищення — замість одного вставлення в кінці. Відмовляється від гарантії, що в документ потрапляє лише очищений текст."
+            "value": "Спробуйте"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在你口述的文档中实时逐段输入粗略结果,清理完成后就地纠正--而不是最后一次性粘贴.因此放弃了「文档中只会出现清理后文本」这一保证."
+            "value": "试一试"
+          }
+        }
+      }
+    },
+    "Types each rough pass directly into whatever you're dictating into, live, instead of pasting once you stop. Turns off Editing above — there's no rewrite pass to reconcile against.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippt jeden groben Durchlauf sofort in das Dokument, in das du gerade diktierst, live – statt erst beim Loslassen einzufügen. Schaltet die Bearbeitung oben aus – es gibt keinen Bereinigungsdurchlauf, mit dem abgeglichen werden könnte."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Types each rough pass directly into whatever you're dictating into, live, instead of pasting once you stop. Turns off Editing above — there's no rewrite pass to reconcile against."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe cada pasada aproximada directamente en el documento en el que estás dictando, en vivo, en lugar de pegar todo al soltar. Desactiva la Edición de arriba: no hay ninguna pasada de limpieza con la que conciliar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tape chaque passe approximative directement dans le document où vous dictez, en direct, au lieu de coller une seule fois en relâchant. Désactive le nettoyage ci-dessus — il n'y a aucune passe de nettoyage à réconcilier."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digita ogni passaggio approssimativo direttamente nel documento in cui stai dettando, dal vivo, invece di incollare tutto al rilascio. Disattiva la Modifica sopra: non c'è alcun passaggio di pulizia con cui conciliare."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大まかな結果をその都度、ディクテーション中のドキュメントへリアルタイムで直接入力します。キーを離したときに一度だけ貼り付ける方式ではありません。上の「編集」をオフにします。照合するクリーンアップの結果がなくなるためです。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰는 문서에 대략적인 결과를 실시간으로 바로 입력합니다 — 키를 놓을 때 한 번에 붙여넣는 대신입니다. 위의 편집 기능을 끕니다. 대조할 정리 결과가 없기 때문입니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typt elke ruwe doorloop direct, live, in het document waarin je dicteert, in plaats van één keer te plakken bij het loslaten. Schakelt Bewerken hierboven uit — er is geen opschoonronde om mee te vergelijken."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wpisuje każdy zgrubny fragment na żywo bezpośrednio do dokumentu, do którego dyktujesz, zamiast wklejać całość po puszczeniu klawisza. Wyłącza Edycję powyżej — nie ma przebiegu czyszczenia, z którym można by to uzgodnić."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escreve cada passagem aproximada diretamente no documento onde estás a ditar, ao vivo, em vez de colar tudo ao soltar a tecla. Desativa a Edição acima — não há nenhuma passagem de limpeza com que reconciliar."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Печатает каждый черновой проход прямо в документ, в который вы диктуете, в реальном времени — вместо одной вставки при отпускании клавиши. Отключает Редактирование выше — сверять её не с чем, ведь очистки не будет."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Друкує кожен чорновий прохід прямо в документ, у який ви диктуєте, наживо — замість одного вставлення після відпускання клавіші. Вимикає Редагування вище — звіряти немає з чим, адже очищення не буде."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你口述的文档中实时逐段输入粗略结果——而不是松开按键后一次性粘贴。会关闭上方的「编辑」功能——因为没有清理结果可供比对。"
+          }
+        }
+      }
+    },
+    "Types words into your document as you speak, instead of pasting once you stop. Turns off Editing above.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippt Wörter in dein Dokument, während du sprichst, statt beim Loslassen einmal einzufügen. Schaltet die Bearbeitung oben aus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Types words into your document as you speak, instead of pasting once you stop. Turns off Editing above."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe las palabras en tu documento mientras hablas, en lugar de pegarlas al soltar. Desactiva la Edición de arriba."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tape les mots dans votre document pendant que vous parlez, au lieu de coller une seule fois en relâchant. Désactive le nettoyage ci-dessus."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digita le parole nel tuo documento mentre parli, invece di incollarle tutte al rilascio. Disattiva la Modifica sopra."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "話しているそばから単語をドキュメントに入力します。キーを離したときに貼り付ける方式ではありません。上の「編集」をオフにします。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "말하는 동안 문서에 단어를 바로 입력합니다 — 키를 놓을 때 붙여넣는 대신입니다. 위의 편집 기능을 끕니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typt woorden in je document terwijl je spreekt, in plaats van te plakken bij het loslaten. Schakelt Bewerken hierboven uit."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wpisuje słowa do dokumentu w trakcie mówienia, zamiast wklejać je po puszczeniu klawisza. Wyłącza Edycję powyżej."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escreve as palavras no teu documento enquanto falas, em vez de as colar ao soltar a tecla. Desativa a Edição acima."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Печатает слова в документ по мере того, как вы говорите, вместо вставки при отпускании клавиши. Отключает Редактирование выше."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Друкує слова в документ у міру того, як ви говорите, замість вставлення після відпускання клавіші. Вимикає Редагування вище."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你说话的同时把文字输入文档,而不是松开按键后再粘贴。会关闭上方的「编辑」功能。"
+          }
+        }
+      }
+    },
+    "Unavailable while Live typing is on below — words land as heard, with no rewrite pass afterward.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verfügbar, solange Live-Tippen unten aktiviert ist – Wörter landen so, wie sie gehört wurden, ohne anschließenden Überarbeitungsdurchlauf."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable while Live typing is on below — words land as heard, with no rewrite pass afterward."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible mientras Escritura en vivo esté activada abajo: las palabras aparecen tal como se oyen, sin una pasada de reescritura posterior."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible tant que la Frappe en direct ci-dessous est activée — les mots atterrissent tels qu'ils sont entendus, sans passe de réécriture ensuite."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non disponibile mentre la Scrittura dal vivo qui sotto è attiva: le parole arrivano così come vengono sentite, senza un passaggio di riscrittura successivo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下のライブタイピングがオンの間は使用できません。単語は聞こえたとおりに入力され、その後の書き直しは行われません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "아래의 실시간 타이핑이 켜져 있는 동안에는 사용할 수 없습니다 — 단어가 들리는 그대로 입력되며, 이후 다시 쓰는 과정은 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niet beschikbaar zolang Live typen hieronder aan staat — woorden verschijnen zoals ze gehoord worden, zonder herschrijfronde achteraf."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niedostępne, gdy poniższe Pisanie na żywo jest włączone — słowa lądują takie, jakie usłyszano, bez późniejszego przepisania."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponível enquanto a Digitação ao vivo abaixo estiver ativa — as palavras aparecem tal como são ouvidas, sem uma passagem de reescrita depois."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недоступно, пока ниже включён Ввод в реальном времени — слова появляются такими, какими были услышаны, без последующей перезаписи."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недоступно, поки нижче ввімкнено Живий набір — слова з'являються такими, якими їх почуто, без подальшого переписування."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当下方的实时输入开启时不可用——文字会按听到的样子直接出现,之后不会再有改写步骤。"
+          }
+        }
+      }
+    },
+    "Unavailable while Live typing is on, under Speech — words land as heard, with no rewrite pass afterward.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verfügbar, solange Live-Tippen unter Sprache aktiviert ist – Wörter landen so, wie sie gehört wurden, ohne anschließenden Überarbeitungsdurchlauf."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable while Live typing is on, under Speech — words land as heard, with no rewrite pass afterward."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No disponible mientras Escritura en vivo esté activada en Voz: las palabras aparecen tal como se oyen, sin una pasada de reescritura posterior."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponible tant que la Frappe en direct est activée dans Voix — les mots atterrissent tels qu'ils sont entendus, sans passe de réécriture ensuite."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non disponibile mentre la Scrittura dal vivo in Voce è attiva: le parole arrivano così come vengono sentite, senza un passaggio di riscrittura successivo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「音声」のライブタイピングがオンの間は使用できません。単語は聞こえたとおりに入力され、その後の書き直しは行われません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "음성의 실시간 타이핑이 켜져 있는 동안에는 사용할 수 없습니다 — 단어가 들리는 그대로 입력되며, 이후 다시 쓰는 과정은 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niet beschikbaar zolang Live typen onder Spraak aan staat — woorden verschijnen zoals ze gehoord worden, zonder herschrijfronde achteraf."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niedostępne, gdy Pisanie na żywo w sekcji Mowa jest włączone — słowa lądują takie, jakie usłyszano, bez późniejszego przepisania."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indisponível enquanto a Digitação ao vivo em Voz estiver ativa — as palavras aparecem tal como são ouvidas, sem uma passagem de reescrita depois."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недоступно, пока в разделе «Речь» включён Ввод в реальном времени — слова появляются такими, какими были услышаны, без последующей перезаписи."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недоступно, поки в розділі «Мовлення» ввімкнено Живий набір — слова з'являються такими, якими їх почуто, без подальшого переписування."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当「语音」中的实时输入开启时不可用——文字会按听到的样子直接出现,之后不会再有改写步骤。"
           }
         }
       }
