@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs Wispr Flow — free, open source, on-device</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed, on-device dictation app for Mac. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
+<title>Plainsay vs superwhisper — free and open source vs closed source</title>
+<meta name="description" content="Plainsay is free, MIT-licensed, and open source. superwhisper is closed source with a free trial and a paid Pro tier. Every claim here links to superwhisper's own pages.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/vs/wispr-flow/">
+<link rel="canonical" href="https://plainsay.app/vs/superwhisper/">
 <style>
   :root{
     --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
@@ -98,9 +98,9 @@
     </nav>
 
     <header class="hero">
-      <div class="eyebrow">Plainsay vs Wispr Flow</div>
-      <h1>Same idea. One costs $0 and never sees your voice.</h1>
-      <p class="sub">Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on your Mac with Whisper or Parakeet — no account, no network call required to dictate. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
+      <div class="eyebrow">Plainsay vs superwhisper</div>
+      <h1>Free and open, vs closed and metered.</h1>
+      <p class="sub">superwhisper is a capable dictation app for Mac, iOS, and Windows, with a free tier and local model options. It's also closed source, requires a login for licensing, and its AI cleanup pass is cloud-only. Plainsay is free for everyone, MIT-licensed, and its cleanup step is your choice — cloud, your own key, or off.</p>
     </header>
 
     <section>
@@ -109,18 +109,17 @@
         <div class="card">
           <div class="h">Price</div>
           <div class="num">$0</div>
-          <p>Local dictation is free forever. Plainsay Cloud is about $3/month. Wispr Flow is $15/month, or $12/month billed annually — <b>$144/year</b>, with no free-to-own option.</p>
-          <p class="mono-src" style="margin-top:8px;">Wispr's free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</p>
+          <p>Plainsay is free, no tier, no limits. superwhisper's free tier gives 15 minutes of Pro-feature trial, then falls back to unlimited local small models — check their current pricing page for the Pro plan cost.</p>
         </div>
         <div class="card">
-          <div class="h">Your voice</div>
-          <div class="num">Stays local</div>
-          <p>Plainsay transcribes on the Mac. Wispr's own docs: <em>“transcription always happens in the cloud.”</em> Every word leaves your device.</p>
-        </div>
-        <div class="card">
-          <div class="h">The code</div>
+          <div class="h">Source</div>
           <div class="num">MIT, public</div>
-          <p>Read exactly what Plainsay does with your audio. Wispr Flow is closed source — you get a privacy policy, not the code.</p>
+          <p>Plainsay's entire client is open. superwhisper is closed source — you get an app, not the code behind it.</p>
+        </div>
+        <div class="card">
+          <div class="h">Cleanup pass</div>
+          <div class="num dim">Your choice</div>
+          <p>Plainsay's cleanup is cloud by default but switchable to your own key or off. superwhisper's AI formatting runs through cloud LLM providers, with no local option surfaced.</p>
         </div>
       </div>
     </section>
@@ -130,76 +129,66 @@
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>Wispr Flow</th></tr>
+            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>superwhisper</th></tr>
           </thead>
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Free</b> on-device, forever. Plainsay Cloud ≈ $3/mo. No word caps.</td>
-              <td class="wispr">$15/mo, or $12/mo billed annually = $144/yr. No lifetime or one-time tier. Free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</td>
+              <td class="plainsay col-plainsay"><b>Free</b>, forever, no limits.</td>
+              <td class="wispr">Free tier: 15-minute Pro trial, then unlimited use of local small models. Paid Pro tier exists — check superwhisper.com/pricing for the current figure, since we couldn't reliably confirm it from their page.</td>
             </tr>
             <tr>
               <td class="axis">Transcription</td>
-              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet through Core ML. No account, no network call needed to dictate.</td>
-              <td class="wispr">“Transcription always happens in the cloud” (Wispr's own words). No offline mode by design.</td>
+              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet via Core ML, always local.</td>
+              <td class="wispr">Both offline (default: local Whisper Large on Apple silicon) and cloud models, depending on plan and hardware.</td>
             </tr>
             <tr>
-              <td class="axis">Openness</td>
-              <td class="plainsay col-plainsay"><b>MIT licensed</b>, whole client public and auditable — read what leaves the Mac and when.</td>
-              <td class="wispr">Closed source — you get a privacy policy to trust, not the code to read.</td>
+              <td class="axis">Cleanup pass</td>
+              <td class="plainsay col-plainsay">Cloud by default, but switchable to your own key, another provider, or off entirely.</td>
+              <td class="wispr">Cloud LLM providers (GPT-5, Claude, Gemini, and others) — no local cleanup option found.</td>
+            </tr>
+            <tr>
+              <td class="axis">Source</td>
+              <td class="plainsay col-plainsay"><b>MIT licensed</b>, fully public.</td>
+              <td class="wispr">Closed source, proprietary.</td>
             </tr>
             <tr>
               <td class="axis">Account</td>
               <td class="plainsay col-plainsay"><b>None required</b> to dictate locally.</td>
-              <td class="wispr">Login required.</td>
-            </tr>
-            <tr>
-              <td class="axis">Engine</td>
-              <td class="plainsay col-plainsay">Your choice — Whisper (breadth of language) or Parakeet-tdt-0.6b-v3 (fast, strong Polish + English).</td>
-              <td class="wispr">Wispr's cloud pipeline. No choice.</td>
+              <td class="wispr">Login required for license activation.</td>
             </tr>
             <tr>
               <td class="axis">Platform</td>
               <td class="plainsay col-plainsay">macOS (Apple silicon).</td>
-              <td class="wispr">macOS, Windows, iOS, Android.</td>
+              <td class="wispr">macOS (Intel + Apple silicon), Windows, iOS.</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="mono-src">Wispr figures from wisprflow.ai/pricing and wisprflow.ai/privacy, 2026. Prices change — check the source links below.</p>
-    </section>
-
-    <section>
-      <h2 class="big">Price</h2>
-      <p class="lede">Wispr Flow is subscription-only: $15/month, or $12/month billed annually — <strong>$144 a year</strong>, every year, with no way to simply own it. Over three years that's more than $430.</p>
-      <p>Plainsay running locally on your Mac is <strong>free</strong>, forever, with no word limits and no account. If you'd rather not download a model or manage a key, Plainsay Cloud is about <strong>$3 a month</strong> — roughly a fifth of Wispr Pro — and the local option stays free and fully capable, not a crippled trial.</p>
-    </section>
-
-    <section>
-      <h2 class="big">Your voice never has to leave the Mac</h2>
-      <p class="lede">This is the difference that doesn't show up on a pricing page. Wispr Flow's own privacy documentation states that <em>“transcription always happens in the cloud.”</em> There is no offline mode — every word you dictate is uploaded, transcribed on someone else's servers, and returned.</p>
-      <p>Plainsay's transcription runs on your Mac through Core ML, on Whisper or NVIDIA Parakeet. Dictating needs no account and makes no network call you didn't ask for. Your voice — often the most sensitive thing you type — stays on the machine in your hands.</p>
-      <div class="callout">
-        <div class="t">Honest about the one place data can leave</div>
-        Plainsay's <em>transcription</em> is always local. The optional <em>cleanup</em> pass — the step that removes fillers and fixes punctuation — uses an AI model, and by default that's a cloud API. You can switch it off entirely, point it at your own API key, or use a local model. So the honest claim isn't “100% offline” — it's: <strong>your raw transcription is guaranteed local, and the one optional step that isn't is your choice, not locked to one vendor's cloud.</strong> Wispr gives you no such choice.
-      </div>
+      <p class="mono-src">superwhisper figures from superwhisper.com, 2026. Prices change — check the source links below. We were unable to reliably confirm superwhisper's exact Pro price from their page and have not stated a number.</p>
     </section>
 
     <section>
       <h2 class="big">Open, so you don't have to take our word for it</h2>
-      <p class="lede">A closed-source cloud app asks you to trust a privacy policy. An open one lets you read the code.</p>
-      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. You (or anyone) can read exactly what happens to your audio, fork it, and self-host it indefinitely. Wispr Flow is closed source — its answer to “what happens to my voice” is a privacy policy you're asked to trust. With Plainsay, the answer is the source code.</p>
+      <p class="lede">A closed-source app asks you to trust that it does what it says. An open one lets you read the code.</p>
+      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. superwhisper is closed source: you get a capable app, but no way to verify its claims by reading the implementation, and no way to fork or self-host it if the company changes direction.</p>
       <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
     </section>
 
     <section>
-      <h2 class="kicker">Where Wispr Flow is the better pick — honestly</h2>
+      <h2 class="big">Cleanup: your choice, or theirs</h2>
+      <p class="lede">Both apps offer an AI pass that turns raw transcription into cleaner written text. Where they differ is who decides which model handles it, and whether that's negotiable.</p>
+      <p>Plainsay's cleanup defaults to a cloud model but is fully switchable — bring your own API key, pick a different provider, or turn it off and keep the raw transcript. superwhisper's cleanup runs through cloud LLM providers they've integrated (GPT-5, Claude, Gemini, and others); we found no local-cleanup option in their current docs. Transcription itself, for both apps, has a local option — this difference is specifically about the formatting pass, not the core dictation.</p>
+    </section>
+
+    <section>
+      <h2 class="kicker">Where superwhisper is the better pick — honestly</h2>
       <ul class="plain">
-        <li>You need <strong>Windows, iOS, or Android</strong> — Plainsay is macOS-only today.</li>
-        <li>You want a single cloud account that syncs across all your devices out of the box.</li>
-        <li>You'd rather never see a model download or an API key, and $144/year is fine for that convenience.</li>
+        <li>You need <strong>Windows or iOS</strong> — Plainsay is macOS-only today, superwhisper covers all three.</li>
+        <li>You want built-in meeting notes, file transcription, and 40+ app integrations (Slack, Gmail, Notion, and more) out of the box.</li>
+        <li>You want predefined output modes (Message, Email, Voice) without configuring your own cleanup prompt.</li>
       </ul>
-      <p>If instead you want dictation that's free, that you can read the source of, and that keeps your voice on your Mac — that's Plainsay.</p>
+      <p>If instead you want free, open-source dictation with no account and a cleanup step you fully control — that's Plainsay.</p>
     </section>
 
     <section class="final">
@@ -212,16 +201,15 @@
     <section>
       <h2 class="kicker">Sources</h2>
       <p class="sources">
-        Wispr Flow pricing — <a href="https://wisprflow.ai/pricing">wisprflow.ai/pricing</a><br>
-        Wispr Flow privacy (“transcription always happens in the cloud”) — <a href="https://wisprflow.ai/privacy">wisprflow.ai/privacy</a><br>
+        superwhisper pricing and features — <a href="https://superwhisper.com">superwhisper.com</a><br>
         Plainsay source — <a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a><br>
-        <span class="mono-src">All Wispr figures were current as of 2026 and are quoted from Wispr's own pages. Wispr ships often — verify at the links above.</span>
+        <span class="mono-src">superwhisper figures were current as of 2026 and are quoted from superwhisper's own pages, except the exact Pro price, which we could not reliably extract and have deliberately omitted. Verify at the link above.</span>
       </p>
     </section>
 
     <section>
       <h2 class="kicker">Compare Plainsay to others</h2>
-      <p><a href="/vs/voiceink/">vs VoiceInk</a> &nbsp;·&nbsp; <a href="/vs/superwhisper/">vs superwhisper</a> &nbsp;·&nbsp; <a href="/vs/macos-dictation/">vs macOS Dictation</a></p>
+      <p><a href="/vs/wispr-flow/">vs Wispr Flow</a> &nbsp;·&nbsp; <a href="/vs/voiceink/">vs VoiceInk</a> &nbsp;·&nbsp; <a href="/vs/macos-dictation/">vs macOS Dictation</a></p>
     </section>
 
     <footer>

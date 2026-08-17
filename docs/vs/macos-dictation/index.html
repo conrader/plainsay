@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs Wispr Flow — free, open source, on-device</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed, on-device dictation app for Mac. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
+<title>Plainsay vs macOS Dictation — when the built-in feature isn't enough</title>
+<meta name="description" content="macOS Dictation is free and built in. Plainsay is also free, adds a vocabulary, an optional cleanup pass, and a choice of Whisper or Parakeet — an honest look at when each makes sense.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/vs/wispr-flow/">
+<link rel="canonical" href="https://plainsay.app/vs/macos-dictation/">
 <style>
   :root{
     --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
@@ -98,9 +98,9 @@
     </nav>
 
     <header class="hero">
-      <div class="eyebrow">Plainsay vs Wispr Flow</div>
-      <h1>Same idea. One costs $0 and never sees your voice.</h1>
-      <p class="sub">Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on your Mac with Whisper or Parakeet — no account, no network call required to dictate. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
+      <div class="eyebrow">Plainsay vs macOS Dictation</div>
+      <h1>The built-in one is already free. Here's when it's not enough.</h1>
+      <p class="sub">macOS already ships a dictation feature, free, with no install. This isn't a case against it — it's an honest look at where it's genuinely enough, and where Plainsay's vocabulary, model choice, and cleanup pass earn a second app.</p>
     </header>
 
     <section>
@@ -108,19 +108,18 @@
       <div class="cards">
         <div class="card">
           <div class="h">Price</div>
-          <div class="num">$0</div>
-          <p>Local dictation is free forever. Plainsay Cloud is about $3/month. Wispr Flow is $15/month, or $12/month billed annually — <b>$144/year</b>, with no free-to-own option.</p>
-          <p class="mono-src" style="margin-top:8px;">Wispr's free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</p>
+          <div class="num">$0 both</div>
+          <p>Both are free. This page isn't about price — Apple's Dictation costs nothing, same as Plainsay.</p>
         </div>
         <div class="card">
-          <div class="h">Your voice</div>
-          <div class="num">Stays local</div>
-          <p>Plainsay transcribes on the Mac. Wispr's own docs: <em>“transcription always happens in the cloud.”</em> Every word leaves your device.</p>
+          <div class="h">Vocabulary</div>
+          <div class="num">Plainsay</div>
+          <p>Plainsay lets you add names and jargon it should recognize. We found no equivalent in Apple's own Dictation documentation.</p>
         </div>
         <div class="card">
-          <div class="h">The code</div>
-          <div class="num">MIT, public</div>
-          <p>Read exactly what Plainsay does with your audio. Wispr Flow is closed source — you get a privacy policy, not the code.</p>
+          <div class="h">Cleanup</div>
+          <div class="num">Plainsay</div>
+          <p>Apple's Dictation transcribes with basic auto-punctuation. Plainsay adds an optional pass that removes filler words and fixes phrasing.</p>
         </div>
       </div>
     </section>
@@ -130,81 +129,75 @@
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>Wispr Flow</th></tr>
+            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>macOS Dictation</th></tr>
           </thead>
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Free</b> on-device, forever. Plainsay Cloud ≈ $3/mo. No word caps.</td>
-              <td class="wispr">$15/mo, or $12/mo billed annually = $144/yr. No lifetime or one-time tier. Free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</td>
+              <td class="plainsay col-plainsay"><b>Free</b>, no install decision — it's a separate app you choose to add.</td>
+              <td class="wispr">Free, built into macOS, nothing to install.</td>
             </tr>
             <tr>
-              <td class="axis">Transcription</td>
-              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet through Core ML. No account, no network call needed to dictate.</td>
-              <td class="wispr">“Transcription always happens in the cloud” (Wispr's own words). No offline mode by design.</td>
+              <td class="axis">Where it runs</td>
+              <td class="plainsay col-plainsay"><b>Always on your Mac</b> — Whisper or Parakeet via Core ML, verifiable in the open-source code.</td>
+              <td class="wispr">Configurable — Apple's own docs say to check Keyboard settings for whether your voice is processed on-device or sent to Siri servers. Not an unconditional local guarantee.</td>
             </tr>
             <tr>
-              <td class="axis">Openness</td>
-              <td class="plainsay col-plainsay"><b>MIT licensed</b>, whole client public and auditable — read what leaves the Mac and when.</td>
-              <td class="wispr">Closed source — you get a privacy policy to trust, not the code to read.</td>
+              <td class="axis">Custom vocabulary</td>
+              <td class="plainsay col-plainsay"><b>Yes</b> — add names, jargon, and product terms.</td>
+              <td class="wispr">Not found in Apple's documentation.</td>
             </tr>
             <tr>
-              <td class="axis">Account</td>
-              <td class="plainsay col-plainsay"><b>None required</b> to dictate locally.</td>
-              <td class="wispr">Login required.</td>
+              <td class="axis">Cleanup pass</td>
+              <td class="plainsay col-plainsay">Optional — removes filler words, fixes phrasing, keeps your wording. Switchable to your own key or off.</td>
+              <td class="wispr">Automatic punctuation only (commas, periods, question marks) — no filler-word removal or rephrasing.</td>
             </tr>
             <tr>
-              <td class="axis">Engine</td>
-              <td class="plainsay col-plainsay">Your choice — Whisper (breadth of language) or Parakeet-tdt-0.6b-v3 (fast, strong Polish + English).</td>
-              <td class="wispr">Wispr's cloud pipeline. No choice.</td>
+              <td class="axis">Model choice</td>
+              <td class="plainsay col-plainsay"><b>Yes</b> — Whisper (language breadth) or Parakeet (fast, strong Polish + English).</td>
+              <td class="wispr">Single built-in engine, no alternative.</td>
             </tr>
             <tr>
-              <td class="axis">Platform</td>
-              <td class="plainsay col-plainsay">macOS (Apple silicon).</td>
-              <td class="wispr">macOS, Windows, iOS, Android.</td>
+              <td class="axis">Time limit</td>
+              <td class="plainsay col-plainsay">None.</td>
+              <td class="wispr">None currently, per Apple's docs — "dictate text of any length without a timeout."</td>
+            </tr>
+            <tr>
+              <td class="axis">Source</td>
+              <td class="plainsay col-plainsay"><b>MIT licensed</b>, fully public.</td>
+              <td class="wispr">Closed, part of macOS.</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="mono-src">Wispr figures from wisprflow.ai/pricing and wisprflow.ai/privacy, 2026. Prices change — check the source links below.</p>
+      <p class="mono-src">macOS Dictation figures from Apple's own support documentation, 2026. Apple's docs — check the source links below.</p>
     </section>
 
     <section>
-      <h2 class="big">Price</h2>
-      <p class="lede">Wispr Flow is subscription-only: $15/month, or $12/month billed annually — <strong>$144 a year</strong>, every year, with no way to simply own it. Over three years that's more than $430.</p>
-      <p>Plainsay running locally on your Mac is <strong>free</strong>, forever, with no word limits and no account. If you'd rather not download a model or manage a key, Plainsay Cloud is about <strong>$3 a month</strong> — roughly a fifth of Wispr Pro — and the local option stays free and fully capable, not a crippled trial.</p>
+      <h2 class="big">"Processed on your device" is a setting, not a guarantee</h2>
+      <p class="lede">This is the one place we want to be precise rather than score a point. Apple's own support documentation says you can check Keyboard settings to see whether your dictation is processed on-device or sent to Siri's servers — it's something you can configure and verify, not an unconditional promise either way.</p>
+      <p>Plainsay's transcription is always on your Mac, by design and in the open-source code — there's no setting to check because there's no cloud path for transcription to begin with. If knowing exactly where your voice goes without checking a settings pane matters to you, that's the practical difference.</p>
     </section>
 
     <section>
-      <h2 class="big">Your voice never has to leave the Mac</h2>
-      <p class="lede">This is the difference that doesn't show up on a pricing page. Wispr Flow's own privacy documentation states that <em>“transcription always happens in the cloud.”</em> There is no offline mode — every word you dictate is uploaded, transcribed on someone else's servers, and returned.</p>
-      <p>Plainsay's transcription runs on your Mac through Core ML, on Whisper or NVIDIA Parakeet. Dictating needs no account and makes no network call you didn't ask for. Your voice — often the most sensitive thing you type — stays on the machine in your hands.</p>
-      <div class="callout">
-        <div class="t">Honest about the one place data can leave</div>
-        Plainsay's <em>transcription</em> is always local. The optional <em>cleanup</em> pass — the step that removes fillers and fixes punctuation — uses an AI model, and by default that's a cloud API. You can switch it off entirely, point it at your own API key, or use a local model. So the honest claim isn't “100% offline” — it's: <strong>your raw transcription is guaranteed local, and the one optional step that isn't is your choice, not locked to one vendor's cloud.</strong> Wispr gives you no such choice.
-      </div>
+      <h2 class="big">A vocabulary, and a real cleanup pass</h2>
+      <p class="lede">Apple's Dictation is solid raw transcription with light, automatic punctuation — genuinely good for short text. It doesn't appear to support a personal dictionary for names or jargon, and it doesn't rewrite what you said.</p>
+      <p>Plainsay adds two things on top of transcription: a vocabulary you control, so uncommon names and terms stop getting misheard, and an optional cleanup pass that removes filler words and false starts while keeping your own wording — not just punctuation, an actual second draft.</p>
     </section>
 
     <section>
-      <h2 class="big">Open, so you don't have to take our word for it</h2>
-      <p class="lede">A closed-source cloud app asks you to trust a privacy policy. An open one lets you read the code.</p>
-      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. You (or anyone) can read exactly what happens to your audio, fork it, and self-host it indefinitely. Wispr Flow is closed source — its answer to “what happens to my voice” is a privacy policy you're asked to trust. With Plainsay, the answer is the source code.</p>
-      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
-    </section>
-
-    <section>
-      <h2 class="kicker">Where Wispr Flow is the better pick — honestly</h2>
+      <h2 class="kicker">Where macOS Dictation is the better pick — honestly</h2>
       <ul class="plain">
-        <li>You need <strong>Windows, iOS, or Android</strong> — Plainsay is macOS-only today.</li>
-        <li>You want a single cloud account that syncs across all your devices out of the box.</li>
-        <li>You'd rather never see a model download or an API key, and $144/year is fine for that convenience.</li>
+        <li>You want <strong>zero installs</strong> and zero third-party trust — it's already there, from Apple, system-wide.</li>
+        <li>You only need short, occasional dictation without a vocabulary or cleanup pass.</li>
+        <li>You'd rather not choose a model or think about where processing happens at all.</li>
       </ul>
-      <p>If instead you want dictation that's free, that you can read the source of, and that keeps your voice on your Mac — that's Plainsay.</p>
+      <p>If instead you want a vocabulary Plainsay actually remembers, a real editing pass beyond punctuation, and a choice of transcription engine, in an open-source app — that's Plainsay.</p>
     </section>
 
     <section class="final">
       <img src="/assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Try the free, open one.</p>
+      <p class="headline">Try the one with a vocabulary.</p>
       <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
       <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
     </section>
@@ -212,16 +205,15 @@
     <section>
       <h2 class="kicker">Sources</h2>
       <p class="sources">
-        Wispr Flow pricing — <a href="https://wisprflow.ai/pricing">wisprflow.ai/pricing</a><br>
-        Wispr Flow privacy (“transcription always happens in the cloud”) — <a href="https://wisprflow.ai/privacy">wisprflow.ai/privacy</a><br>
+        macOS Dictation guide — <a href="https://support.apple.com/guide/mac-help/mh40584/mac">support.apple.com/guide/mac-help/mh40584/mac</a><br>
         Plainsay source — <a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a><br>
-        <span class="mono-src">All Wispr figures were current as of 2026 and are quoted from Wispr's own pages. Wispr ships often — verify at the links above.</span>
+        <span class="mono-src">macOS Dictation figures were current as of 2026 and are quoted from Apple's own documentation. Apple updates macOS regularly — verify at the link above.</span>
       </p>
     </section>
 
     <section>
       <h2 class="kicker">Compare Plainsay to others</h2>
-      <p><a href="/vs/voiceink/">vs VoiceInk</a> &nbsp;·&nbsp; <a href="/vs/superwhisper/">vs superwhisper</a> &nbsp;·&nbsp; <a href="/vs/macos-dictation/">vs macOS Dictation</a></p>
+      <p><a href="/vs/wispr-flow/">vs Wispr Flow</a> &nbsp;·&nbsp; <a href="/vs/voiceink/">vs VoiceInk</a> &nbsp;·&nbsp; <a href="/vs/superwhisper/">vs superwhisper</a></p>
     </section>
 
     <footer>

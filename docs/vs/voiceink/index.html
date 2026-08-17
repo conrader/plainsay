@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs Wispr Flow — free, open source, on-device</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed, on-device dictation app for Mac. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
+<title>Plainsay vs VoiceInk — free vs one-time purchase, both on-device</title>
+<meta name="description" content="Plainsay is free and MIT-licensed. VoiceInk is a one-time purchase, $29–69, under GPL-3.0. Both run transcription on-device — the real differences are price, license, and platform.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/vs/wispr-flow/">
+<link rel="canonical" href="https://plainsay.app/vs/voiceink/">
 <style>
   :root{
     --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
@@ -98,9 +98,9 @@
     </nav>
 
     <header class="hero">
-      <div class="eyebrow">Plainsay vs Wispr Flow</div>
-      <h1>Same idea. One costs $0 and never sees your voice.</h1>
-      <p class="sub">Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on your Mac with Whisper or Parakeet — no account, no network call required to dictate. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
+      <div class="eyebrow">Plainsay vs VoiceInk</div>
+      <h1>Both run on-device. One is free.</h1>
+      <p class="sub">VoiceInk is a real on-device dictation app for Mac — genuinely local transcription, GPL-3.0 licensed, one-time purchase instead of a subscription. It's one of the more honest competitors out there. The differences that remain: price, and what "free" actually gets you.</p>
     </header>
 
     <section>
@@ -109,18 +109,17 @@
         <div class="card">
           <div class="h">Price</div>
           <div class="num">$0</div>
-          <p>Local dictation is free forever. Plainsay Cloud is about $3/month. Wispr Flow is $15/month, or $12/month billed annually — <b>$144/year</b>, with no free-to-own option.</p>
-          <p class="mono-src" style="margin-top:8px;">Wispr's free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</p>
+          <p>Plainsay is free, forever, no tiers. VoiceInk is a one-time purchase: $29 (1 Mac) to $69 (3 Macs) — not a subscription, which is genuinely better than most of this market.</p>
         </div>
         <div class="card">
-          <div class="h">Your voice</div>
-          <div class="num">Stays local</div>
-          <p>Plainsay transcribes on the Mac. Wispr's own docs: <em>“transcription always happens in the cloud.”</em> Every word leaves your device.</p>
+          <div class="h">Transcription</div>
+          <div class="num">Both local</div>
+          <p>Both transcribe on your Mac. VoiceInk uses whisper.cpp, Parakeet, and other local engines; Plainsay uses WhisperKit or Parakeet via Core ML. Neither requires the cloud to dictate.</p>
         </div>
         <div class="card">
-          <div class="h">The code</div>
-          <div class="num">MIT, public</div>
-          <p>Read exactly what Plainsay does with your audio. Wispr Flow is closed source — you get a privacy policy, not the code.</p>
+          <div class="h">License</div>
+          <div class="num dim">MIT vs GPL-3.0</div>
+          <p>Plainsay is MIT — permissive, no obligations on derivative work. VoiceInk is GPL-3.0 — also open source, but copyleft, and its repo currently isn't accepting outside pull requests.</p>
         </div>
       </div>
     </section>
@@ -130,81 +129,71 @@
       <div class="tablewrap">
         <table>
           <thead>
-            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>Wispr Flow</th></tr>
+            <tr><th>&nbsp;</th><th class="col-plainsay">Plainsay</th><th>VoiceInk</th></tr>
           </thead>
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Free</b> on-device, forever. Plainsay Cloud ≈ $3/mo. No word caps.</td>
-              <td class="wispr">$15/mo, or $12/mo billed annually = $144/yr. No lifetime or one-time tier. Free tier: 2,000 words/week desktop, 1,000/week iPhone, unlimited on Android.</td>
+              <td class="plainsay col-plainsay"><b>Free</b>, forever. No purchase, no tiers.</td>
+              <td class="wispr">One-time purchase: $29 (1 Mac), $49 (2 Macs), $69 (3 Macs). 14-day money-back guarantee.</td>
             </tr>
             <tr>
               <td class="axis">Transcription</td>
-              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet through Core ML. No account, no network call needed to dictate.</td>
-              <td class="wispr">“Transcription always happens in the cloud” (Wispr's own words). No offline mode by design.</td>
+              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet via Core ML.</td>
+              <td class="wispr">On your Mac — whisper.cpp, Parakeet (FluidAudio), and other local engines. Also genuinely local.</td>
             </tr>
             <tr>
-              <td class="axis">Openness</td>
-              <td class="plainsay col-plainsay"><b>MIT licensed</b>, whole client public and auditable — read what leaves the Mac and when.</td>
-              <td class="wispr">Closed source — you get a privacy policy to trust, not the code to read.</td>
+              <td class="axis">Cleanup pass</td>
+              <td class="plainsay col-plainsay">Cloud by default (Gemini), but switchable to your own key, another provider, or off entirely.</td>
+              <td class="wispr">Multiple providers including local options (Ollama, a local CLI) alongside cloud ones (Groq, Gemini, OpenAI, Anthropic, and more).</td>
+            </tr>
+            <tr>
+              <td class="axis">License</td>
+              <td class="plainsay col-plainsay"><b>MIT</b> — permissive, no copyleft obligations.</td>
+              <td class="wispr">GPL-3.0 — open source, copyleft. Repo currently not accepting external pull requests.</td>
             </tr>
             <tr>
               <td class="axis">Account</td>
               <td class="plainsay col-plainsay"><b>None required</b> to dictate locally.</td>
-              <td class="wispr">Login required.</td>
-            </tr>
-            <tr>
-              <td class="axis">Engine</td>
-              <td class="plainsay col-plainsay">Your choice — Whisper (breadth of language) or Parakeet-tdt-0.6b-v3 (fast, strong Polish + English).</td>
-              <td class="wispr">Wispr's cloud pipeline. No choice.</td>
+              <td class="wispr">None required to dictate locally.</td>
             </tr>
             <tr>
               <td class="axis">Platform</td>
               <td class="plainsay col-plainsay">macOS (Apple silicon).</td>
-              <td class="wispr">macOS, Windows, iOS, Android.</td>
+              <td class="wispr">macOS 14.4+ (Apple silicon), and now also iOS.</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="mono-src">Wispr figures from wisprflow.ai/pricing and wisprflow.ai/privacy, 2026. Prices change — check the source links below.</p>
+      <p class="mono-src">VoiceInk figures from tryvoiceink.com and github.com/Beingpax/VoiceInk, 2026. Software changes — check the source links below.</p>
     </section>
 
     <section>
-      <h2 class="big">Price</h2>
-      <p class="lede">Wispr Flow is subscription-only: $15/month, or $12/month billed annually — <strong>$144 a year</strong>, every year, with no way to simply own it. Over three years that's more than $430.</p>
-      <p>Plainsay running locally on your Mac is <strong>free</strong>, forever, with no word limits and no account. If you'd rather not download a model or manage a key, Plainsay Cloud is about <strong>$3 a month</strong> — roughly a fifth of Wispr Pro — and the local option stays free and fully capable, not a crippled trial.</p>
+      <h2 class="big">Free vs one-time — and what that buys</h2>
+      <p class="lede">VoiceInk is not a subscription trap. $29–69 once, no recurring charge, which is a genuinely fair way to sell software. Plainsay's pitch is different, not "cheaper than VoiceInk" — it's that dictation is free at all, with no purchase decision to make, and the source stays MIT rather than GPL.</p>
+      <p>If you'd rather pay once and own a polished, actively-developed app with a support relationship behind it, VoiceInk is a legitimate choice. If you'd rather never take out your card for dictation, Plainsay is free with no catch — the same on-device transcription, at $0.</p>
     </section>
 
     <section>
-      <h2 class="big">Your voice never has to leave the Mac</h2>
-      <p class="lede">This is the difference that doesn't show up on a pricing page. Wispr Flow's own privacy documentation states that <em>“transcription always happens in the cloud.”</em> There is no offline mode — every word you dictate is uploaded, transcribed on someone else's servers, and returned.</p>
-      <p>Plainsay's transcription runs on your Mac through Core ML, on Whisper or NVIDIA Parakeet. Dictating needs no account and makes no network call you didn't ask for. Your voice — often the most sensitive thing you type — stays on the machine in your hands.</p>
-      <div class="callout">
-        <div class="t">Honest about the one place data can leave</div>
-        Plainsay's <em>transcription</em> is always local. The optional <em>cleanup</em> pass — the step that removes fillers and fixes punctuation — uses an AI model, and by default that's a cloud API. You can switch it off entirely, point it at your own API key, or use a local model. So the honest claim isn't “100% offline” — it's: <strong>your raw transcription is guaranteed local, and the one optional step that isn't is your choice, not locked to one vendor's cloud.</strong> Wispr gives you no such choice.
-      </div>
+      <h2 class="big">Openness: MIT vs GPL-3.0</h2>
+      <p class="lede">Both are open source — this isn't a privacy argument the way it is against closed, cloud-only competitors. The real difference is the license terms and how open the project is to outside contribution right now.</p>
+      <p>Plainsay is MIT licensed: permissive, no obligation on anything built with it. VoiceInk is GPL-3.0: also genuinely open, but copyleft, and as of this writing its GitHub repo isn't accepting external pull requests — you can read the code, but contributing back isn't currently open the way it is with Plainsay.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line, PRs welcome</p>
     </section>
 
     <section>
-      <h2 class="big">Open, so you don't have to take our word for it</h2>
-      <p class="lede">A closed-source cloud app asks you to trust a privacy policy. An open one lets you read the code.</p>
-      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. You (or anyone) can read exactly what happens to your audio, fork it, and self-host it indefinitely. Wispr Flow is closed source — its answer to “what happens to my voice” is a privacy policy you're asked to trust. With Plainsay, the answer is the source code.</p>
-      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
-    </section>
-
-    <section>
-      <h2 class="kicker">Where Wispr Flow is the better pick — honestly</h2>
+      <h2 class="kicker">Where VoiceInk is the better pick — honestly</h2>
       <ul class="plain">
-        <li>You need <strong>Windows, iOS, or Android</strong> — Plainsay is macOS-only today.</li>
-        <li>You want a single cloud account that syncs across all your devices out of the box.</li>
-        <li>You'd rather never see a model download or an API key, and $144/year is fine for that convenience.</li>
+        <li>You want an <strong>iOS app</strong> too — Plainsay is Mac-only today, VoiceInk now supports iOS.</li>
+        <li>You'd rather pay once for a supported, actively-maintained product than rely on volunteer open-source goodwill.</li>
+        <li>You want built-in support for a wider range of cloud cleanup providers out of the box (Groq, Cerebras, Mistral, OpenRouter, and more).</li>
       </ul>
-      <p>If instead you want dictation that's free, that you can read the source of, and that keeps your voice on your Mac — that's Plainsay.</p>
+      <p>If instead you want the same on-device transcription with no purchase at all, and an MIT-licensed codebase open to contribution — that's Plainsay.</p>
     </section>
 
     <section class="final">
       <img src="/assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Try the free, open one.</p>
+      <p class="headline">Try the free one.</p>
       <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
       <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
     </section>
@@ -212,16 +201,17 @@
     <section>
       <h2 class="kicker">Sources</h2>
       <p class="sources">
-        Wispr Flow pricing — <a href="https://wisprflow.ai/pricing">wisprflow.ai/pricing</a><br>
-        Wispr Flow privacy (“transcription always happens in the cloud”) — <a href="https://wisprflow.ai/privacy">wisprflow.ai/privacy</a><br>
+        VoiceInk pricing and features — <a href="https://tryvoiceink.com">tryvoiceink.com</a><br>
+        VoiceInk license and repository — <a href="https://github.com/Beingpax/VoiceInk">github.com/Beingpax/VoiceInk</a><br>
+        VoiceInk recommended cleanup providers — <a href="https://tryvoiceink.com/docs/recommended-models">tryvoiceink.com/docs/recommended-models</a><br>
         Plainsay source — <a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a><br>
-        <span class="mono-src">All Wispr figures were current as of 2026 and are quoted from Wispr's own pages. Wispr ships often — verify at the links above.</span>
+        <span class="mono-src">VoiceInk figures were current as of 2026 and are quoted from VoiceInk's own pages. Software changes — verify at the links above.</span>
       </p>
     </section>
 
     <section>
       <h2 class="kicker">Compare Plainsay to others</h2>
-      <p><a href="/vs/voiceink/">vs VoiceInk</a> &nbsp;·&nbsp; <a href="/vs/superwhisper/">vs superwhisper</a> &nbsp;·&nbsp; <a href="/vs/macos-dictation/">vs macOS Dictation</a></p>
+      <p><a href="/vs/wispr-flow/">vs Wispr Flow</a> &nbsp;·&nbsp; <a href="/vs/superwhisper/">vs superwhisper</a> &nbsp;·&nbsp; <a href="/vs/macos-dictation/">vs macOS Dictation</a></p>
     </section>
 
     <footer>
