@@ -542,6 +542,15 @@ public final class DictationCoordinator {
 
     private func endRecording() {
         stopMetering()
+        // Captured before `stopLivePreview()` clears it: `cancel()` does not
+        // interrupt a live-typing reconciliation already in flight (it only
+        // makes the NEXT `Task.sleep` inside it return early), so a preview
+        // pass can still be mid delete/insert into the document at this exact
+        // moment. Without waiting for it, its CGEvents and the final
+        // reconciliation's CGEvents below race on the same document — two
+        // independent edit sequences interleaving character by character,
+        // which reads as "it deleted what I said and typed something wrong."
+        let inFlightPreview = previewTask
         stopLivePreview()
         let samples = recorder.stop()
         guard phase == .recording else { return }
@@ -558,7 +567,10 @@ public final class DictationCoordinator {
             return
         }
 
-        Task { await process(samples) }
+        Task {
+            await inFlightPreview?.value
+            await process(samples)
+        }
     }
 
     // MARK: - Pipeline

@@ -42,10 +42,32 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
     var error: Error?
     private(set) var receivedPrompt: String?
     private(set) var receivedSampleCount = 0
+    /// Every call, including ones currently suspended on the gate below —
+    /// incremented before gating, so a test can prove a later call hasn't
+    /// even been *entered* yet, not just that it hasn't returned.
+    private(set) var callCount = 0
+    private var shouldGateNextCall = false
+    private var gateContinuation: CheckedContinuation<Void, Never>?
+
+    /// The next `transcribe()` call suspends indefinitely instead of
+    /// returning, until `releaseGate()` is called. Pins a specific pass
+    /// "still in flight" deterministically, instead of racing real
+    /// wall-clock timing against fakes that are otherwise near-instant.
+    func gateNextCall() { shouldGateNextCall = true }
+
+    func releaseGate() {
+        gateContinuation?.resume()
+        gateContinuation = nil
+    }
 
     func prepare() async throws {}
 
     func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        callCount += 1
+        if shouldGateNextCall {
+            shouldGateNextCall = false
+            await withCheckedContinuation { gateContinuation = $0 }
+        }
         receivedSampleCount = samples.count
         receivedPrompt = prompt
         if let error { throw error }
@@ -450,6 +472,55 @@ struct PipelineTests {
         // than nothing at all — proving the delta is computed, not skipped.
         #expect(harness.inserter.deletedCounts == [11])
         #expect(harness.inserter.inserted.last == "The cat sat.")
+    }
+
+    @Test("Ending a recording waits for an in-flight live-typing preview pass before starting the final reconciliation")
+    func liveTypingWaitsForInFlightPreviewBeforeFinalReconciliation() async throws {
+        let harness = Harness()
+        harness.settings.liveTypingEnabled = true
+        harness.recorder.duration = 3
+        harness.engine.transcript = "hello there"
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+
+        // Let the first preview pass complete normally.
+        try await harness.waitUntil { harness.inserter.inserted.contains("hello there") }
+        #expect(harness.engine.callCount == 1)
+
+        // Arm the gate, then wait for the SECOND preview tick to actually
+        // enter (not return from) transcribe — call 2. From this point on
+        // we know, with certainty rather than luck, that a preview pass is
+        // suspended mid-flight, because nothing can make it return without
+        // `releaseGate()` below.
+        harness.engine.gateNextCall()
+        try await harness.waitUntil { harness.engine.callCount == 2 }
+
+        // End the recording while that pass is provably still in flight.
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+
+        // Give the pipeline every chance to race ahead if nothing were
+        // actually blocking it. Before the fix, `endRecording` span a new
+        // Task that called `process(samples)` — and hence the final
+        // engine.transcribe — immediately, regardless of the still-gated
+        // preview pass; call count would climb to 3 well within this
+        // window. With the fix, the new Task's first move is `await
+        // inFlightPreview?.value`, which cannot resolve until the gate is
+        // released, so call count must hold at exactly 2 throughout.
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(harness.engine.callCount == 2)
+
+        // Release the gate: the preview pass finishes, and only now should
+        // the final reconciliation's own transcribe call be allowed to fire.
+        harness.engine.releaseGate()
+        try await harness.waitUntil(timeout: .seconds(3)) { harness.engine.callCount == 3 }
+        try await harness.settle(timeout: .seconds(3))
+
+        #expect(harness.coordinator.phase == .idle)
     }
 
     @Test("Voice filtering enabled but not yet loaded fails open — dictation still works")
