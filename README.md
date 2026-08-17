@@ -131,3 +131,8 @@ pipeline.
 
 Building from source, and running the tests, are covered in
 [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contact
+
+Bugs and feature requests: [open an issue](https://github.com/conrader/plainsay/issues).
+Everything else: [hi@plainsay.app](mailto:hi@plainsay.app).
