@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Plainsay actually works</title>
+<meta name="description" content="The ASR engines, the live-typing reconciliation algorithm, the cleanup pass, and text insertion — with the real numbers and the actual tradeoffs, not a marketing gloss.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/how-it-works/">
+<style>
+  :root{
+    --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
+    --sys-accent:#0a84ff; --hairline:rgba(255,255,255,0.16); --label-secondary:#a8aebd;
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,monospace; --radius-card:18px; --radius-pill:999px;
+    --ease-out:cubic-bezier(0,0,0.58,1); --dur-phase:180ms;
+    --win:rgba(111,211,199,0.10); --win-line:rgba(111,211,199,0.30);
+    --warn:rgba(232,137,107,0.10); --warn-line:rgba(232,137,107,0.32);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--bone);text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--bone)}
+  a:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .page{min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:760px;padding:0 32px;display:flex;flex-direction:column}
+  @media(max-width:620px){.wrap{padding:0 20px}}
+  nav.top{display:flex;align-items:center;gap:10px;padding:30px 0;width:100%;max-width:920px}
+  nav.top .word{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+  nav.top .word a{text-decoration:none;color:var(--bone)}
+  nav.top .spacer{flex:1}
+  nav.top .links{display:flex;align-items:center;gap:22px;font-size:13px}
+  nav.top .links a{text-decoration:none;color:var(--bone);opacity:.9}
+  nav.top .links a:hover{opacity:1;text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35)}
+  @media(max-width:480px){nav.top .links{gap:14px}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-ui);font-weight:500;line-height:1;text-decoration:none;cursor:pointer;transition:filter var(--dur-phase) var(--ease-out);height:30px;padding:0 16px;border-radius:7px;font-size:13px;background:var(--sys-accent);border:1px solid transparent;color:#fff}
+  .btn:hover{filter:brightness(1.08)}
+  header.hero{padding:64px 0 20px;display:flex;flex-direction:column;gap:18px}
+  header.hero .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
+  header.hero h1{margin:0;font-size:44px;line-height:1.13;font-weight:700;letter-spacing:-1px;text-wrap:balance}
+  header.hero .sub{margin:0;font-size:18px;line-height:1.6;color:var(--label-secondary);text-wrap:pretty}
+  @media(max-width:620px){header.hero h1{font-size:32px}}
+  section{border-top:1px solid var(--hairline);padding:40px 0 44px}
+  section:first-of-type{border-top:none}
+  h2.big{margin:0 0 12px;font-size:23px;font-weight:650;letter-spacing:-0.4px}
+  h3.sub{margin:28px 0 8px;font-size:16px;font-weight:650;color:var(--bone)}
+  p{font-size:16px;line-height:1.7;color:var(--bone)}
+  p.dim{color:var(--label-secondary)}
+  .kicker{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--slate)}
+  .flow{display:flex;flex-direction:column;gap:0;border:1px solid var(--hairline);border-radius:var(--radius-card);overflow:hidden;margin:18px 0;font-family:var(--font-mono);font-size:13px}
+  .flow .step{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-bottom:1px solid var(--hairline)}
+  .flow .step:last-child{border-bottom:none}
+  .flow .where{flex:0 0 96px;font-weight:600;letter-spacing:0.5px}
+  .flow .where.local{color:var(--signal)}
+  .flow .where.cloud{color:var(--ember)}
+  .flow .what{color:var(--label-secondary);line-height:1.55}
+  .callout{border:1px solid var(--warn-line);background:var(--warn);border-radius:var(--radius-card);padding:18px 20px;margin:18px 0;font-size:15px;line-height:1.65}
+  .callout.win{border-color:var(--win-line);background:var(--win)}
+  .callout .t{font-weight:650;margin-bottom:5px}
+  ul.plain{padding-left:22px;margin:12px 0}
+  ul.plain li{margin:10px 0;font-size:16px;line-height:1.65}
+  ul.plain li b{color:var(--signal)}
+  code{font-family:var(--font-mono);font-size:0.9em;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:5px}
+  pre{font-family:var(--font-mono);font-size:13px;line-height:1.6;background:rgba(255,255,255,0.04);border:1px solid var(--hairline);border-radius:var(--radius-card);padding:16px 18px;overflow-x:auto;margin:16px 0;color:var(--label-secondary)}
+  pre b{color:var(--signal);font-weight:600}
+  .mono-src{font-family:var(--font-mono);font-size:11.5px;color:var(--slate)}
+  .final{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 0 56px}
+  .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
+  .final .req{font-size:12px;color:var(--slate)}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;width:100%;max-width:920px}
+  footer .text{font-size:12px;color:var(--slate)}
+  footer .spacer{flex:1}
+  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links a{color:var(--slate);text-decoration:none}
+  footer .links a:hover{color:var(--bone)}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="top">
+    <img src="/assets/logo.svg" alt="" width="28" height="28" style="display:block">
+    <span class="word"><a href="/">Plainsay</a></span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/why-on-device/">Why on-device</a>
+      <a href="https://github.com/conrader/plainsay">GitHub</a>
+      <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+
+    <header class="hero">
+      <div class="eyebrow">How it works</div>
+      <h1>The engineering, not the pitch.</h1>
+      <p class="sub">Two on-device ASR engines, a reconciliation algorithm for typing words while you're still speaking them, and a cleanup pass designed to never lose a dictation to a bad network call. The real numbers, the actual tradeoffs, and one bug we shipped and fixed the same day.</p>
+    </header>
+
+    <section>
+      <h2 class="big">Two transcription engines, both fully local</h2>
+      <p>Plainsay ships two on-device speech engines through Core ML, and you pick which one runs:</p>
+      <ul class="plain">
+        <li><b>Whisper</b>, via <a href="https://github.com/argmaxinc/WhisperKit">WhisperKit</a> — OpenAI's model family, broad language coverage, running as a Core ML model on the Neural Engine.</li>
+        <li><b>NVIDIA Parakeet TDT 0.6B v3</b>, via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a> — faster, and in our own benchmark <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">measurably more accurate</a> on English, with real Polish coverage most competitors don't market at all.</li>
+      </ul>
+      <p>The Parakeet integration has a couple of specific choices worth stating plainly:</p>
+      <ul class="plain">
+        <li>The encoder loads at <b>int8 precision</b> (<code>AsrModels.downloadAndLoad(version: .v3, encoderPrecision: .int8, …)</code>) — smaller download, faster inference, negligible accuracy cost for this task.</li>
+        <li><b>Mel-context carry-over is disabled</b> (<code>ASRConfig(melChunkContext: false)</code>), on FluidAudio's own recommendation for multilingual v3 recordings longer than one model window — without it, later chunks of a Polish sentence measurably drift toward English as the model's context window fills with the wrong language's statistics.</li>
+        <li><b>Decoder state is fresh for every single utterance</b> — a new <code>TdtDecoderState</code> per <code>transcribe()</code> call, deliberately never reused across dictations, so nothing you said in one dictation can leak linguistic context into the next.</li>
+      </ul>
+      <p>Which model to default to isn't hardcoded, either. <code>OnDeviceModel.recommended(for:)</code> takes the languages you actually speak (set once in the Setup Assistant) and checks them against FluidAudio's own <code>Language.allCases</code> — Parakeet's real, current language coverage, not a table we maintain by hand and let go stale. Speak a language outside that list and the recommendation falls back to Whisper automatically.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Live typing: words landing as you speak, then correcting themselves</h2>
+      <p class="dim">The hard constraint: the only editing primitive available to a program typing into an arbitrary focused text field in someone else's app is <b>Backspace</b>. No cursor movement, no select-and-replace, no diff-aware text replacement API that works in Slack, VS Code, and Safari's address bar alike.</p>
+      <p>Every <b>1.5 seconds</b> while you're recording, Plainsay re-transcribes the entire growing audio buffer from scratch — not incrementally — through whichever engine is loaded. That's a real, deliberate choice: streaming/incremental decoding is faster per-step but the model can't revise an earlier guess once it's committed, and ASR models frequently do want to revise an earlier word once more audio gives them more context. A fresh full-buffer decode every tick costs more compute; it buys the model the right to change its mind.</p>
+      <p>With <b>Live typing</b> on, each of those passes doesn't just update a HUD preview — it gets reconciled onto the actual document:</p>
+      <pre>old = what's already typed on screen (our own tracked model of it)
+new = this pass's fresh transcript
+
+find the longest common <b>prefix</b> of old and new
+  → delete (old.count − prefix.count) characters via Backspace
+  → type (new.count − prefix.count) new characters
+
+liveTypedText = new   // <span class="mono-src">this becomes the baseline for the next pass</span></pre>
+      <p>A pure longest-common-prefix diff, not a full edit-distance alignment — deliberately. Backspace can only ever erase a suffix, so the only diff worth computing is "how much of the tail changed," and the assumption is that ASR revisions overwhelmingly land near the end of what's been said so far, not the beginning.</p>
+      <h3 class="sub">The bug this shipped with, and the fix</h3>
+      <p>The reconciliation step above sends every Backspace as a synthetic <code>CGEvent</code> keydown/keyup pair. The first version of this sent them back-to-back with <b>zero delay</b> between keystrokes. It worked perfectly in every manual test — and then a real user reported wrong capitalization and missing spaces showing up "very often."</p>
+      <p>The actual bug: deletion is fire-and-forget. Nothing confirms a synthetic Backspace was actually consumed by the target app, and a busy app (a web view mid-render, an Electron app servicing its own event loop) can silently drop or coalesce a keystroke sent with no gap after it. Drop one Backspace, and Plainsay's internal model of what's on screen — <code>liveTypedText</code>, the baseline the <i>next</i> diff is computed against — is now permanently one character wrong for the rest of that dictation. Every subsequent correction compounds the error instead of fixing it.</p>
+      <p>The fix: pace the Backspace events the same way the paste path was already paced — a short, deliberate delay between each one, mirroring a lesson learned earlier for <code>⌘V</code> itself (a busy app needs time to actually service a synthetic keystroke, full stop). Shipped and verified the same day it was reported.</p>
+      <p class="dim">Live typing is off by default, and turning it on turns off the cleanup pass below — reconciling live-typed raw words against a rewritten sentence would mean visibly rewriting text you just watched yourself type, which defeats the point.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Cleanup: best-effort, and never the reason a dictation is lost</h2>
+      <p>Raw ASR output is grammatically honest but reads like speech: filler words, false starts, no punctuation. The optional cleanup pass turns that into written text via an LLM call — by default Gemini Flash Lite, but switchable to your own key, a different provider, a local model, or off.</p>
+      <p>The design constraint that actually matters: <b>a failed cleanup call must never cost you the dictation.</b> The call has a <b>3-second timeout</b>; no key, no network, a timeout, or an HTTP error all fall back to inserting the raw transcript instead, and the HUD says so. <code>TextCleaning</code> is a protocol with one method — the whole pipeline doesn't know or care whether the concrete implementation is Gemini, OpenAI-compatible, Anthropic, or a no-op passthrough when cleanup is disabled.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Getting text into someone else's app</h2>
+      <p>Text lands via the pasteboard and a synthetic <code>⌘V</code>, not Apple's Accessibility text-insertion API. The Accessibility route is cleaner in theory and fails silently in practice — in Electron apps, web views, and most terminals, which cover a large share of where people actually dictate. Pasting works everywhere a human can paste.</p>
+      <p>The cost is briefly borrowing the real clipboard: your existing clipboard contents are snapshotted before the write and restored after, so a dictation never permanently clobbers whatever you had copied a moment ago.</p>
+    </section>
+
+    <section>
+      <h2 class="kicker">Read the rest</h2>
+      <p><a href="/why-on-device/">Why on-device</a> — the privacy case, stated precisely. <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">Benchmark</a> — WER and latency for both engines, reproducible with one command. <a href="https://github.com/conrader/plainsay">Source</a> — all of the above, every line, MIT licensed.</p>
+    </section>
+
+    <div class="final">
+      <p class="headline">Read the code, or just use it.</p>
+      <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
+      <span class="req">Free · MIT licensed · macOS 15+, Apple silicon</span>
+    </div>
+
+  </div>
+
+  <footer>
+    <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
+    <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/why-on-device/">Why on-device</a>
+      <a href="https://github.com/conrader/plainsay">Source</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

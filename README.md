@@ -16,7 +16,8 @@ Both run as Core ML models on Apple silicon, accelerated by the Neural Engine.
 A Gemini Flash Lite pass then turns spoken language into written language:
 filler words out, punctuation in, your wording intact — see
 [why on-device](https://plainsay.app/why-on-device/) for exactly what that
-means.
+means, or [how it works](https://plainsay.app/how-it-works/) for the engine
+internals, the live-typing reconciliation algorithm, and the cleanup design.
 
 ## Screenshots
 
