@@ -53,6 +53,14 @@ public final class PlainsaySettings {
     /// scratch once you stop. On-device only: a partial call every couple of
     /// seconds would be far too slow and costly against a paid API.
     public var livePreviewEnabled: Bool { didSet { defaults.set(livePreviewEnabled, forKey: Key.livePreviewEnabled.rawValue) } }
+    /// Types each live-preview pass into the focused document as it arrives,
+    /// then reconciles it to the cleaned transcript once you stop — instead
+    /// of one paste at the end. Trades the "clean, then insert once"
+    /// guarantee for a live feel: raw, unedited words land while you're still
+    /// speaking, and get corrected in place afterward. Off by default. Same
+    /// on-device requirement as `livePreviewEnabled`, since it drives the same
+    /// periodic pass.
+    public var liveTypingEnabled: Bool { didSet { defaults.set(liveTypingEnabled, forKey: Key.liveTypingEnabled.rawValue) } }
 
     /// Filters out any voice that doesn't match `voiceEmbedding` before
     /// transcription, so a second person in the room never reaches the
@@ -150,7 +158,7 @@ public final class PlainsaySettings {
 
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
-        case livePreviewEnabled
+        case livePreviewEnabled, liveTypingEnabled
         case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
@@ -186,6 +194,7 @@ public final class PlainsaySettings {
         onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false
+        liveTypingEnabled = defaults.object(forKey: Key.liveTypingEnabled.rawValue) as? Bool ?? false
         voiceFilterEnabled = defaults.object(forKey: Key.voiceFilterEnabled.rawValue) as? Bool ?? false
         voiceEmbedding = decode(.voiceEmbedding, [Float]?.none)
         cleanupProvider = decode(.cleanupProvider, CleanupProvider.gemini)

@@ -207,6 +207,14 @@ private struct SpeechSettings: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
+
+                Section {
+                    Toggle("Live typing (experimental)", isOn: $settings.liveTypingEnabled)
+                } footer: {
+                    Text("Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
             } else if settings.transcriptionSource == .cloud {
                 Section("Plainsay Cloud") {
                     CloudSettingsView(cloud: coordinator.cloud) {

@@ -3199,6 +3199,88 @@
         }
       }
     },
+    "Live typing (experimental)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live-Tippen (experimentell)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live typing (experimental)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escritura en vivo (experimental)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frappe en direct (expérimental)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrittura dal vivo (sperimentale)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライブタイピング（実験的機能）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "실시간 타이핑 (실험적 기능)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live typen (experimenteel)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pisanie na żywo (eksperymentalne)"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digitação em direto (experimental)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Живой ввод текста (экспериментально)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Живе введення тексту (експериментально)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时输入(实验性)"
+          }
+        }
+      }
+    },
     "Local refers to speech recognition and recorded audio. If transcript cleanup is enabled with a cloud provider, transcript text may still be sent to that provider; turn cleanup off for a fully local text path.": {
       "localizations": {
         "de": {
@@ -6557,6 +6639,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "转录服务"
+          }
+        }
+      }
+    },
+    "Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippt jeden groben Durchlauf sofort in das Dokument, in das du gerade diktierst, und korrigiert ihn an Ort und Stelle, sobald die Bereinigung abgeschlossen ist – statt einmal am Ende einzufügen. Verzichtet auf die Garantie, dass in deinem Dokument nur bereinigter Text landet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Types each rough pass directly into whatever you're dictating into, live, then corrects it in place once cleanup finishes — instead of one paste at the end. Trades away the guarantee that only clean text ever lands in your document."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribe cada pasada aproximada directamente en el documento en el que estás dictando, en vivo, y la corrige en el mismo lugar en cuanto termina la limpieza, en lugar de pegar todo al final. Renuncia a la garantía de que solo el texto limpio llega a tu documento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tape chaque passe approximative directement dans le document où vous dictez, en direct, puis la corrige sur place une fois le nettoyage terminé — au lieu d'un seul collage à la fin. Renonce à la garantie que seul le texte nettoyé atterrit dans votre document."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Digita ogni passaggio approssimativo direttamente nel documento in cui stai dettando, dal vivo, per poi correggerlo sul posto non appena la pulizia è completata, invece di un unico incolla finale. Rinuncia alla garanzia che nel documento arrivi solo testo pulito."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大まかな結果をその都度、ディクテーション中のドキュメントへリアルタイムで直接入力し、クリーンアップが完了した時点でその場で修正します。最後に一度だけ貼り付ける方式とは異なります。ドキュメントに届くのが必ずクリーンなテキストだけである、という保証は失われます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰는 문서에 대략적인 결과를 실시간으로 바로 입력한 다음, 정리가 끝나면 그 자리에서 수정합니다 — 끝에 한 번에 붙여넣는 대신입니다. 문서에 항상 정리된 텍스트만 들어간다는 보장은 포기하게 됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typt elke ruwe doorloop direct, live, in het document waarin je dicteert, en corrigeert dat ter plekke zodra het opschonen klaar is — in plaats van één keer plakken aan het einde. Doet daarmee afstand van de garantie dat er alleen opgeschoonde tekst in je document terechtkomt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wpisuje każdy zgrubny fragment na żywo bezpośrednio do dokumentu, do którego dyktujesz, a po zakończeniu czyszczenia poprawia go w tym samym miejscu — zamiast wklejać całość na końcu. Rezygnuje z gwarancji, że w dokumencie ląduje wyłącznie oczyszczony tekst."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escreve cada passagem aproximada diretamente no documento onde estás a ditar, ao vivo, e corrige-a no mesmo local assim que a limpeza terminar — em vez de colar tudo no final. Abdica da garantia de que só texto limpo chega ao teu documento."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Печатает каждый черновой проход прямо в документ, в который вы диктуете, в реальном времени, а затем исправляет его на месте, как только завершится очистка — вместо одной вставки в конце. Отказывается от гарантии, что в документ попадает только очищенный текст."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Друкує кожен чорновий прохід прямо в документ, у який ви диктуєте, наживо, а потім виправляє його на місці, щойно завершиться очищення — замість одного вставлення в кінці. Відмовляється від гарантії, що в документ потрапляє лише очищений текст."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你口述的文档中实时逐段输入粗略结果,清理完成后就地纠正--而不是最后一次性粘贴.因此放弃了「文档中只会出现清理后文本」这一保证."
           }
         }
       }

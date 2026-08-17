@@ -197,11 +197,16 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
 @MainActor
 final class FakeInserter: TextInserting {
     private(set) var inserted: [String] = []
+    private(set) var deletedCounts: [Int] = []
     var outcome: TextInsertionOutcome = .inserted
 
     func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
         inserted.append(text)
         return outcome
+    }
+
+    func deleteBackward(_ count: Int) async {
+        deletedCounts.append(count)
     }
 }
 
@@ -351,6 +356,87 @@ struct PipelineTests {
         try await harness.settle()
 
         #expect(harness.coordinator.livePreviewText.isEmpty)
+    }
+
+    @Test("Live typing stays off by default, even while recording")
+    func liveTypingOffByDefault() async throws {
+        let harness = Harness()
+        harness.recorder.duration = 3
+        harness.engine.transcript = "hello there"
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.inserter.inserted.isEmpty)
+        #expect(harness.inserter.deletedCounts.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+
+        // The one, single-shot insert at the end — unchanged from the
+        // non-live-typing pipeline.
+        #expect(harness.inserter.inserted.count == 1)
+        #expect(harness.inserter.deletedCounts.isEmpty)
+    }
+
+    @Test("Live typing types the raw preview as it arrives, then reconciles with a minimal edit")
+    func liveTypingReconcilesWithMinimalEdit() async throws {
+        let harness = Harness()
+        harness.settings.liveTypingEnabled = true
+        harness.recorder.duration = 3
+        harness.engine.transcript = "hello there"
+        harness.cleaner.output = "hello there."
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(60))
+        // The raw preview pass typed directly into the document — no HUD
+        // preview needed, since live typing doesn't require livePreviewEnabled.
+        #expect(harness.inserter.inserted.contains("hello there"))
+        #expect(harness.coordinator.livePreviewText.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+
+        // Cleanup only added a trailing period. Reconciliation appended just
+        // that — it never deleted and retyped words cleanup left untouched.
+        #expect(harness.inserter.deletedCounts.isEmpty)
+        #expect(harness.inserter.inserted.last == ".")
+    }
+
+    @Test("Live typing reconciles by deleting only the diverged tail, not the whole line")
+    func liveTypingDeletesOnlyTheDivergedTail() async throws {
+        let harness = Harness()
+        harness.settings.liveTypingEnabled = true
+        harness.recorder.duration = 3
+        harness.engine.transcript = "the cat sat"
+        harness.cleaner.output = "The cat sat."
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(60))
+        #expect(harness.inserter.inserted.contains("the cat sat"))
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+
+        // "the cat sat" -> "The cat sat." diverges at the very first
+        // character (case), so the whole line is deleted and retyped rather
+        // than nothing at all — proving the delta is computed, not skipped.
+        #expect(harness.inserter.deletedCounts == [11])
+        #expect(harness.inserter.inserted.last == "The cat sat.")
     }
 
     @Test("Voice filtering enabled but not yet loaded fails open — dictation still works")
@@ -839,5 +925,50 @@ struct PipelineTests {
             try await Task.sleep(for: .milliseconds(1))
         }
         try #require(coordinator.modelState == expected)
+    }
+}
+
+@Suite("Live-typing diff")
+struct LiveTypingDiffTests {
+    @Test("A pure extension inserts only the new suffix")
+    func appendOnly() {
+        let result = DictationCoordinator.diff(from: "hello", to: "hello there")
+        #expect(result.deleteCount == 0)
+        #expect(result.insertText == " there")
+    }
+
+    @Test("A revised tail deletes only the diverged part")
+    func revisedTail() {
+        let result = DictationCoordinator.diff(from: "the cat sat", to: "the cat sang")
+        #expect(result.deleteCount == 1)
+        #expect(result.insertText == "ng")
+    }
+
+    @Test("Identical text is a no-op")
+    func identical() {
+        let result = DictationCoordinator.diff(from: "same", to: "same")
+        #expect(result.deleteCount == 0)
+        #expect(result.insertText.isEmpty)
+    }
+
+    @Test("No shared prefix deletes everything and retypes")
+    func totalReplacement() {
+        let result = DictationCoordinator.diff(from: "abc", to: "xyz")
+        #expect(result.deleteCount == 3)
+        #expect(result.insertText == "xyz")
+    }
+
+    @Test("An empty starting point just types the new text")
+    func fromEmpty() {
+        let result = DictationCoordinator.diff(from: "", to: "hello")
+        #expect(result.deleteCount == 0)
+        #expect(result.insertText == "hello")
+    }
+
+    @Test("An empty result deletes everything and types nothing")
+    func toEmpty() {
+        let result = DictationCoordinator.diff(from: "hello", to: "")
+        #expect(result.deleteCount == 5)
+        #expect(result.insertText.isEmpty)
     }
 }

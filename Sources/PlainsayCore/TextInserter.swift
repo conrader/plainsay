@@ -59,6 +59,11 @@ public protocol TextInserting: Sendable {
     ///   than restoring the previous contents, so a swallowed ⌘V costs one
     ///   manual paste instead of the whole dictation.
     @MainActor func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome
+
+    /// Deletes `count` characters immediately before the caret via synthetic
+    /// backspace. Used to walk live-typed text back to a common prefix before
+    /// pasting a revision — never touches the pasteboard.
+    @MainActor func deleteBackward(_ count: Int) async
 }
 
 /// Inserts text by writing it to the pasteboard and synthesizing ⌘V.
@@ -143,8 +148,18 @@ public struct PasteboardTextInserter: TextInserting {
         return result == .success && focused != nil
     }
 
+    @MainActor
+    public func deleteBackward(_ count: Int) async {
+        guard count > 0, AXIsProcessTrusted(), Self.hasFocusedElement() else { return }
+        for _ in 0..<count {
+            Self.sendDelete()
+        }
+    }
+
     /// Virtual keycode for `v` on any layout (ANSI position-based).
     private static let keyCodeV: CGKeyCode = 0x09
+    /// Virtual keycode for Delete/Backspace (ANSI position-based).
+    private static let keyCodeDelete: CGKeyCode = 0x33
 
     @MainActor
     static func sendCommandV() {
@@ -156,6 +171,17 @@ public struct PasteboardTextInserter: TextInserting {
         let up = CGEvent(keyboardEventSource: source, virtualKey: keyCodeV, keyDown: false)
         down?.flags = .maskCommand
         up?.flags = .maskCommand
+
+        down?.post(tap: .cghidEventTap)
+        up?.post(tap: .cghidEventTap)
+    }
+
+    @MainActor
+    static func sendDelete() {
+        guard let source = CGEventSource(stateID: .combinedSessionState) else { return }
+
+        let down = CGEvent(keyboardEventSource: source, virtualKey: keyCodeDelete, keyDown: true)
+        let up = CGEvent(keyboardEventSource: source, virtualKey: keyCodeDelete, keyDown: false)
 
         down?.post(tap: .cghidEventTap)
         up?.post(tap: .cghidEventTap)
