@@ -530,7 +530,10 @@ struct PipelineTests {
         await harness.ready()
 
         harness.dictate()
-        try await Task.sleep(for: .milliseconds(200))
+        try await harness.waitUntil {
+            if case .error = harness.coordinator.phase { return true }
+            return false
+        }
 
         #expect(harness.inserter.inserted.isEmpty)
         if case .error = harness.coordinator.phase {} else {
