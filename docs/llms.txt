@@ -1,10 +1,9 @@
 # Plainsay
 
-> Free, MIT-licensed, on-device voice dictation for macOS. Hold a key, speak,
-> release — clean written text lands in whatever app has focus. Transcription
-> runs on the Mac with Whisper or NVIDIA Parakeet, never in the cloud, never
-> behind a login. An optional LLM cleanup pass uses a key you control. No
-> subscription. No account required.
+> Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs
+> on-device with Whisper or Parakeet — never in the cloud, never behind a
+> login. An optional LLM cleanup pass uses a key you control. No subscription.
+> No account required.
 
 Plainsay is a from-scratch Swift/SwiftUI menu-bar app: global hotkey capture,
 on-device Core ML transcription (WhisperKit or NVIDIA Parakeet TDT 0.6B v3 via
