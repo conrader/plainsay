@@ -1,0 +1,926 @@
+[
+  {
+    "averageLatencySeconds" : 0.10092884540557862,
+    "engine" : "parakeet-tdt-0.6b-v3",
+    "failedCount" : 0,
+    "realTimeFactor" : 0.014154724195778443,
+    "totalErrors" : 23,
+    "totalReferenceWords" : 1002,
+    "utteranceCount" : 50,
+    "utterances" : [
+      {
+        "audioSeconds" : 10.435,
+        "errors" : 0,
+        "hypothesis" : "He hoped there would be stew for dinner, turnips and carrots and bruised potatoes, and fat mutton pieces to be ladled out in thick, peppered, flour fattened sauce.",
+        "id" : "1089-134686-0000",
+        "latencySeconds" : 0.12022995948791504,
+        "reference" : "HE HOPED THERE WOULD BE STEW FOR DINNER TURNIPS AND CARROTS AND BRUISED POTATOES AND FAT MUTTON PIECES TO BE LADLED OUT IN THICK PEPPERED FLOUR FATTENED SAUCE",
+        "refWords" : 28
+      },
+      {
+        "audioSeconds" : 4.2750000000000004,
+        "errors" : 0,
+        "hypothesis" : "A cold, lucid indifference reigned in his soul.",
+        "id" : "1089-134686-0007",
+        "latencySeconds" : 0.088215112686157227,
+        "reference" : "A COLD LUCID INDIFFERENCE REIGNED IN HIS SOUL",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 2.2250000000000001,
+        "errors" : 0,
+        "hypothesis" : "He tried to think how it could be",
+        "id" : "1089-134686-0014",
+        "latencySeconds" : 0.080531954765319824,
+        "reference" : "HE TRIED TO THINK HOW IT COULD BE",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 6.5499999999999998,
+        "errors" : 0,
+        "hypothesis" : "If a layman, in giving baptism, pour the water before saying the words, is the child baptized?",
+        "id" : "1089-134686-0021",
+        "latencySeconds" : 0.092123985290527344,
+        "reference" : "IF A LAYMAN IN GIVING BAPTISM POUR THE WATER BEFORE SAYING THE WORDS IS THE CHILD BAPTIZED",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 7.8300000000000001,
+        "errors" : 1,
+        "hypothesis" : "The retreat will begin on Wednesday afternoon in honor of Saint Francis Xavier, whose feast day is Saturday.",
+        "id" : "1089-134686-0028",
+        "latencySeconds" : 0.095461010932922363,
+        "reference" : "THE RETREAT WILL BEGIN ON WEDNESDAY AFTERNOON IN HONOUR OF SAINT FRANCIS XAVIER WHOSE FEAST DAY IS SATURDAY",
+        "refWords" : 18
+      },
+      {
+        "audioSeconds" : 8.1199999999999992,
+        "errors" : 0,
+        "hypothesis" : "He wore blue silk stockings, blue knee pants with gold buckles, a blue ruffled waist, and a jacket of bright blue braided with gold.",
+        "id" : "1284-1180-0000",
+        "latencySeconds" : 0.1024620532989502,
+        "reference" : "HE WORE BLUE SILK STOCKINGS BLUE KNEE PANTS WITH GOLD BUCKLES A BLUE RUFFLED WAIST AND A JACKET OF BRIGHT BLUE BRAIDED WITH GOLD",
+        "refWords" : 24
+      },
+      {
+        "audioSeconds" : 6.8650000000000002,
+        "errors" : 0,
+        "hypothesis" : "At the foot of the mountain that separated the country of the Munchkins from the country of the Gillikins, the path divided.",
+        "id" : "1284-1180-0006",
+        "latencySeconds" : 0.099922895431518555,
+        "reference" : "AT THE FOOT OF THE MOUNTAIN THAT SEPARATED THE COUNTRY OF THE MUNCHKINS FROM THE COUNTRY OF THE GILLIKINS THE PATH DIVIDED",
+        "refWords" : 22
+      },
+      {
+        "audioSeconds" : 4.8799999999999999,
+        "errors" : 0,
+        "hypothesis" : "We have come from a far lonelier place than this. A lonelier place",
+        "id" : "1284-1180-0012",
+        "latencySeconds" : 0.08018803596496582,
+        "reference" : "WE HAVE COME FROM A FAR LONELIER PLACE THAN THIS A LONELIER PLACE",
+        "refWords" : 13
+      },
+      {
+        "audioSeconds" : 12.005000000000001,
+        "errors" : 1,
+        "hypothesis" : "It takes me several years to make this magic powder, but at this moment I am pleased to say it is nearly done. You see I am making it for my good wife Margolot, who wants to use some of it for a purpose of her own.",
+        "id" : "1284-1180-0018",
+        "latencySeconds" : 0.11421000957489014,
+        "reference" : "IT TAKES ME SEVERAL YEARS TO MAKE THIS MAGIC POWDER BUT AT THIS MOMENT I AM PLEASED TO SAY IT IS NEARLY DONE YOU SEE I AM MAKING IT FOR MY GOOD WIFE MARGOLOTTE WHO WANTS TO USE SOME OF IT FOR A PURPOSE OF HER OWN",
+        "refWords" : 47
+      },
+      {
+        "audioSeconds" : 5.2599999999999998,
+        "errors" : 0,
+        "hypothesis" : "That is one reason you are Ojo the unlucky, said the woman, in a sympathetic tone.",
+        "id" : "1284-1180-0024",
+        "latencySeconds" : 0.08983302116394043,
+        "reference" : "THAT IS ONE REASON YOU ARE OJO THE UNLUCKY SAID THE WOMAN IN A SYMPATHETIC TONE",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 22.57,
+        "errors" : 0,
+        "hypothesis" : "It is a very fine old place, of red brick, softened by a pale, powdery lichen, which has dispersed itself with happy irregularity, so as to bring the red brick into terms of friendly companionship with the limestone ornaments surrounding the three gables, the windows and the door place.",
+        "id" : "2094-142345-0000",
+        "latencySeconds" : 0.179252028465271,
+        "reference" : "IT IS A VERY FINE OLD PLACE OF RED BRICK SOFTENED BY A PALE POWDERY LICHEN WHICH HAS DISPERSED ITSELF WITH HAPPY IRREGULARITY SO AS TO BRING THE RED BRICK INTO TERMS OF FRIENDLY COMPANIONSHIP WITH THE LIMESTONE ORNAMENTS SURROUNDING THE THREE GABLES THE WINDOWS AND THE DOOR PLACE",
+        "refWords" : 49
+      },
+      {
+        "audioSeconds" : 16.129999999999999,
+        "errors" : 1,
+        "hypothesis" : "The family likeness between her and her niece Dinah Morris, with a contrast between her keenness and Dinah's seraphic gentleness of expression, might have served a painter as an excellent suggestion for a Martha and Mary.",
+        "id" : "2094-142345-0012",
+        "latencySeconds" : 0.15186309814453125,
+        "reference" : "THE FAMILY LIKENESS BETWEEN HER AND HER NIECE DINAH MORRIS WITH THE CONTRAST BETWEEN HER KEENNESS AND DINAH'S SERAPHIC GENTLENESS OF EXPRESSION MIGHT HAVE SERVED A PAINTER AS AN EXCELLENT SUGGESTION FOR A MARTHA AND MARY",
+        "refWords" : 36
+      },
+      {
+        "audioSeconds" : 5.2699999999999996,
+        "errors" : 2,
+        "hypothesis" : "Money, my iron's twite told. Please put it down to warm.",
+        "id" : "2094-142345-0024",
+        "latencySeconds" : 0.094892978668212891,
+        "reference" : "MUNNY MY IRON'S TWITE TOLD PEASE PUT IT DOWN TO WARM",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 6.915,
+        "errors" : 0,
+        "hypothesis" : "Nay, dear Aunt, you never heard me say that all people are called to forsake their work and their families?",
+        "id" : "2094-142345-0036",
+        "latencySeconds" : 0.10064601898193359,
+        "reference" : "NAY DEAR AUNT YOU NEVER HEARD ME SAY THAT ALL PEOPLE ARE CALLED TO FORSAKE THEIR WORK AND THEIR FAMILIES",
+        "refWords" : 20
+      },
+      {
+        "audioSeconds" : 6.3899999999999997,
+        "errors" : 2,
+        "hypothesis" : "said Captain Donny Thorne, seating himself where he could see along the short passage to the open dairy door.",
+        "id" : "2094-142345-0048",
+        "latencySeconds" : 0.097531914710998535,
+        "reference" : "SAID CAPTAIN DONNITHORNE SEATING HIMSELF WHERE HE COULD SEE ALONG THE SHORT PASSAGE TO THE OPEN DAIRY DOOR",
+        "refWords" : 18
+      },
+      {
+        "audioSeconds" : 6.1200000000000001,
+        "errors" : 0,
+        "hypothesis" : "We want you to help us publish some leading work of Luther's for the general American market. Will you do it?",
+        "id" : "2830-3979-0000",
+        "latencySeconds" : 0.095744013786315918,
+        "reference" : "WE WANT YOU TO HELP US PUBLISH SOME LEADING WORK OF LUTHER'S FOR THE GENERAL AMERICAN MARKET WILL YOU DO IT",
+        "refWords" : 21
+      },
+      {
+        "audioSeconds" : 4.3150000000000004,
+        "errors" : 0,
+        "hypothesis" : "Let us begin with that his commentary on Galatians.",
+        "id" : "2830-3979-0002",
+        "latencySeconds" : 0.081676006317138672,
+        "reference" : "LET US BEGIN WITH THAT HIS COMMENTARY ON GALATIANS",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 1.9450000000000001,
+        "errors" : 0,
+        "hypothesis" : "It was written in Latin.",
+        "id" : "2830-3979-0004",
+        "latencySeconds" : 0.077105998992919922,
+        "reference" : "IT WAS WRITTEN IN LATIN",
+        "refWords" : 5
+      },
+      {
+        "audioSeconds" : 4.5499999999999998,
+        "errors" : 0,
+        "hypothesis" : "A word should now be said about the origin of Luther's commentary on Galatians.",
+        "id" : "2830-3979-0006",
+        "latencySeconds" : 0.083519935607910156,
+        "reference" : "A WORD SHOULD NOW BE SAID ABOUT THE ORIGIN OF LUTHER'S COMMENTARY ON GALATIANS",
+        "refWords" : 14
+      },
+      {
+        "audioSeconds" : 9.4399999999999995,
+        "errors" : 1,
+        "hypothesis" : "In other words, these three men took down the lectures which Luther addressed to his students in the course of Galatians, and Rohrer prepared the manuscript for the printer.",
+        "id" : "2830-3979-0008",
+        "latencySeconds" : 0.10480499267578125,
+        "reference" : "IN OTHER WORDS THESE THREE MEN TOOK DOWN THE LECTURES WHICH LUTHER ADDRESSED TO HIS STUDENTS IN THE COURSE OF GALATIANS AND ROERER PREPARED THE MANUSCRIPT FOR THE PRINTER",
+        "refWords" : 29
+      },
+      {
+        "audioSeconds" : 11.17,
+        "errors" : 1,
+        "hypothesis" : "To celebrate the arrival of her son, Sylvia gave a splendid supper to which she had invited all her relatives, and it was a good opportunity for me to make their acquaintance.",
+        "id" : "3729-6852-0000",
+        "latencySeconds" : 0.1059950590133667,
+        "reference" : "TO CELEBRATE THE ARRIVAL OF HER SON SILVIA GAVE A SPLENDID SUPPER TO WHICH SHE HAD INVITED ALL HER RELATIVES AND IT WAS A GOOD OPPORTUNITY FOR ME TO MAKE THEIR ACQUAINTANCE",
+        "refWords" : 32
+      },
+      {
+        "audioSeconds" : 18.309999999999999,
+        "errors" : 2,
+        "hypothesis" : "You will forgive me, dear reader, if I have made you attend the funeral of Sylvia ten years before her death. Believe me, I have no intention of performing a miracle. You may console yourself with the idea that I shall spare you that unpleasant task when poor Sylvia dies.",
+        "id" : "3729-6852-0009",
+        "latencySeconds" : 0.18793094158172607,
+        "reference" : "YOU WILL FORGIVE ME DEAR READER IF I HAVE MADE YOU ATTEND THE FUNERAL OF SILVIA TEN YEARS BEFORE HER DEATH BELIEVE ME I HAVE NO INTENTION OF PERFORMING A MIRACLE YOU MAY CONSOLE YOURSELF WITH THE IDEA THAT I SHALL SPARE YOU THAT UNPLEASANT TASK WHEN POOR SILVIA DIES",
+        "refWords" : 50
+      },
+      {
+        "audioSeconds" : 6.21,
+        "errors" : 1,
+        "hypothesis" : "I sit down at a small table. A waiter comes immediately to inquire my wishes.",
+        "id" : "3729-6852-0018",
+        "latencySeconds" : 0.1088179349899292,
+        "reference" : "I SIT DOWN AT A SMALL TABLE A WAITER COMES IMMEDIATELY TO ENQUIRE MY WISHES",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 3,
+        "errors" : 1,
+        "hypothesis" : "That is true badgery.",
+        "id" : "3729-6852-0027",
+        "latencySeconds" : 0.089320063591003418,
+        "reference" : "THAT IS TRUE BADAUDERIE",
+        "refWords" : 4
+      },
+      {
+        "audioSeconds" : 5.2400000000000002,
+        "errors" : 1,
+        "hypothesis" : "When the king comes to Paris, everybody calls out Vive le Roy",
+        "id" : "3729-6852-0036",
+        "latencySeconds" : 0.088009953498840332,
+        "reference" : "WHEN THE KING COMES TO PARIS EVERYBODY CALLS OUT VIVE LE ROI",
+        "refWords" : 12
+      },
+      {
+        "audioSeconds" : 3.0299999999999998,
+        "errors" : 0,
+        "hypothesis" : "You'll never dig it out of the Astor Library.",
+        "id" : "4970-29093-0000",
+        "latencySeconds" : 0.083925008773803711,
+        "reference" : "YOU'LL NEVER DIG IT OUT OF THE ASTOR LIBRARY",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 3.75,
+        "errors" : 0,
+        "hypothesis" : "He was unable to decide exactly what it should be.",
+        "id" : "4970-29093-0004",
+        "latencySeconds" : 0.080726027488708496,
+        "reference" : "HE WAS UNABLE TO DECIDE EXACTLY WHAT IT SHOULD BE",
+        "refWords" : 10
+      },
+      {
+        "audioSeconds" : 3.5800000000000001,
+        "errors" : 0,
+        "hypothesis" : "He wanted to begin at the top of the ladder.",
+        "id" : "4970-29093-0008",
+        "latencySeconds" : 0.079710960388183594,
+        "reference" : "HE WANTED TO BEGIN AT THE TOP OF THE LADDER",
+        "refWords" : 10
+      },
+      {
+        "audioSeconds" : 8.7100000000000009,
+        "errors" : 0,
+        "hypothesis" : "But Philip did afford it, and he wrote, thanking his friends, and declining because he said the political scheme would fail, and ought to fail.",
+        "id" : "4970-29093-0012",
+        "latencySeconds" : 0.10172593593597412,
+        "reference" : "BUT PHILIP DID AFFORD IT AND HE WROTE THANKING HIS FRIENDS AND DECLINING BECAUSE HE SAID THE POLITICAL SCHEME WOULD FAIL AND OUGHT TO FAIL",
+        "refWords" : 25
+      },
+      {
+        "audioSeconds" : 2.23,
+        "errors" : 1,
+        "hypothesis" : "No, it's not too soon.",
+        "id" : "4970-29093-0016",
+        "latencySeconds" : 0.078256964683532715,
+        "reference" : "NO ITS NOT TOO SOON",
+        "refWords" : 5
+      },
+      {
+        "audioSeconds" : 15.77,
+        "errors" : 1,
+        "hypothesis" : "Eleven o'clock had struck. It was a fine clear night, they were the only persons on the road, and they sauntered leisurely along, to avoid paying the price of fatigue for the recreation provided for the Toledans in the valley or on the banks of their river.",
+        "id" : "5639-40744-0000",
+        "latencySeconds" : 0.16645407676696777,
+        "reference" : "ELEVEN O'CLOCK HAD STRUCK IT WAS A FINE CLEAR NIGHT THEY WERE THE ONLY PERSONS ON THE ROAD AND THEY SAUNTERED LEISURELY ALONG TO AVOID PAYING THE PRICE OF FATIGUE FOR THE RECREATION PROVIDED FOR THE TOLEDANS IN THEIR VALLEY OR ON THE BANKS OF THEIR RIVER",
+        "refWords" : 47
+      },
+      {
+        "audioSeconds" : 2.2149999999999999,
+        "errors" : 0,
+        "hypothesis" : "Who touches me? Am I in bed?",
+        "id" : "5639-40744-0008",
+        "latencySeconds" : 0.078850984573364258,
+        "reference" : "WHO TOUCHES ME AM I IN BED",
+        "refWords" : 7
+      },
+      {
+        "audioSeconds" : 9.4900000000000002,
+        "errors" : 0,
+        "hypothesis" : "On the contrary he resolved to tell them that repenting of his violence, and moved by her tears, he had only carried her half way towards his house, and then let her go",
+        "id" : "5639-40744-0016",
+        "latencySeconds" : 0.10237908363342285,
+        "reference" : "ON THE CONTRARY HE RESOLVED TO TELL THEM THAT REPENTING OF HIS VIOLENCE AND MOVED BY HER TEARS HE HAD ONLY CARRIED HER HALF WAY TOWARDS HIS HOUSE AND THEN LET HER GO",
+        "refWords" : 33
+      },
+      {
+        "audioSeconds" : 8.8450000000000006,
+        "errors" : 0,
+        "hypothesis" : "One day when the boy was sent by his grandfather with a message to a relation, he passed along a street in which there was a great concourse of horsemen",
+        "id" : "5639-40744-0024",
+        "latencySeconds" : 0.10744798183441162,
+        "reference" : "ONE DAY WHEN THE BOY WAS SENT BY HIS GRANDFATHER WITH A MESSAGE TO A RELATION HE PASSED ALONG A STREET IN WHICH THERE WAS A GREAT CONCOURSE OF HORSEMEN",
+        "refWords" : 30
+      },
+      {
+        "audioSeconds" : 17.43,
+        "errors" : 0,
+        "hypothesis" : "For God's sake, my lady mother, give me a wife who would be an agreeable companion, not one who will disgust me so that we may both bear evenly and with mutual good will the yoke imposed on us by heaven, instead of pulling this way and that way and fretting each other to death.",
+        "id" : "5639-40744-0032",
+        "latencySeconds" : 0.17074298858642578,
+        "reference" : "FOR GOD'S SAKE MY LADY MOTHER GIVE ME A WIFE WHO WOULD BE AN AGREEABLE COMPANION NOT ONE WHO WILL DISGUST ME SO THAT WE MAY BOTH BEAR EVENLY AND WITH MUTUAL GOOD WILL THE YOKE IMPOSED ON US BY HEAVEN INSTEAD OF PULLING THIS WAY AND THAT WAY AND FRETTING EACH OTHER TO DEATH",
+        "refWords" : 55
+      },
+      {
+        "audioSeconds" : 11.695,
+        "errors" : 1,
+        "hypothesis" : "Kenneth and Beth refrained from telling the other girls or Uncle John of old Will Rogers' visit, but they got mister Watson in the library and questioned him closely about the penalty for forging a check.",
+        "id" : "6829-68769-0000",
+        "latencySeconds" : 0.1207660436630249,
+        "reference" : "KENNETH AND BETH REFRAINED FROM TELLING THE OTHER GIRLS OR UNCLE JOHN OF OLD WILL ROGERS'S VISIT BUT THEY GOT MISTER WATSON IN THE LIBRARY AND QUESTIONED HIM CLOSELY ABOUT THE PENALTY FOR FORGING A CHECK",
+        "refWords" : 36
+      },
+      {
+        "audioSeconds" : 3.1400000000000001,
+        "errors" : 0,
+        "hypothesis" : "We wish to talk with him, answered Kenneth. Talk",
+        "id" : "6829-68769-0010",
+        "latencySeconds" : 0.084061980247497559,
+        "reference" : "WE WISH TO TALK WITH HIM ANSWERED KENNETH TALK",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 5.125,
+        "errors" : 0,
+        "hypothesis" : "Sit down, please, said Gates, in a cheerful and pleasant voice. There's a bench here.",
+        "id" : "6829-68769-0020",
+        "latencySeconds" : 0.091653108596801758,
+        "reference" : "SIT DOWN PLEASE SAID GATES IN A CHEERFUL AND PLEASANT VOICE THERE'S A BENCH HERE",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 4.9100000000000001,
+        "errors" : 3,
+        "hypothesis" : "I was bit keeper, so it was easy to get a blank cheque and forge the signature.",
+        "id" : "6829-68769-0030",
+        "latencySeconds" : 0.092269062995910645,
+        "reference" : "I WAS BOOKKEEPER SO IT WAS EASY TO GET A BLANK CHECK AND FORGE THE SIGNATURE",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 4.7699999999999996,
+        "errors" : 1,
+        "hypothesis" : "Some girl has been in here twice to interview my men, and I have refused to admit her.",
+        "id" : "6829-68769-0040",
+        "latencySeconds" : 0.089949965476989746,
+        "reference" : "SOME GIRL HAS BEEN HERE TWICE TO INTERVIEW MY MEN AND I HAVE REFUSED TO ADMIT HER",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 5.6950000000000003,
+        "errors" : 1,
+        "hypothesis" : "All about him was a tumult of bright and broken colour, scattered in broad splashes",
+        "id" : "7176-88083-0000",
+        "latencySeconds" : 0.090641975402832031,
+        "reference" : "ALL ABOUT HIM WAS A TUMULT OF BRIGHT AND BROKEN COLOR SCATTERED IN BROAD SPLASHES",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 4.7000000000000002,
+        "errors" : 0,
+        "hypothesis" : "Once fairly a wing, however, he wheeled and made back hurriedly for his perch.",
+        "id" : "7176-88083-0005",
+        "latencySeconds" : 0.091144084930419922,
+        "reference" : "ONCE FAIRLY A WING HOWEVER HE WHEELED AND MADE BACK HURRIEDLY FOR HIS PERCH",
+        "refWords" : 14
+      },
+      {
+        "audioSeconds" : 6.7400000000000002,
+        "errors" : 0,
+        "hypothesis" : "The cat growled softly, picked up the prize in her jaws, and trotted into the bushes to devour it.",
+        "id" : "7176-88083-0010",
+        "latencySeconds" : 0.09306800365447998,
+        "reference" : "THE CAT GROWLED SOFTLY PICKED UP THE PRIZE IN HER JAWS AND TROTTED INTO THE BUSHES TO DEVOUR IT",
+        "refWords" : 19
+      },
+      {
+        "audioSeconds" : 2.335,
+        "errors" : 0,
+        "hypothesis" : "Almost instantly he was forced to the top.",
+        "id" : "7176-88083-0015",
+        "latencySeconds" : 0.082165956497192383,
+        "reference" : "ALMOST INSTANTLY HE WAS FORCED TO THE TOP",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 5.415,
+        "errors" : 0,
+        "hypothesis" : "where the waves for an instant sank, they came closer, but not quite within grasping reach.",
+        "id" : "7176-88083-0020",
+        "latencySeconds" : 0.091776013374328613,
+        "reference" : "WHERE THE WAVES FOR AN INSTANT SANK THEY CAME CLOSER BUT NOT QUITE WITHIN GRASPING REACH",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 8.7449999999999992,
+        "errors" : 0,
+        "hypothesis" : "I remained there alone for many hours, but I must acknowledge that before I left the chambers I had gradually brought myself to look at the matter in another light.",
+        "id" : "8455-210777-0000",
+        "latencySeconds" : 0.10794103145599365,
+        "reference" : "I REMAINED THERE ALONE FOR MANY HOURS BUT I MUST ACKNOWLEDGE THAT BEFORE I LEFT THE CHAMBERS I HAD GRADUALLY BROUGHT MYSELF TO LOOK AT THE MATTER IN ANOTHER LIGHT",
+        "refWords" : 30
+      },
+      {
+        "audioSeconds" : 4.1200000000000001,
+        "errors" : 0,
+        "hypothesis" : "Sir Kennington Oval is a very fine player, said my wife.",
+        "id" : "8455-210777-0014",
+        "latencySeconds" : 0.082213044166564941,
+        "reference" : "SIR KENNINGTON OVAL IS A VERY FINE PLAYER SAID MY WIFE",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 7.7350000000000003,
+        "errors" : 0,
+        "hypothesis" : "Jack would become Eva's happy husband, and would remain amidst the hurried duties of the eager world.",
+        "id" : "8455-210777-0028",
+        "latencySeconds" : 0.093806982040405273,
+        "reference" : "JACK WOULD BECOME EVA'S HAPPY HUSBAND AND WOULD REMAIN AMIDST THE HURRIED DUTIES OF THE EAGER WORLD",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 4.7800000000000002,
+        "errors" : 1,
+        "hypothesis" : "You hear what Sir Ferdinando Brown has said, replied Captain Battleaxe.",
+        "id" : "8455-210777-0042",
+        "latencySeconds" : 0.086842060089111328,
+        "reference" : "YOU HEAR WHAT SIR FERDINANDO BROWN HAS SAID REPLIED CAPTAIN BATTLEAX",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 5.5449999999999999,
+        "errors" : 0,
+        "hypothesis" : "The peculiar circumstances of the colony are within your Excellency's knowledge.",
+        "id" : "8455-210777-0056",
+        "latencySeconds" : 0.087633967399597168,
+        "reference" : "THE PECULIAR CIRCUMSTANCES OF THE COLONY ARE WITHIN YOUR EXCELLENCY'S KNOWLEDGE",
+        "refWords" : 11
+      }
+    ],
+    "werPercent" : 2.2954091816367264
+  },
+  {
+    "averageLatencySeconds" : 0.72151029586791993,
+    "engine" : "whisper-large-v3-turbo",
+    "failedCount" : 0,
+    "realTimeFactor" : 0.10118791314202848,
+    "totalErrors" : 29,
+    "totalReferenceWords" : 1002,
+    "utteranceCount" : 50,
+    "utterances" : [
+      {
+        "audioSeconds" : 10.435,
+        "errors" : 0,
+        "hypothesis" : "he hoped there would be stew for dinner turnips and carrots and bruised potatoes and fat mutton pieces to be ladled out in thick peppered flour fattened sauce",
+        "id" : "1089-134686-0000",
+        "latencySeconds" : 1.0719490051269531,
+        "reference" : "HE HOPED THERE WOULD BE STEW FOR DINNER TURNIPS AND CARROTS AND BRUISED POTATOES AND FAT MUTTON PIECES TO BE LADLED OUT IN THICK PEPPERED FLOUR FATTENED SAUCE",
+        "refWords" : 28
+      },
+      {
+        "audioSeconds" : 4.2750000000000004,
+        "errors" : 0,
+        "hypothesis" : "A cold, lucid indifference reigned in his soul.",
+        "id" : "1089-134686-0007",
+        "latencySeconds" : 0.62900900840759277,
+        "reference" : "A COLD LUCID INDIFFERENCE REIGNED IN HIS SOUL",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 2.2250000000000001,
+        "errors" : 0,
+        "hypothesis" : "He tried to think how it could be",
+        "id" : "1089-134686-0014",
+        "latencySeconds" : 0.52777600288391113,
+        "reference" : "HE TRIED TO THINK HOW IT COULD BE",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 6.5499999999999998,
+        "errors" : 0,
+        "hypothesis" : "If a layman, in giving baptism, pour the water before saying the words, is the child baptized?",
+        "id" : "1089-134686-0021",
+        "latencySeconds" : 0.73525798320770264,
+        "reference" : "IF A LAYMAN IN GIVING BAPTISM POUR THE WATER BEFORE SAYING THE WORDS IS THE CHILD BAPTIZED",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 7.8300000000000001,
+        "errors" : 2,
+        "hypothesis" : "The retreat will begin on Wednesday afternoon in honor of St. Francis Xavier, whose feast day is Saturday.",
+        "id" : "1089-134686-0028",
+        "latencySeconds" : 0.74049997329711914,
+        "reference" : "THE RETREAT WILL BEGIN ON WEDNESDAY AFTERNOON IN HONOUR OF SAINT FRANCIS XAVIER WHOSE FEAST DAY IS SATURDAY",
+        "refWords" : 18
+      },
+      {
+        "audioSeconds" : 8.1199999999999992,
+        "errors" : 0,
+        "hypothesis" : "He wore blue silk stockings, blue knee pants with gold buckles, a blue ruffled waist, and a jacket of bright blue braided with gold.",
+        "id" : "1284-1180-0000",
+        "latencySeconds" : 0.86219704151153564,
+        "reference" : "HE WORE BLUE SILK STOCKINGS BLUE KNEE PANTS WITH GOLD BUCKLES A BLUE RUFFLED WAIST AND A JACKET OF BRIGHT BLUE BRAIDED WITH GOLD",
+        "refWords" : 24
+      },
+      {
+        "audioSeconds" : 6.8650000000000002,
+        "errors" : 0,
+        "hypothesis" : "at the foot of the mountain that separated the country of the munchkins from the country of the gillikins the path divided",
+        "id" : "1284-1180-0006",
+        "latencySeconds" : 0.74801099300384521,
+        "reference" : "AT THE FOOT OF THE MOUNTAIN THAT SEPARATED THE COUNTRY OF THE MUNCHKINS FROM THE COUNTRY OF THE GILLIKINS THE PATH DIVIDED",
+        "refWords" : 22
+      },
+      {
+        "audioSeconds" : 4.8799999999999999,
+        "errors" : 0,
+        "hypothesis" : "We have come from a far lonelier place than this. A lonelier place?",
+        "id" : "1284-1180-0012",
+        "latencySeconds" : 0.68572604656219482,
+        "reference" : "WE HAVE COME FROM A FAR LONELIER PLACE THAN THIS A LONELIER PLACE",
+        "refWords" : 13
+      },
+      {
+        "audioSeconds" : 12.005000000000001,
+        "errors" : 1,
+        "hypothesis" : "it takes me several years to make this magic powder but at this moment i am pleased to say it is nearly done you see i am making it for my good wife margolot who wants to use some of it for a purpose of her own",
+        "id" : "1284-1180-0018",
+        "latencySeconds" : 0.94115698337554932,
+        "reference" : "IT TAKES ME SEVERAL YEARS TO MAKE THIS MAGIC POWDER BUT AT THIS MOMENT I AM PLEASED TO SAY IT IS NEARLY DONE YOU SEE I AM MAKING IT FOR MY GOOD WIFE MARGOLOTTE WHO WANTS TO USE SOME OF IT FOR A PURPOSE OF HER OWN",
+        "refWords" : 47
+      },
+      {
+        "audioSeconds" : 5.2599999999999998,
+        "errors" : 0,
+        "hypothesis" : "that is one reason you are ojo the unlucky said the woman in a sympathetic tone",
+        "id" : "1284-1180-0024",
+        "latencySeconds" : 0.73068296909332275,
+        "reference" : "THAT IS ONE REASON YOU ARE OJO THE UNLUCKY SAID THE WOMAN IN A SYMPATHETIC TONE",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 22.57,
+        "errors" : 0,
+        "hypothesis" : "it is a very fine old place of red brick softened by a pale powdery lichen which has dispersed itself with happy irregularity so as to bring the red brick into terms of friendly companionship with the limestone ornaments surrounding the three gables the windows and the door place",
+        "id" : "2094-142345-0000",
+        "latencySeconds" : 0.99430596828460693,
+        "reference" : "IT IS A VERY FINE OLD PLACE OF RED BRICK SOFTENED BY A PALE POWDERY LICHEN WHICH HAS DISPERSED ITSELF WITH HAPPY IRREGULARITY SO AS TO BRING THE RED BRICK INTO TERMS OF FRIENDLY COMPANIONSHIP WITH THE LIMESTONE ORNAMENTS SURROUNDING THE THREE GABLES THE WINDOWS AND THE DOOR PLACE",
+        "refWords" : 49
+      },
+      {
+        "audioSeconds" : 16.129999999999999,
+        "errors" : 0,
+        "hypothesis" : "the family likeness between her and her niece dinah morris with the contrast between her keenness and dinah's seraphic gentleness of expression might have served a painter as an excellent suggestion for a martha and mary",
+        "id" : "2094-142345-0012",
+        "latencySeconds" : 0.98372793197631836,
+        "reference" : "THE FAMILY LIKENESS BETWEEN HER AND HER NIECE DINAH MORRIS WITH THE CONTRAST BETWEEN HER KEENNESS AND DINAH'S SERAPHIC GENTLENESS OF EXPRESSION MIGHT HAVE SERVED A PAINTER AS AN EXCELLENT SUGGESTION FOR A MARTHA AND MARY",
+        "refWords" : 36
+      },
+      {
+        "audioSeconds" : 5.2699999999999996,
+        "errors" : 3,
+        "hypothesis" : "money my iron's twight told please put it down to warm",
+        "id" : "2094-142345-0024",
+        "latencySeconds" : 0.56953990459442139,
+        "reference" : "MUNNY MY IRON'S TWITE TOLD PEASE PUT IT DOWN TO WARM",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 6.915,
+        "errors" : 0,
+        "hypothesis" : "\"Nay, dear aunt, you never heard me say that all people are called to forsake their work and their families.\"",
+        "id" : "2094-142345-0036",
+        "latencySeconds" : 0.80050790309906006,
+        "reference" : "NAY DEAR AUNT YOU NEVER HEARD ME SAY THAT ALL PEOPLE ARE CALLED TO FORSAKE THEIR WORK AND THEIR FAMILIES",
+        "refWords" : 20
+      },
+      {
+        "audioSeconds" : 6.3899999999999997,
+        "errors" : 1,
+        "hypothesis" : "said captain donnythorne seating himself where he could see along the short passage to the open dairy door",
+        "id" : "2094-142345-0048",
+        "latencySeconds" : 0.71447896957397461,
+        "reference" : "SAID CAPTAIN DONNITHORNE SEATING HIMSELF WHERE HE COULD SEE ALONG THE SHORT PASSAGE TO THE OPEN DAIRY DOOR",
+        "refWords" : 18
+      },
+      {
+        "audioSeconds" : 6.1200000000000001,
+        "errors" : 0,
+        "hypothesis" : "We want you to help us publish some leading work of Luther's for the general American market. Will you do it?",
+        "id" : "2830-3979-0000",
+        "latencySeconds" : 0.67557704448699951,
+        "reference" : "WE WANT YOU TO HELP US PUBLISH SOME LEADING WORK OF LUTHER'S FOR THE GENERAL AMERICAN MARKET WILL YOU DO IT",
+        "refWords" : 21
+      },
+      {
+        "audioSeconds" : 4.3150000000000004,
+        "errors" : 0,
+        "hypothesis" : "Let us begin with that, his commentary on Galatians.",
+        "id" : "2830-3979-0002",
+        "latencySeconds" : 0.65344905853271484,
+        "reference" : "LET US BEGIN WITH THAT HIS COMMENTARY ON GALATIANS",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 1.9450000000000001,
+        "errors" : 0,
+        "hypothesis" : "it was written in latin",
+        "id" : "2830-3979-0004",
+        "latencySeconds" : 0.50739502906799316,
+        "reference" : "IT WAS WRITTEN IN LATIN",
+        "refWords" : 5
+      },
+      {
+        "audioSeconds" : 4.5499999999999998,
+        "errors" : 0,
+        "hypothesis" : "A word should now be said about the origin of Luther's commentary on Galatians.",
+        "id" : "2830-3979-0006",
+        "latencySeconds" : 0.70359504222869873,
+        "reference" : "A WORD SHOULD NOW BE SAID ABOUT THE ORIGIN OF LUTHER'S COMMENTARY ON GALATIANS",
+        "refWords" : 14
+      },
+      {
+        "audioSeconds" : 9.4399999999999995,
+        "errors" : 1,
+        "hypothesis" : "in other words these three men took down the lectures which luther addressed to his students in the course of galatians and rohrer prepared the manuscript for the printer",
+        "id" : "2830-3979-0008",
+        "latencySeconds" : 0.83426296710968018,
+        "reference" : "IN OTHER WORDS THESE THREE MEN TOOK DOWN THE LECTURES WHICH LUTHER ADDRESSED TO HIS STUDENTS IN THE COURSE OF GALATIANS AND ROERER PREPARED THE MANUSCRIPT FOR THE PRINTER",
+        "refWords" : 29
+      },
+      {
+        "audioSeconds" : 11.17,
+        "errors" : 1,
+        "hypothesis" : "to celebrate the arrival of her son sylvia gave a splendid supper to which she had invited all her relatives and it was a good opportunity for me to make their acquaintance",
+        "id" : "3729-6852-0000",
+        "latencySeconds" : 0.87159693241119385,
+        "reference" : "TO CELEBRATE THE ARRIVAL OF HER SON SILVIA GAVE A SPLENDID SUPPER TO WHICH SHE HAD INVITED ALL HER RELATIVES AND IT WAS A GOOD OPPORTUNITY FOR ME TO MAKE THEIR ACQUAINTANCE",
+        "refWords" : 32
+      },
+      {
+        "audioSeconds" : 18.309999999999999,
+        "errors" : 2,
+        "hypothesis" : "you will forgive me dear reader if i have made you attend the funeral of sylvia ten years before her death believe me i have no intention of performing a miracle you may console yourself with the idea that i shall spare you that unpleasant task when poor sylvia dies",
+        "id" : "3729-6852-0009",
+        "latencySeconds" : 1.0047990083694458,
+        "reference" : "YOU WILL FORGIVE ME DEAR READER IF I HAVE MADE YOU ATTEND THE FUNERAL OF SILVIA TEN YEARS BEFORE HER DEATH BELIEVE ME I HAVE NO INTENTION OF PERFORMING A MIRACLE YOU MAY CONSOLE YOURSELF WITH THE IDEA THAT I SHALL SPARE YOU THAT UNPLEASANT TASK WHEN POOR SILVIA DIES",
+        "refWords" : 50
+      },
+      {
+        "audioSeconds" : 6.21,
+        "errors" : 1,
+        "hypothesis" : "I sit down at a small table. A waiter comes immediately to inquire my wishes.",
+        "id" : "3729-6852-0018",
+        "latencySeconds" : 0.68819200992584229,
+        "reference" : "I SIT DOWN AT A SMALL TABLE A WAITER COMES IMMEDIATELY TO ENQUIRE MY WISHES",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 3,
+        "errors" : 3,
+        "hypothesis" : "That is true, Bad-Dot-Grey.",
+        "id" : "3729-6852-0027",
+        "latencySeconds" : 0.56349599361419678,
+        "reference" : "THAT IS TRUE BADAUDERIE",
+        "refWords" : 4
+      },
+      {
+        "audioSeconds" : 5.2400000000000002,
+        "errors" : 1,
+        "hypothesis" : "When the king comes to Paris, everybody calls out, Vive le Roy!",
+        "id" : "3729-6852-0036",
+        "latencySeconds" : 0.59698092937469482,
+        "reference" : "WHEN THE KING COMES TO PARIS EVERYBODY CALLS OUT VIVE LE ROI",
+        "refWords" : 12
+      },
+      {
+        "audioSeconds" : 3.0299999999999998,
+        "errors" : 0,
+        "hypothesis" : "You'll never dig it out of the Astor Library.",
+        "id" : "4970-29093-0000",
+        "latencySeconds" : 0.68702495098114014,
+        "reference" : "YOU'LL NEVER DIG IT OUT OF THE ASTOR LIBRARY",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 3.75,
+        "errors" : 0,
+        "hypothesis" : "he was unable to decide exactly what it should be",
+        "id" : "4970-29093-0004",
+        "latencySeconds" : 0.64656209945678711,
+        "reference" : "HE WAS UNABLE TO DECIDE EXACTLY WHAT IT SHOULD BE",
+        "refWords" : 10
+      },
+      {
+        "audioSeconds" : 3.5800000000000001,
+        "errors" : 0,
+        "hypothesis" : "he wanted to begin at the top of the ladder",
+        "id" : "4970-29093-0008",
+        "latencySeconds" : 0.55003106594085693,
+        "reference" : "HE WANTED TO BEGIN AT THE TOP OF THE LADDER",
+        "refWords" : 10
+      },
+      {
+        "audioSeconds" : 8.7100000000000009,
+        "errors" : 0,
+        "hypothesis" : "but philip did afford it and he wrote thanking his friends and declining because he said the political scheme would fail and ought to fail",
+        "id" : "4970-29093-0012",
+        "latencySeconds" : 0.73865902423858643,
+        "reference" : "BUT PHILIP DID AFFORD IT AND HE WROTE THANKING HIS FRIENDS AND DECLINING BECAUSE HE SAID THE POLITICAL SCHEME WOULD FAIL AND OUGHT TO FAIL",
+        "refWords" : 25
+      },
+      {
+        "audioSeconds" : 2.23,
+        "errors" : 1,
+        "hypothesis" : "\"No, it's not too soon.\"",
+        "id" : "4970-29093-0016",
+        "latencySeconds" : 0.56560599803924561,
+        "reference" : "NO ITS NOT TOO SOON",
+        "refWords" : 5
+      },
+      {
+        "audioSeconds" : 15.77,
+        "errors" : 1,
+        "hypothesis" : "eleven o'clock had struck it was a fine clear night they were the only persons on the road and they sauntered leisurely along to avoid paying the price of fatigue for the recreation provided for the toledans in the valley or on the banks of their river",
+        "id" : "5639-40744-0000",
+        "latencySeconds" : 0.96968793869018555,
+        "reference" : "ELEVEN O'CLOCK HAD STRUCK IT WAS A FINE CLEAR NIGHT THEY WERE THE ONLY PERSONS ON THE ROAD AND THEY SAUNTERED LEISURELY ALONG TO AVOID PAYING THE PRICE OF FATIGUE FOR THE RECREATION PROVIDED FOR THE TOLEDANS IN THEIR VALLEY OR ON THE BANKS OF THEIR RIVER",
+        "refWords" : 47
+      },
+      {
+        "audioSeconds" : 2.2149999999999999,
+        "errors" : 0,
+        "hypothesis" : "Who touches me? Am I in bed?",
+        "id" : "5639-40744-0008",
+        "latencySeconds" : 0.53705191612243652,
+        "reference" : "WHO TOUCHES ME AM I IN BED",
+        "refWords" : 7
+      },
+      {
+        "audioSeconds" : 9.4900000000000002,
+        "errors" : 0,
+        "hypothesis" : "on the contrary he resolved to tell them that repenting of his violence and moved by her tears he had only carried her half-way towards his house and then let her go",
+        "id" : "5639-40744-0016",
+        "latencySeconds" : 0.79004299640655518,
+        "reference" : "ON THE CONTRARY HE RESOLVED TO TELL THEM THAT REPENTING OF HIS VIOLENCE AND MOVED BY HER TEARS HE HAD ONLY CARRIED HER HALF WAY TOWARDS HIS HOUSE AND THEN LET HER GO",
+        "refWords" : 33
+      },
+      {
+        "audioSeconds" : 8.8450000000000006,
+        "errors" : 0,
+        "hypothesis" : "one day when the boy was sent by his grandfather with a message to a relation he passed along a street in which there was a great concourse of horsemen",
+        "id" : "5639-40744-0024",
+        "latencySeconds" : 0.78058803081512451,
+        "reference" : "ONE DAY WHEN THE BOY WAS SENT BY HIS GRANDFATHER WITH A MESSAGE TO A RELATION HE PASSED ALONG A STREET IN WHICH THERE WAS A GREAT CONCOURSE OF HORSEMEN",
+        "refWords" : 30
+      },
+      {
+        "audioSeconds" : 17.43,
+        "errors" : 0,
+        "hypothesis" : "for god's sake my lady mother give me a wife who would be an agreeable companion not one who will disgust me so that we may both bear evenly and with mutual good-will the yoke imposed on us by heaven instead of pulling this way and that way and fretting each other to death",
+        "id" : "5639-40744-0032",
+        "latencySeconds" : 1.1551539897918701,
+        "reference" : "FOR GOD'S SAKE MY LADY MOTHER GIVE ME A WIFE WHO WOULD BE AN AGREEABLE COMPANION NOT ONE WHO WILL DISGUST ME SO THAT WE MAY BOTH BEAR EVENLY AND WITH MUTUAL GOOD WILL THE YOKE IMPOSED ON US BY HEAVEN INSTEAD OF PULLING THIS WAY AND THAT WAY AND FRETTING EACH OTHER TO DEATH",
+        "refWords" : 55
+      },
+      {
+        "audioSeconds" : 11.695,
+        "errors" : 1,
+        "hypothesis" : "kenneth and beth refrained from telling the other girls or uncle john of old will rogers's visit but they got mr watson in the library and questioned him closely about the penalty for forging a check",
+        "id" : "6829-68769-0000",
+        "latencySeconds" : 0.9857410192489624,
+        "reference" : "KENNETH AND BETH REFRAINED FROM TELLING THE OTHER GIRLS OR UNCLE JOHN OF OLD WILL ROGERS'S VISIT BUT THEY GOT MISTER WATSON IN THE LIBRARY AND QUESTIONED HIM CLOSELY ABOUT THE PENALTY FOR FORGING A CHECK",
+        "refWords" : 36
+      },
+      {
+        "audioSeconds" : 3.1400000000000001,
+        "errors" : 4,
+        "hypothesis" : "\"'We wish to talk with him,' answered Kenneth. \"'Talk!'",
+        "id" : "6829-68769-0010",
+        "latencySeconds" : 0.59545302391052246,
+        "reference" : "WE WISH TO TALK WITH HIM ANSWERED KENNETH TALK",
+        "refWords" : 9
+      },
+      {
+        "audioSeconds" : 5.125,
+        "errors" : 0,
+        "hypothesis" : "sit down please said gates in a cheerful and pleasant voice there's a bench here",
+        "id" : "6829-68769-0020",
+        "latencySeconds" : 0.59807205200195312,
+        "reference" : "SIT DOWN PLEASE SAID GATES IN A CHEERFUL AND PLEASANT VOICE THERE'S A BENCH HERE",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 4.9100000000000001,
+        "errors" : 2,
+        "hypothesis" : "I was bit keeper, so it was easy to get a blank check and forge the signature.",
+        "id" : "6829-68769-0030",
+        "latencySeconds" : 0.63657796382904053,
+        "reference" : "I WAS BOOKKEEPER SO IT WAS EASY TO GET A BLANK CHECK AND FORGE THE SIGNATURE",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 4.7699999999999996,
+        "errors" : 1,
+        "hypothesis" : "some girl has been in here twice to interview my men and i have refused to admit her",
+        "id" : "6829-68769-0040",
+        "latencySeconds" : 0.63179695606231689,
+        "reference" : "SOME GIRL HAS BEEN HERE TWICE TO INTERVIEW MY MEN AND I HAVE REFUSED TO ADMIT HER",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 5.6950000000000003,
+        "errors" : 0,
+        "hypothesis" : "All about him was a tumult of bright and broken color, scattered in broad splashes.",
+        "id" : "7176-88083-0000",
+        "latencySeconds" : 0.69435298442840576,
+        "reference" : "ALL ABOUT HIM WAS A TUMULT OF BRIGHT AND BROKEN COLOR SCATTERED IN BROAD SPLASHES",
+        "refWords" : 15
+      },
+      {
+        "audioSeconds" : 4.7000000000000002,
+        "errors" : 0,
+        "hypothesis" : "Once fairly a wing, however, he wheeled and made back hurriedly for his perch.",
+        "id" : "7176-88083-0005",
+        "latencySeconds" : 0.63972902297973633,
+        "reference" : "ONCE FAIRLY A WING HOWEVER HE WHEELED AND MADE BACK HURRIEDLY FOR HIS PERCH",
+        "refWords" : 14
+      },
+      {
+        "audioSeconds" : 6.7400000000000002,
+        "errors" : 0,
+        "hypothesis" : "The cat growled softly, picked up the prize in her jaws, and trotted into the bushes to devour it.",
+        "id" : "7176-88083-0010",
+        "latencySeconds" : 0.68456006050109863,
+        "reference" : "THE CAT GROWLED SOFTLY PICKED UP THE PRIZE IN HER JAWS AND TROTTED INTO THE BUSHES TO DEVOUR IT",
+        "refWords" : 19
+      },
+      {
+        "audioSeconds" : 2.335,
+        "errors" : 0,
+        "hypothesis" : "Almost instantly, he was forced to the top.",
+        "id" : "7176-88083-0015",
+        "latencySeconds" : 0.53919494152069092,
+        "reference" : "ALMOST INSTANTLY HE WAS FORCED TO THE TOP",
+        "refWords" : 8
+      },
+      {
+        "audioSeconds" : 5.415,
+        "errors" : 0,
+        "hypothesis" : "where the waves for an instant sank they came closer, but not quite within grasping reach.",
+        "id" : "7176-88083-0020",
+        "latencySeconds" : 0.65275907516479492,
+        "reference" : "WHERE THE WAVES FOR AN INSTANT SANK THEY CAME CLOSER BUT NOT QUITE WITHIN GRASPING REACH",
+        "refWords" : 16
+      },
+      {
+        "audioSeconds" : 8.7449999999999992,
+        "errors" : 0,
+        "hypothesis" : "i remained there alone for many hours but i must acknowledge that before i left the chambers i had gradually brought myself to look at the matter in another light",
+        "id" : "8455-210777-0000",
+        "latencySeconds" : 0.74773895740509033,
+        "reference" : "I REMAINED THERE ALONE FOR MANY HOURS BUT I MUST ACKNOWLEDGE THAT BEFORE I LEFT THE CHAMBERS I HAD GRADUALLY BROUGHT MYSELF TO LOOK AT THE MATTER IN ANOTHER LIGHT",
+        "refWords" : 30
+      },
+      {
+        "audioSeconds" : 4.1200000000000001,
+        "errors" : 2,
+        "hypothesis" : "\"'Sir Kennington Oval is a very fine player,' said my wife.",
+        "id" : "8455-210777-0014",
+        "latencySeconds" : 0.60963296890258789,
+        "reference" : "SIR KENNINGTON OVAL IS A VERY FINE PLAYER SAID MY WIFE",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 7.7350000000000003,
+        "errors" : 0,
+        "hypothesis" : "Jack would become Eva's happy husband and would remain amidst the hurried duties of the eager world.",
+        "id" : "8455-210777-0028",
+        "latencySeconds" : 0.64559197425842285,
+        "reference" : "JACK WOULD BECOME EVA'S HAPPY HUSBAND AND WOULD REMAIN AMIDST THE HURRIED DUTIES OF THE EAGER WORLD",
+        "refWords" : 17
+      },
+      {
+        "audioSeconds" : 4.7800000000000002,
+        "errors" : 1,
+        "hypothesis" : "you hear what sir ferdinando brown has said replied captain battleaxe",
+        "id" : "8455-210777-0042",
+        "latencySeconds" : 0.58928000926971436,
+        "reference" : "YOU HEAR WHAT SIR FERDINANDO BROWN HAS SAID REPLIED CAPTAIN BATTLEAX",
+        "refWords" : 11
+      },
+      {
+        "audioSeconds" : 5.5449999999999999,
+        "errors" : 0,
+        "hypothesis" : "the peculiar circumstances of the colony are within your excellency's knowledge",
+        "id" : "8455-210777-0056",
+        "latencySeconds" : 0.57045507431030273,
+        "reference" : "THE PECULIAR CIRCUMSTANCES OF THE COLONY ARE WITHIN YOUR EXCELLENCY'S KNOWLEDGE",
+        "refWords" : 11
+      }
+    ],
+    "werPercent" : 2.8942115768463075
+  }
+]

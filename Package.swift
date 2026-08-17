@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "PlainsayCore", targets: ["PlainsayCore"]),
         .executable(name: "PlainsayApp", targets: ["PlainsayApp"]),
+        .executable(name: "BenchmarkCLI", targets: ["BenchmarkCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/argmaxinc/WhisperKit", from: "1.1.0"),
@@ -34,6 +35,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PlainsayCoreTests",
+            dependencies: ["PlainsayCore"]
+        ),
+        .executableTarget(
+            name: "BenchmarkCLI",
             dependencies: ["PlainsayCore"]
         ),
     ]

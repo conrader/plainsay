@@ -132,6 +132,12 @@ pipeline.
 Building from source, and running the tests, are covered in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Benchmark
+
+[Word error rate and latency for both on-device engines](BENCHMARK.md),
+measured on a public dataset with published reference transcripts —
+reproducible with one command.
+
 ## Contact
 
 Bugs and feature requests: [open an issue](https://github.com/conrader/plainsay/issues).
