@@ -17,7 +17,7 @@ A Gemini Flash Lite pass then turns spoken language into written language:
 filler words out, punctuation in, your wording intact — see
 [why on-device](https://plainsay.app/why-on-device/) for exactly what that
 means, or [how it works](https://plainsay.app/how-it-works/) for the engine
-internals, the live-typing reconciliation algorithm, and the cleanup design.
+internals and the cleanup design.
 
 ## Screenshots
 

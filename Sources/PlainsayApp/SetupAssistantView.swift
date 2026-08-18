@@ -99,7 +99,7 @@ struct SetupAssistantView: View {
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .language:
-                        LanguageSetupStep(settings: settings, coordinator: coordinator)
+                        LanguageSetupStep(settings: settings)
                     case .configure:
                         ConfigureSpeechSetupStep(
                             source: $speechSource,
@@ -721,13 +721,9 @@ private struct ConfigureSpeechSetupStep: View {
 /// separate decision from *how* audio gets transcribed.
 private struct LanguageSetupStep: View {
     @Bindable var settings: PlainsaySettings
-    let coordinator: DictationCoordinator
     // Doesn't gate Continue — cleanup is optional and falls back to the raw
     // transcript without a key.
     @State private var editingKeyRevision = 0
-    // Purely a scratch pad for the live-typing "try it" field below — never
-    // read anywhere else, never persisted.
-    @State private var liveTypingTestText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -774,14 +770,8 @@ private struct LanguageSetupStep: View {
 
             Toggle("Rewrite as written text (removes filler words, fixes punctuation)", isOn: $settings.cleanupEnabled)
                 .font(.callout)
-                .disabled(settings.liveTypingEnabled)
 
-            if settings.liveTypingEnabled {
-                Text("Unavailable while Live typing is on below — words land as heard, with no rewrite pass afterward.")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else if settings.cleanupEnabled {
+            if settings.cleanupEnabled {
                 Picker("Editing service", selection: $settings.cleanupProvider) {
                     ForEach(CleanupProvider.allCases) { provider in
                         Text(provider.displayName).tag(provider)
@@ -826,57 +816,9 @@ private struct LanguageSetupStep: View {
                         .foregroundStyle(.orange)
                 }
             }
-
-            // Reconciling live-typed text against a rewrite pass would mean
-            // visibly rewriting words right after the user watched
-            // themselves type them — same reasoning as `livePreviewEnabled`,
-            // on-device only, since a partial pass every couple of seconds
-            // would be far too slow and costly against a paid API.
-            if settings.transcriptionSource == .onDevice {
-                Divider()
-
-                Toggle("Live typing (experimental)", isOn: $settings.liveTypingEnabled)
-                    .font(.callout)
-                Text("Types words into your document as you speak, instead of pasting once you stop. Turns off Editing above.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                liveTypingTestField
-            }
         }
         .padding(18)
         .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var liveTypingTestField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Divider()
-
-            Label("Try it", systemImage: "text.cursor")
-                .font(.callout.bold())
-            Text(
-                coordinator.isReadyForDictation
-                    ? "Click below, then use your dictation shortcut. Flip Live typing above and try again to feel the difference."
-                    : "Click below, then use your dictation shortcut. This only works once setup finishes — permissions and the speech model need to be ready first."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-
-            TextEditor(text: $liveTypingTestText)
-                .font(.body)
-                .frame(height: 80)
-                .padding(6)
-                .scrollContentBackground(.hidden)
-                .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.secondary.opacity(0.25)))
-
-            if !liveTypingTestText.isEmpty {
-                Button("Clear") { liveTypingTestText = "" }
-                    .font(.caption)
-            }
-        }
     }
 }
 

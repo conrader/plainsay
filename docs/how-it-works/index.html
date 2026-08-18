@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How Plainsay actually works</title>
-<meta name="description" content="The ASR engines, the live-typing reconciliation algorithm, the cleanup pass, and text insertion — with the real numbers and the actual tradeoffs, not a marketing gloss.">
+<meta name="description" content="The ASR engines, the cleanup pass, and text insertion — with the real numbers and the actual tradeoffs, not a marketing gloss.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/how-it-works/">
 <style>
@@ -111,27 +111,6 @@
         <li><b>Decoder state is fresh for every single utterance</b> — a new <code>TdtDecoderState</code> per <code>transcribe()</code> call, deliberately never reused across dictations, so nothing you said in one dictation can leak linguistic context into the next.</li>
       </ul>
       <p>Which model to default to isn't hardcoded, either. <code>OnDeviceModel.recommended(for:)</code> takes the languages you actually speak (set once in the Setup Assistant) and checks them against FluidAudio's own <code>Language.allCases</code> — Parakeet's real, current language coverage, not a table we maintain by hand and let go stale. Speak a language outside that list and the recommendation falls back to Whisper automatically.</p>
-    </section>
-
-    <section>
-      <h2 class="big">Live typing: words landing as you speak, then correcting themselves</h2>
-      <p class="dim">The hard constraint: the only editing primitive available to a program typing into an arbitrary focused text field in someone else's app is <b>Backspace</b>. No cursor movement, no select-and-replace, no diff-aware text replacement API that works in Slack, VS Code, and Safari's address bar alike.</p>
-      <p>Every <b>1.5 seconds</b> while you're recording, Plainsay re-transcribes the entire growing audio buffer from scratch — not incrementally — through whichever engine is loaded. That's a real, deliberate choice: streaming/incremental decoding is faster per-step but the model can't revise an earlier guess once it's committed, and ASR models frequently do want to revise an earlier word once more audio gives them more context. A fresh full-buffer decode every tick costs more compute; it buys the model the right to change its mind.</p>
-      <p>With <b>Live typing</b> on, each of those passes doesn't just update a HUD preview — it gets reconciled onto the actual document:</p>
-      <pre>old = what's already typed on screen (our own tracked model of it)
-new = this pass's fresh transcript
-
-find the longest common <b>prefix</b> of old and new
-  → delete (old.count − prefix.count) characters via Backspace
-  → type (new.count − prefix.count) new characters
-
-liveTypedText = new   // <span class="mono-src">this becomes the baseline for the next pass</span></pre>
-      <p>A pure longest-common-prefix diff, not a full edit-distance alignment — deliberately. Backspace can only ever erase a suffix, so the only diff worth computing is "how much of the tail changed," and the assumption is that ASR revisions overwhelmingly land near the end of what's been said so far, not the beginning.</p>
-      <h3 class="sub">The bug this shipped with, and the fix</h3>
-      <p>The reconciliation step above sends every Backspace as a synthetic <code>CGEvent</code> keydown/keyup pair. The first version of this sent them back-to-back with <b>zero delay</b> between keystrokes. It worked perfectly in every manual test — and then a real user reported wrong capitalization and missing spaces showing up "very often."</p>
-      <p>The actual bug: deletion is fire-and-forget. Nothing confirms a synthetic Backspace was actually consumed by the target app, and a busy app (a web view mid-render, an Electron app servicing its own event loop) can silently drop or coalesce a keystroke sent with no gap after it. Drop one Backspace, and Plainsay's internal model of what's on screen — <code>liveTypedText</code>, the baseline the <i>next</i> diff is computed against — is now permanently one character wrong for the rest of that dictation. Every subsequent correction compounds the error instead of fixing it.</p>
-      <p>The fix: pace the Backspace events the same way the paste path was already paced — a short, deliberate delay between each one, mirroring a lesson learned earlier for <code>⌘V</code> itself (a busy app needs time to actually service a synthetic keystroke, full stop). Shipped and verified the same day it was reported.</p>
-      <p class="dim">Live typing is off by default, and turning it on turns off the cleanup pass below — reconciling live-typed raw words against a rewritten sentence would mean visibly rewriting text you just watched yourself type, which defeats the point.</p>
     </section>
 
     <section>

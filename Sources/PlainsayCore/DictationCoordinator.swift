@@ -51,18 +51,6 @@ public final class DictationCoordinator {
     /// actually gets inserted; the final pipeline re-transcribes and cleans
     /// the complete recording from scratch once you stop.
     public private(set) var livePreviewText: String = ""
-    /// What live typing has actually put in the focused document so far this
-    /// recording, if `liveTypingEnabled`. Empty whenever nothing has been
-    /// typed live — either the feature is off, or focus moved away from
-    /// `targetApp` and further live edits were suspended.
-    private var liveTypedText: String = ""
-
-    /// Set when the previous preview pass deferred a disruptive edit (see
-    /// `applyLiveTypingDelta`). Bounds how stale `liveTypedText` can get: a
-    /// pass that deferred twice in a row would keep comparing against the
-    /// same frozen text forever, since a real revision rarely re-converges
-    /// with it — so the very next pass is forced through unconditionally.
-    private var deferredLiveTypingPass = false
 
     /// How many samples the ribbon shows — about four seconds at 30fps.
     public static let levelHistoryLength = 120
@@ -549,15 +537,6 @@ public final class DictationCoordinator {
 
     private func endRecording() {
         stopMetering()
-        // Captured before `stopLivePreview()` clears it: `cancel()` does not
-        // interrupt a live-typing reconciliation already in flight (it only
-        // makes the NEXT `Task.sleep` inside it return early), so a preview
-        // pass can still be mid delete/insert into the document at this exact
-        // moment. Without waiting for it, its CGEvents and the final
-        // reconciliation's CGEvents below race on the same document — two
-        // independent edit sequences interleaving character by character,
-        // which reads as "it deleted what I said and typed something wrong."
-        let inFlightPreview = previewTask
         stopLivePreview()
         let samples = recorder.stop()
         guard phase == .recording else { return }
@@ -574,10 +553,7 @@ public final class DictationCoordinator {
             return
         }
 
-        Task {
-            await inFlightPreview?.value
-            await process(samples)
-        }
+        Task { await process(samples) }
     }
 
     // MARK: - Pipeline
@@ -684,12 +660,7 @@ public final class DictationCoordinator {
             duration: duration
         )
 
-        let outcome: TextInsertionOutcome
-        if liveTypedText.isEmpty {
-            outcome = await insert(finalText)
-        } else {
-            outcome = await reconcileLiveTyping(to: finalText)
-        }
+        let outcome = await insert(finalText)
 
         switch outcome {
         case .inserted:
@@ -725,78 +696,6 @@ public final class DictationCoordinator {
         return outcome
     }
 
-    /// Walks whatever live typing already put in `targetApp` back to a common
-    /// prefix with `finalText`, then pastes the rest — turning the raw,
-    /// in-progress text into the cleaned transcript in place, instead of
-    /// inserting the cleaned text a second time on top of it.
-    private func reconcileLiveTyping(to finalText: String) async -> TextInsertionOutcome {
-        defer { liveTypedText = ""; targetApp = nil }
-
-        let (deleteCount, insertText) = Self.diff(from: liveTypedText, to: finalText)
-        if deleteCount > 0 {
-            await inserter.deleteBackward(deleteCount)
-        }
-        guard !insertText.isEmpty else { return .inserted }
-        return await inserter.insert(insertText, keepOnClipboard: settings.keepOnClipboard)
-    }
-
-    /// Reconciles what's already live-typed (`liveTypedText`) toward `text`,
-    /// by deleting only the diverged tail and pasting only the new one — so a
-    /// revision doesn't retype words that were already correct.
-    private func applyLiveTypingDelta(to text: String) async {
-        guard let targetApp, NSWorkspace.shared.frontmostApplication?.bundleIdentifier == targetApp.bundleIdentifier else {
-            // Focus moved elsewhere. Stop touching this document — further
-            // backspaces would land in whatever the user switched to, not
-            // where this dictation started.
-            return
-        }
-        let (deleteCount, insertText) = Self.diff(from: liveTypedText, to: text)
-        // A streaming pass revising more than half of what's already on
-        // screen is the ASR revising the head (a filler word dropping, an
-        // early guess firming up), not the tail — wiping and retyping most
-        // of the line while the user is still mid-sentence reads as
-        // corruption, not a correction. Defer the pass instead of applying
-        // it: skip touching the document (and skip the `liveTypedText`
-        // update below), so this doesn't flicker live. But only once in a
-        // row — `liveTypedText` is now stale, so the very next pass is
-        // forced through regardless of size, or live typing would keep
-        // comparing against that same stale text and stay stuck deferring
-        // for the rest of the recording. `reconcileLiveTyping` always runs
-        // unconditionally once recording stops either way, so nothing is
-        // ever lost — a deferred pass is just one preview interval late.
-        let isDisruptive = deleteCount > liveTypedText.count / 2
-        guard !isDisruptive || deferredLiveTypingPass else {
-            deferredLiveTypingPass = true
-            return
-        }
-        deferredLiveTypingPass = false
-        if deleteCount > 0 {
-            await inserter.deleteBackward(deleteCount)
-        }
-        if !insertText.isEmpty {
-            // Never restore the clipboard mid-session — that only happens
-            // once, at the final reconciliation, per `settings.keepOnClipboard`.
-            _ = await inserter.insert(insertText, keepOnClipboard: true)
-        }
-        liveTypedText = text
-    }
-
-    /// Splits an old→new pair into "how many trailing characters to delete"
-    /// and "what to type after that", by longest common prefix. A streaming
-    /// ASR pass revises the tail of what it heard as more context arrives far
-    /// more often than the head, so a prefix diff — not a full edit-distance
-    /// diff — is enough, and it's exactly reversible: deleting `deleteCount`
-    /// characters from `old` and then appending `insertText` reproduces `new`.
-    nonisolated static func diff(from old: String, to new: String) -> (deleteCount: Int, insertText: String) {
-        let oldChars = Array(old)
-        let newChars = Array(new)
-        var common = 0
-        while common < oldChars.count, common < newChars.count, oldChars[common] == newChars[common] {
-            common += 1
-        }
-        return (oldChars.count - common, String(newChars[common...]))
-    }
-
     // MARK: - HUD feed
 
     private func startMetering() {
@@ -823,25 +722,14 @@ public final class DictationCoordinator {
     }
 
     /// Re-transcribes the growing recording every couple of seconds so the
-    /// HUD can show a rough live readout, and — when `liveTypingEnabled` —
-    /// types each pass's delta into the focused document. Deliberately not
-    /// streaming ASR itself: each pass is a fresh full-buffer call through
-    /// the same engine `stop()` will use, so a pass still in flight when
-    /// recording stops simply finishes first — the engine actor serializes
-    /// both, adding at most one preview pass's worth of latency to the real
-    /// transcription.
+    /// HUD can show a rough live readout. Deliberately not streaming ASR
+    /// itself: each pass is a fresh full-buffer call through the same engine
+    /// `stop()` will use, so a pass still in flight when recording stops
+    /// simply finishes first — the engine actor serializes both, adding at
+    /// most one preview pass's worth of latency to the real transcription.
     private func startLivePreview() {
-        // Reset before the early-return guard: a previous recording that
-        // ended through the error path (see `stopLivePreview`) can leave
-        // `liveTypedText` non-empty, and it must never survive into a
-        // recording where live typing is off, or `runPipeline` would try to
-        // reconcile against a document this session never touched.
         livePreviewText = ""
-        liveTypedText = ""
-        deferredLiveTypingPass = false
-        let previewOn = settings.livePreviewEnabled
-        let typingOn = settings.liveTypingEnabled
-        guard (previewOn || typingOn), settings.transcriptionSource == .onDevice else { return }
+        guard settings.livePreviewEnabled, settings.transcriptionSource == .onDevice else { return }
         previewTask?.cancel()
         previewTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
@@ -857,8 +745,7 @@ public final class DictationCoordinator {
                 let prompt = self.settings.dictionary.asrPrompt()
                 let text = (try? await engine.transcribe(samples: samples, prompt: prompt)) ?? ""
                 guard !Task.isCancelled, self.phase == .recording, !text.isEmpty else { continue }
-                if previewOn { self.livePreviewText = text }
-                if typingOn { await self.applyLiveTypingDelta(to: text) }
+                self.livePreviewText = text
             }
         }
     }
@@ -867,11 +754,6 @@ public final class DictationCoordinator {
         previewTask?.cancel()
         previewTask = nil
         livePreviewText = ""
-        // `liveTypedText` deliberately survives this call: it still describes
-        // what's in the document when a dictation ends normally, and
-        // `runPipeline` needs it to reconcile the final text. On an abandoned
-        // recording (see `stop()`, `flashError`) it's simply never read again
-        // before the next recording's `startLivePreview` resets it.
     }
 
     private func flashError(_ message: String) {

@@ -42,32 +42,10 @@ final class FakeEngine: TranscriptionEngine, @unchecked Sendable {
     var error: Error?
     private(set) var receivedPrompt: String?
     private(set) var receivedSampleCount = 0
-    /// Every call, including ones currently suspended on the gate below —
-    /// incremented before gating, so a test can prove a later call hasn't
-    /// even been *entered* yet, not just that it hasn't returned.
-    private(set) var callCount = 0
-    private var shouldGateNextCall = false
-    private var gateContinuation: CheckedContinuation<Void, Never>?
-
-    /// The next `transcribe()` call suspends indefinitely instead of
-    /// returning, until `releaseGate()` is called. Pins a specific pass
-    /// "still in flight" deterministically, instead of racing real
-    /// wall-clock timing against fakes that are otherwise near-instant.
-    func gateNextCall() { shouldGateNextCall = true }
-
-    func releaseGate() {
-        gateContinuation?.resume()
-        gateContinuation = nil
-    }
 
     func prepare() async throws {}
 
     func transcribe(samples: [Float], prompt: String?) async throws -> String {
-        callCount += 1
-        if shouldGateNextCall {
-            shouldGateNextCall = false
-            await withCheckedContinuation { gateContinuation = $0 }
-        }
         receivedSampleCount = samples.count
         receivedPrompt = prompt
         if let error { throw error }
@@ -219,16 +197,11 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
 @MainActor
 final class FakeInserter: TextInserting {
     private(set) var inserted: [String] = []
-    private(set) var deletedCounts: [Int] = []
     var outcome: TextInsertionOutcome = .inserted
 
     func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
         inserted.append(text)
         return outcome
-    }
-
-    func deleteBackward(_ count: Int) async {
-        deletedCounts.append(count)
     }
 }
 
@@ -391,189 +364,6 @@ struct PipelineTests {
         try await harness.settle()
 
         #expect(harness.coordinator.livePreviewText.isEmpty)
-    }
-
-    @Test("Live typing stays off by default, even while recording")
-    func liveTypingOffByDefault() async throws {
-        let harness = Harness()
-        harness.recorder.duration = 3
-        harness.engine.transcript = "hello there"
-        await harness.ready()
-
-        let previous = DictationCoordinator.previewInterval
-        DictationCoordinator.previewInterval = .milliseconds(10)
-        defer { DictationCoordinator.previewInterval = previous }
-
-        harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await Task.sleep(for: .milliseconds(50))
-        #expect(harness.inserter.inserted.isEmpty)
-        #expect(harness.inserter.deletedCounts.isEmpty)
-
-        harness.coordinator.handleHotkeyEdge(.up(at: 1))
-        try await harness.settle()
-
-        // The one, single-shot insert at the end — unchanged from the
-        // non-live-typing pipeline.
-        #expect(harness.inserter.inserted.count == 1)
-        #expect(harness.inserter.deletedCounts.isEmpty)
-    }
-
-    @Test("Live typing types the raw preview as it arrives, then reconciles with a minimal edit")
-    func liveTypingReconcilesWithMinimalEdit() async throws {
-        let harness = Harness()
-        harness.settings.liveTypingEnabled = true
-        harness.recorder.duration = 3
-        harness.engine.transcript = "hello there"
-        harness.cleaner.output = "hello there."
-        await harness.ready()
-
-        let previous = DictationCoordinator.previewInterval
-        DictationCoordinator.previewInterval = .milliseconds(10)
-        defer { DictationCoordinator.previewInterval = previous }
-
-        harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await harness.waitUntil { harness.inserter.inserted.contains("hello there") }
-        // The raw preview pass typed directly into the document — no HUD
-        // preview needed, since live typing doesn't require livePreviewEnabled.
-        #expect(harness.inserter.inserted.contains("hello there"))
-        #expect(harness.coordinator.livePreviewText.isEmpty)
-
-        harness.coordinator.handleHotkeyEdge(.up(at: 1))
-        try await harness.settle()
-
-        // Cleanup only added a trailing period. Reconciliation appended just
-        // that — it never deleted and retyped words cleanup left untouched.
-        #expect(harness.inserter.deletedCounts.isEmpty)
-        #expect(harness.inserter.inserted.last == ".")
-    }
-
-    @Test("Live typing reconciles by deleting only the diverged tail, not the whole line")
-    func liveTypingDeletesOnlyTheDivergedTail() async throws {
-        let harness = Harness()
-        harness.settings.liveTypingEnabled = true
-        harness.recorder.duration = 3
-        harness.engine.transcript = "the cat sat"
-        harness.cleaner.output = "The cat sat."
-        await harness.ready()
-
-        let previous = DictationCoordinator.previewInterval
-        DictationCoordinator.previewInterval = .milliseconds(10)
-        defer { DictationCoordinator.previewInterval = previous }
-
-        harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await harness.waitUntil { harness.inserter.inserted.contains("the cat sat") }
-        #expect(harness.inserter.inserted.contains("the cat sat"))
-
-        harness.coordinator.handleHotkeyEdge(.up(at: 1))
-        try await harness.settle()
-
-        // "the cat sat" -> "The cat sat." diverges at the very first
-        // character (case), so the whole line is deleted and retyped rather
-        // than nothing at all — proving the delta is computed, not skipped.
-        #expect(harness.inserter.deletedCounts == [11])
-        #expect(harness.inserter.inserted.last == "The cat sat.")
-    }
-
-    @Test("A revision that would wipe most of the line defers once, then the very next pass is forced through instead of deferring forever")
-    func liveTypingDefersOnceThenCatchesUp() async throws {
-        let harness = Harness()
-        harness.settings.liveTypingEnabled = true
-        harness.recorder.duration = 3
-        harness.engine.transcript = "uh the deploy went out around noon"
-        await harness.ready()
-
-        let previous = DictationCoordinator.previewInterval
-        DictationCoordinator.previewInterval = .milliseconds(10)
-        defer { DictationCoordinator.previewInterval = previous }
-
-        harness.coordinator.handleHotkeyEdge(.down(at: 0))
-        try await harness.waitUntil { harness.inserter.inserted.contains("uh the deploy went out around noon") }
-        #expect(harness.engine.callCount == 1)
-
-        // The next pass drops the filler word at the very front and extends
-        // the tail — a head revision, not a tail one. Diffed against what's
-        // already on screen, that's a near-total mismatch from character 0.
-        // Gate call 2 *before* changing the transcript, so nothing can race
-        // ahead of this assertion: call 2 is provably suspended mid-transcribe
-        // until `releaseGate()` below, and nothing else can run meanwhile.
-        harness.engine.gateNextCall()
-        harness.engine.transcript = "the deploy went out around noon and everyone is happy"
-        try await harness.waitUntil { harness.engine.callCount == 2 }
-
-        // Arm the gate for call 3 too, then release call 2 — by the time
-        // call 3 has *started* (incrementing callCount), call 2's entire
-        // body, including its (deferred) `applyLiveTypingDelta`, has
-        // necessarily already finished, since the preview loop awaits it
-        // sequentially before ever looping back around to call 3.
-        harness.engine.gateNextCall()
-        harness.engine.releaseGate()
-        try await harness.waitUntil { harness.engine.callCount == 3 }
-
-        // Nothing was deleted live for call 2: wiping and retyping almost
-        // the entire line while the user is still mid-sentence is more
-        // disruptive than deferring the correction by one pass.
-        #expect(harness.inserter.deletedCounts.isEmpty)
-
-        // Release call 3 — same (still-disruptive) text again. It must be
-        // forced through rather than deferred a second time in a row, or
-        // live typing would keep comparing against the same stale text and
-        // stay stuck deferring for the rest of the recording.
-        harness.engine.releaseGate()
-        try await harness.waitUntil { !harness.inserter.deletedCounts.isEmpty }
-        #expect(harness.inserter.deletedCounts == [34])
-        #expect(harness.inserter.inserted.last == "the deploy went out around noon and everyone is happy")
-
-        harness.coordinator.handleHotkeyEdge(.up(at: 1))
-        try await harness.settle()
-    }
-
-    @Test("Ending a recording waits for an in-flight live-typing preview pass before starting the final reconciliation")
-    func liveTypingWaitsForInFlightPreviewBeforeFinalReconciliation() async throws {
-        let harness = Harness()
-        harness.settings.liveTypingEnabled = true
-        harness.recorder.duration = 3
-        harness.engine.transcript = "hello there"
-        await harness.ready()
-
-        let previous = DictationCoordinator.previewInterval
-        DictationCoordinator.previewInterval = .milliseconds(10)
-        defer { DictationCoordinator.previewInterval = previous }
-
-        harness.coordinator.handleHotkeyEdge(.down(at: 0))
-
-        // Let the first preview pass complete normally.
-        try await harness.waitUntil { harness.inserter.inserted.contains("hello there") }
-        #expect(harness.engine.callCount == 1)
-
-        // Arm the gate, then wait for the SECOND preview tick to actually
-        // enter (not return from) transcribe — call 2. From this point on
-        // we know, with certainty rather than luck, that a preview pass is
-        // suspended mid-flight, because nothing can make it return without
-        // `releaseGate()` below.
-        harness.engine.gateNextCall()
-        try await harness.waitUntil { harness.engine.callCount == 2 }
-
-        // End the recording while that pass is provably still in flight.
-        harness.coordinator.handleHotkeyEdge(.up(at: 1))
-
-        // Give the pipeline every chance to race ahead if nothing were
-        // actually blocking it. Before the fix, `endRecording` span a new
-        // Task that called `process(samples)` — and hence the final
-        // engine.transcribe — immediately, regardless of the still-gated
-        // preview pass; call count would climb to 3 well within this
-        // window. With the fix, the new Task's first move is `await
-        // inFlightPreview?.value`, which cannot resolve until the gate is
-        // released, so call count must hold at exactly 2 throughout.
-        try await Task.sleep(for: .milliseconds(150))
-        #expect(harness.engine.callCount == 2)
-
-        // Release the gate: the preview pass finishes, and only now should
-        // the final reconciliation's own transcribe call be allowed to fire.
-        harness.engine.releaseGate()
-        try await harness.waitUntil(timeout: .seconds(3)) { harness.engine.callCount == 3 }
-        try await harness.settle(timeout: .seconds(3))
-
-        #expect(harness.coordinator.phase == .idle)
     }
 
     @Test("Voice filtering enabled but not yet loaded fails open — dictation still works")
@@ -1068,82 +858,3 @@ struct PipelineTests {
     }
 }
 
-@Suite("Live-typing diff")
-struct LiveTypingDiffTests {
-    @Test("A pure extension inserts only the new suffix")
-    func appendOnly() {
-        let result = DictationCoordinator.diff(from: "hello", to: "hello there")
-        #expect(result.deleteCount == 0)
-        #expect(result.insertText == " there")
-    }
-
-    @Test("A revised tail deletes only the diverged part")
-    func revisedTail() {
-        let result = DictationCoordinator.diff(from: "the cat sat", to: "the cat sang")
-        #expect(result.deleteCount == 1)
-        #expect(result.insertText == "ng")
-    }
-
-    @Test("Identical text is a no-op")
-    func identical() {
-        let result = DictationCoordinator.diff(from: "same", to: "same")
-        #expect(result.deleteCount == 0)
-        #expect(result.insertText.isEmpty)
-    }
-
-    @Test("No shared prefix deletes everything and retypes")
-    func totalReplacement() {
-        let result = DictationCoordinator.diff(from: "abc", to: "xyz")
-        #expect(result.deleteCount == 3)
-        #expect(result.insertText == "xyz")
-    }
-
-    @Test("An empty starting point just types the new text")
-    func fromEmpty() {
-        let result = DictationCoordinator.diff(from: "", to: "hello")
-        #expect(result.deleteCount == 0)
-        #expect(result.insertText == "hello")
-    }
-
-    @Test("An empty result deletes everything and types nothing")
-    func toEmpty() {
-        let result = DictationCoordinator.diff(from: "hello", to: "")
-        #expect(result.deleteCount == 5)
-        #expect(result.insertText.isEmpty)
-    }
-}
-
-@Suite("Live typing / cleanup exclusivity")
-@MainActor
-struct LiveTypingCleanupExclusivityTests {
-    @Test("Turning on live typing forces cleanup off")
-    func liveTypingForcesCleanupOff() {
-        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
-        let settings = PlainsaySettings(defaults: suite)
-        settings.cleanupEnabled = true
-
-        settings.liveTypingEnabled = true
-        #expect(settings.cleanupEnabled == false)
-    }
-
-    @Test("Turning live typing back off does not silently re-enable cleanup")
-    func liveTypingOffDoesNotRestoreCleanup() {
-        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
-        let settings = PlainsaySettings(defaults: suite)
-        settings.cleanupEnabled = true
-        settings.liveTypingEnabled = true
-        #expect(settings.cleanupEnabled == false)
-
-        settings.liveTypingEnabled = false
-        #expect(settings.cleanupEnabled == false)
-    }
-
-    @Test("Turning on cleanup does not affect live typing")
-    func cleanupDoesNotForceLiveTypingOff() {
-        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
-        let settings = PlainsaySettings(defaults: suite)
-        settings.liveTypingEnabled = false
-        settings.cleanupEnabled = true
-        #expect(settings.liveTypingEnabled == false)
-    }
-}

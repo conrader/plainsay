@@ -59,11 +59,6 @@ public protocol TextInserting: Sendable {
     ///   than restoring the previous contents, so a swallowed ⌘V costs one
     ///   manual paste instead of the whole dictation.
     @MainActor func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome
-
-    /// Deletes `count` characters immediately before the caret via synthetic
-    /// backspace. Used to walk live-typed text back to a common prefix before
-    /// pasting a revision — never touches the pasteboard.
-    @MainActor func deleteBackward(_ count: Int) async
 }
 
 /// Inserts text by writing it to the pasteboard and synthesizing ⌘V.
@@ -76,8 +71,6 @@ public struct PasteboardTextInserter: TextInserting {
     private let restoreDelay: Duration
     /// Gap between writing the pasteboard and sending ⌘V.
     private let pasteDelay: Duration
-    /// Gap between consecutive synthetic backspace keystrokes.
-    private let keystrokeDelay: Duration
 
     public init(
         pasteDelay: Duration = .milliseconds(20),
@@ -85,23 +78,10 @@ public struct PasteboardTextInserter: TextInserting {
         // than that to service ⌘V, and restoring the old clipboard underneath
         // it means the paste lands as the *previous* clipboard contents — or as
         // nothing. That is the likeliest cause of a dictation "disappearing".
-        restoreDelay: Duration = .milliseconds(600),
-        // Live typing walks a run of live-typed text back with one backspace
-        // per character before pasting a revision, and every live-preview
-        // pass — not just the final one — can trigger this, so a long
-        // dictation can mean many bursts of dozens of backspaces each. Sent
-        // with zero gap, some real apps drop or coalesce keystrokes in a
-        // burst like that; a dropped backspace desyncs our model of what's
-        // actually on screen from what's really there, and every later delta
-        // in that dictation is then computed against a wrong baseline —
-        // corruption compounds instead of self-correcting. Reported by
-        // Konrad as capitalization glitches and missing spaces in live
-        // typing (2026-08-17).
-        keystrokeDelay: Duration = .milliseconds(8)
+        restoreDelay: Duration = .milliseconds(600)
     ) {
         self.pasteDelay = pasteDelay
         self.restoreDelay = restoreDelay
-        self.keystrokeDelay = keystrokeDelay
     }
 
     @MainActor
@@ -163,19 +143,8 @@ public struct PasteboardTextInserter: TextInserting {
         return result == .success && focused != nil
     }
 
-    @MainActor
-    public func deleteBackward(_ count: Int) async {
-        guard count > 0, AXIsProcessTrusted(), Self.hasFocusedElement() else { return }
-        for _ in 0..<count {
-            Self.sendDelete()
-            try? await Task.sleep(for: keystrokeDelay)
-        }
-    }
-
     /// Virtual keycode for `v` on any layout (ANSI position-based).
     private static let keyCodeV: CGKeyCode = 0x09
-    /// Virtual keycode for Delete/Backspace (ANSI position-based).
-    private static let keyCodeDelete: CGKeyCode = 0x33
 
     @MainActor
     static func sendCommandV() {
@@ -187,17 +156,6 @@ public struct PasteboardTextInserter: TextInserting {
         let up = CGEvent(keyboardEventSource: source, virtualKey: keyCodeV, keyDown: false)
         down?.flags = .maskCommand
         up?.flags = .maskCommand
-
-        down?.post(tap: .cghidEventTap)
-        up?.post(tap: .cghidEventTap)
-    }
-
-    @MainActor
-    static func sendDelete() {
-        guard let source = CGEventSource(stateID: .combinedSessionState) else { return }
-
-        let down = CGEvent(keyboardEventSource: source, virtualKey: keyCodeDelete, keyDown: true)
-        let up = CGEvent(keyboardEventSource: source, virtualKey: keyCodeDelete, keyDown: false)
 
         down?.post(tap: .cghidEventTap)
         up?.post(tap: .cghidEventTap)
