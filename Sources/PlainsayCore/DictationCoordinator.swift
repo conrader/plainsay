@@ -57,6 +57,13 @@ public final class DictationCoordinator {
     /// `targetApp` and further live edits were suspended.
     private var liveTypedText: String = ""
 
+    /// Set when the previous preview pass deferred a disruptive edit (see
+    /// `applyLiveTypingDelta`). Bounds how stale `liveTypedText` can get: a
+    /// pass that deferred twice in a row would keep comparing against the
+    /// same frozen text forever, since a real revision rarely re-converges
+    /// with it — so the very next pass is forced through unconditionally.
+    private var deferredLiveTypingPass = false
+
     /// How many samples the ribbon shows — about four seconds at 30fps.
     public static let levelHistoryLength = 120
     public private(set) var modelState: SpeechModelLoadState = .idle
@@ -748,12 +755,21 @@ public final class DictationCoordinator {
         // screen is the ASR revising the head (a filler word dropping, an
         // early guess firming up), not the tail — wiping and retyping most
         // of the line while the user is still mid-sentence reads as
-        // corruption, not a correction. Skip the pass entirely, including
-        // the `liveTypedText` update below, so the next diff still compares
-        // against what's actually on screen; `reconcileLiveTyping` always
-        // runs unconditionally once recording stops, so nothing is lost —
-        // just deferred to that one clean pass instead of flickering live.
-        guard deleteCount <= liveTypedText.count / 2 else { return }
+        // corruption, not a correction. Defer the pass instead of applying
+        // it: skip touching the document (and skip the `liveTypedText`
+        // update below), so this doesn't flicker live. But only once in a
+        // row — `liveTypedText` is now stale, so the very next pass is
+        // forced through regardless of size, or live typing would keep
+        // comparing against that same stale text and stay stuck deferring
+        // for the rest of the recording. `reconcileLiveTyping` always runs
+        // unconditionally once recording stops either way, so nothing is
+        // ever lost — a deferred pass is just one preview interval late.
+        let isDisruptive = deleteCount > liveTypedText.count / 2
+        guard !isDisruptive || deferredLiveTypingPass else {
+            deferredLiveTypingPass = true
+            return
+        }
+        deferredLiveTypingPass = false
         if deleteCount > 0 {
             await inserter.deleteBackward(deleteCount)
         }
@@ -822,6 +838,7 @@ public final class DictationCoordinator {
         // reconcile against a document this session never touched.
         livePreviewText = ""
         liveTypedText = ""
+        deferredLiveTypingPass = false
         let previewOn = settings.livePreviewEnabled
         let typingOn = settings.liveTypingEnabled
         guard (previewOn || typingOn), settings.transcriptionSource == .onDevice else { return }

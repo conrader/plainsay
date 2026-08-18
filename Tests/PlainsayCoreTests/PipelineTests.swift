@@ -474,13 +474,12 @@ struct PipelineTests {
         #expect(harness.inserter.inserted.last == "The cat sat.")
     }
 
-    @Test("A revision that would wipe most of the line during recording is deferred to the final reconciliation, not typed live")
-    func liveTypingDefersLargeHeadRevisions() async throws {
+    @Test("A revision that would wipe most of the line defers once, then the very next pass is forced through instead of deferring forever")
+    func liveTypingDefersOnceThenCatchesUp() async throws {
         let harness = Harness()
         harness.settings.liveTypingEnabled = true
         harness.recorder.duration = 3
         harness.engine.transcript = "uh the deploy went out around noon"
-        harness.cleaner.output = "The deploy went out around noon and everyone is relieved."
         await harness.ready()
 
         let previous = DictationCoordinator.previewInterval
@@ -494,21 +493,38 @@ struct PipelineTests {
         // The next pass drops the filler word at the very front and extends
         // the tail — a head revision, not a tail one. Diffed against what's
         // already on screen, that's a near-total mismatch from character 0.
+        // Gate call 2 *before* changing the transcript, so nothing can race
+        // ahead of this assertion: call 2 is provably suspended mid-transcribe
+        // until `releaseGate()` below, and nothing else can run meanwhile.
+        harness.engine.gateNextCall()
         harness.engine.transcript = "the deploy went out around noon and everyone is happy"
         try await harness.waitUntil { harness.engine.callCount == 2 }
-        try await Task.sleep(for: .milliseconds(50))
 
-        // Nothing was deleted live: wiping and retyping almost the entire
-        // line while the user is still mid-sentence is more disruptive than
-        // deferring the correction to the one reconciliation pass at the end.
+        // Arm the gate for call 3 too, then release call 2 — by the time
+        // call 3 has *started* (incrementing callCount), call 2's entire
+        // body, including its (deferred) `applyLiveTypingDelta`, has
+        // necessarily already finished, since the preview loop awaits it
+        // sequentially before ever looping back around to call 3.
+        harness.engine.gateNextCall()
+        harness.engine.releaseGate()
+        try await harness.waitUntil { harness.engine.callCount == 3 }
+
+        // Nothing was deleted live for call 2: wiping and retyping almost
+        // the entire line while the user is still mid-sentence is more
+        // disruptive than deferring the correction by one pass.
         #expect(harness.inserter.deletedCounts.isEmpty)
+
+        // Release call 3 — same (still-disruptive) text again. It must be
+        // forced through rather than deferred a second time in a row, or
+        // live typing would keep comparing against the same stale text and
+        // stay stuck deferring for the rest of the recording.
+        harness.engine.releaseGate()
+        try await harness.waitUntil { !harness.inserter.deletedCounts.isEmpty }
+        #expect(harness.inserter.deletedCounts == [34])
+        #expect(harness.inserter.inserted.last == "the deploy went out around noon and everyone is happy")
 
         harness.coordinator.handleHotkeyEdge(.up(at: 1))
         try await harness.settle()
-
-        // The final reconciliation still corrects everything in one pass,
-        // exactly as it would with no live typing at all.
-        #expect(harness.inserter.inserted.last == "The deploy went out around noon and everyone is relieved.")
     }
 
     @Test("Ending a recording waits for an in-flight live-typing preview pass before starting the final reconciliation")
