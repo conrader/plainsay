@@ -1,0 +1,49 @@
+[package]
+name = "plainsay"
+version = "0.1.0"
+description = "Plainsay — free dictation for Windows, cloud-first"
+authors = ["Plainsay"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "plainsay_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Push-to-talk hotkey: RegisterHotKey-based, confirmed Pressed/Released
+# support — see windows/PLAN.md for why this beats a raw keyboard hook as
+# the primary path.
+global-hotkey = "0.7"
+# WASAPI audio capture — the de facto Rust choice on Windows.
+cpal = "0.15"
+# Uploads to api.plainsay.app — same API contract the Mac client speaks.
+reqwest = { version = "0.12", features = ["json", "multipart"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+# Clipboard write for the paste-based text insertion path.
+arboard = "3"
+# Session token storage (Windows Credential Manager), mirroring the Mac
+# client's Keychain-only policy for anything that can spend money.
+keyring = { version = "3", features = ["windows-native"] }
+thiserror = "1"
+
+[target.'cfg(windows)'.dependencies]
+# SendInput (paste) and the WH_KEYBOARD_LL fallback hook.
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Threading",
+] }
+

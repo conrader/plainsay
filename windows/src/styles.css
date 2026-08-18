@@ -1,0 +1,89 @@
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f6f6f7;
+  color: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1e1f22;
+    color: #eee;
+  }
+  input {
+    background: #2a2b2e;
+    color: #eee;
+    border-color: #444;
+  }
+}
+
+.settings {
+  padding: 28px 32px;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.hint {
+  color: #888;
+  font-size: 13px;
+  margin: 0 0 20px;
+}
+
+kbd {
+  font: inherit;
+  background: rgba(128, 128, 128, 0.18);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+input {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 220px;
+}
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background: #eee;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+button:hover {
+  background: #e2e2e2;
+}
+
+.status {
+  font-size: 13px;
+  color: #888;
+  min-height: 1.2em;
+}
+
+#usage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+progress {
+  width: 180px;
+}
+
+#sign-out {
+  margin-left: 0;
+  margin-top: 12px;
+}

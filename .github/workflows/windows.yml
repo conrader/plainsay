@@ -1,0 +1,42 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows.yml"
+  pull_request:
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows.yml"
+
+jobs:
+  build:
+    # The real build+link this app needs: cargo check on macOS can verify
+    # types against the x86_64-pc-windows-msvc target, but link.exe only
+    # exists on an actual Windows toolchain. This job is the authoritative
+    # verification, not a supplement to it.
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            windows/src-tauri/target
+          key: windows-cargo-${{ hashFiles('windows/src-tauri/Cargo.lock') }}
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run tauri build -- --debug

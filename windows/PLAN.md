@@ -37,12 +37,14 @@ don't pre-optimize for it.
 
 ## Concrete build shape
 
-- **Hotkey / push-to-talk**: NOT `RegisterHotKey` — it has no clean
-  key-release signal, which hold-to-talk needs. Use a low-level keyboard hook
-  (`WH_KEYBOARD_LL`), same as Handy's `rdev` dependency uses. The callback
-  must only post to a channel and return immediately — Windows silently
-  unhooks any callback that blocks past a 1000ms watchdog, with no error
-  signal to the app.
+- **Hotkey / push-to-talk**: `tauri-apps/global-hotkey` (RegisterHotKey-based,
+  source-confirmed `HotKeyState::{Pressed,Released}` — it does support
+  hold-to-talk, not just toggle). Fallback only: if the chosen key is already
+  claimed system-wide and `RegisterHotKey` can't grab it, fall back to a raw
+  low-level keyboard hook (`WH_KEYBOARD_LL` via `SetWindowsHookExW`), same as
+  Handy's `rdev` dependency uses. The hook callback must only post to a
+  channel and return immediately — Windows silently unhooks any callback that
+  blocks past a 1000ms watchdog, with no error signal to the app.
 - **Audio capture (WASAPI)**: `cpal` — the de facto Rust choice, used by
   every precedent found (Handy, opentypeless, SpeakoFlow, ContextFlow).
 - **Tray icon**: `tauri-apps/tray-icon`.

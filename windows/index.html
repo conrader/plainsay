@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plainsay</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <main class="settings">
+    <h1>Plainsay</h1>
+    <p class="hint">Hold <kbd>Right Ctrl</kbd> anywhere to dictate. Release to insert.</p>
+
+    <section id="signed-out">
+      <div id="request-code-step">
+        <input id="email" type="email" placeholder="you@example.com" />
+        <button id="send-code">Send code</button>
+      </div>
+      <div id="verify-code-step" hidden>
+        <input id="code" type="text" inputmode="numeric" placeholder="Six-digit code" maxlength="6" />
+        <button id="verify-code">Sign in</button>
+      </div>
+      <p class="status" id="signed-out-status"></p>
+    </section>
+
+    <section id="signed-in" hidden>
+      <p><strong id="account-email"></strong></p>
+      <p id="account-subscription-status"></p>
+      <div id="usage-row" hidden>
+        <progress id="usage-bar" max="100" value="0"></progress>
+        <span id="usage-text"></span>
+      </div>
+      <button id="subscribe-monthly" hidden>Subscribe — about $3/month</button>
+      <button id="sign-out">Sign out</button>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
