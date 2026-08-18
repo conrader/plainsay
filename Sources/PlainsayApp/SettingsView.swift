@@ -301,6 +301,15 @@ private struct SpeechSettings: View {
                     }
 
                     if settings.cleanupProvider == .plainsay {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label("Nothing to paste in — sign in once and it just works", systemImage: "checkmark.circle")
+                            Label("No usage cap — Polishing itself is never rate-limited", systemImage: "checkmark.circle")
+                            Label("Works with any transcription source, including fully on-device", systemImage: "checkmark.circle")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .labelStyle(.titleAndIcon)
+
                         CloudSettingsView(cloud: coordinator.cloud, onCredentialsChanged: {}, showsUsage: false)
                     } else {
                         if settings.cleanupProvider == .custom {
