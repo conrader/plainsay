@@ -10,6 +10,10 @@ import PlainsayCore
 struct CloudSettingsView: View {
     let cloud: PlainsayCloudClient
     let onCredentialsChanged: () -> Void
+    /// The transcription-minutes bar is meaningless (and actively
+    /// misleading) shown from the Polishing provider picker: Polishing is
+    /// unlimited, and the quota shown here is the transcription plan's.
+    var showsUsage: Bool = true
 
     @State private var email = ""
     @State private var code = ""
@@ -103,7 +107,7 @@ struct CloudSettingsView: View {
                 }
             }
 
-            if account.isActive, account.limitSeconds > 0 {
+            if showsUsage, account.isActive, account.limitSeconds > 0 {
                 VStack(alignment: .leading, spacing: 4) {
                     ProgressView(
                         value: Double(account.usedSeconds),

@@ -7,6 +7,12 @@ import Foundation
 /// anything else that implements `/v1/chat/completions`. Gemini and Anthropic
 /// each have their own REST shape and get their own client.
 public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiable {
+    /// Plainsay's own hosted Polishing, via an active Plainsay Cloud
+    /// subscription — no key to find or paste in, no per-provider usage
+    /// limit. `ProviderFactory` resolves this from `cloudCredentials`
+    /// instead of a stored key; `defaultBaseURL`/`defaultModel`/etc. below
+    /// are unused placeholders for this case, never actually read.
+    case plainsay
     case gemini
     case anthropic
     case openRouter
@@ -17,6 +23,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
 
     public var displayName: String {
         switch self {
+        case .plainsay: Localization.coreString("cleanupProvider.displayName.plainsay", fallback: "Plainsay")
         case .gemini: Localization.coreString("cleanupProvider.displayName.gemini", fallback: "Google Gemini")
         case .anthropic:
             Localization.coreString("cleanupProvider.displayName.claude", fallback: "Anthropic Claude")
@@ -29,9 +36,10 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
         }
     }
 
-    /// Empty for `.custom`, where the user supplies it.
+    /// Empty for `.custom` (the user supplies it) and `.plainsay` (unused).
     public var defaultBaseURL: String {
         switch self {
+        case .plainsay: ""
         case .gemini: "https://generativelanguage.googleapis.com/v1beta"
         case .anthropic: "https://api.anthropic.com/v1"
         case .openRouter: "https://openrouter.ai/api/v1"
@@ -42,6 +50,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
 
     public var defaultModel: String {
         switch self {
+        case .plainsay: ""
         case .gemini: "gemini-3.1-flash-lite"
         case .anthropic: AnthropicCleanupService.defaultModel
         case .openRouter: "google/gemini-3.1-flash-lite"
@@ -55,6 +64,8 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     /// on every single dictation.
     public var suggestedModels: [String] {
         switch self {
+        case .plainsay:
+            []
         case .gemini:
             ["gemini-3.1-flash-lite", "gemini-3.1-flash"]
         case .anthropic:
@@ -74,8 +85,11 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     }
 
     /// Keychain account, so switching provider does not lose the other keys.
+    /// `.plainsay` never actually stores anything here — its credential
+    /// comes from the Cloud subscription, not a pasted-in key.
     public var keychainAccount: String {
         switch self {
+        case .plainsay: "plainsay-cleanup-unused"
         case .gemini: "gemini-api-key"
         case .anthropic: "anthropic-api-key"
         case .openRouter: "openrouter-api-key"
@@ -86,6 +100,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
 
     public var signupURL: String? {
         switch self {
+        case .plainsay: nil
         case .gemini: "https://aistudio.google.com/apikey"
         case .anthropic: "https://console.anthropic.com/settings/keys"
         case .openRouter: "https://openrouter.ai/keys"
@@ -95,6 +110,7 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
     }
 
     /// Gemini and Anthropic each have their own REST shape; everything else
+    /// (including `.plainsay`, proxied as an OpenAI-compatible endpoint)
     /// shares one OpenAI-dialect client.
     public var usesOpenAIDialect: Bool {
         self != .gemini && self != .anthropic

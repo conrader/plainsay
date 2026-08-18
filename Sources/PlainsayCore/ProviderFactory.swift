@@ -20,9 +20,12 @@ public enum ProviderFactory {
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
         guard settings.cleanupEnabled else { return NoCleanup() }
 
-        // A Cloud subscription supplies its own minted cleanup key, so it wins
-        // over whatever provider is configured for bring-your-own-key use.
-        if settings.transcriptionSource == .cloud, let cloud = cloudCredentials {
+        // Polishing via Plainsay itself is independent of which transcription
+        // source is active — someone dictating entirely on-device can still
+        // pick this as their editing provider. No stored key to check, only
+        // whether a subscription actually minted one into memory.
+        if settings.cleanupProvider == .plainsay {
+            guard let cloud = cloudCredentials else { return NoCleanup() }
             return OpenAICompatibleCleanupService(
                 baseURL: cloud.cleanup.baseURL,
                 apiKey: cloud.cleanup.key,

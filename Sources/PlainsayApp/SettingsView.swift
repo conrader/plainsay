@@ -194,7 +194,7 @@ private struct SpeechSettings: View {
                         .foregroundStyle(.secondary)
 
                     if settings.model == .parakeetTDT06BV3 {
-                        Text("Automatically handles Polish and English. When cleanup is enabled, vocabulary terms are applied there rather than as decoder hints. NVIDIA Parakeet is provided under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and runs through FluidAudio.")
+                        Text("Automatically handles Polish and English. When Polishing is enabled, vocabulary terms are applied there rather than as decoder hints. NVIDIA Parakeet is provided under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and runs through FluidAudio.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
@@ -280,7 +280,7 @@ private struct SpeechSettings: View {
             Section {
                 Toggle("Rewrite transcripts as written text", isOn: $settings.cleanupEnabled)
             } header: {
-                Text("Editing")
+                Text("Polishing")
             } footer: {
                 Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
                     .font(.callout)
@@ -288,49 +288,60 @@ private struct SpeechSettings: View {
             }
 
             if settings.cleanupEnabled {
-                Section("Editing provider") {
+                Section("Polishing provider") {
                     Picker("Service", selection: $settings.cleanupProvider) {
                         ForEach(CleanupProvider.allCases) { provider in
-                            Text(provider.displayName).tag(provider)
+                            Text(
+                                provider == .plainsay
+                                    ? "\(provider.displayName) — easiest, no limits, $3/mo"
+                                    : provider.displayName
+                            )
+                            .tag(provider)
                         }
                     }
 
-                    if settings.cleanupProvider == .custom {
-                        TextField(
-                            "Base URL",
-                            text: $settings.cleanupBaseURL,
-                            prompt: Text("https://example.com/v1")
+                    if settings.cleanupProvider == .plainsay {
+                        CloudSettingsView(cloud: coordinator.cloud, onCredentialsChanged: {}, showsUsage: false)
+                    } else {
+                        if settings.cleanupProvider == .custom {
+                            TextField(
+                                "Base URL",
+                                text: $settings.cleanupBaseURL,
+                                prompt: Text("https://example.com/v1")
+                            )
+                            .textFieldStyle(.roundedBorder)
+                        }
+
+                        ModelField(
+                            label: Localization.appString("settings.modelLabel", fallback: "Model"),
+                            suggestions: settings.cleanupProvider.suggestedModels,
+                            placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                                ? Localization.appString("settings.modelPlaceholder", fallback: "model name")
+                                : settings.cleanupProvider.defaultModel,
+                            value: $settings.cleanupModel
                         )
-                        .textFieldStyle(.roundedBorder)
+
+                        APIKeyField(
+                            title: Localization.appFormat(
+                                "settings.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
+                            ),
+                            signupURL: settings.cleanupProvider.signupURL,
+                            currentKey: settings.apiKey(for: settings.cleanupProvider),
+                            onSave: { key in
+                                settings.setAPIKey(key, for: settings.cleanupProvider)
+                                editingKeyRevision += 1
+                            }
+                        )
+                        .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
                     }
-
-                    ModelField(
-                        label: Localization.appString("settings.modelLabel", fallback: "Model"),
-                        suggestions: settings.cleanupProvider.suggestedModels,
-                        placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                            ? Localization.appString("settings.modelPlaceholder", fallback: "model name")
-                            : settings.cleanupProvider.defaultModel,
-                        value: $settings.cleanupModel
-                    )
-
-                    APIKeyField(
-                        title: Localization.appFormat(
-                            "settings.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
-                        ),
-                        signupURL: settings.cleanupProvider.signupURL,
-                        currentKey: settings.apiKey(for: settings.cleanupProvider),
-                        onSave: { key in
-                            settings.setAPIKey(key, for: settings.cleanupProvider)
-                            editingKeyRevision += 1
-                        }
-                    )
-                    .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
                 }
 
-                Section {
-                    Text(editingStatusLine)
-                        .font(.callout)
-                        .foregroundStyle(settings.cleanupIsConfigured ? Color.secondary : Color.orange)
+                if settings.cleanupProvider != .plainsay {
+                    Section {
+                        Text(editingStatusLine)
+                            .font(.callout)
+                            .foregroundStyle(settings.cleanupIsConfigured ? Color.secondary : Color.orange)
+                    }
                 }
             }
 
@@ -382,6 +393,9 @@ private struct SpeechSettings: View {
         .onChange(of: settings.voiceFilterEnabled) {
             Task { await coordinator.reloadVoiceFilterIfNeeded() }
         }
+        .onChange(of: settings.cleanupProvider) {
+            Task { await coordinator.refreshCloudCleanupIfNeeded() }
+        }
     }
 
     /// Said plainly, because this is the setting that decides whether someone's
@@ -391,7 +405,7 @@ private struct SpeechSettings: View {
         case .onDevice:
             Localization.appString(
                 "settings.sourceExplanation.local",
-                fallback: "Recorded audio stays on this Mac. Local speech needs a model download and uses Mac storage and memory; optional cleanup may still send transcript text to its configured provider."
+                fallback: "Recorded audio stays on this Mac. Local speech needs a model download and uses Mac storage and memory; optional Polishing may still send transcript text to its configured provider."
             )
         case .remote:
             Localization.appString(
@@ -401,7 +415,7 @@ private struct SpeechSettings: View {
         case .cloud:
             Localization.appString(
                 "settings.sourceExplanation.cloud",
-                fallback: "About $3/month: transcription and cleanup are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
+                fallback: "About $3/month: transcription and Polishing are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
             )
         }
     }

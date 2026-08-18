@@ -272,7 +272,9 @@ struct AnthropicCleanupTests {
 struct CleanupProviderTests {
     @Test("Every preset provider is fully configured out of the box")
     func presetsAreComplete() {
-        for provider in CleanupProvider.allCases where provider != .custom {
+        // .custom is user-supplied; .plainsay is resolved from a Cloud
+        // subscription's minted credentials, not a preset base URL/model/key.
+        for provider in CleanupProvider.allCases where provider != .custom && provider != .plainsay {
             #expect(!provider.defaultBaseURL.isEmpty, "\(provider) has no base URL")
             #expect(!provider.defaultModel.isEmpty, "\(provider) has no default model")
             #expect(provider.signupURL != nil, "\(provider) has nowhere to get a key")
@@ -296,5 +298,45 @@ struct CleanupProviderTests {
         #expect(CleanupProvider.openRouter.usesOpenAIDialect)
         #expect(CleanupProvider.openAI.usesOpenAIDialect)
         #expect(CleanupProvider.custom.usesOpenAIDialect)
+    }
+}
+
+@Suite("Plainsay as the Polishing provider", .serialized)
+@MainActor
+struct PlainsayPolishingProviderTests {
+    private func freshSettings() -> PlainsaySettings {
+        PlainsaySettings(defaults: UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!)
+    }
+
+    @Test("Picking Plainsay for Polishing works with on-device transcription, not just Cloud")
+    func worksAlongsideOnDeviceTranscription() {
+        let settings = freshSettings()
+        settings.transcriptionSource = .onDevice
+        settings.cleanupEnabled = true
+        settings.cleanupProvider = .plainsay
+        ProviderFactory.cloudCredentials = CloudCredentials(cleanup: .init(baseURL: "u", model: "m", key: "k"))
+        defer { ProviderFactory.cloudCredentials = nil }
+
+        let cleaner = ProviderFactory.makeCleaner(settings)
+        #expect(cleaner is OpenAICompatibleCleanupService)
+    }
+
+    @Test("Without an active subscription, Plainsay Polishing falls back to no cleanup rather than failing")
+    func fallsBackWithoutCredentials() {
+        let settings = freshSettings()
+        settings.cleanupEnabled = true
+        settings.cleanupProvider = .plainsay
+        ProviderFactory.cloudCredentials = nil
+
+        let cleaner = ProviderFactory.makeCleaner(settings)
+        #expect(cleaner is NoCleanup)
+    }
+
+    @Test("cleanupIsConfigured is true for Plainsay once enabled, with no key required")
+    func plainsayNeedsNoStoredKey() {
+        let settings = freshSettings()
+        settings.cleanupEnabled = true
+        settings.cleanupProvider = .plainsay
+        #expect(settings.cleanupIsConfigured)
     }
 }

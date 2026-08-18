@@ -124,9 +124,15 @@ public final class PlainsaySettings {
     }
 
     /// Whether cleanup can actually run as configured.
+    ///
+    /// `.plainsay` is excluded from the key/model checks below: its
+    /// credential comes from a Cloud subscription, not a stored key, and
+    /// `CloudSettingsView` already shows its own accurate sign-in/subscribe
+    /// status — this just needs to not falsely warn "missing API key".
     public var cleanupIsConfigured: Bool {
-        cleanupEnabled
-            && !apiKey(for: cleanupProvider).isEmpty
+        guard cleanupEnabled else { return false }
+        if cleanupProvider == .plainsay { return true }
+        return !apiKey(for: cleanupProvider).isEmpty
             && !resolvedCleanupModel.isEmpty
             && !resolvedCleanupBaseURL.isEmpty
     }

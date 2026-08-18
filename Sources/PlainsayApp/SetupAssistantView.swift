@@ -99,7 +99,7 @@ struct SetupAssistantView: View {
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .language:
-                        LanguageSetupStep(settings: settings)
+                        LanguageSetupStep(settings: settings, coordinator: coordinator)
                     case .configure:
                         ConfigureSpeechSetupStep(
                             source: $speechSource,
@@ -329,7 +329,7 @@ private struct SpeechSetupStep: View {
                             "wizard.plan.cloud.feature1", fallback: "No model download or preparation"
                         ),
                         Localization.appString(
-                            "wizard.plan.cloud.feature2", fallback: "Transcription and cleanup included"
+                            "wizard.plan.cloud.feature2", fallback: "Transcription and Polishing included"
                         ),
                         Localization.appString("wizard.plan.cloud.feature3", fallback: "No API keys to configure"),
                     ],
@@ -470,7 +470,7 @@ private struct ConfigureSpeechSetupStep: View {
         case .cloud:
             Localization.appString(
                 "wizard.configure.detail.cloud",
-                fallback: "Sign in once. Plainsay Cloud supplies speech transcription and cleanup, with no large model to prepare on this Mac."
+                fallback: "Sign in once. Plainsay Cloud supplies speech transcription and Polishing, with no large model to prepare on this Mac."
             )
         case .onDevice:
             Localization.appString(
@@ -556,7 +556,7 @@ private struct ConfigureSpeechSetupStep: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             Label(
-                "Local refers to speech recognition and recorded audio. If transcript cleanup is enabled with a cloud provider, transcript text may still be sent to that provider; turn cleanup off for a fully local text path.",
+                "Local refers to speech recognition and recorded audio. If Polishing is enabled with a cloud provider, transcript text may still be sent to that provider; turn Polishing off for a fully local text path.",
                 systemImage: "info.circle"
             )
             .font(.caption)
@@ -721,6 +721,7 @@ private struct ConfigureSpeechSetupStep: View {
 /// separate decision from *how* audio gets transcribed.
 private struct LanguageSetupStep: View {
     @Bindable var settings: PlainsaySettings
+    let coordinator: DictationCoordinator
     // Doesn't gate Continue — cleanup is optional and falls back to the raw
     // transcript without a key.
     @State private var editingKeyRevision = 0
@@ -765,7 +766,7 @@ private struct LanguageSetupStep: View {
 
     private var editingDetails: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Editing", systemImage: "pencil.and.outline")
+            Label("Polishing", systemImage: "pencil.and.outline")
                 .font(.headline)
 
             Toggle("Rewrite as written text (removes filler words, fixes punctuation)", isOn: $settings.cleanupEnabled)
@@ -774,46 +775,58 @@ private struct LanguageSetupStep: View {
             if settings.cleanupEnabled {
                 Picker("Editing service", selection: $settings.cleanupProvider) {
                     ForEach(CleanupProvider.allCases) { provider in
-                        Text(provider.displayName).tag(provider)
+                        Text(
+                            provider == .plainsay
+                                ? "\(provider.displayName) — easiest, no limits, $3/mo"
+                                : provider.displayName
+                        )
+                        .tag(provider)
                     }
                 }
                 .labelsHidden()
-
-                if settings.cleanupProvider == .custom {
-                    TextField(
-                        "Base URL",
-                        text: $settings.cleanupBaseURL,
-                        prompt: Text("https://example.com/v1")
-                    )
-                    .textFieldStyle(.roundedBorder)
+                .onChange(of: settings.cleanupProvider) {
+                    Task { await coordinator.refreshCloudCleanupIfNeeded() }
                 }
 
-                ModelField(
-                    label: Localization.appString("wizard.modelLabel", fallback: "Model"),
-                    suggestions: settings.cleanupProvider.suggestedModels,
-                    placeholder: settings.cleanupProvider.defaultModel.isEmpty
-                        ? Localization.appString("wizard.modelPlaceholder", fallback: "model name")
-                        : settings.cleanupProvider.defaultModel,
-                    value: $settings.cleanupModel
-                )
-
-                APIKeyField(
-                    title: Localization.appFormat(
-                        "wizard.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
-                    ),
-                    signupURL: settings.cleanupProvider.signupURL,
-                    currentKey: settings.apiKey(for: settings.cleanupProvider),
-                    onSave: { key in
-                        settings.setAPIKey(key, for: settings.cleanupProvider)
-                        editingKeyRevision += 1
+                if settings.cleanupProvider == .plainsay {
+                    CloudSettingsView(cloud: coordinator.cloud, onCredentialsChanged: {}, showsUsage: false)
+                } else {
+                    if settings.cleanupProvider == .custom {
+                        TextField(
+                            "Base URL",
+                            text: $settings.cleanupBaseURL,
+                            prompt: Text("https://example.com/v1")
+                        )
+                        .textFieldStyle(.roundedBorder)
                     }
-                )
-                .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
 
-                if !settings.cleanupIsConfigured {
-                    Text("No key yet — Plainsay will insert the raw transcript until one is saved.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                    ModelField(
+                        label: Localization.appString("wizard.modelLabel", fallback: "Model"),
+                        suggestions: settings.cleanupProvider.suggestedModels,
+                        placeholder: settings.cleanupProvider.defaultModel.isEmpty
+                            ? Localization.appString("wizard.modelPlaceholder", fallback: "model name")
+                            : settings.cleanupProvider.defaultModel,
+                        value: $settings.cleanupModel
+                    )
+
+                    APIKeyField(
+                        title: Localization.appFormat(
+                            "wizard.apiKeyTitle", fallback: "%@ API key", settings.cleanupProvider.displayName
+                        ),
+                        signupURL: settings.cleanupProvider.signupURL,
+                        currentKey: settings.apiKey(for: settings.cleanupProvider),
+                        onSave: { key in
+                            settings.setAPIKey(key, for: settings.cleanupProvider)
+                            editingKeyRevision += 1
+                        }
+                    )
+                    .id("\(settings.cleanupProvider.rawValue)-\(editingKeyRevision)")
+
+                    if !settings.cleanupIsConfigured {
+                        Text("No key yet — Plainsay will insert the raw transcript until one is saved.")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                 }
             }
         }
@@ -1279,7 +1292,7 @@ private struct ReadySetupStep: View {
         case .cloud:
             Localization.appString(
                 "wizard.ready.speechConfig.detail.cloud",
-                fallback: "About $3/month · transcription and cleanup included"
+                fallback: "About $3/month · transcription and Polishing included"
             )
         }
     }

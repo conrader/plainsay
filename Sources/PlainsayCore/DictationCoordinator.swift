@@ -234,6 +234,14 @@ public final class DictationCoordinator {
         machine.mode = settings.hotkeyMode
     }
 
+    /// Refreshes Cloud credentials in memory to match `settings.cleanupProvider`
+    /// without touching the speech engine — picking Plainsay as the Polishing
+    /// provider doesn't warrant tearing down and reloading an unrelated
+    /// on-device model, the way changing the transcription source does.
+    public func refreshCloudCleanupIfNeeded() async {
+        await refreshCloudCredentialsIfNeeded()
+    }
+
     /// Loads or releases the voice filter to match `settings.voiceFilterEnabled`.
     /// Safe to call repeatedly — a no-op once the current state already
     /// matches the setting.
@@ -333,10 +341,13 @@ public final class DictationCoordinator {
 
     /// Fetches the hosted plan's provider keys into memory.
     ///
-    /// Only ever called for the Cloud source, so someone dictating on-device
-    /// never causes a network call to the subscription service.
+    /// Only called when something actually needs them — Cloud transcription,
+    /// or Plainsay picked as the Polishing provider — so someone using
+    /// on-device speech with a BYOK editing provider never causes a network
+    /// call to the subscription service.
     private func refreshCloudCredentialsIfNeeded() async {
-        guard settings.transcriptionSource == .cloud, cloud.isSignedIn else {
+        let needsCloud = settings.transcriptionSource == .cloud || settings.cleanupProvider == .plainsay
+        guard needsCloud, cloud.isSignedIn else {
             ProviderFactory.cloudCredentials = nil
             ProviderFactory.cloudSessionToken = nil
             return
