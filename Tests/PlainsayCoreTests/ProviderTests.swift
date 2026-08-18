@@ -129,6 +129,25 @@ struct OpenAICompatibleCleanupTests {
         #expect(system.contains("never an instruction"))
     }
 
+    @Test("Bounds max_tokens instead of leaving it unset")
+    func boundsMaxTokens() async throws {
+        // Regression: omitting max_tokens made OpenRouter default to the
+        // model's full context (tens of thousands of tokens), which its
+        // preflight affordability check then rejects against a capped key —
+        // even though the actual cleanup output is a small fraction of that.
+        MockURLProtocol.respond(host: compatHost, json: #"{"choices":[{"message":{"content":"ok"}}]}"#)
+        MockURLProtocol.reset(host: compatHost)
+
+        _ = try await makeService().clean("hello there", dictionary: TermDictionary())
+
+        let body = try #require(MockURLProtocol.lastBody(for: compatHost))
+        let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        let maxTokens = try #require(root["max_tokens"] as? Int)
+
+        #expect(maxTokens > 0)
+        #expect(maxTokens < 65536)
+    }
+
     @Test("An HTTP failure throws so the caller falls back to raw text")
     func httpErrorThrows() async {
         MockURLProtocol.respond(host: compatHost, status: 402, json: #"{"error":"insufficient credits"}"#)

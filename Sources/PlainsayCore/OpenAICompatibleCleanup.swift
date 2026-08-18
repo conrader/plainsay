@@ -54,6 +54,11 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
         let body: [String: Any] = [
             "model": model,
             "temperature": 0,
+            // Without this, OpenRouter defaults to the model's full context
+            // (tens of thousands of tokens) and its preflight affordability
+            // check rejects that against a capped key, even though the actual
+            // output is a small fraction of it.
+            "max_tokens": max(1024, trimmed.count),
             "messages": [
                 ["role": "system", "content": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint())],
                 ["role": "user", "content": CleanupPrompt.userMessage(trimmed)],
