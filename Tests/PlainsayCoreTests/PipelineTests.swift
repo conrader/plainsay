@@ -474,6 +474,43 @@ struct PipelineTests {
         #expect(harness.inserter.inserted.last == "The cat sat.")
     }
 
+    @Test("A revision that would wipe most of the line during recording is deferred to the final reconciliation, not typed live")
+    func liveTypingDefersLargeHeadRevisions() async throws {
+        let harness = Harness()
+        harness.settings.liveTypingEnabled = true
+        harness.recorder.duration = 3
+        harness.engine.transcript = "uh the deploy went out around noon"
+        harness.cleaner.output = "The deploy went out around noon and everyone is relieved."
+        await harness.ready()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await harness.waitUntil { harness.inserter.inserted.contains("uh the deploy went out around noon") }
+        #expect(harness.engine.callCount == 1)
+
+        // The next pass drops the filler word at the very front and extends
+        // the tail — a head revision, not a tail one. Diffed against what's
+        // already on screen, that's a near-total mismatch from character 0.
+        harness.engine.transcript = "the deploy went out around noon and everyone is happy"
+        try await harness.waitUntil { harness.engine.callCount == 2 }
+        try await Task.sleep(for: .milliseconds(50))
+
+        // Nothing was deleted live: wiping and retyping almost the entire
+        // line while the user is still mid-sentence is more disruptive than
+        // deferring the correction to the one reconciliation pass at the end.
+        #expect(harness.inserter.deletedCounts.isEmpty)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+
+        // The final reconciliation still corrects everything in one pass,
+        // exactly as it would with no live typing at all.
+        #expect(harness.inserter.inserted.last == "The deploy went out around noon and everyone is relieved.")
+    }
+
     @Test("Ending a recording waits for an in-flight live-typing preview pass before starting the final reconciliation")
     func liveTypingWaitsForInFlightPreviewBeforeFinalReconciliation() async throws {
         let harness = Harness()

@@ -744,6 +744,16 @@ public final class DictationCoordinator {
             return
         }
         let (deleteCount, insertText) = Self.diff(from: liveTypedText, to: text)
+        // A streaming pass revising more than half of what's already on
+        // screen is the ASR revising the head (a filler word dropping, an
+        // early guess firming up), not the tail — wiping and retyping most
+        // of the line while the user is still mid-sentence reads as
+        // corruption, not a correction. Skip the pass entirely, including
+        // the `liveTypedText` update below, so the next diff still compares
+        // against what's actually on screen; `reconcileLiveTyping` always
+        // runs unconditionally once recording stops, so nothing is lost —
+        // just deferred to that one clean pass instead of flickering live.
+        guard deleteCount <= liveTypedText.count / 2 else { return }
         if deleteCount > 0 {
             await inserter.deleteBackward(deleteCount)
         }
