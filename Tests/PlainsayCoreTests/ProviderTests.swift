@@ -291,8 +291,8 @@ struct AnthropicCleanupTests {
 struct CleanupProviderTests {
     @Test("Every preset provider is fully configured out of the box")
     func presetsAreComplete() {
-        // .custom is user-supplied; .plainsay is resolved from a Cloud
-        // subscription's minted credentials, not a preset base URL/model/key.
+        // .custom is user-supplied; .plainsay is proxied through Plainsay's
+        // own server with the session token, not a preset base URL/model/key.
         for provider in CleanupProvider.allCases where provider != .custom && provider != .plainsay {
             #expect(!provider.defaultBaseURL.isEmpty, "\(provider) has no base URL")
             #expect(!provider.defaultModel.isEmpty, "\(provider) has no default model")
@@ -333,11 +333,11 @@ struct PlainsayPolishingProviderTests {
         settings.transcriptionSource = .onDevice
         settings.cleanupEnabled = true
         settings.cleanupProvider = .plainsay
-        ProviderFactory.cloudCredentials = CloudCredentials(cleanup: .init(baseURL: "u", model: "m", key: "k"))
-        defer { ProviderFactory.cloudCredentials = nil }
+        ProviderFactory.cloudSessionToken = "psk_test"
+        defer { ProviderFactory.cloudSessionToken = nil }
 
         let cleaner = ProviderFactory.makeCleaner(settings)
-        #expect(cleaner is OpenAICompatibleCleanupService)
+        #expect(cleaner is CloudCleanupService)
     }
 
     @Test("Without an active subscription, Plainsay Polishing falls back to no cleanup rather than failing")
@@ -345,7 +345,7 @@ struct PlainsayPolishingProviderTests {
         let settings = freshSettings()
         settings.cleanupEnabled = true
         settings.cleanupProvider = .plainsay
-        ProviderFactory.cloudCredentials = nil
+        ProviderFactory.cloudSessionToken = nil
 
         let cleaner = ProviderFactory.makeCleaner(settings)
         #expect(cleaner is NoCleanup)

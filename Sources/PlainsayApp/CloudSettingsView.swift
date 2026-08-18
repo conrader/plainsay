@@ -196,14 +196,14 @@ struct CloudSettingsView: View {
 
     private func signOut() {
         cloud.signOut()
-        if ProviderFactory.cloudCredentials != nil || ProviderFactory.cloudSessionToken != nil {
+        if ProviderFactory.cloudSessionToken != nil {
             clearCloudState()
             onCredentialsChanged()
         }
         message = nil
     }
 
-    /// Pulls account state and, if subscribed, the provider credentials.
+    /// Pulls account state and, if subscribed, the session token.
     private func refresh() async {
         guard !refreshing else { return }
         refreshing = true
@@ -212,19 +212,13 @@ struct CloudSettingsView: View {
         await run(nil) {
             let account = try await cloud.refreshAccount()
             guard account.isActive else {
-                if ProviderFactory.cloudCredentials != nil || ProviderFactory.cloudSessionToken != nil {
+                if ProviderFactory.cloudSessionToken != nil {
                     clearCloudState()
                     onCredentialsChanged()
                 }
                 return
             }
-            let credentials = try await cloud.refreshCredentials()
-            // The transcription engine authenticates with the session token
-            // directly, so it has to be refreshed in the same pass as the
-            // cleanup credentials — a stale token would leave transcription
-            // failing silently while cleanup kept working.
-            if ProviderFactory.cloudCredentials != credentials || ProviderFactory.cloudSessionToken != cloud.sessionToken {
-                ProviderFactory.cloudCredentials = credentials
+            if ProviderFactory.cloudSessionToken != cloud.sessionToken {
                 ProviderFactory.cloudSessionToken = cloud.sessionToken
                 onCredentialsChanged()
             }
@@ -232,7 +226,6 @@ struct CloudSettingsView: View {
     }
 
     private func clearCloudState() {
-        ProviderFactory.cloudCredentials = nil
         ProviderFactory.cloudSessionToken = nil
     }
 

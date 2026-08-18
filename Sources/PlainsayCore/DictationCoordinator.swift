@@ -339,16 +339,16 @@ public final class DictationCoordinator {
         await loadModel(generation: generation)
     }
 
-    /// Fetches the hosted plan's provider keys into memory.
+    /// Confirms the hosted plan is actually active and puts the session token
+    /// where `CloudTranscriptionEngine` and `CloudCleanupService` can find it.
     ///
-    /// Only called when something actually needs them — Cloud transcription,
-    /// or Plainsay picked as the Polishing provider — so someone using
-    /// on-device speech with a BYOK editing provider never causes a network
-    /// call to the subscription service.
+    /// Only called when something actually needs it — Cloud transcription, or
+    /// Plainsay picked as the Polishing provider — so someone using on-device
+    /// speech with a BYOK editing provider never causes a network call to the
+    /// subscription service.
     private func refreshCloudCredentialsIfNeeded() async {
         let needsCloud = settings.transcriptionSource == .cloud || settings.cleanupProvider == .plainsay
         guard needsCloud, cloud.isSignedIn else {
-            ProviderFactory.cloudCredentials = nil
             ProviderFactory.cloudSessionToken = nil
             return
         }
@@ -356,19 +356,13 @@ public final class DictationCoordinator {
         do {
             let account = try await cloud.refreshAccount()
             guard account.isActive else {
-                ProviderFactory.cloudCredentials = nil
                 ProviderFactory.cloudSessionToken = nil
                 Log.model.info("Plainsay Cloud subscription is \(account.status, privacy: .public)")
                 return
             }
-            ProviderFactory.cloudCredentials = try await cloud.refreshCredentials()
-            // The transcription engine authenticates with this directly, so
-            // both have to land together — a stale token with fresh
-            // credentials would make transcription fail while cleanup works.
             ProviderFactory.cloudSessionToken = cloud.sessionToken
-            Log.model.info("Plainsay Cloud credentials loaded into memory")
+            Log.model.info("Plainsay Cloud session token loaded into memory")
         } catch {
-            ProviderFactory.cloudCredentials = nil
             ProviderFactory.cloudSessionToken = nil
             Log.model.error("Plainsay Cloud unavailable: \(error.localizedDescription, privacy: .public)")
         }

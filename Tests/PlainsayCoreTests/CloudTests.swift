@@ -27,30 +27,13 @@ struct PlainsayCloudTests {
         )
     }
 
-    @Test("Cleanup credentials arrive and are held in memory")
-    func fetchesCredentials() async throws {
-        // No "transcription" object: transcription is proxied through our own
-        // server with the session token, not a direct provider credential —
-        // deAPI has no per-subscriber key to hand out.
-        MockURLProtocol.respond(host: cloudHost, json: """
-        {"cleanup":{"baseURL":"https://openrouter.ai/api/v1","model":"google/gemini-3.1-flash-lite","key":"sk-or-minted"}}
-        """)
-
-        let client = makeClient()
-        let credentials = try await client.refreshCredentials()
-
-        #expect(credentials.cleanup.key == "sk-or-minted")
-        #expect(credentials.cleanup.model == "google/gemini-3.1-flash-lite")
-        #expect(client.credentials == credentials)
-    }
-
     @Test("A 402 is reported as a subscription problem, not a generic failure")
     func surfacesMissingSubscription() async {
         MockURLProtocol.respond(host: cloudHost, status: 402, json: #"{"error":"No active subscription","status":"canceled"}"#)
 
         let client = makeClient()
         await #expect(throws: CloudError.noSubscription(status: "canceled")) {
-            try await client.refreshCredentials()
+            try await client.refreshAccount()
         }
     }
 
@@ -58,7 +41,7 @@ struct PlainsayCloudTests {
     func refusesWithoutToken() async {
         let client = makeClient(token: nil)
         await #expect(throws: CloudError.notSignedIn) {
-            try await client.refreshCredentials()
+            try await client.refreshAccount()
         }
     }
 
@@ -82,19 +65,17 @@ struct PlainsayCloudTests {
         #expect(try await makeClient().refreshAccount().isActive)
     }
 
-    @Test("Signing out drops the token and everything spendable")
+    @Test("Signing out drops the token")
     func signOutClears() async throws {
-        MockURLProtocol.respond(host: cloudHost, json: """
-        {"transcription":{"baseURL":"u","model":"m","key":"k"},"cleanup":{"baseURL":"u","model":"m","key":"k"}}
-        """)
+        MockURLProtocol.respond(host: cloudHost, json: #"{"status":"active","usage":{"usedSeconds":0,"limitSeconds":1}}"#)
 
         let client = makeClient()
-        _ = try await client.refreshCredentials()
-        #expect(client.credentials != nil)
+        _ = try await client.refreshAccount()
+        #expect(client.account != nil)
 
         client.signOut()
 
-        #expect(client.credentials == nil)
+        #expect(client.account == nil)
         #expect(!client.isSignedIn)
     }
 }
@@ -131,12 +112,12 @@ struct OnDeviceDefaultTests {
         #expect(TranscriptionSource.cloud.leavesTheMachine)
     }
 
-    @Test("Choosing Cloud without credentials does not silently fall back")
+    @Test("Choosing Cloud without a session token does not silently fall back")
     func cloudWithoutCredentialsReportsFailure() async {
         let settings = freshSettings()
         settings.transcriptionSource = .cloud
         settings.model = .parakeetTDT06BV3
-        ProviderFactory.cloudCredentials = nil
+        ProviderFactory.cloudSessionToken = nil
 
         let box = StateBox()
         let engine = ProviderFactory.makeEngine(settings) { box.value = $0 }
@@ -156,26 +137,19 @@ struct OnDeviceDefaultTests {
         }
     }
 
-    @Test("Cloud credentials are never written to settings")
+    @Test("The Cloud session token is never written to settings")
     func credentialsAreNotPersisted() {
         let suite = "plainsay.tests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         let settings = PlainsaySettings(defaults: defaults)
         settings.transcriptionSource = .cloud
 
-        ProviderFactory.cloudCredentials = CloudCredentials(
-            cleanup: .init(baseURL: "u", model: "m", key: "sk-or-secret")
-        )
         ProviderFactory.cloudSessionToken = "psk_secret"
-        defer {
-            ProviderFactory.cloudCredentials = nil
-            ProviderFactory.cloudSessionToken = nil
-        }
+        defer { ProviderFactory.cloudSessionToken = nil }
 
-        // Neither the minted OpenRouter key nor the session token that
-        // authenticates transcription must survive a restart on disk.
+        // The token that authenticates transcription and cleanup must not
+        // survive a restart on disk.
         let dump = defaults.dictionaryRepresentation().description
-        #expect(!dump.contains("sk-or-secret"))
         #expect(!dump.contains("psk_secret"))
     }
 }
@@ -244,5 +218,58 @@ struct CloudTranscriptionEngineTests {
         let text = try await makeEngine().transcribe(samples: [], prompt: nil)
         #expect(text.isEmpty)
         #expect(MockURLProtocol.lastRequest(for: cloudTranscribeHost) == nil)
+    }
+}
+
+let cloudCleanupHost = "cloud-cleanup.plainsay.test"
+
+@Suite("Cloud cleanup service", .serialized)
+struct CloudCleanupServiceTests {
+    private func makeService() -> CloudCleanupService {
+        CloudCleanupService(
+            baseURL: "https://\(cloudCleanupHost)",
+            sessionToken: "psk_test",
+            session: MockURLProtocol.session()
+        )
+    }
+
+    @Test("Posts the transcript and vocabulary hint with the session token, not a provider key")
+    func requestShape() async throws {
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"I'll be there Tuesday."}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        let result = try await makeService()
+            .clean("um i'll uh be there tuesday", dictionary: TermDictionary(terms: ["Plainsay"]))
+
+        #expect(result == "I'll be there Tuesday.")
+
+        let request = try #require(MockURLProtocol.lastRequest(for: cloudCleanupHost))
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer psk_test")
+        #expect(request.url?.path == "/v1/cleanup")
+
+        let body = try #require(MockURLProtocol.lastBody(for: cloudCleanupHost))
+        let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(root["transcript"] as? String == "um i'll uh be there tuesday")
+        #expect((root["terms"] as? String)?.contains("Plainsay") == true)
+        // The system prompt lives server-side now — the request carries no
+        // API key and no prompt text, only the transcript and a vocabulary hint.
+        #expect(root["key"] == nil)
+    }
+
+    @Test("A 402 reports the subscription as the problem")
+    func mapsSubscriptionRequired() async {
+        MockURLProtocol.respond(host: cloudCleanupHost, status: 402, json: #"{"error":"No active subscription"}"#)
+
+        await #expect(throws: CleanupError.self) {
+            try await self.makeService().clean("hello", dictionary: TermDictionary())
+        }
+    }
+
+    @Test("Empty transcripts never reach the network")
+    func emptyTranscriptSkipsUpload() async throws {
+        MockURLProtocol.reset(host: cloudCleanupHost)
+        let text = try await makeService().clean("   ", dictionary: TermDictionary())
+        #expect(text.isEmpty)
+        #expect(MockURLProtocol.lastRequest(for: cloudCleanupHost) == nil)
     }
 }

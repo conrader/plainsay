@@ -6,15 +6,11 @@ import Foundation
 /// coordinator never has to know a provider exists.
 @MainActor
 public enum ProviderFactory {
-    /// Credentials for the current Plainsay Cloud session, if any.
+    /// Session token for `CloudTranscriptionEngine` and `CloudCleanupService`.
     ///
-    /// Held here rather than in settings because they must never be persisted:
-    /// settings write through to `UserDefaults`, and the deAPI key in here is
-    /// shared between every subscriber.
-    public static var cloudCredentials: CloudCredentials?
-    /// Session token for `CloudTranscriptionEngine`. Set alongside
-    /// `cloudCredentials` — kept separate because it authenticates a proxy
-    /// call to our own server, not a direct call to a provider.
+    /// Held here rather than in settings because it must never be persisted:
+    /// settings write through to `UserDefaults`, and this authenticates every
+    /// proxied call to our own server for as long as it's in memory.
     public static var cloudSessionToken: String?
 
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
@@ -23,14 +19,10 @@ public enum ProviderFactory {
         // Polishing via Plainsay itself is independent of which transcription
         // source is active — someone dictating entirely on-device can still
         // pick this as their editing provider. No stored key to check, only
-        // whether a subscription actually minted one into memory.
+        // whether a subscription is active right now.
         if settings.cleanupProvider == .plainsay {
-            guard let cloud = cloudCredentials else { return NoCleanup() }
-            return OpenAICompatibleCleanupService(
-                baseURL: cloud.cleanup.baseURL,
-                apiKey: cloud.cleanup.key,
-                model: cloud.cleanup.model
-            )
+            guard let token = cloudSessionToken else { return NoCleanup() }
+            return CloudCleanupService(baseURL: PlainsayCloudClient.defaultBaseURL, sessionToken: token)
         }
 
         let provider = settings.cleanupProvider
@@ -69,7 +61,7 @@ public enum ProviderFactory {
             return makeOnDeviceEngine(settings, onState: onState)
 
         case .cloud:
-            guard cloudCredentials != nil, let token = cloudSessionToken else {
+            guard let token = cloudSessionToken else {
                 // Signed out, unsubscribed, or the key fetch failed. Say so
                 // rather than silently transcribing on-device: the user picked
                 // Cloud, and quietly doing something else hides a billing

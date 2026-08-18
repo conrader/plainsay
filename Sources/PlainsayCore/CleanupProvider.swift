@@ -9,9 +9,10 @@ import Foundation
 public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiable {
     /// Plainsay's own hosted Polishing, via an active Plainsay Cloud
     /// subscription — no key to find or paste in, no per-provider usage
-    /// limit. `ProviderFactory` resolves this from `cloudCredentials`
-    /// instead of a stored key; `defaultBaseURL`/`defaultModel`/etc. below
-    /// are unused placeholders for this case, never actually read.
+    /// limit. `ProviderFactory` resolves this to `CloudCleanupService`,
+    /// proxied through Plainsay's own server with the session token rather
+    /// than a stored key; `defaultBaseURL`/`defaultModel`/etc. below are
+    /// unused placeholders for this case, never actually read.
     case plainsay
     case gemini
     case anthropic
@@ -109,9 +110,10 @@ public enum CleanupProvider: String, Codable, CaseIterable, Sendable, Identifiab
         }
     }
 
-    /// Gemini and Anthropic each have their own REST shape; everything else
-    /// (including `.plainsay`, proxied as an OpenAI-compatible endpoint)
-    /// shares one OpenAI-dialect client.
+    /// Gemini and Anthropic each have their own REST shape; the BYOK
+    /// providers share one OpenAI-dialect client. `.plainsay` short-circuits
+    /// before this is ever consulted — it has its own proxied client — so its
+    /// value here is never read.
     public var usesOpenAIDialect: Bool {
         self != .gemini && self != .anthropic
     }

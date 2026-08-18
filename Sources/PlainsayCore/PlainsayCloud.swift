@@ -1,27 +1,6 @@
 import Foundation
 import Observation
 
-/// Credentials handed out by the Plainsay service for the current session.
-///
-/// Held in memory and nowhere else. Not the Keychain, not `UserDefaults`, not
-/// a cache file — they are re-fetched on every launch.
-///
-/// Transcription is deliberately absent here. deAPI does not yet support
-/// minting a key per subscriber the way OpenRouter does, so there is no safe
-/// individual credential to hand out — only one key shared by everyone. Hand
-/// that out and its life on any one Mac becomes the size of the leak surface.
-/// Transcription is proxied through `CloudTranscriptionEngine` instead, using
-/// the session token below; the deAPI key never reaches the client.
-public struct CloudCredentials: Sendable, Equatable {
-    public struct Endpoint: Sendable, Equatable {
-        public let baseURL: String
-        public let model: String
-        public let key: String
-    }
-
-    public let cleanup: Endpoint
-}
-
 public enum CloudError: LocalizedError, Equatable {
     case notSignedIn
     case noSubscription(status: String)
@@ -66,7 +45,6 @@ public enum CloudError: LocalizedError, Equatable {
 @MainActor
 @Observable
 public final class PlainsayCloudClient {
-    public private(set) var credentials: CloudCredentials?
     public private(set) var account: Account?
 
     public struct Account: Sendable, Equatable {
@@ -109,7 +87,6 @@ public final class PlainsayCloudClient {
 
     public func signOut() {
         tokenStore.token = nil
-        credentials = nil
         account = nil
     }
 
@@ -148,26 +125,6 @@ public final class PlainsayCloudClient {
         )
         self.account = account
         return account
-    }
-
-    /// Fetches the provider credentials for this session.
-    @discardableResult
-    public func refreshCredentials() async throws -> CloudCredentials {
-        let json = try await get("/v1/keys")
-
-        func endpoint(_ key: String) throws -> CloudCredentials.Endpoint {
-            guard
-                let raw = json[key] as? [String: Any],
-                let baseURL = raw["baseURL"] as? String,
-                let model = raw["model"] as? String,
-                let apiKey = raw["key"] as? String
-            else { throw CloudError.malformedResponse }
-            return .init(baseURL: baseURL, model: model, key: apiKey)
-        }
-
-        let credentials = CloudCredentials(cleanup: try endpoint("cleanup"))
-        self.credentials = credentials
-        return credentials
     }
 
     public func checkoutURL(annual: Bool) async throws -> URL {
