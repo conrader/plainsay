@@ -113,6 +113,17 @@ struct TermDictionaryTests {
 
         #expect(dictionary.applyCorrections(to: "hi there") == "hi there")
     }
+
+    @Test("A short invented term is corrected even two edits away")
+    func correctionsFixShortTermTwoEditsAway() {
+        // Regression: "revised"/"advised" are exactly what an ASR mishears
+        // an unfamiliar 5-letter word like "Vised" as, and both sit two
+        // edits away — a distance-1 budget missed this in practice.
+        let dictionary = TermDictionary(terms: ["Vised"])
+
+        #expect(dictionary.applyCorrections(to: "I opened revised and typed a command") == "I opened Vised and typed a command")
+        #expect(dictionary.applyCorrections(to: "I opened advised and typed a command") == "I opened Vised and typed a command")
+    }
 }
 
 @Suite("Transcript normalization")

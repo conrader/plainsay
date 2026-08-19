@@ -198,8 +198,14 @@ public struct TermDictionary: Codable, Sendable, Equatable {
     private static func maxAllowedDistance(forKeyLength length: Int) -> Int {
         switch length {
         case 0...3: 0
-        case 4...5: 1
-        case 6...9: 2
+        // A short invented/technical term ("Vised") is exactly the kind of
+        // word ASR mangles hardest, and a distance-1 budget mostly missed
+        // it: common mishearings like "revised" or "advised" sit two edits
+        // away, not one. Terms this short only exist in the dictionary
+        // because someone deliberately added them, so the same
+        // accept-more-editing-for-deliberate-terms tradeoff the longer
+        // brackets already make applies here too.
+        case 4...9: 2
         default: 3
         }
     }
