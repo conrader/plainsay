@@ -162,9 +162,19 @@ func respond(_ connection: NWConnection, status: Int, json: String) async {
 
 // MARK: - Multipart + transcription
 
+struct AudioField {
+    let data: Data
+    /// The part's own declared filename, if any — used only to pick a
+    /// matching temp-file extension so `AVAudioFile` gets a real container
+    /// hint. Callers may upload WAV or AAC/m4a; without this, a bare
+    /// extensionless temp file made `AVAudioFile` guess wrong for anything
+    /// that wasn't WAV.
+    let filename: String?
+}
+
 /// Extracts the `audio` file field from a `multipart/form-data` body given
 /// the boundary from the request's Content-Type header.
-func extractAudioField(request: ParsedRequest) throws -> Data {
+func extractAudioField(request: ParsedRequest) throws -> AudioField {
     guard let contentType = request.headers["content-type"], contentType.contains("multipart/form-data") else {
         throw HTTPError(status: 400, message: "expected multipart/form-data")
     }
@@ -185,18 +195,33 @@ func extractAudioField(request: ParsedRequest) throws -> Data {
         if content.suffix(2) == Data("\r\n".utf8) {
             content = content.dropLast(2)
         }
-        return Data(content)
+
+        var filename: String?
+        if let range = partHeaders.range(of: "filename=\"") {
+            let rest = partHeaders[range.upperBound...]
+            if let end = rest.firstIndex(of: "\"") {
+                filename = String(rest[rest.startIndex..<end])
+            }
+        }
+
+        return AudioField(data: Data(content), filename: filename)
     }
     throw HTTPError(status: 400, message: "no 'audio' field in multipart body")
 }
 
 func transcribe(request: ParsedRequest) async throws -> String {
-    let audioData = try extractAudioField(request: request)
-    guard !audioData.isEmpty else { throw HTTPError(status: 400, message: "empty audio upload") }
+    let field = try extractAudioField(request: request)
+    guard !field.data.isEmpty else { throw HTTPError(status: 400, message: "empty audio upload") }
 
+    // AVAudioFile picks its decoder from the file extension, so an
+    // extensionless temp file guesses wrong for anything but WAV. Default to
+    // .wav only when the upload genuinely didn't name itself.
+    let ext = field.filename.flatMap { name in
+        name.contains(".") ? "." + name.split(separator: ".").last! : nil
+    } ?? ".wav"
     let tempURL = FileManager.default.temporaryDirectory
-        .appendingPathComponent("mini-transcribe-\(UUID().uuidString)")
-    try audioData.write(to: tempURL)
+        .appendingPathComponent("mini-transcribe-\(UUID().uuidString)\(ext)")
+    try field.data.write(to: tempURL)
     defer { try? FileManager.default.removeItem(at: tempURL) }
 
     let samples = try loadSamples(fileURL: tempURL)

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.plainsay.minitranscribe</string>
+	<key>ProgramArguments</key>
+	<array>
+		<!-- caffeinate -is: keeps the Mini awake (system + idle sleep both
+		     blocked) for as long as this process is alive. No sudo/pmset
+		     change needed — the assertion goes away automatically if the
+		     service is ever stopped. -->
+		<string>/usr/bin/caffeinate</string>
+		<string>-is</string>
+		<string>/Users/konradsierzputowski/plainsay/.build/release/MiniTranscribeServer</string>
+		<string>--port</string>
+		<string>8098</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/konradsierzputowski/plainsay</string>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/Users/konradsierzputowski/Library/Logs/plainsay-minitranscribe.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/konradsierzputowski/Library/Logs/plainsay-minitranscribe.log</string>
+</dict>
+</plist>
