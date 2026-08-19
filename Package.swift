@@ -16,8 +16,6 @@ let package = Package(
         // releases, so keep the integration on the version it is tested with.
         .package(url: "https://github.com/FluidInference/FluidAudio.git", exact: "0.15.6"),
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.5"),
-        // Only for MiniTranscribeServer's HTTP layer — not linked into the app.
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.99.0"),
     ],
     targets: [
         .target(
@@ -46,10 +44,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "MiniTranscribeServer",
-            dependencies: [
-                "PlainsayCore",
-                .product(name: "Vapor", package: "vapor"),
-            ]
+            dependencies: ["PlainsayCore"]
         ),
     ]
 )
