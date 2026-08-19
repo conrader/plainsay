@@ -209,16 +209,30 @@ func extractAudioField(request: ParsedRequest) throws -> AudioField {
     throw HTTPError(status: 400, message: "no 'audio' field in multipart body")
 }
 
+/// The client-supplied filename's extension, restricted to a handful of
+/// alphanumeric characters — long enough for "wav"/"m4a"/"mp4" and nothing
+/// that could carry a "/", "..", or a null byte into a filesystem path.
+func sanitizedExtension(from filename: String?) -> String {
+    guard
+        let filename, let dot = filename.lastIndex(of: "."),
+        case let candidate = filename[filename.index(after: dot)...],
+        !candidate.isEmpty, candidate.count <= 8,
+        candidate.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber) })
+    else { return ".wav" }
+    return "." + candidate.lowercased()
+}
+
 func transcribe(request: ParsedRequest) async throws -> String {
     let field = try extractAudioField(request: request)
     guard !field.data.isEmpty else { throw HTTPError(status: 400, message: "empty audio upload") }
 
     // AVAudioFile picks its decoder from the file extension, so an
     // extensionless temp file guesses wrong for anything but WAV. Default to
-    // .wav only when the upload genuinely didn't name itself.
-    let ext = field.filename.flatMap { name in
-        name.contains(".") ? "." + name.split(separator: ".").last! : nil
-    } ?? ".wav"
+    // .wav only when the upload genuinely didn't name itself. The extension
+    // is client-supplied, so it's allowlisted to bare alphanumerics before
+    // it ever touches a path — nothing that could smuggle a "/" or ".."
+    // through `appendingPathComponent`.
+    let ext = sanitizedExtension(from: field.filename)
     let tempURL = FileManager.default.temporaryDirectory
         .appendingPathComponent("mini-transcribe-\(UUID().uuidString)\(ext)")
     try field.data.write(to: tempURL)
