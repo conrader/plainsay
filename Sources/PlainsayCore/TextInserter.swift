@@ -102,6 +102,11 @@ public struct PasteboardTextInserter: TextInserting {
 
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
+        // `changeCount` increments on every write to the pasteboard, ours
+        // included. Recorded right after our own write, so a mismatch later
+        // means someone else — the user copying something else, another
+        // app — touched it in between, not just that time passed.
+        let changeCountAfterOurWrite = pasteboard.changeCount
 
         // Nothing focused anywhere means a synthetic ⌘V has nowhere to land.
         // Sending it anyway risks it reaching some unrelated responder, and
@@ -119,7 +124,12 @@ public struct PasteboardTextInserter: TextInserting {
         Self.sendCommandV()
 
         try? await Task.sleep(for: restoreDelay)
-        if !keepOnClipboard {
+        // Restoring unconditionally here used to silently clobber anything
+        // copied during that wait — dictate something, copy something else
+        // right after, and the second copy would vanish back to whatever was
+        // on the clipboard before the dictation. Only restore if nothing else
+        // touched the pasteboard since our own write.
+        if !keepOnClipboard, pasteboard.changeCount == changeCountAfterOurWrite {
             snapshot.restore(to: pasteboard)
         }
 
