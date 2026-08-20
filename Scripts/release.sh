@@ -73,15 +73,71 @@ SIGNATURE=$("$SIGN_UPDATE" "$ZIP" | sed -E 's/.*sparkle:edSignature="([^"]+)".*/
 # A DMG for GitHub is a nicer first download than a zip: Finder mounts it and
 # shows a drag-to-Applications window, the pattern every Mac user already
 # knows. Sparkle still ships the zip above — DMGs aren't what it expects.
+#
+# Built as a "fancy" DMG (large icons, an arrow toward /Applications, on
+# Plainsay's own palette) rather than a bare folder view: create a
+# read-write image, let Finder itself write the icon layout and background
+# into a real .DS_Store by opening and arranging it, then convert that to
+# the compressed read-only image actually shipped. Verified visually
+# (screenshotted a locally-built DMG) before wiring this in — Finder's
+# window bounds vs. icon-view content area have a well-known small offset
+# in this recipe elsewhere, but it lines up correctly here as written.
 echo "==> Building DMG"
 DMG="dist/Plainsay-$VERSION.dmg"
+DMG_RW="dist/Plainsay-$VERSION-rw.dmg"
 DMG_STAGING=$(mktemp -d)
-trap 'rm -rf "$DMG_STAGING"' EXIT
+DMG_MOUNT=""
+cleanup_dmg_build() {
+	rm -rf "$DMG_STAGING"
+	if [ -n "$DMG_MOUNT" ]; then hdiutil detach "$DMG_MOUNT" -quiet 2>/dev/null || true; fi
+}
+trap cleanup_dmg_build EXIT
+
 ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
 ln -s /Applications "$DMG_STAGING/Applications"
-rm -f "$DMG"
-hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG" >/dev/null
+mkdir -p "$DMG_STAGING/.background"
+swift Scripts/make-dmg-background.swift "$DMG_STAGING/.background" >/dev/null
+
+rm -f "$DMG" "$DMG_RW"
+# Sized generously above the staged contents — this read-write image is
+# thrown away after the conversion below, so a few spare MB costs nothing.
+DMG_SIZE_MB=$(( $(du -sm "$DMG_STAGING" | cut -f1) + 40 ))
+hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -fs HFS+ \
+	-format UDRW -size "${DMG_SIZE_MB}m" "$DMG_RW" >/dev/null
+
+DMG_MOUNT=$(hdiutil attach "$DMG_RW" -readwrite -noverify -noautoopen | tail -1 | awk -F'\t' '{print $NF}')
+
+osascript <<OSA
+tell application "Finder"
+	tell disk "Plainsay $VERSION"
+		open
+		set current view of container window to icon view
+		set toolbar visible of container window to false
+		set statusbar visible of container window to false
+		set the bounds of container window to {400, 100, 1060, 500}
+		set theViewOptions to icon view options of container window
+		set arrangement of theViewOptions to not arranged
+		set icon size of theViewOptions to 128
+		set background picture of theViewOptions to file ".background:background.png"
+		set position of item "Plainsay.app" of container window to {180, 195}
+		set position of item "Applications" of container window to {480, 195}
+		select {}
+		close
+		open
+		update without registering applications
+		delay 1
+	end tell
+end tell
+OSA
+
+sync
+hdiutil detach "$DMG_MOUNT" -quiet
+DMG_MOUNT=""
+
+hdiutil convert "$DMG_RW" -format UDZO -ov -o "$DMG" >/dev/null
+rm -f "$DMG_RW"
 rm -rf "$DMG_STAGING"
+trap - EXIT
 
 if [ "${NOTARIZE:-1}" = "1" ]; then
 	# The app inside is already stapled, but Gatekeeper also checks the DMG
