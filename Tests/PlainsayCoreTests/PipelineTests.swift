@@ -396,6 +396,25 @@ struct PipelineTests {
         #expect(harness.coordinator.phase == .insertedRaw)
     }
 
+    @Test("Control characters from Polishing never reach the paste")
+    func cleanupOutputIsSanitizedBeforeInsertion() async throws {
+        // Polishing is a remote LLM's output, not a fixed local transform —
+        // nothing guarantees it never contains a stray control byte. A
+        // synthetic ⌘V carries whatever a string contains straight to
+        // whatever is focused; into a terminal, ESC begins a control
+        // sequence the terminal itself will act on.
+        let harness = Harness()
+        harness.cleaner.output = "line one\u{1B}[31mline two\u{0007}\r\nline three"
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        // \n and \t survive — real paragraph/tab formatting Polishing is
+        // asked to produce — everything else in the control ranges does not.
+        #expect(harness.inserter.inserted == ["line one[31mline two\nline three"])
+    }
+
     @Test("No focused element saves the dictation to the clipboard instead of losing it")
     func noFocusedElementSavesToClipboard() async throws {
         let harness = Harness()

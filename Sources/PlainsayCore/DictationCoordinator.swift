@@ -654,6 +654,12 @@ public final class DictationCoordinator {
             finalText = transcript
         }
 
+        // Polishing is a remote LLM's output, not a fixed local transform —
+        // unlike the ASR engines' own normalizeTranscript pass, nothing
+        // guarantees it never contains a stray control byte. Sanitized once
+        // here so both the auto-paste below and a later manual copy from
+        // history see the same safe text.
+        finalText = sanitizeForInsertion(finalText)
         lastTranscript = finalText
 
         // Written down *before* the paste is attempted. Insertion is the one

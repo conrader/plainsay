@@ -29,6 +29,15 @@ command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the Git
 # marketing string. Derived from the version so they cannot drift apart.
 BUILD=$(echo "$VERSION" | awk -F. '{ printf "%d", ($1*10000)+($2*100)+$3 }')
 
+# Read rather than hardcoded a second time: this used to be a bare "15.0"
+# literal here that silently stopped matching Info.plist's own
+# LSMinimumSystemVersion the moment that changed (commit 1f54fe3 lowered the
+# floor to Sonoma everywhere except this one line) — Sparkle filters every
+# feed item whose minimumSystemVersion exceeds the running OS with no error
+# surfaced anywhere, so the mismatch meant exactly the macOS 14 users that
+# commit was meant to serve would silently never see another update again.
+MIN_SYSTEM_VERSION=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" Scripts/Info.plist)
+
 echo "==> Version $VERSION (build $BUILD)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Scripts/Info.plist
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Scripts/Info.plist
@@ -163,7 +172,7 @@ cat > dist/appcast.xml <<XML
       <pubDate>$PUBDATE</pubDate>
       <sparkle:version>$BUILD</sparkle:version>
       <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>$MIN_SYSTEM_VERSION</sparkle:minimumSystemVersion>
       <description><![CDATA[${NOTES:-<p>Bug fixes and improvements.</p>}]]></description>
       <enclosure
         url="$FEED_URL/releases/Plainsay-$VERSION.zip"

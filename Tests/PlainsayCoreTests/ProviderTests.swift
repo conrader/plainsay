@@ -320,6 +320,51 @@ struct CleanupProviderTests {
     }
 }
 
+@Suite("Base URL resolution")
+@MainActor
+struct BaseURLResolutionTests {
+    private func freshSettings() -> PlainsaySettings {
+        PlainsaySettings(defaults: UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!)
+    }
+
+    @Test("Switching away from Custom stops using its stored base URL")
+    func switchingAwayFromCustomDropsItsBaseURL() {
+        // Regression: configuring a Custom endpoint, then switching the
+        // picker to a preset provider, used to keep sending that preset's
+        // key and every recorded transcript to the old Custom host — the
+        // Base URL field only shows for .custom in Settings, so nothing in
+        // the UI would have shown this was still happening.
+        let settings = freshSettings()
+        settings.cleanupProvider = .custom
+        settings.cleanupBaseURL = "https://attacker.example.com/v1"
+
+        settings.cleanupProvider = .openAI
+
+        #expect(settings.resolvedCleanupBaseURL == CleanupProvider.openAI.defaultBaseURL)
+        #expect(settings.resolvedCleanupBaseURL != "https://attacker.example.com/v1")
+    }
+
+    @Test("Custom still resolves to whatever base URL was actually typed in")
+    func customStillUsesItsOwnBaseURL() {
+        let settings = freshSettings()
+        settings.cleanupProvider = .custom
+        settings.cleanupBaseURL = "https://my-own-proxy.example.com/v1"
+
+        #expect(settings.resolvedCleanupBaseURL == "https://my-own-proxy.example.com/v1")
+    }
+
+    @Test("The same fix applies to the ASR base URL")
+    func asrBaseURLHasTheSameFix() {
+        let settings = freshSettings()
+        settings.asrProvider = .custom
+        settings.asrBaseURL = "https://attacker.example.com/v1"
+
+        settings.asrProvider = .groq
+
+        #expect(settings.resolvedASRBaseURL == ASRProvider.groq.defaultBaseURL)
+    }
+}
+
 @Suite("Plainsay as the Polishing provider", .serialized)
 @MainActor
 struct PlainsayPolishingProviderTests {

@@ -111,16 +111,24 @@ public final class PlainsaySettings {
         cleanupModel.isEmpty ? cleanupProvider.defaultModel : cleanupModel
     }
 
+    /// Only ever the stored custom URL when `.custom` is actually selected —
+    /// the Base URL field only shows in Settings for `.custom`, but this used
+    /// to fall back to whatever was last typed there for *every* provider
+    /// once it was non-empty. Configure a custom endpoint, switch the picker
+    /// to a preset provider, and that preset's key plus every recorded
+    /// transcript kept going to the old custom host, with nothing in the UI
+    /// showing it.
     public var resolvedCleanupBaseURL: String {
-        cleanupBaseURL.isEmpty ? cleanupProvider.defaultBaseURL : cleanupBaseURL
+        cleanupProvider == .custom ? cleanupBaseURL : cleanupProvider.defaultBaseURL
     }
 
     public var resolvedASRModel: String {
         asrModel.isEmpty ? asrProvider.defaultModel : asrModel
     }
 
+    /// See `resolvedCleanupBaseURL` — same fix, same reason.
     public var resolvedASRBaseURL: String {
-        asrBaseURL.isEmpty ? asrProvider.defaultBaseURL : asrBaseURL
+        asrProvider == .custom ? asrBaseURL : asrProvider.defaultBaseURL
     }
 
     /// Whether cleanup can actually run as configured.

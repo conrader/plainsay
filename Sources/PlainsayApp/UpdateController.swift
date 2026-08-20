@@ -18,9 +18,11 @@ final class UpdateController {
     private(set) var canCheck = true
 
     init() {
-        // `startingUpdater: true` begins the scheduled-check timer. Whether it
-        // actually checks is governed by SUEnableAutomaticChecks in Info.plist,
-        // which is false until the user opts in — Sparkle asks on first run.
+        // `startingUpdater: true` begins the scheduled-check timer.
+        // SUEnableAutomaticChecks in Info.plist defaults this on — outside
+        // the App Store, this is the only way a fix reaches anyone, so
+        // opt-out (a Settings toggle, bound to `automaticallyChecks` below)
+        // beats opt-in here, not the reverse.
         updater = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,

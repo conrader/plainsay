@@ -118,7 +118,12 @@ func readRequest(_ connection: NWConnection) async -> ParsedRequest? {
         headers[key] = value
     }
 
+    // Matches plainsay-server's own bodyLimit for the same kind of upload —
+    // no cap here meant an attacker-declared Content-Length could make this
+    // loop allocate without bound.
+    let maxBodyBytes = 32 * 1024 * 1024
     let contentLength = Int(headers["content-length"] ?? "0") ?? 0
+    guard contentLength >= 0, contentLength <= maxBodyBytes else { return nil }
     while bodyData.count < contentLength {
         guard let chunk = await receive(connection, max: contentLength - bodyData.count), !chunk.isEmpty else {
             break
@@ -264,13 +269,31 @@ func loadSamples(fileURL: URL) throws -> [Float] {
         throw HTTPError(status: 500, message: "no converter")
     }
 
+    // `file.length` is an Int64 read from the container's own header — a
+    // small crafted file can declare a length near Int64.max, and
+    // `AVAudioFrameCount(_:)` (a UInt32) traps rather than failing on a
+    // value that doesn't fit. Reject before converting instead of crashing
+    // the process; with launchd's KeepAlive that crash would otherwise
+    // restart into a loop, re-running the CoreML model load every time.
+    // 100M frames is already an order of magnitude past any real dictation
+    // (~35 minutes even at 48kHz) and comfortably inside UInt32's range.
+    let maxFrames: Int64 = 100_000_000
+    guard file.length > 0, file.length <= maxFrames else {
+        throw HTTPError(status: 400, message: "audio too long or invalid")
+    }
     let frameCount = AVAudioFrameCount(file.length)
     guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: frameCount) else {
         throw HTTPError(status: 500, message: "no input buffer")
     }
     try file.read(into: inputBuffer)
 
-    let outCapacity = AVAudioFrameCount(Double(frameCount) * whisperSampleRate / sourceFormat.sampleRate) + 1024
+    // Same overflow hazard as above, one step removed: bound the Double
+    // before converting it back to a fixed-width frame count.
+    let outCapacityRaw = (Double(frameCount) * whisperSampleRate / sourceFormat.sampleRate) + 1024
+    guard outCapacityRaw.isFinite, outCapacityRaw <= Double(UInt32.max) else {
+        throw HTTPError(status: 400, message: "audio too long or invalid")
+    }
+    let outCapacity = AVAudioFrameCount(outCapacityRaw)
     guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: outCapacity) else {
         throw HTTPError(status: 500, message: "no output buffer")
     }

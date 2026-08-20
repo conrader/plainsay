@@ -9,9 +9,13 @@
 //!   only detection: `SendInput` succeeds even when the keystrokes are
 //!   silently dropped by the elevated target, so this can't be reported as a
 //!   normal error — it just won't paste.
-//! - A raw inserted newline can trigger command execution in a shell.
-//!   Flattened to a space here for that reason, mirroring the Mac client's
-//!   terminal-aware handling.
+//! - A raw inserted newline can trigger command execution in a shell. Only
+//!   CRLF is normalized to LF here (see `insert` below) — newlines are NOT
+//!   flattened or stripped, and the Mac client has no terminal-aware
+//!   handling to mirror either (it strips genuine control bytes but
+//!   deliberately keeps `\n`/`\t`, matching Polishing's own paragraph
+//!   breaks). Real terminal-injection hardening is still a TODO on both
+//!   clients, not implemented on either.
 
 use arboard::Clipboard;
 
@@ -32,8 +36,8 @@ pub enum InsertionError {
 /// afterward, matching the Mac client's "leave no trace" behavior — dictation
 /// shouldn't quietly become the user's next Ctrl+V outside the app.
 pub fn insert(text: &str) -> Result<(), InsertionError> {
-    // Flattened, not stripped: a paragraph break is still meaningful in most
-    // targets. Only a bare newline landing in a shell is the actual hazard.
+    // CRLF -> LF only. This does not address the shell-injection hazard
+    // described above — see the module doc comment.
     let text = text.replace("\r\n", "\n");
 
     let mut clipboard = Clipboard::new().map_err(|e| InsertionError::Clipboard(e.to_string()))?;
