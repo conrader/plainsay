@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — 面向 Mac 的本地设备端语音听写</title>
-<meta name="description" content="Plainsay 是一款面向 Mac 的免费、MIT 许可听写应用。转录在设备本地通过 Whisper 或 Parakeet 完成——绝不经过云端，也绝不需要登录。可选的 LLM 清理步骤使用你自己掌控的密钥。无需订阅。无需账户。">
+<meta name="description" content="Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频，用于托管转录和文本润色，无需下载模型，每月约 3 美元。">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/zh/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费、MIT 许可听写应用。转录在设备本地通过 Whisper 或 Parakeet 完成——绝不经过云端，也绝不需要登录。可选的 LLM 清理步骤使用你自己掌控的密钥。无需订阅。无需账户。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频，用于托管转录和文本润色，无需下载模型，每月约 3 美元。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">即将推出</h2>
-        <p>完整的实时输入已经上线，作为实验性选项——设置 › 语音 › 实时输入（默认关闭）。它放弃了“先清理、再一次性插入”的保证，换来一种实时的感觉：粗糙的文字在你仍在说话时就直接出现，清理完成后再就地修正。</p>
         <p class="dim">此外：语言自动检测方面的持续工作，以及随着本地模型不断进步而调整的默认模型。</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["一次性模型下载，475–632 MB", "Plainsay 运行期间会持续占用内存"]
     },
     {
-      id: "cloud", eyebrow: "推荐", title: "Plainsay Cloud", price: "约 3 美元 / 月",
+      id: "cloud", eyebrow: "最快设置", title: "Plainsay Cloud", price: "约 3 美元 / 月",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["无需下载模型，无需密钥", "包含转录与编辑"],
       caveats: ["音频会被发送到 Plainsay Cloud 进行转录"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

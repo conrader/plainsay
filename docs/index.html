@@ -482,7 +482,7 @@
       caveats: ["One-time model download, 475–632 MB", "Keeps using memory while Plainsay is running"]
     },
     {
-      id: "cloud", eyebrow: "RECOMMENDED", title: "Plainsay Cloud", price: "≈ $3 / month",
+      id: "cloud", eyebrow: "FASTEST SETUP", title: "Plainsay Cloud", price: "≈ $3 / month",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["No model download, no keys", "Transcription and Polishing included"],
       caveats: ["Audio is sent to Plainsay Cloud to be transcribed"]
@@ -495,7 +495,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

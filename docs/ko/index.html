@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Mac용 온디바이스 음성 받아쓰기</title>
-<meta name="description" content="Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 필사는 Whisper 또는 Parakeet를 통해 기기에서 직접 처리되며, 클라우드나 로그인 뒤로 전송되지 않습니다. 선택적 LLM 정리 단계는 사용자가 직접 관리하는 키를 사용합니다. 구독 불필요. 계정 불필요.">
+<meta name="description" content="Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 로컬 모드에서는 Whisper 또는 Parakeet가 Mac에서만 음성을 텍스트로 변환하므로 계정이나 구독이 필요 없습니다. 선택 사항인 Plainsay Cloud는 녹음된 오디오를 전송해 호스팅된 받아쓰기와 문장 다듬기를 제공하며, 모델 다운로드 없이 월 약 3달러입니다.">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/ko/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 필사는 Whisper 또는 Parakeet를 통해 기기에서 직접 처리되며, 클라우드나 로그인 뒤로 전송되지 않습니다. 선택적 LLM 정리 단계는 사용자가 직접 관리하는 키를 사용합니다. 구독 불필요. 계정 불필요.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 로컬 모드에서는 Whisper 또는 Parakeet가 Mac에서만 음성을 텍스트로 변환하므로 계정이나 구독이 필요 없습니다. 선택 사항인 Plainsay Cloud는 녹음된 오디오를 전송해 호스팅된 받아쓰기와 문장 다듬기를 제공하며, 모델 다운로드 없이 월 약 3달러입니다.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">예정된 기능</h2>
-        <p>완전한 실시간 타이핑이 출시되었습니다 — 설정 › 음성 › 실시간 타이핑(기본값 꺼짐)에서 사용해 볼 수 있는 실험적 기능입니다. “정리 후 한 번에 삽입”이라는 보장 대신 실시간 느낌을 제공합니다. 말하는 도중에 다듬어지지 않은 단어가 바로 입력되고, 정리가 끝나면 그 자리에서 수정됩니다.</p>
         <p class="dim">그 외에도: 언어 자동 감지 기능을 계속 개선하고, 로컬 모델이 발전함에 따라 기본 모델도 변경할 예정입니다.</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["모델 다운로드는 한 번만, 475–632MB", "Plainsay가 실행되는 동안 메모리를 계속 사용"]
     },
     {
-      id: "cloud", eyebrow: "추천", title: "Plainsay Cloud", price: "월 약 3달러",
+      id: "cloud", eyebrow: "가장 빠른 설정", title: "Plainsay Cloud", price: "월 약 3달러",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["모델 다운로드 불필요, 키 불필요", "필사와 편집 포함"],
       caveats: ["음성이 필사를 위해 Plainsay Cloud로 전송됩니다"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — голосовой ввод на Mac, локально на устройстве</title>
-<meta name="description" content="Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. Расшифровка выполняется прямо на устройстве через Whisper или Parakeet — никогда в облаке, никогда за входом в аккаунт. Необязательный этап очистки с помощью LLM использует ключ, который вы контролируете сами. Без подписки. Без учётной записи.">
+<meta name="description" content="Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. В локальном режиме Whisper или Parakeet выполняет всю расшифровку на вашем Mac — без учётной записи и подписки. Опциональный Plainsay Cloud отправляет записанное аудио для облачной расшифровки и редактирования, без загрузки модели, примерно за 3 USD в месяц.">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. Расшифровка выполняется прямо на устройстве через Whisper или Parakeet — никогда в облаке, никогда за входом в аккаунт. Необязательный этап очистки с помощью LLM использует ключ, который вы контролируете сами. Без подписки. Без учётной записи.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. В локальном режиме Whisper или Parakeet выполняет всю расшифровку на вашем Mac — без учётной записи и подписки. Опциональный Plainsay Cloud отправляет записанное аудио для облачной расшифровки и редактирования, без загрузки модели, примерно за 3 USD в месяц.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Скоро</h2>
-        <p>Полноценный ввод в реальном времени уже здесь — как экспериментальная опция в Настройках › Речь › Ввод в реальном времени (по умолчанию выключена). Она отказывается от гарантии «сначала очистить, потом вставить один раз» ради живого ощущения: черновые слова появляются, пока вы ещё говорите, а затем исправляются на месте, как только завершится очистка.</p>
         <p class="dim">Также: продолжается работа над автоопределением языка и изменениями модели по умолчанию по мере улучшения локальных моделей.</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["Разовая загрузка модели, 475–632 МБ", "Занимает память, пока Plainsay работает"]
     },
     {
-      id: "cloud", eyebrow: "РЕКОМЕНДУЕТСЯ", title: "Plainsay Cloud", price: "≈ 3 $ / месяц",
+      id: "cloud", eyebrow: "БЫСТРЫЙ СТАРТ", title: "Plainsay Cloud", price: "≈ 3 $ / месяц",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Без загрузки модели, без ключей", "Расшифровка и редактирование включены"],
       caveats: ["Аудио отправляется в Plainsay Cloud для расшифровки"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

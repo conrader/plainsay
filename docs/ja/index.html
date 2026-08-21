@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Mac向けオンデバイス音声入力</title>
-<meta name="description" content="Plainsayは、Mac向けの無料・MITライセンスのディクテーションアプリです。文字起こしはWhisperまたはParakeetによりデバイス上で実行され、クラウドにもログインの裏側にも送られません。任意のLLMクリーンアップ処理では、あなた自身が管理するキーを使用します。サブスクリプション不要。アカウント不要。">
+<meta name="description" content="PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、モデルのダウンロードなしで月額約3ドルです。">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/ja/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsayは、Mac向けの無料・MITライセンスのディクテーションアプリです。文字起こしはWhisperまたはParakeetによりデバイス上で実行され、クラウドにもログインの裏側にも送られません。任意のLLMクリーンアップ処理では、あなた自身が管理するキーを使用します。サブスクリプション不要。アカウント不要。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、モデルのダウンロードなしで月額約3ドルです。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">今後の予定</h2>
-        <p>完全なライブタイピングが実現しました。設定 › 音声 › ライブタイピング（既定はオフ）から試せる実験的機能です。「まずクリーンにしてから一度だけ挿入する」という保証と引き換えに、ライブ感を実現します。話している最中に粗い単語がそのまま入力され、クリーンアップが完了するとその場で修正されます。</p>
         <p class="dim">また、言語の自動検出への継続的な取り組みと、ローカルモデルの向上に伴うデフォルトモデルの変更も予定しています。</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["モデルのダウンロードは一度だけ、475〜632MB", "Plainsayの実行中はメモリを使用し続けます"]
     },
     {
-      id: "cloud", eyebrow: "おすすめ", title: "Plainsay Cloud", price: "月額 約3ドル",
+      id: "cloud", eyebrow: "最速セットアップ", title: "Plainsay Cloud", price: "月額 約3ドル",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["モデルのダウンロード不要、キー不要", "文字起こしと編集込み"],
       caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

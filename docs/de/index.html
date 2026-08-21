@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Spracherkennung auf dem Mac, lokal auf dem Gerät</title>
-<meta name="description" content="Plainsay ist eine kostenlose, MIT-lizenzierte Diktier-App für den Mac. Die Transkription läuft direkt auf dem Gerät mit Whisper oder Parakeet — nie in der Cloud, nie hinter einem Login. Ein optionaler LLM-Bereinigungsschritt nutzt einen Schlüssel, den du selbst kontrollierst. Kein Abo. Kein Konto nötig.">
+<meta name="description" content="Plainsay ist eine kostenlose, MIT-lizenzierte Diktier-App für den Mac. Im lokalen Modus transkribiert Whisper oder Parakeet vollständig auf deinem Mac — ohne Konto oder Abo. Das optionale Plainsay Cloud sendet aufgezeichnetes Audio für gehostete Transkription und Textbereinigung, ohne Modelldownload, für etwa 3 $/Monat.">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/de/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay ist eine kostenlose, MIT-lizenzierte Diktier-App für den Mac. Die Transkription läuft direkt auf dem Gerät mit Whisper oder Parakeet — nie in der Cloud, nie hinter einem Login. Ein optionaler LLM-Bereinigungsschritt nutzt einen Schlüssel, den du selbst kontrollierst. Kein Abo. Kein Konto nötig.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay ist eine kostenlose, MIT-lizenzierte Diktier-App für den Mac. Im lokalen Modus transkribiert Whisper oder Parakeet vollständig auf deinem Mac — ohne Konto oder Abo. Das optionale Plainsay Cloud sendet aufgezeichnetes Audio für gehostete Transkription und Textbereinigung, ohne Modelldownload, für etwa 3 $/Monat.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Demnächst</h2>
-        <p>Vollständiges Live-Tippen ist da — als experimentelle Option unter Einstellungen › Sprache › Live-Tippen (standardmäßig aus). Es gibt die Garantie „erst bereinigen, dann einmal einfügen“ zugunsten eines Live-Gefühls auf: Rohe Wörter landen im Dokument, während du noch sprichst, und werden an Ort und Stelle korrigiert, sobald die Bereinigung fertig ist.</p>
         <p class="dim">Außerdem: laufende Arbeit an automatischer Spracherkennung und Änderungen am Standardmodell, sobald lokale Modelle besser werden.</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["Einmaliger Modell-Download, 475–632 MB", "Belegt Arbeitsspeicher, solange Plainsay läuft"]
     },
     {
-      id: "cloud", eyebrow: "EMPFOHLEN", title: "Plainsay Cloud", price: "≈ 3 $ / Monat",
+      id: "cloud", eyebrow: "SCHNELLSTER START", title: "Plainsay Cloud", price: "≈ 3 $ / Monat",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Kein Modell-Download, keine Schlüssel", "Transkription und Bearbeitung inklusive"],
       caveats: ["Audio wird zur Transkription an Plainsay Cloud gesendet"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

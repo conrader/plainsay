@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Ditado por voz no dispositivo, para Mac</title>
-<meta name="description" content="Plainsay é uma aplicação de ditado gratuita e licenciada sob MIT para Mac. A transcrição é executada no próprio dispositivo com Whisper ou Parakeet — nunca na nuvem, nunca atrás de um login. Uma etapa opcional de limpeza com LLM usa uma chave que tu controlas. Sem subscrição. Sem conta necessária.">
+<meta name="description" content="Plainsay é uma aplicação de ditado gratuita e licenciada sob MIT para Mac. No modo Local, Whisper ou Parakeet transcreve inteiramente no teu Mac, sem conta ou subscrição. O Plainsay Cloud opcional envia o áudio gravado para transcrição e aperfeiçoamento alojados, sem descarregar um modelo, por cerca de 3 USD por mês.">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/pt/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +21,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay é uma aplicação de ditado gratuita e licenciada sob MIT para Mac. A transcrição é executada no próprio dispositivo com Whisper ou Parakeet — nunca na nuvem, nunca atrás de um login. Uma etapa opcional de limpeza com LLM usa uma chave que tu controlas. Sem subscrição. Sem conta necessária.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay é uma aplicação de ditado gratuita e licenciada sob MIT para Mac. No modo Local, Whisper ou Parakeet transcreve inteiramente no teu Mac, sem conta ou subscrição. O Plainsay Cloud opcional envia o áudio gravado para transcrição e aperfeiçoamento alojados, sem descarregar um modelo, por cerca de 3 USD por mês.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -350,7 +350,6 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Em breve</h2>
-        <p>A digitação ao vivo completa já chegou, como opção experimental — Definições › Voz › Digitação ao vivo (desativada por predefinição). Abdica da garantia “limpar e depois inserir uma vez” em troca de uma sensação ao vivo: as palavras em bruto aparecem enquanto ainda estás a falar, e são corrigidas no mesmo local assim que a limpeza termina.</p>
         <p class="dim">Também: trabalho contínuo em detecção automática de idioma, e mudanças no modelo padrão à medida que os modelos locais melhoram.</p>
       </div>
     </section>
@@ -462,7 +461,7 @@
       caveats: ["Download único do modelo, 475–632 MB", "Consome memória enquanto o Plainsay estiver rodando"]
     },
     {
-      id: "cloud", eyebrow: "RECOMENDADO", title: "Plainsay Cloud", price: "≈ US$ 3 / mês",
+      id: "cloud", eyebrow: "CONFIGURAÇÃO RÁPIDA", title: "Plainsay Cloud", price: "≈ US$ 3 / mês",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Sem download de modelo, sem chaves", "Transcrição e edição incluídas"],
       caveats: ["O áudio é enviado ao Plainsay Cloud para ser transcrito"]
@@ -475,7 +474,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";
