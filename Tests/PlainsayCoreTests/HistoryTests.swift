@@ -18,6 +18,34 @@ struct TranscriptHistoryTests {
         )
     }
 
+    @Test("Transcripts on disk are readable only by their owner, and skipped by backups")
+    func historyFileIsPrivate() throws {
+        // Every one of these is a verbatim record of something the user said.
+        // They used to land at the default 0644 in a 0755 directory, and were
+        // copied into Time Machine — raised in an external review (#1).
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-history-\(UUID().uuidString)")
+        let history = TranscriptHistory(directory: dir)
+        history.add(record("something private"))
+
+        let fileURL = dir.appendingPathComponent("history.json")
+        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+
+        func mode(_ url: URL) throws -> Int {
+            let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
+            return (attrs[.posixPermissions] as? NSNumber)?.intValue ?? -1
+        }
+
+        // The file check is the one that matters: `Data.write(options: .atomic)`
+        // renames a temporary file over the destination, so a mode set before
+        // the write would be silently replaced by the temporary file's own.
+        #expect(try mode(fileURL) == 0o600)
+        #expect(try mode(dir) == 0o700)
+
+        let excluded = try fileURL.resourceValues(forKeys: [.isExcludedFromBackupKey])
+        #expect(excluded.isExcludedFromBackup == true)
+    }
+
     @Test("Newest dictation comes first")
     func newestFirst() {
         let history = makeHistory()

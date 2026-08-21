@@ -17,7 +17,7 @@ public struct PendingAudioStore: Sendable {
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Plainsay/pending", isDirectory: true)
         self.directory = base
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        PrivateFiles.makePrivateDirectory(at: base)
     }
 
     /// Writes samples as raw little-endian Float32 and returns their handle.
@@ -28,6 +28,7 @@ public struct PendingAudioStore: Sendable {
         let data = samples.withUnsafeBufferPointer { Data(buffer: $0) }
         do {
             try data.write(to: url, options: .atomic)
+            PrivateFiles.protectWrittenFile(url)
             return url
         } catch {
             // Not fatal: the dictation still works, it just isn't recoverable.
