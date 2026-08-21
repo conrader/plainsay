@@ -193,6 +193,11 @@ scp -q "$DMG" "$HOST:$REMOTE_DIR/releases/Plainsay-latest.dmg"
 scp -q dist/appcast.xml "$HOST:$REMOTE_DIR/appcast.xml"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
+# The marketing site is a separate docroot with its own deploy. Run it here
+# so a release can never again leave plainsay.app describing a version of
+# the app that no longer exists.
+./Scripts/deploy-site.sh
+
 echo "==> Publishing GitHub Release v$VERSION"
 # Plain text for the release body: GitHub's own markdown renderer is what
 # displays it, not Sparkle's CDATA-wrapped HTML — reusing the HTML string

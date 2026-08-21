@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac dictation apps compared — free, paid, on-device and cloud</title>
+<meta name="description" content="An honest side-by-side of the main Mac dictation apps: Plainsay, Wispr Flow, superwhisper, VoiceInk and Apple's built-in Dictation. Which transcribe on-device, which need an account, and what each actually costs.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/compare/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Which Mac dictation apps transcribe on-device?","acceptedAnswer":{"@type":"Answer","text":"Plainsay, VoiceInk and Apple's built-in Dictation all transcribe locally on the Mac. superwhisper offers local models including on its free tier. Wispr Flow is cloud-only — its own documentation states transcription always happens in the cloud."}},
+{"@type":"Question","name":"What is the best free dictation app for Mac?","acceptedAnswer":{"@type":"Answer","text":"Apple's built-in Dictation is free, on-device and already installed, and is enough if you only need basic punctuation. Plainsay is free and MIT-licensed, and adds custom vocabulary and an optional cleanup pass. superwhisper has a free tier that falls back to unlimited local models."}},
+{"@type":"Question","name":"Is there a free alternative to Wispr Flow?","acceptedAnswer":{"@type":"Answer","text":"Plainsay is free and open source, and unlike Wispr Flow it transcribes on the Mac rather than in the cloud. Wispr Flow costs $15/month, or $12/month billed annually, and supports more platforms including Windows and Android."}},
+{"@type":"Question","name":"Which Mac dictation app keeps everything local, including the cleanup pass?","acceptedAnswer":{"@type":"Answer","text":"VoiceInk supports local cleanup through Ollama alongside cloud providers. Plainsay transcribes locally but its optional cleanup pass calls an LLM, so it does not keep that step on-device."}}]}</script>
+<style>
+  :root{
+    --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
+    --sys-accent:#0a84ff; --hairline:rgba(255,255,255,0.16); --label-secondary:#a8aebd;
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,monospace; --radius-card:18px; --radius-pill:999px;
+    --ease-out:cubic-bezier(0,0,0.58,1); --dur-phase:180ms;
+    --win:rgba(111,211,199,0.10); --win-line:rgba(111,211,199,0.30);
+    --warn:rgba(232,137,107,0.10); --warn-line:rgba(232,137,107,0.32);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--bone);text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--bone)}
+  a:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .page{min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:920px;padding:0 32px;display:flex;flex-direction:column}
+  @media(max-width:620px){.wrap{padding:0 20px}}
+  nav.top{display:flex;align-items:center;gap:10px;padding:30px 0}
+  nav.top .word{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+  nav.top .word a{text-decoration:none;color:var(--bone)}
+  nav.top .spacer{flex:1}
+  nav.top .links{display:flex;align-items:center;gap:22px;font-size:13px}
+  nav.top .links a{text-decoration:none;color:var(--bone);opacity:.9}
+  nav.top .links a:hover{opacity:1;text-decoration:underline;text-decoration-color:rgba(242,239,233,0.35)}
+  @media(max-width:480px){nav.top .links{gap:14px}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--font-ui);font-weight:500;line-height:1;text-decoration:none;cursor:pointer;transition:filter var(--dur-phase) var(--ease-out);height:30px;padding:0 16px;border-radius:7px;font-size:13px;background:var(--sys-accent);border:1px solid transparent;color:#fff}
+  .btn:hover{filter:brightness(1.08)}
+  header.hero{padding:70px 0 36px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px}
+  header.hero .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
+  header.hero h1{margin:0;font-size:46px;line-height:1.12;font-weight:700;letter-spacing:-1px;max-width:16ch;text-wrap:balance}
+  header.hero .sub{margin:0;font-size:17px;line-height:1.6;color:var(--label-secondary);max-width:54ch;text-wrap:pretty}
+  @media(max-width:620px){header.hero h1{font-size:34px}}
+  section{border-top:1px solid var(--hairline);padding:48px 0 52px}
+  section .kicker{margin:0 0 18px;font-size:13px;font-weight:600;color:var(--slate)}
+  section .lede{margin:0 0 18px;font-size:15px;line-height:1.65;color:var(--label-secondary);max-width:64ch}
+  h2.big{margin:0 0 6px;font-size:24px;font-weight:650;letter-spacing:-0.4px}
+  p{font-size:15px;line-height:1.65}
+  .tablewrap{overflow-x:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);margin:6px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+  th,td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--hairline);vertical-align:top}
+  thead th{font-family:var(--font-mono);font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--slate);font-weight:600}
+  tbody tr:last-child td{border-bottom:none}
+  td.axis{color:var(--slate);font-weight:600;white-space:nowrap}
+  td.plainsay{color:var(--bone)}
+  td.plainsay b{color:var(--signal)}
+  td.wispr{color:var(--label-secondary)}
+  .col-plainsay{background:var(--win)}
+  .mono-src{font-family:var(--font-mono);font-size:11px;color:var(--slate)}
+  .callout{border:1px solid var(--warn-line);background:var(--warn);border-radius:var(--radius-card);padding:18px 20px;margin:18px 0;font-size:14px;line-height:1.6}
+  .callout.win{border-color:var(--win-line);background:var(--win)}
+  .callout .t{font-weight:650;margin-bottom:5px}
+  .cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{border:1px solid var(--hairline);border-radius:var(--radius-card);padding:18px 18px}
+  .card .h{font-size:15px;font-weight:650;margin:0 0 6px}
+  .card p{margin:0;font-size:13.5px;color:var(--label-secondary);line-height:1.6}
+  .card .num{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--signal)}
+  .card .num.dim{color:var(--ember)}
+  ul.plain{padding-left:20px;margin:10px 0}
+  ul.plain li{margin:7px 0;font-size:14.5px;line-height:1.6;color:var(--label-secondary)}
+  .final{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:56px 0 64px}
+  .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
+  .final .req{font-size:12px;color:var(--slate)}
+  .sources{font-size:12.5px;color:var(--slate);line-height:1.9}
+  .sources a{color:var(--slate)}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px}
+  footer .text{font-size:12px;color:var(--slate)}
+  footer .spacer{flex:1}
+  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links a{color:var(--slate);text-decoration:none}
+  footer .links a:hover{color:var(--bone)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="wrap">
+
+    <nav class="top">
+      <img src="/assets/logo.svg" alt="" width="28" height="28" style="display:block">
+      <span class="word"><a href="/">Plainsay</a></span>
+      <span class="spacer"></span>
+      <div class="links">
+        <a href="/why-on-device/">Why on-device</a>
+        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="eyebrow">Mac dictation apps</div>
+      <h1>Compared, including where we lose.</h1>
+      <p class="sub">We make one of these, so read this with that in mind. What follows is the comparison we'd want if we were choosing: what actually runs on your Mac, what leaves it, what it costs, and which app to pick when it isn't ours.</p>
+    </header>
+
+    <section>
+      <h2 class="kicker">Pick by what you care about</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="h">Nothing should leave my Mac</div>
+          <div class="num">Plainsay · VoiceInk</div>
+          <p>Both transcribe locally and neither needs an account to do it. VoiceInk is a one-time purchase; Plainsay is free. Apple's built-in Dictation also runs on-device on Apple silicon.</p>
+        </div>
+        <div class="card">
+          <div class="h">I want the most polished product</div>
+          <div class="num dim">Wispr Flow</div>
+          <p>It's the incumbent, and it shows in the details. The trade is explicit in their own docs: transcription always happens in the cloud, and it's $15/month.</p>
+        </div>
+        <div class="card">
+          <div class="h">I just want something now</div>
+          <div class="num dim">Apple Dictation</div>
+          <p>Already installed, free, on-device, zero setup. If basic punctuation is enough and you don't need custom vocabulary or a cleanup pass, you may not need any of the rest of this page.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="kicker">Side by side</h2>
+      <p class="lede">Prices and features change; each figure below is from that product's own documentation at the time of writing. The linked pages go into each comparison properly.</p>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>&nbsp;</th>
+              <th class="col-plainsay">Plainsay</th>
+              <th>Wispr Flow</th>
+              <th>superwhisper</th>
+              <th>VoiceInk</th>
+              <th>Apple Dictation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="axis">Price</td>
+              <td class="plainsay col-plainsay"><b>Free</b> on-device. Optional cloud ~$3/mo.</td>
+              <td class="wispr">$15/mo, or $12/mo billed annually. Limited free tier.</td>
+              <td class="wispr">Free tier, then a paid Pro plan.</td>
+              <td class="wispr">One-time $29–$69.</td>
+              <td class="wispr">Free, built in.</td>
+            </tr>
+            <tr>
+              <td class="axis">Transcription</td>
+              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or Parakeet via Core ML.</td>
+              <td class="wispr">Cloud only — "transcription always happens in the cloud".</td>
+              <td class="wispr">Local models available, including on the free tier.</td>
+              <td class="wispr">On your Mac — whisper.cpp, Parakeet and others.</td>
+              <td class="wispr">On-device on Apple silicon.</td>
+            </tr>
+            <tr>
+              <td class="axis">Source code</td>
+              <td class="plainsay col-plainsay"><b>MIT</b>, fully public.</td>
+              <td class="wispr">Closed.</td>
+              <td class="wispr">Closed.</td>
+              <td class="wispr">GPL-3.0, public.</td>
+              <td class="wispr">Closed.</td>
+            </tr>
+            <tr>
+              <td class="axis">Account required</td>
+              <td class="plainsay col-plainsay"><b>No</b> — only for the optional cloud tier.</td>
+              <td class="wispr">Yes.</td>
+              <td class="wispr">Not for local use.</td>
+              <td class="wispr">No.</td>
+              <td class="wispr">No.</td>
+            </tr>
+            <tr>
+              <td class="axis">Custom vocabulary</td>
+              <td class="plainsay col-plainsay"><b>Yes</b> — names and jargon you add.</td>
+              <td class="wispr">Yes.</td>
+              <td class="wispr">Yes.</td>
+              <td class="wispr">Yes.</td>
+              <td class="wispr">None documented.</td>
+            </tr>
+            <tr>
+              <td class="axis">Cleanup / formatting pass</td>
+              <td class="plainsay col-plainsay">Optional, your key or ours, or off.</td>
+              <td class="wispr">Yes, cloud.</td>
+              <td class="wispr">Yes, cloud providers.</td>
+              <td class="wispr">Yes, cloud <em>and</em> local (Ollama).</td>
+              <td class="wispr">Auto-punctuation only.</td>
+            </tr>
+            <tr>
+              <td class="axis">Platforms</td>
+              <td class="plainsay col-plainsay">macOS 14+, Apple silicon.</td>
+              <td class="wispr">macOS, Windows, iOS, Android.</td>
+              <td class="wispr">macOS, iOS.</td>
+              <td class="wispr">macOS 14.4+, iOS.</td>
+              <td class="wispr">macOS, iOS and more.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mono-src">Detailed, sourced write-ups: <a href="/vs/wispr-flow/">vs Wispr Flow</a> · <a href="/vs/superwhisper/">vs superwhisper</a> · <a href="/vs/voiceink/">vs VoiceInk</a> · <a href="/vs/macos-dictation/">vs Apple Dictation</a></p>
+    </section>
+
+    <section>
+      <h2 class="big">When Plainsay is the wrong choice</h2>
+      <p class="lede">Genuinely — these are the cases where we'd point you elsewhere.</p>
+      <div class="callout">
+        <p><b>You need Windows, Android, or an Intel Mac.</b> Plainsay is Apple silicon only. Wispr Flow covers the most platforms. (A Windows port is in progress, but it isn't shipped.)</p>
+        <p><b>You want the cleanup pass to run locally too.</b> Plainsay's transcription is local, but its cleanup pass calls out to an LLM. VoiceInk supports local cleanup through Ollama; that's a real advantage if you want nothing at all leaving the machine.</p>
+        <p><b>You want to pay once and never think about it.</b> VoiceInk's one-time purchase is a fair model and avoids depending on whether we keep the servers running.</p>
+        <p><b>Apple's Dictation already does what you need.</b> It's free, built in, and on-device. We wrote a <a href="/vs/macos-dictation/">whole page</a> on when it's genuinely enough.</p>
+      </div>
+    </section>
+
+    <section class="final">
+      <h2 class="big">What Plainsay is for</h2>
+      <p>Dictation where the audio stays on your Mac, the code is readable, and there's no account or subscription in the way. Hold a key, speak, release — the text lands where your cursor is.</p>
+      <p><a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a></p>
+    </section>
+
+    <footer>
+      <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
+      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <span class="spacer"></span>
+      <div class="links">
+        <a href="/">Home</a>
+        <a href="/why-on-device/">Why on-device</a>
+        <a href="/how-it-works/">How it works</a>
+        <a href="https://github.com/conrader/plainsay">Source</a>
+      </div>
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>
