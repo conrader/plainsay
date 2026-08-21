@@ -1,3 +1,4 @@
+import CoreGraphics
 import Testing
 @testable import PlainsayCore
 
@@ -78,5 +79,22 @@ struct HotkeyStateMachineTests {
         #expect(!machine.isRecording)
         // The stranded release must not be read as the end of a recording.
         #expect(machine.handle(.up(at: 1)) == .none)
+    }
+}
+
+@Suite("Hotkey monitor")
+@MainActor
+struct HotkeyMonitorTests {
+    @Test("Escape emits one cancellation and ignores key repeat")
+    func escapeCancelsOnce() {
+        let monitor = HotkeyMonitor()
+        var cancellationCount = 0
+        monitor.onCancel = { cancellationCount += 1 }
+
+        monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: false)
+        monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: true)
+        monitor.handle(type: .keyUp, keyCode: 53, flags: 0, isAutorepeat: false)
+
+        #expect(cancellationCount == 1)
     }
 }
