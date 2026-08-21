@@ -48,9 +48,9 @@ public enum TextInsertionOutcome: Sendable, Equatable {
     /// app actually consumed it — nothing can, short of reading its contents
     /// back — but it is the normal, expected case.
     case inserted
-    /// The Accessibility API positively reports no focused UI element (or
-    /// Accessibility isn't granted at all), so a synthetic ⌘V has nowhere to
-    /// land. The text was left on the clipboard either way.
+    /// Accessibility cannot identify a usable paste target (or isn't granted
+    /// at all), so a synthetic ⌘V has nowhere safe to land. The text was left
+    /// on the clipboard either way.
     case noFocusedElement
 }
 
@@ -113,7 +113,7 @@ public struct PasteboardTextInserter: TextInserting {
         // the pasteboard write above already keeps the dictation safe either
         // way, so leave it there instead of restoring the old clipboard over
         // it — that restore is exactly how a dictation used to vanish.
-        guard trusted, Self.hasFocusedElement() else {
+        guard trusted, Self.hasPossiblePasteTarget() else {
             Log.insertion.info(
                 "no focused element — left \(text.count, privacy: .public) chars on the clipboard"
             )
@@ -139,18 +139,92 @@ public struct PasteboardTextInserter: TextInserting {
         return .inserted
     }
 
-    /// Best-effort: only reports "no focus" when the Accessibility API
-    /// positively confirms it. Any error, timeout, or app that simply doesn't
-    /// answer this query reports a focus, so a paste that would have worked
-    /// is never second-guessed into a false "nothing focused" warning.
+    /// Best-effort: a visible focused element is authoritative. If that probe
+    /// is inconclusive, a focused window supplies the missing evidence; the
+    /// known ChatGPT custom editor may use that fallback even when the element
+    /// probe explicitly has no value.
     @MainActor
-    private static func hasFocusedElement() -> Bool {
+    private static func hasPossiblePasteTarget() -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
-        var focused: AnyObject?
-        let result = AXUIElementCopyAttributeValue(
-            systemWide, kAXFocusedUIElementAttribute as CFString, &focused
+        let focusedElement = accessibilityValueState(
+            on: systemWide,
+            attribute: kAXFocusedUIElementAttribute as CFString
         )
-        return result == .success && focused != nil
+
+        // A definite focused element needs no slower cross-process fallback.
+        if focusedElement == .present { return true }
+
+        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return false }
+        let allowsFocusedWindowFallback = frontmost.bundleIdentifier == "com.openai.codex"
+
+        // A definite missing element normally means no paste target. ChatGPT's
+        // custom editor is the confirmed exception: its focused window accepts
+        // ⌘V even though the editor itself can be hidden from Accessibility.
+        guard focusedElement == .unknown || allowsFocusedWindowFallback else { return false }
+
+        let focusedWindow = accessibilityValueState(
+            on: AXUIElementCreateApplication(frontmost.processIdentifier),
+            attribute: kAXFocusedWindowAttribute as CFString
+        )
+
+        return shouldAttemptPaste(
+            focusedElement: focusedElement,
+            focusedWindow: focusedWindow,
+            allowsFocusedWindowFallback: allowsFocusedWindowFallback
+        )
+    }
+
+    enum AccessibilityValueState: Equatable {
+        case present
+        case absent
+        case unknown
+    }
+
+    private static func accessibilityValueState(
+        on element: AXUIElement,
+        attribute: CFString
+    ) -> AccessibilityValueState {
+        var value: AnyObject?
+        let result = AXUIElementCopyAttributeValue(element, attribute, &value)
+        return accessibilityValueState(
+            queryResult: result,
+            valuePresent: value != nil
+        )
+    }
+
+    static func accessibilityValueState(
+        queryResult: AXError,
+        valuePresent: Bool
+    ) -> AccessibilityValueState {
+        switch queryResult {
+        case .success:
+            return valuePresent ? .present : .absent
+        case .noValue:
+            return .absent
+        default:
+            // `cannotComplete`, `attributeUnsupported`, and timeouts describe
+            // an inconclusive probe, not proof that no editor can receive ⌘V.
+            return .unknown
+        }
+    }
+
+    /// Accessibility cannot expose the focused editor in every native app or
+    /// app-backed web view. An inconclusive element probe still needs a focused
+    /// window before we risk ⌘V. ChatGPT gets the narrower window-only fallback
+    /// because its custom editor is known to omit the element entirely.
+    static func shouldAttemptPaste(
+        focusedElement: AccessibilityValueState,
+        focusedWindow: AccessibilityValueState,
+        allowsFocusedWindowFallback: Bool
+    ) -> Bool {
+        switch focusedElement {
+        case .present:
+            return true
+        case .unknown:
+            return focusedWindow == .present
+        case .absent:
+            return allowsFocusedWindowFallback && focusedWindow == .present
+        }
     }
 
     /// Virtual keycode for `v` on any layout (ANSI position-based).

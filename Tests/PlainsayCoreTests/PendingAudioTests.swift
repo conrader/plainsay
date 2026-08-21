@@ -11,6 +11,28 @@ struct PendingAudioStoreTests {
         )
     }
 
+    @Test("Staged audio is readable only by its owner, and skipped by backups")
+    func stagedAudioIsPrivate() throws {
+        // Raw recordings of the user's voice, sitting on disk between capture
+        // and transcription. Same defaults problem as the transcript history
+        // (external review #1): 0644 files in a 0755 directory, backed up.
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-pending-\(UUID().uuidString)")
+        let store = PendingAudioStore(directory: dir)
+        let url = try #require(store.save([0.1, -0.2, 0.3]))
+
+        func mode(_ u: URL) throws -> Int {
+            let attrs = try FileManager.default.attributesOfItem(atPath: u.path)
+            return (attrs[.posixPermissions] as? NSNumber)?.intValue ?? -1
+        }
+
+        #expect(try mode(url) == 0o600)
+        #expect(try mode(dir) == 0o700)
+
+        let excluded = try url.resourceValues(forKeys: [.isExcludedFromBackupKey])
+        #expect(excluded.isExcludedFromBackup == true)
+    }
+
     @Test("Samples survive a round trip through disk")
     func roundTrip() throws {
         let store = makeStore()

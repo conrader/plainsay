@@ -134,6 +134,9 @@ public final class DictationCoordinator {
         hotkeys.onEdge = { [weak self] edge in
             self?.handle(edge)
         }
+        hotkeys.onCancel = { [weak self] in
+            self?.cancelDictation()
+        }
     }
 
     // MARK: - Lifecycle
@@ -472,6 +475,28 @@ public final class DictationCoordinator {
         handle(edge)
     }
 
+    /// Abandons an active capture without transcribing, saving, or inserting
+    /// anything. Escape reaches this through `HotkeyMonitor`; the public entry
+    /// point also keeps the behavior directly testable without a system event
+    /// tap or macOS privacy prompts.
+    @discardableResult
+    public func cancelDictation() -> Bool {
+        guard phase == .recording, recorder.isRecording else { return false }
+
+        resetTask?.cancel()
+        stopMetering()
+        stopLivePreview()
+        recorder.cancel()
+        machine.reset()
+        targetApp = nil
+        elapsed = 0
+        levelHistory = []
+        phase = .idle
+        finishEngineWork()
+        Log.pipeline.info("dictation cancelled")
+        return true
+    }
+
     private func handle(_ edge: HotkeyEdge) {
         switch machine.handle(edge) {
         case .start: beginRecording()
@@ -754,7 +779,13 @@ public final class DictationCoordinator {
                 guard Double(samples.count) / whisperSampleRate >= Self.minimumDuration else { continue }
 
                 let prompt = self.settings.dictionary.asrPrompt()
+                // A preview pass can outlive capture cancellation when the
+                // backend is inside non-cancellable model work. Retain engine
+                // ownership for the pass itself so a model reload cannot shut
+                // it down and start another Core ML load underneath it.
+                self.beginEngineWork()
                 let text = (try? await engine.transcribe(samples: samples, prompt: prompt)) ?? ""
+                self.finishEngineWork()
                 guard !Task.isCancelled, self.phase == .recording, !text.isEmpty else { continue }
                 self.livePreviewText = text
             }

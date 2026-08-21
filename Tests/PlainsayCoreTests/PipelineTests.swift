@@ -573,6 +573,101 @@ struct PipelineTests {
         #expect(harness.inserter.inserted.count == 1)
     }
 
+    @Test("Escape cancels a latched dictation without processing it")
+    func escapeCancelsLatchedDictation() async throws {
+        let harness = Harness()
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        harness.coordinator.handleHotkeyEdge(.up(at: 0.05))
+        #expect(harness.coordinator.phase == .recording)
+
+        #expect(harness.coordinator.cancelDictation())
+        #expect(harness.coordinator.phase == .idle)
+        #expect(!harness.recorder.isRecording)
+        #expect(harness.recorder.cancelCount == 1)
+        #expect(harness.engine.receivedSampleCount == 0)
+        #expect(harness.inserter.inserted.isEmpty)
+        #expect(harness.history.mostRecent == nil)
+
+        // Cancelling resets the latch, so the next press starts a fresh
+        // recording instead of behaving like the old session's stop press.
+        harness.coordinator.handleHotkeyEdge(.down(at: 2))
+        #expect(harness.coordinator.phase == .recording)
+        #expect(harness.recorder.isRecording)
+        #expect(harness.coordinator.cancelDictation())
+    }
+
+    @Test("Escape cancels a held dictation and strands no key release")
+    func escapeCancelsHeldDictation() async throws {
+        let harness = Harness()
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(harness.coordinator.cancelDictation())
+
+        // The release belonging to the abandoned press must not start the
+        // pipeline or affect a later recording.
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        #expect(harness.coordinator.phase == .idle)
+        #expect(harness.engine.receivedSampleCount == 0)
+        #expect(harness.inserter.inserted.isEmpty)
+        #expect(harness.history.mostRecent == nil)
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 2))
+        #expect(harness.coordinator.phase == .recording)
+        #expect(harness.coordinator.cancelDictation())
+    }
+
+    @Test("Escape while idle is a no-op")
+    func escapeWhileIdleDoesNothing() async {
+        let harness = Harness()
+        await harness.ready()
+
+        #expect(!harness.coordinator.cancelDictation())
+        #expect(harness.coordinator.phase == .idle)
+        #expect(harness.recorder.cancelCount == 0)
+        #expect(harness.history.mostRecent == nil)
+    }
+
+    @Test("Cancelling during live preview keeps the engine until that preview exits")
+    func escapeWaitsForInFlightPreviewBeforeReload() async throws {
+        let settings = isolatedSettings("cancel-preview-reload")
+        settings.livePreviewEnabled = true
+        settings.transcriptionSource = .onDevice
+        let recorder = FakeRecorder()
+        let inserter = FakeInserter()
+        let gate = AsyncTestGate()
+        let engine = ControlledTranscriptionEngine(gate: gate)
+        let coordinator = makeLifecycleCoordinator(
+            settings: settings,
+            recorder: recorder,
+            inserter: inserter,
+            engine: engine,
+            name: "cancel-preview-reload"
+        )
+        await coordinator.reloadModel()
+
+        let previous = DictationCoordinator.previewInterval
+        DictationCoordinator.previewInterval = .milliseconds(10)
+        defer { DictationCoordinator.previewInterval = previous }
+
+        coordinator.handleHotkeyEdge(.down(at: 0))
+        await gate.waitUntilStarted()
+        #expect(coordinator.cancelDictation())
+
+        let reload = Task { await coordinator.reloadModel() }
+        try await waitForModelState(.idle, coordinator: coordinator)
+        for _ in 0..<10 { await Task.yield() }
+        #expect(await engine.shutdownCount == 0)
+
+        await gate.open()
+        await reload.value
+
+        #expect(await engine.shutdownCount == 1)
+        #expect(inserter.inserted.isEmpty)
+    }
+
     @Test("Superseded model loads finish before the latest one starts")
     func serializesRapidModelReloads() async throws {
         let defaults = UserDefaults(suiteName: "plainsay.reloads.\(UUID().uuidString)")!
@@ -876,4 +971,3 @@ struct PipelineTests {
         try #require(coordinator.modelState == expected)
     }
 }
-

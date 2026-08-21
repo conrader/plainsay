@@ -35,10 +35,15 @@ public final class HotkeyMonitor {
 
     /// Called on the main actor for every press and release of the bound key.
     public var onEdge: ((HotkeyEdge) -> Void)?
+    /// Called once when Escape is pressed. The event remains visible to the
+    /// frontmost app because this monitor is deliberately listen-only.
+    public var onCancel: (() -> Void)?
 
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var isDown = false
+
+    static let escapeKeyCode: UInt16 = 53
 
     public private(set) var isRunning = false
 
@@ -122,7 +127,16 @@ public final class HotkeyMonitor {
 
     /// Takes plain scalars rather than the `CGEvent` itself: the event is not
     /// `Sendable`, and everything we need from it is read on the tap's thread.
-    fileprivate func handle(type: CGEventType, keyCode: UInt16, flags: UInt64, isAutorepeat: Bool) {
+    func handle(type: CGEventType, keyCode: UInt16, flags: UInt64, isAutorepeat: Bool) {
+        if type == .keyDown, keyCode == Self.escapeKeyCode {
+            // A held Escape key repeats. One cancellation is enough, and
+            // avoiding repeats keeps an Escape intended for the next session
+            // from being inferred from the same physical press.
+            guard !isAutorepeat else { return }
+            onCancel?()
+            return
+        }
+
         guard keyCode == binding.keyCode else { return }
 
         let now = ProcessInfo.processInfo.systemUptime

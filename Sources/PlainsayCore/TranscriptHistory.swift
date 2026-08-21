@@ -55,7 +55,7 @@ public final class TranscriptHistory {
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Plainsay", isDirectory: true)
 
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        PrivateFiles.makePrivateDirectory(at: base)
         fileURL = base.appendingPathComponent("history.json")
         load()
     }
@@ -97,6 +97,9 @@ public final class TranscriptHistory {
         guard let data = try? encoder.encode(records) else { return }
         // Atomic: a crash mid-write must not corrupt the whole history.
         try? data.write(to: fileURL, options: .atomic)
+        // After the write, never before — the atomic rename above replaces
+        // the file, and with it any mode already set on the old one.
+        PrivateFiles.protectWrittenFile(fileURL)
     }
 }
 
