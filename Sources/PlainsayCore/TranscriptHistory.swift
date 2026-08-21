@@ -61,6 +61,9 @@ public final class TranscriptHistory {
     }
 
     public var mostRecent: TranscriptRecord? { records.first }
+    public var hasUnacknowledgedInsertion: Bool {
+        records.contains { $0.outcome == .insertionUnverified }
+    }
 
     public func add(_ record: TranscriptRecord) {
         records.insert(record, at: 0)
@@ -70,17 +73,59 @@ public final class TranscriptHistory {
         save()
     }
 
+    /// Persists that the user has dealt with every outstanding paste warning.
+    /// The history rows still say those dictations were not pasted; only the
+    /// menu reminder is acknowledged.
+    public func acknowledgeInsertionIssues() {
+        var changed = false
+        records = records.map { record in
+            guard record.outcome == .insertionUnverified else { return record }
+            changed = true
+            return replacingOutcome(of: record, with: .insertionUnverifiedAcknowledged)
+        }
+        if changed { save() }
+    }
+
+    /// The transcript is saved before insertion is attempted. If that later
+    /// step falls back to the clipboard, amend the existing record rather than
+    /// adding a duplicate or leaving history claiming it was inserted.
+    public func updateOutcome(id: UUID, to outcome: DictationOutcome) {
+        guard let index = records.firstIndex(where: { $0.id == id }) else { return }
+        let record = records[index]
+        guard record.outcome != outcome else { return }
+        records[index] = replacingOutcome(of: record, with: outcome)
+        save()
+    }
+
+    private func replacingOutcome(of record: TranscriptRecord, with outcome: DictationOutcome) -> TranscriptRecord {
+        TranscriptRecord(
+            id: record.id,
+            date: record.date,
+            text: record.text,
+            rawText: record.rawText,
+            outcome: outcome,
+            durationSeconds: record.durationSeconds,
+            targetApp: record.targetApp
+        )
+    }
+
     public func clear() {
         records = []
         save()
     }
 
     /// Puts a past dictation back on the clipboard so it can be pasted by hand.
+    /// Copying is also a successful recovery action, so it acknowledges that
+    /// record's persistent not-pasted reminder without changing its badge.
     @discardableResult
     public func copyToClipboard(_ record: TranscriptRecord) -> Bool {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        return pasteboard.setString(record.text, forType: .string)
+        let copied = pasteboard.setString(record.text, forType: .string)
+        if copied, record.outcome == .insertionUnverified {
+            updateOutcome(id: record.id, to: .insertionUnverifiedAcknowledged)
+        }
+        return copied
     }
 
     private func load() {

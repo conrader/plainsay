@@ -20,20 +20,50 @@ struct HUDPreview: View {
     }()
 
     private static let states: [(String, HUDState)] = [
-        ("Recording", HUDState(phase: .recording, levelHistory: sampleLevels, elapsed: 7)),
-        ("Just started", HUDState(phase: .recording, levelHistory: Array(sampleLevels.prefix(14)), elapsed: 0)),
+        ("Held recording", HUDState(
+            phase: .recording,
+            levelHistory: sampleLevels,
+            elapsed: 7,
+            recordingStyle: .releaseToFinish
+        )),
+        ("Latched recording", HUDState(
+            phase: .recording,
+            levelHistory: Array(sampleLevels.prefix(52)),
+            elapsed: 3,
+            recordingStyle: .tapToFinish
+        )),
         ("Transcribing", HUDState(phase: .transcribing, levelHistory: sampleLevels)),
         ("Polishing", HUDState(phase: .cleaning, levelHistory: sampleLevels)),
         ("Downloading model", HUDState(
             phase: .modelLoading,
-            modelState: .downloading(progress: 0.42)
+            modelState: .downloading(progress: 0.42),
+            modelLoadTiming: SpeechModelLoadTiming(
+                phase: .downloading,
+                startedAt: Date().addingTimeInterval(-38),
+                lastDownloadProgressAt: Date().addingTimeInterval(-2)
+            )
         )),
         ("Preparing model", HUDState(
             phase: .modelLoading,
-            modelState: .loading(progress: nil)
+            modelState: .loading(progress: nil),
+            modelLoadTiming: SpeechModelLoadTiming(
+                phase: .preparing,
+                startedAt: Date().addingTimeInterval(-134),
+                lastDownloadProgressAt: nil
+            )
+        )),
+        ("Slow preparation", HUDState(
+            phase: .modelLoading,
+            modelState: .loading(progress: nil),
+            modelLoadTiming: SpeechModelLoadTiming(
+                phase: .preparing,
+                startedAt: Date().addingTimeInterval(-481),
+                lastDownloadProgressAt: nil
+            )
         )),
         ("Cleanup unavailable", HUDState(phase: .insertedRaw, levelHistory: sampleLevels)),
         ("Saved to clipboard", HUDState(phase: .savedToClipboard, levelHistory: sampleLevels)),
+        ("Cancelled", HUDState(phase: .cancelled)),
         ("Error", HUDState(
             phase: .error("Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."),
             levelHistory: []

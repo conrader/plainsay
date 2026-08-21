@@ -10,7 +10,7 @@ public enum HotkeyMonitorError: LocalizedError {
         case .tapCreationFailed:
             Localization.coreString(
                 "hotkey.tapCreationFailed",
-                fallback: "Could not listen for the hotkey. Grant Plainsay access in System Settings › Privacy & Security › Input Monitoring, then restart it."
+                fallback: "Could not listen for the hotkey. Grant Plainsay Accessibility and Input Monitoring access in System Settings › Privacy & Security, then restart it."
             )
         }
     }
@@ -35,13 +35,18 @@ public final class HotkeyMonitor {
 
     /// Called on the main actor for every press and release of the bound key.
     public var onEdge: ((HotkeyEdge) -> Void)?
-    /// Called once when Escape is pressed. The event remains visible to the
-    /// frontmost app because this monitor is deliberately listen-only.
-    public var onCancel: (() -> Void)?
+    /// Called once when Escape is pressed. Returning `true` means an active
+    /// dictation was cancelled and the complete Escape press should be kept
+    /// away from the frontmost app. Returning `false` leaves Escape alone.
+    public var onCancel: (() -> Bool)?
 
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var isDown = false
+    /// If the cancelling key-down was consumed, consume its repeats and key-up
+    /// too. Delivering only half a key press to another app can strand its own
+    /// keyboard state or trigger an unrelated Escape action on release.
+    private var consumesEscapeSequence = false
 
     static let escapeKeyCode: UInt16 = 53
 
@@ -79,9 +84,10 @@ public final class HotkeyMonitor {
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
-            // Listen-only: we must not swallow the key, or binding Right ⌘ would
-            // break every ⌘-shortcut typed with the right hand.
-            options: .listenOnly,
+            // Active so an Escape that really cancels dictation can be kept
+            // from also dismissing a sheet or modal in the destination app.
+            // Every hotkey event and every idle Escape is still returned.
+            options: .defaultTap,
             eventsOfInterest: mask,
             callback: hotkeyTapCallback,
             userInfo: context
@@ -109,6 +115,7 @@ public final class HotkeyMonitor {
         tap = nil
         runLoopSource = nil
         isDown = false
+        consumesEscapeSequence = false
         isRunning = false
     }
 
@@ -127,43 +134,54 @@ public final class HotkeyMonitor {
 
     /// Takes plain scalars rather than the `CGEvent` itself: the event is not
     /// `Sendable`, and everything we need from it is read on the tap's thread.
-    func handle(type: CGEventType, keyCode: UInt16, flags: UInt64, isAutorepeat: Bool) {
-        if type == .keyDown, keyCode == Self.escapeKeyCode {
-            // A held Escape key repeats. One cancellation is enough, and
-            // avoiding repeats keeps an Escape intended for the next session
-            // from being inferred from the same physical press.
-            guard !isAutorepeat else { return }
-            onCancel?()
-            return
+    @discardableResult
+    func handle(type: CGEventType, keyCode: UInt16, flags: UInt64, isAutorepeat: Bool) -> Bool {
+        if keyCode == Self.escapeKeyCode {
+            switch type {
+            case .keyDown:
+                if isAutorepeat { return consumesEscapeSequence }
+                consumesEscapeSequence = onCancel?() == true
+                return consumesEscapeSequence
+            case .keyUp:
+                let consume = consumesEscapeSequence
+                consumesEscapeSequence = false
+                return consume
+            default:
+                return false
+            }
         }
 
-        guard keyCode == binding.keyCode else { return }
+        guard keyCode == binding.keyCode else { return false }
 
         let now = ProcessInfo.processInfo.systemUptime
 
         switch type {
         case .flagsChanged:
-            guard binding.isModifier else { return }
+            guard binding.isModifier else { return false }
             let pressed = binding.isPressed(flags: flags)
-            guard pressed != isDown else { return }
+            guard pressed != isDown else { return false }
             isDown = pressed
             emit(pressed ? .down(at: now) : .up(at: now))
 
         case .keyDown:
-            guard !binding.isModifier else { return }
+            guard !binding.isModifier else { return false }
             // Ignore auto-repeat: a held key must read as one long press.
-            guard !isAutorepeat, !isDown else { return }
+            guard !isAutorepeat, !isDown else { return false }
             isDown = true
             emit(.down(at: now))
 
         case .keyUp:
-            guard !binding.isModifier, isDown else { return }
+            guard !binding.isModifier, isDown else { return false }
             isDown = false
             emit(.up(at: now))
 
         default:
             break
         }
+
+        // The configured dictation hotkey must always remain available to the
+        // foreground app (for example Right Command in normal shortcuts).
+        return false
     }
 
     private func emit(_ edge: HotkeyEdge) {
@@ -187,14 +205,15 @@ private func hotkeyTapCallback(
     let flags = event.flags.rawValue
     let isAutorepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
 
-    MainActor.assumeIsolated {
+    let shouldConsume = MainActor.assumeIsolated {
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             monitor.reenable()
+            return false
         default:
-            monitor.handle(type: type, keyCode: keyCode, flags: flags, isAutorepeat: isAutorepeat)
+            return monitor.handle(type: type, keyCode: keyCode, flags: flags, isAutorepeat: isAutorepeat)
         }
     }
 
-    return Unmanaged.passUnretained(event)
+    return shouldConsume ? nil : Unmanaged.passUnretained(event)
 }

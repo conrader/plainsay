@@ -56,6 +56,127 @@ public enum SpeechModelLoadState: Sendable, Equatable {
     }
 }
 
+/// Wall-clock markers for the model-load phase currently in progress.
+///
+/// Views can derive a live elapsed duration from `startedAt` without the core
+/// pipeline owning a repeating timer. `lastDownloadProgressAt` only advances
+/// when the reported download fraction reaches a new high-water mark, so it
+/// can distinguish real forward progress from a stalled or oscillating source.
+public struct SpeechModelLoadTiming: Sendable, Equatable {
+    public enum Phase: Sendable, Equatable {
+        case downloading
+        case preparing
+    }
+
+    public let phase: Phase
+    public let startedAt: Date
+    public let lastDownloadProgressAt: Date?
+    /// High-water mark used to distinguish genuine forward movement from
+    /// providers that briefly regress or oscillate between file subtotals.
+    public let highestDownloadProgress: Double?
+
+    public init(
+        phase: Phase,
+        startedAt: Date,
+        lastDownloadProgressAt: Date?,
+        highestDownloadProgress: Double? = nil
+    ) {
+        self.phase = phase
+        self.startedAt = startedAt
+        self.lastDownloadProgressAt = lastDownloadProgressAt
+        self.highestDownloadProgress = highestDownloadProgress
+    }
+}
+
+/// Pure policy for presenting a live model load without inventing an ETA.
+/// Keeping the thresholds in Core makes the boundary behavior testable while
+/// App remains responsible only for localized wording and controls.
+public struct SpeechModelLoadWatchdog: Sendable, Equatable {
+    public enum Attention: Sendable, Equatable {
+        case downloadStalled
+        case downloadActionRequired
+        case firstPreparation
+        case takingLonger
+        case actionRequired
+    }
+
+    public enum RecoveryAction: Sendable, Equatable {
+        case retry
+        case restart
+    }
+
+    public static let downloadStallAfter: TimeInterval = 90
+    public static let downloadActionRequiredAfter: TimeInterval = 5 * 60
+    public static let firstPreparationMessageAfter: TimeInterval = 3 * 60
+    public static let takingLongerAfter: TimeInterval = 8 * 60
+    public static let actionRequiredAfter: TimeInterval = 15 * 60
+
+    public let state: SpeechModelLoadState
+    public let timing: SpeechModelLoadTiming?
+    public let now: Date
+
+    public init(state: SpeechModelLoadState, timing: SpeechModelLoadTiming?, now: Date) {
+        self.state = state
+        self.timing = timing
+        self.now = now
+    }
+
+    public var elapsed: TimeInterval? {
+        guard let timing else { return nil }
+        return max(0, now.timeIntervalSince(timing.startedAt))
+    }
+
+    public var percentage: Int? {
+        switch state {
+        case .downloading(let progress):
+            Self.percentage(progress)
+        case .loading(let progress):
+            progress.map(Self.percentage)
+        case .idle, .ready, .failed:
+            nil
+        }
+    }
+
+    public var attention: Attention? {
+        guard let timing, let elapsed else { return nil }
+        switch timing.phase {
+        case .downloading:
+            guard let lastProgress = timing.lastDownloadProgressAt,
+                  now.timeIntervalSince(lastProgress) >= Self.downloadStallAfter
+            else { return nil }
+            if now.timeIntervalSince(lastProgress) >= Self.downloadActionRequiredAfter {
+                return .downloadActionRequired
+            }
+            return .downloadStalled
+        case .preparing:
+            if elapsed >= Self.actionRequiredAfter { return .actionRequired }
+            if elapsed >= Self.takingLongerAfter { return .takingLonger }
+            if elapsed >= Self.firstPreparationMessageAfter { return .firstPreparation }
+            return nil
+        }
+    }
+
+    public var recoveryAction: RecoveryAction? {
+        if case .failed = state { return .retry }
+        if attention == .downloadStalled { return .retry }
+        if attention == .downloadActionRequired || attention == .actionRequired { return .restart }
+        return nil
+    }
+
+    public static func timecode(_ interval: TimeInterval) -> String {
+        let total = max(0, Int(interval))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        if hours > 0 { return String(format: "%d:%02d:%02d", hours, minutes, seconds) }
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    private static func percentage(_ value: Double) -> Int {
+        Int((SpeechModelLoadState.clampedProgress(value) * 100).rounded())
+    }
+}
+
 /// On-device speech models available in the Speech settings.
 ///
 /// The Whisper raw values are unchanged so preferences written by earlier

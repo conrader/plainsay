@@ -10,8 +10,10 @@ struct HotkeyStateMachineTests {
 
         #expect(machine.handle(.down(at: 0)) == .start)
         #expect(machine.isRecording)
+        #expect(machine.recordingStyle == .releaseToFinish)
         #expect(machine.handle(.up(at: 1.5)) == .stop)
         #expect(!machine.isRecording)
+        #expect(machine.recordingStyle == nil)
     }
 
     @Test("A quick tap latches recording on until the next press")
@@ -22,6 +24,7 @@ struct HotkeyStateMachineTests {
         // Released quickly: keep recording rather than stopping.
         #expect(machine.handle(.up(at: 0.1)) == .none)
         #expect(machine.isRecording)
+        #expect(machine.recordingStyle == .tapToFinish)
 
         // Second tap ends it...
         #expect(machine.handle(.down(at: 5.0)) == .stop)
@@ -63,6 +66,7 @@ struct HotkeyStateMachineTests {
         var machine = HotkeyStateMachine(mode: .toggleOnly)
 
         #expect(machine.handle(.down(at: 0)) == .start)
+        #expect(machine.recordingStyle == .tapToFinish)
         #expect(machine.handle(.up(at: 0.01)) == .none)
         #expect(machine.isRecording)
         #expect(machine.handle(.down(at: 3)) == .stop)
@@ -85,16 +89,40 @@ struct HotkeyStateMachineTests {
 @Suite("Hotkey monitor")
 @MainActor
 struct HotkeyMonitorTests {
-    @Test("Escape emits one cancellation and ignores key repeat")
-    func escapeCancelsOnce() {
+    @Test("A handled Escape consumes its whole key sequence and cancels once")
+    func handledEscapeIsConsumed() {
         let monitor = HotkeyMonitor()
         var cancellationCount = 0
-        monitor.onCancel = { cancellationCount += 1 }
+        monitor.onCancel = {
+            cancellationCount += 1
+            return true
+        }
 
-        monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: false)
-        monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: true)
-        monitor.handle(type: .keyUp, keyCode: 53, flags: 0, isAutorepeat: false)
+        #expect(monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: false))
+        #expect(monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: true))
+        #expect(monitor.handle(type: .keyUp, keyCode: 53, flags: 0, isAutorepeat: false))
 
         #expect(cancellationCount == 1)
+    }
+
+    @Test("Escape stays available to the frontmost app while Plainsay is idle")
+    func idleEscapePassesThrough() {
+        let monitor = HotkeyMonitor()
+        monitor.onCancel = { false }
+
+        #expect(!monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: false))
+        #expect(!monitor.handle(type: .keyDown, keyCode: 53, flags: 0, isAutorepeat: true))
+        #expect(!monitor.handle(type: .keyUp, keyCode: 53, flags: 0, isAutorepeat: false))
+    }
+
+    @Test("The dictation hotkey is observed but never consumed")
+    func dictationHotkeyPassesThrough() {
+        let monitor = HotkeyMonitor(binding: .f13Key)
+        var edges: [HotkeyEdge] = []
+        monitor.onEdge = { edges.append($0) }
+
+        #expect(!monitor.handle(type: .keyDown, keyCode: monitor.binding.keyCode, flags: 0, isAutorepeat: false))
+        #expect(!monitor.handle(type: .keyUp, keyCode: monitor.binding.keyCode, flags: 0, isAutorepeat: false))
+        #expect(edges.count == 2)
     }
 }
