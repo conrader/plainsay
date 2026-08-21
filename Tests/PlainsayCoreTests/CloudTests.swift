@@ -184,14 +184,22 @@ struct CloudTranscriptionEngineTests {
         #expect(request.value(forHTTPHeaderField: "Content-Type") == AudioUploadFormat.m4a.mimeType)
 
         let url = try #require(request.url)
-        let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
-        #expect(query.first { $0.name == "language" }?.value == "pl")
-        #expect(query.first { $0.name == "prompt" }?.value == "Plainsay")
+        #expect(url.path == "/v1/transcribe")
+        #expect(url.query == nil)
+
+        let encoded = try #require(request.value(forHTTPHeaderField: "X-Plainsay-Metadata"))
+        var base64 = encoded.replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
+        let metadataData = try #require(Data(base64Encoded: base64))
+        let metadata = try #require(try JSONSerialization.jsonObject(with: metadataData) as? [String: Any])
+        #expect(metadata["language"] as? String == "pl")
+        #expect(metadata["prompt"] as? String == "Plainsay")
         // Duration comes from the sample count the client actually recorded,
         // not from re-parsing the encoded upload — the server trusts this
         // value for both the fair-use cap and its own usage accounting.
-        let seconds = try #require(query.first { $0.name == "durationSeconds" }?.value).flatMap(Double.init)
-        #expect(abs(seconds! - 2.0) < 0.01)
+        let seconds = try #require(metadata["durationSeconds"] as? Double)
+        #expect(abs(seconds - 2.0) < 0.01)
     }
 
     @Test("A 402 reports the subscription as the problem")

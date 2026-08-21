@@ -307,7 +307,7 @@ private struct SpeechSetupStep: View {
                 title: Localization.appString("wizard.speech.title", fallback: "Choose your Plainsay experience"),
                 detail: Localization.appString(
                     "wizard.speech.detail",
-                    fallback: "Keep speech recognition and recorded audio on this Mac for free, or use Plainsay Cloud for the fastest setup without a model download. The next step configures whichever you pick."
+                    fallback: "Keep speech recognition and recorded audio on this Mac for free, or use Plainsay Cloud without downloading a transcription model. The next step configures whichever you pick."
                 )
             )
 
@@ -346,12 +346,17 @@ private struct SpeechSetupStep: View {
                     isSelected: source == .cloud,
                     icon: "cloud.fill",
                     colors: [.indigo, .blue],
-                    eyebrow: Localization.appString("wizard.plan.cloud.eyebrow", fallback: "FASTEST SETUP"),
+                    eyebrow: Localization.appString(
+                        "wizard.plan.cloud.eyebrow", fallback: "NO TRANSCRIPTION-MODEL DOWNLOAD"
+                    ),
                     title: Localization.appString("wizard.plan.cloud.title", fallback: "Plainsay Cloud"),
-                    price: Localization.appString("wizard.plan.cloud.price", fallback: "≈ $3 / month"),
+                    price: Localization.appString(
+                        "wizard.plan.cloud.price", fallback: "12 PLN / month (about US$3)"
+                    ),
                     features: [
                         Localization.appString(
-                            "wizard.plan.cloud.feature1", fallback: "No model download or preparation"
+                            "wizard.plan.cloud.feature1",
+                            fallback: "No transcription-model download or preparation"
                         ),
                         Localization.appString(
                             "wizard.plan.cloud.feature2", fallback: "Transcription and Polishing included"
@@ -363,6 +368,10 @@ private struct SpeechSetupStep: View {
                         Localization.appString(
                             "wizard.plan.cloud.caveat2",
                             fallback: "Audio is sent to Plainsay Cloud to be transcribed"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.cloud.caveat3",
+                            fallback: "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"
                         ),
                     ],
                     action: { source = .cloud }
@@ -772,7 +781,7 @@ private struct LanguageSetupStep: View {
                     ForEach(CleanupProvider.allCases) { provider in
                         Text(
                             provider == .plainsay
-                                ? "\(provider.displayName) — easiest, no limits, $3/mo"
+                                ? "\(provider.displayName) — \(Localization.appString("cleanup.plainsay.summary", fallback: "included with Cloud"))"
                                 : provider.displayName
                         )
                         .tag(provider)
@@ -785,9 +794,26 @@ private struct LanguageSetupStep: View {
 
                 if settings.cleanupProvider == .plainsay {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Nothing to paste in — sign in once and it just works", systemImage: "checkmark.circle")
-                        Label("No usage cap — Polishing itself is never rate-limited", systemImage: "checkmark.circle")
-                        Label("Works with any transcription source, including fully on-device", systemImage: "checkmark.circle")
+                        Label(
+                            Localization.appString(
+                                "cleanup.plainsay.noKey", fallback: "No provider key to paste — sign in once"
+                            ),
+                            systemImage: "checkmark.circle"
+                        )
+                        Label(
+                            Localization.appString(
+                                "cleanup.plainsay.subscription",
+                                fallback: "Included with an active Plainsay Cloud subscription"
+                            ),
+                            systemImage: "checkmark.circle"
+                        )
+                        Label(
+                            Localization.appString(
+                                "cleanup.plainsay.anySource",
+                                fallback: "Works with any transcription source, including fully on-device"
+                            ),
+                            systemImage: "checkmark.circle"
+                        )
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -849,10 +875,10 @@ private struct VoiceSetupStep: View {
             SetupHeading(
                 icon: "person.wave.2.fill",
                 colors: [.teal, .cyan],
-                title: Localization.appString("wizard.voice.title", fallback: "Ignore other voices (optional)"),
+                title: Localization.appString("wizard.voice.title", fallback: "Focus on your voice (optional, best effort)"),
                 detail: Localization.appString(
                     "wizard.voice.detail",
-                    fallback: "If you often dictate somewhere with other people talking, Plainsay can learn your voice and filter everyone else out before transcription."
+                    fallback: "Enabling this downloads a separate local filtering model. Plainsay can then try to focus on your enrolled voice locally. If filtering is unavailable or fails, dictation continues with unfiltered audio; a selected Cloud or bring-your-own-provider speech service may then receive that audio."
                 )
             )
 
@@ -1235,7 +1261,7 @@ private struct ReadySetupStep: View {
         if canDictate {
             return Localization.appString(
                 "wizard.ready.detail.ready",
-                fallback: "You can dictate into any app. Settings are always available from the menu bar."
+                fallback: "You can dictate in many Mac apps. If safe insertion is unavailable, the text stays on the clipboard. Settings are always available from the menu bar."
             )
         }
         if case .error = coordinator.phase {
@@ -1296,7 +1322,7 @@ private struct ReadySetupStep: View {
         case .cloud:
             Localization.appString(
                 "wizard.ready.speechConfig.detail.cloud",
-                fallback: "About $3/month · transcription and Polishing included"
+                fallback: "12 PLN/month (about US$3) · transcription and Polishing included · no transcription-model download"
             )
         }
     }

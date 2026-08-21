@@ -10,9 +10,9 @@ import PlainsayCore
 struct CloudSettingsView: View {
     let cloud: PlainsayCloudClient
     let onCredentialsChanged: () -> Void
-    /// The transcription-minutes bar is meaningless (and actively
-    /// misleading) shown from the Polishing provider picker: Polishing is
-    /// unlimited, and the quota shown here is the transcription plan's.
+    /// The transcription-minutes bar is misleading when this view is shown
+    /// from the Polishing provider picker: the visible quota is measured in
+    /// transcription minutes, not Polishing requests.
     var showsUsage: Bool = true
 
     @State private var email = ""
@@ -115,7 +115,7 @@ struct CloudSettingsView: View {
                     )
                     Text(
                         Localization.appFormat(
-                            "cloud.minutesUsed", fallback: "%d of %d minutes this month",
+                            "cloud.minutesUsed", fallback: "%d of %d minutes used in the last 30 days",
                             account.usedSeconds / 60, account.limitSeconds / 60
                         )
                     )
@@ -124,13 +124,31 @@ struct CloudSettingsView: View {
                 }
             }
 
+            if showsUsage {
+                Text(
+                    Localization.appString(
+                        "cloud.rollingLimit",
+                        fallback: "Up to 900 transcription minutes in any rolling 30-day window; Local mode is unmetered."
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
             HStack {
                 if account.isActive {
                     Button("Manage subscription") { Task { await openPortal() } }
                 } else {
-                    Button("Subscribe — about $3/month") { Task { await subscribe(annual: false) } }
+                    Button(
+                        Localization.appString(
+                            "cloud.subscribeMonthly",
+                            fallback: "Subscribe — 12 PLN/month (about US$3)"
+                        )
+                    ) { Task { await subscribe(annual: false) } }
                         .buttonStyle(.borderedProminent)
-                    Button("About $30/year") { Task { await subscribe(annual: true) } }
+                    Button(
+                        Localization.appString("cloud.subscribeAnnual", fallback: "120 PLN/year")
+                    ) { Task { await subscribe(annual: true) } }
                 }
                 Spacer()
                 Button("Sign out", action: signOut)

@@ -45,7 +45,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Plainsay records your voice while you hold the dictation hotkey, and transcribes it on this Mac.</string>
+	<string>Plainsay records your voice while you hold the dictation hotkey and transcribes it using the transcription mode you choose.</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
