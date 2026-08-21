@@ -87,6 +87,9 @@ public protocol AudioRecording: AnyObject {
     /// 0...1, for the HUD meter.
     var normalizedLevel: Float { get }
     var elapsed: TimeInterval { get }
+    /// Becomes true at the capture boundary, before another audio callback has
+    /// to discard samples. The coordinator turns this into an automatic stop.
+    var hasReachedMaximumDuration: Bool { get }
 
     func start() throws
     /// Stops and returns the recording as 16kHz mono floats.
@@ -98,9 +101,17 @@ public protocol AudioRecording: AnyObject {
     func peek() -> [Float]
 }
 
+public extension AudioRecording {
+    /// Custom recorders that are not duration-bounded remain compatible; the
+    /// production `AudioRecorder` overrides this with its sample-buffer state.
+    var hasReachedMaximumDuration: Bool { false }
+}
+
 /// Captures microphone audio as 16kHz mono float samples.
 @MainActor
 public final class AudioRecorder: AudioRecording {
+    public static let maximumDuration: TimeInterval = 10 * 60
+
     public private(set) var isRecording = false
 
     /// Rebuilt whenever the audio hardware changes underneath us.
@@ -112,7 +123,7 @@ public final class AudioRecorder: AudioRecording {
     /// long-lived engine therefore breaks permanently the first time hardware
     /// changes, which looks exactly like "dictation randomly stopped working".
     private var engine = AVAudioEngine()
-    private let sink = AudioSampleSink()
+    private let sink = AudioSampleSink(seconds: AudioRecorder.maximumDuration)
     private var processor: AudioTapProcessor?
     private var startedAt: Date?
     private var configurationObserver: (any NSObjectProtocol)?
@@ -173,6 +184,11 @@ public final class AudioRecorder: AudioRecording {
 
     /// Live input level, 0...1, for the recording HUD.
     public var normalizedLevel: Float { sink.normalizedLevel }
+
+    /// Ten minutes of 16kHz mono audio is the bounded in-memory capture. The
+    /// coordinator observes this exact sample boundary and stops the recorder;
+    /// it does not infer the cutoff from wall-clock time.
+    public var hasReachedMaximumDuration: Bool { sink.isAtCapacity }
 
     public var elapsed: TimeInterval {
         guard let startedAt else { return 0 }

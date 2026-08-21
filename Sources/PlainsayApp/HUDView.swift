@@ -103,12 +103,17 @@ struct HUDView: View {
     }
 
     private var isWorking: Bool {
-        state.phase == .transcribing || state.phase == .cleaning
+        switch state.phase {
+        case .recordingLimitReached, .transcribing, .cleaning: true
+        default: false
+        }
     }
 
     private var label: String {
         switch state.phase {
         case .recording: Localization.appString("hud.label.listening", fallback: "LISTENING")
+        case .recordingLimitReached:
+            Localization.appString("hud.label.recordingLimitReached", fallback: "10-MINUTE LIMIT")
         case .transcribing: Localization.appString("hud.label.transcribing", fallback: "TRANSCRIBING")
         case .cleaning: Localization.appString("hud.label.polishing", fallback: "POLISHING")
         case .modelLoading: Localization.appString("hud.label.preparingModel", fallback: "PREPARING MODEL")
@@ -122,6 +127,7 @@ struct HUDView: View {
     private var labelColor: Color {
         switch state.phase {
         case .recording: Palette.bone
+        case .recordingLimitReached: Palette.signal
         case .insertedRaw, .error: Palette.ember
         case .savedToClipboard: Palette.signal
         default: Palette.slate
@@ -131,7 +137,7 @@ struct HUDView: View {
     private var borderColor: Color {
         switch state.phase {
         case .error, .insertedRaw: Palette.ember.opacity(0.45)
-        case .savedToClipboard: Palette.signal.opacity(0.45)
+        case .recordingLimitReached, .savedToClipboard: Palette.signal.opacity(0.45)
         default: Palette.veil
         }
     }
@@ -145,6 +151,11 @@ struct HUDView: View {
         switch state.phase {
         case .recording:
             Localization.appFormat("hud.a11y.listening", fallback: "Listening, %d seconds", Int(state.elapsed))
+        case .recordingLimitReached:
+            Localization.appString(
+                "hud.a11y.recordingLimitReached",
+                fallback: "Ten-minute recording limit reached. Recording stopped automatically; processing the captured audio."
+            )
         case .transcribing: Localization.appString("hud.a11y.transcribing", fallback: "Transcribing")
         case .cleaning: Localization.appString("hud.a11y.polishing", fallback: "Polishing transcript")
         case .modelLoading: modelAccessibilityLabel
@@ -345,6 +356,15 @@ struct HUDContainer: View {
                     message: Localization.appString(
                         "hud.error.clipboard",
                         fallback: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it."
+                    ),
+                    tint: Palette.signal
+                )
+            }
+            if case .recordingLimitReached = state.phase {
+                HUDErrorView(
+                    message: Localization.appString(
+                        "hud.notice.recordingLimitReached",
+                        fallback: "Recording stopped automatically. The captured audio is being processed."
                     ),
                     tint: Palette.signal
                 )
