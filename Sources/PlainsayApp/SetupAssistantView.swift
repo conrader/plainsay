@@ -94,7 +94,11 @@ struct SetupAssistantView: View {
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .language:
-                        LanguageSetupStep(settings: settings, coordinator: coordinator)
+                        LanguageSetupStep(
+                            speechSource: speechSource,
+                            settings: settings,
+                            coordinator: coordinator
+                        )
                     case .configure:
                         ConfigureSpeechSetupStep(
                             source: $speechSource,
@@ -247,11 +251,13 @@ struct SetupAssistantView: View {
 
                         if leavingConfigure {
                             // Only this explicit transition commits the draft.
-                            // It also avoids reloading an unchanged source or model.
-                            let changed = speechSource != settings.transcriptionSource
-                                || speechModel != settings.model
-                            settings.transcriptionSource = speechSource
-                            settings.model = speechModel
+                            // Cloud also commits the Polishing included in its
+                            // subscription; Local and BYOK leave that separate
+                            // choice exactly as configured on the prior step.
+                            let changed = settings.applySetupSpeechSelection(
+                                source: speechSource,
+                                model: speechModel
+                            )
                             onSpeechConfirmed(changed)
                         }
                     }
@@ -724,6 +730,10 @@ private struct ConfigureSpeechSetupStep: View {
 /// page in the assistant needs. Language and editing are also a genuinely
 /// separate decision from *how* audio gets transcribed.
 private struct LanguageSetupStep: View {
+    /// The uncommitted choice from the Speech step. Reading the persisted
+    /// setting here made a fresh Cloud selection look Local until Configure
+    /// was finished, and made a switch away from Cloud hide editing controls.
+    let speechSource: TranscriptionSource
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     // Doesn't gate Continue — cleanup is optional and falls back to the raw
@@ -746,7 +756,9 @@ private struct LanguageSetupStep: View {
 
             // Cloud bundles its own editing pass; only local and BYO
             // transcription need a separate editing provider chosen here.
-            if settings.transcriptionSource != .cloud {
+            if speechSource.bundlesPolishing {
+                bundledEditingDetails
+            } else {
                 editingDetails
             }
         }
@@ -765,6 +777,31 @@ private struct LanguageSetupStep: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
+        .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var bundledEditingDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(
+                Localization.appString(
+                    "wizard.plan.cloud.feature2", fallback: "Transcription and Polishing included"
+                ),
+                systemImage: "sparkles"
+            )
+            .font(.headline)
+
+            Text(
+                Localization.appString(
+                    "wizard.configure.detail.cloud",
+                    fallback: "Sign in once. Plainsay Cloud supplies speech transcription and Polishing, with no large model to prepare on this Mac."
+                )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
     }
 

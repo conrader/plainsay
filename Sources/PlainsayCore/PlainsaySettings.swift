@@ -149,6 +149,36 @@ public final class PlainsaySettings {
         onboardingVersion < Self.currentOnboardingVersion
     }
 
+    /// Commits the Setup Assistant's speech draft after every required field
+    /// has been configured. Plainsay Cloud is sold as transcription with
+    /// Polishing included, so confirming that plan must select the hosted
+    /// cleaner as well as the hosted speech engine. The other speech sources
+    /// deliberately preserve the user's independent Polishing choice.
+    ///
+    /// - Returns: Whether the running speech/Cloud configuration needs to be
+    ///   refreshed after the commit.
+    @discardableResult
+    public func applySetupSpeechSelection(
+        source: TranscriptionSource,
+        model: OnDeviceModel
+    ) -> Bool {
+        let bundledPolishingChanged = source.bundlesPolishing
+            && (!cleanupEnabled || cleanupProvider != .plainsay)
+        let changed = source != transcriptionSource
+            || model != self.model
+            || bundledPolishingChanged
+
+        transcriptionSource = source
+        self.model = model
+
+        if source.bundlesPolishing {
+            cleanupEnabled = true
+            cleanupProvider = .plainsay
+        }
+
+        return changed
+    }
+
     /// Version 0 predates the setup assistant. Existing preferences or a fully
     /// authorized installation identify an existing user who should not be put
     /// through first-run setup merely because the app was updated.

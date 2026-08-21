@@ -21,6 +21,74 @@ struct OnboardingSettingsTests {
         #expect(settings.transcriptionSource == .onDevice)
     }
 
+    @Test("Only Plainsay Cloud bundles Polishing")
+    func cloudBundlesPolishing() {
+        #expect(TranscriptionSource.cloud.bundlesPolishing)
+        #expect(!TranscriptionSource.onDevice.bundlesPolishing)
+        #expect(!TranscriptionSource.remote.bundlesPolishing)
+    }
+
+    @Test("Confirming Cloud selects and persists its included Polishing")
+    func cloudSelectionIncludesPolishing() {
+        let defaults = makeDefaults()
+        let settings = PlainsaySettings(defaults: defaults)
+        settings.cleanupEnabled = false
+        settings.cleanupProvider = .anthropic
+
+        let changed = settings.applySetupSpeechSelection(
+            source: .cloud,
+            model: .smallEN
+        )
+
+        #expect(changed)
+        #expect(settings.transcriptionSource == .cloud)
+        #expect(settings.model == .smallEN)
+        #expect(settings.cleanupEnabled)
+        #expect(settings.cleanupProvider == .plainsay)
+
+        let relaunched = PlainsaySettings(defaults: defaults)
+        #expect(relaunched.transcriptionSource == .cloud)
+        #expect(relaunched.cleanupEnabled)
+        #expect(relaunched.cleanupProvider == .plainsay)
+    }
+
+    @Test("Repairing Cloud Polishing counts as a configuration change")
+    func cloudPolishingRepairTriggersRefresh() {
+        let settings = makeSettings()
+        settings.transcriptionSource = .cloud
+        settings.model = .smallEN
+        settings.cleanupEnabled = true
+        settings.cleanupProvider = .gemini
+
+        let repaired = settings.applySetupSpeechSelection(
+            source: .cloud,
+            model: .smallEN
+        )
+        let repeated = settings.applySetupSpeechSelection(
+            source: .cloud,
+            model: .smallEN
+        )
+
+        #expect(repaired)
+        #expect(!repeated)
+        #expect(settings.cleanupProvider == .plainsay)
+    }
+
+    @Test("Local and BYOK speech preserve the independent Polishing choice")
+    func nonCloudSelectionPreservesPolishing() {
+        for source in [TranscriptionSource.onDevice, .remote] {
+            let settings = makeSettings()
+            settings.cleanupEnabled = false
+            settings.cleanupProvider = .custom
+
+            settings.applySetupSpeechSelection(source: source, model: .baseEN)
+
+            #expect(settings.transcriptionSource == source)
+            #expect(!settings.cleanupEnabled)
+            #expect(settings.cleanupProvider == .custom)
+        }
+    }
+
     @Test("Completing setup persists its version")
     func completionPersists() {
         let defaults = makeDefaults()
