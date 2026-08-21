@@ -88,6 +88,13 @@ private struct HistoryRow: View {
                     // Worth flagging: this one skipped the cleanup pass.
                     Text("raw").foregroundStyle(.orange)
                 }
+                if record.outcome == .insertionUnverified
+                    || record.outcome == .insertionUnverifiedAcknowledged
+                {
+                    Text("·")
+                    Text(Localization.appString("history.notPasted", fallback: "not pasted"))
+                        .foregroundStyle(.orange)
+                }
                 Spacer()
                 Button(
                     justCopied

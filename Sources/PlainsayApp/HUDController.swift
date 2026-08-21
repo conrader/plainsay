@@ -128,7 +128,7 @@ final class HUDController {
         switch phase {
         case .idle:
             hide()
-        case .recording, .transcribing, .cleaning, .modelLoading, .insertedRaw, .savedToClipboard, .error:
+        case .recording, .transcribing, .cleaning, .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error:
             show()
             // Error text changes the panel's height.
             if let panel { position(panel) }

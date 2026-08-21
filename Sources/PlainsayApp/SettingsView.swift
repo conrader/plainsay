@@ -80,9 +80,15 @@ private struct GeneralSettings: View {
                     }
                 }
             } footer: {
-                Text(behaviorHint)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(behaviorHint)
+                    Text(Localization.appString(
+                        "dictation.cancelHint",
+                        fallback: "Press Esc to cancel the whole dictation without inserting anything."
+                    ))
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
             }
 
             Section {
@@ -183,7 +189,12 @@ private struct SpeechSettings: View {
                                 .disabled(!model.isSupportedOnCurrentHardware)
                         }
                     }
-                    ModelLoadStatusView(state: coordinator.modelState)
+                    ModelLoadStatusView(
+                        state: coordinator.modelState,
+                        timing: coordinator.modelLoadTiming,
+                        onRetry: { Task { await coordinator.retryModel() } },
+                        onRestart: restartPlainsay
+                    )
                     Text(
                         Localization.appFormat(
                             "settings.modelDownloadNote", fallback: "%@ download, then it runs entirely on this Mac.",
@@ -293,7 +304,11 @@ private struct SpeechSettings: View {
                         ForEach(CleanupProvider.allCases) { provider in
                             Text(
                                 provider == .plainsay
-                                    ? "\(provider.displayName) — easiest, no limits, $3/mo"
+                                    ? Localization.appFormat(
+                                        "settings.cleanupProvider.plainsayOption",
+                                        fallback: "%@ — easiest, no limits, $3/mo",
+                                        provider.displayName
+                                    )
                                     : provider.displayName
                             )
                             .tag(provider)

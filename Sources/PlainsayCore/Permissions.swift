@@ -25,7 +25,7 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
         switch self {
         case .microphone:
             Localization.coreString(
-                "permission.reason.microphone", fallback: "To record your voice while the hotkey is held."
+                "permission.reason.microphone", fallback: "To record your voice while dictation is active."
             )
         case .accessibility:
             Localization.coreString(

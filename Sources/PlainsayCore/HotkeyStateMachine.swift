@@ -29,6 +29,14 @@ public enum DictationCommand: Sendable, Equatable {
     case none
 }
 
+/// The instruction the HUD should show for the recording that is active now.
+/// It reflects state, not merely the configured mode: a hybrid press begins as
+/// push-to-talk and only becomes tap-latched after a quick release.
+public enum HotkeyRecordingStyle: Sendable, Equatable {
+    case releaseToFinish
+    case tapToFinish
+}
+
 /// Pure hold-vs-tap disambiguation. No timers, no I/O — feed it edges, get commands.
 ///
 /// In `.hybrid` mode a press released faster than `tapThreshold` latches recording
@@ -58,6 +66,17 @@ public struct HotkeyStateMachine: Sendable {
         switch state {
         case .holding, .latched: true
         case .idle, .endingAwaitingUp: false
+        }
+    }
+
+    public var recordingStyle: HotkeyRecordingStyle? {
+        switch state {
+        case .holding:
+            .releaseToFinish
+        case .latched:
+            .tapToFinish
+        case .idle, .endingAwaitingUp:
+            nil
         }
     }
 

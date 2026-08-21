@@ -99,7 +99,11 @@ struct SetupAssistantView: View {
                     case .speech:
                         SpeechSetupStep(source: $speechSource)
                     case .language:
-                        LanguageSetupStep(settings: settings, coordinator: coordinator)
+                        LanguageSetupStep(
+                            source: speechSource,
+                            settings: settings,
+                            coordinator: coordinator
+                        )
                     case .configure:
                         ConfigureSpeechSetupStep(
                             source: $speechSource,
@@ -312,7 +316,7 @@ private struct SpeechSetupStep: View {
                 title: Localization.appString("wizard.speech.title", fallback: "Choose your Plainsay experience"),
                 detail: Localization.appString(
                     "wizard.speech.detail",
-                    fallback: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
+                    fallback: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac."
                 )
             )
 
@@ -720,6 +724,7 @@ private struct ConfigureSpeechSetupStep: View {
 /// page in the assistant needs. Language and editing are also a genuinely
 /// separate decision from *how* audio gets transcribed.
 private struct LanguageSetupStep: View {
+    let source: TranscriptionSource
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     // Doesn't gate Continue — cleanup is optional and falls back to the raw
@@ -742,7 +747,7 @@ private struct LanguageSetupStep: View {
 
             // Cloud bundles its own editing pass; only local and BYO
             // transcription need a separate editing provider chosen here.
-            if settings.transcriptionSource != .cloud {
+            if source != .cloud {
                 editingDetails
             }
         }
@@ -777,7 +782,11 @@ private struct LanguageSetupStep: View {
                     ForEach(CleanupProvider.allCases) { provider in
                         Text(
                             provider == .plainsay
-                                ? "\(provider.displayName) — easiest, no limits, $3/mo"
+                                ? Localization.appFormat(
+                                    "settings.cleanupProvider.plainsayOption",
+                                    fallback: "%@ — easiest, no limits, $3/mo",
+                                    provider.displayName
+                                )
                                 : provider.displayName
                         )
                         .tag(provider)
@@ -1089,6 +1098,16 @@ private struct ShortcutSetupStep: View {
             Label(behaviorHint, systemImage: "info.circle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+
+            Label(
+                Localization.appString(
+                    "dictation.cancelHint",
+                    fallback: "Press Esc to cancel the whole dictation without inserting anything."
+                ),
+                systemImage: "escape"
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -1193,7 +1212,12 @@ private struct ReadySetupStep: View {
                     }
                 }
 
-                ModelLoadStatusView(state: coordinator.modelState)
+                ModelLoadStatusView(
+                    state: coordinator.modelState,
+                    timing: coordinator.modelLoadTiming,
+                    onRetry: { Task { await coordinator.retryModel() } },
+                    onRestart: restartPlainsay
+                )
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)

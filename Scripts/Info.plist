@@ -33,9 +33,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.21</string>
+	<string>0.2.22</string>
 	<key>CFBundleVersion</key>
-	<string>221</string>
+	<string>222</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
@@ -45,7 +45,7 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Plainsay records your voice while you hold the dictation hotkey, and transcribes it on this Mac.</string>
+	<string>Plainsay records your voice while dictation is active, and transcribes it on this Mac.</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
