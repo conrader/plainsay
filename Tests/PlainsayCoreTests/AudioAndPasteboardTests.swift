@@ -107,4 +107,73 @@ struct PasteboardSnapshotTests {
 
         #expect(pasteboard.string(forType: .string) == nil)
     }
+
+    @Test("A definite empty focus result suppresses synthetic paste")
+    func definiteMissingFocusSuppressesPaste() {
+        let successfulEmpty = PasteboardTextInserter.accessibilityValueState(
+            queryResult: .success,
+            valuePresent: false
+        )
+        let explicitNoValue = PasteboardTextInserter.accessibilityValueState(
+            queryResult: .noValue,
+            valuePresent: false
+        )
+
+        #expect(successfulEmpty == .absent)
+        #expect(explicitNoValue == .absent)
+        #expect(!PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: successfulEmpty,
+            focusedWindow: explicitNoValue,
+            allowsFocusedWindowFallback: false
+        ))
+    }
+
+    @Test("Accessibility query errors require a focused window")
+    func uncertainFocusRequiresWindow() {
+        let focused = PasteboardTextInserter.accessibilityValueState(
+            queryResult: .success,
+            valuePresent: true
+        )
+        let busy = PasteboardTextInserter.accessibilityValueState(
+            queryResult: .cannotComplete,
+            valuePresent: false
+        )
+        let unsupported = PasteboardTextInserter.accessibilityValueState(
+            queryResult: .attributeUnsupported,
+            valuePresent: false
+        )
+
+        #expect(focused == .present)
+        #expect(busy == .unknown)
+        #expect(unsupported == .unknown)
+        #expect(!PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: busy,
+            focusedWindow: .absent,
+            allowsFocusedWindowFallback: false
+        ))
+        #expect(PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: busy,
+            focusedWindow: focused,
+            allowsFocusedWindowFallback: false
+        ))
+        #expect(PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: focused,
+            focusedWindow: .absent,
+            allowsFocusedWindowFallback: false
+        ))
+    }
+
+    @Test("ChatGPT can use its focused window when its custom editor is hidden from Accessibility")
+    func chatGPTFocusedWindowFallback() {
+        #expect(PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: .absent,
+            focusedWindow: .present,
+            allowsFocusedWindowFallback: true
+        ))
+        #expect(!PasteboardTextInserter.shouldAttemptPaste(
+            focusedElement: .absent,
+            focusedWindow: .present,
+            allowsFocusedWindowFallback: false
+        ))
+    }
 }
