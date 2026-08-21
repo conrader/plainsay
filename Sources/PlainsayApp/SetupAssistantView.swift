@@ -25,7 +25,6 @@ struct SetupAssistantView: View {
         settings: PlainsaySettings,
         coordinator: DictationCoordinator,
         permissionStatus: PermissionStatus,
-        preferCloudOnFirstPresentation: Bool,
         onSpeechConfirmed: @escaping @MainActor (Bool) -> Void,
         onFinish: @escaping @MainActor () -> Void
     ) {
@@ -35,22 +34,18 @@ struct SetupAssistantView: View {
         self.onSpeechConfirmed = onSpeechConfirmed
         self.onFinish = onFinish
 
-        // A first-run choice stays a draft until Continue. Reopening the
-        // assistant must reflect what the user is already using.
-        _speechSource = State(
-            initialValue: preferCloudOnFirstPresentation ? .cloud : settings.transcriptionSource
-        )
+        // A first-run choice stays a draft until Continue. A fresh settings
+        // store defaults to Local, while reopening the assistant reflects
+        // whatever source the user is already using.
+        _speechSource = State(initialValue: settings.transcriptionSource)
         _speechModel = State(
-            initialValue: preferCloudOnFirstPresentation
-                && OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
-                ? .parakeetTDT06BV3
+            initialValue: settings.needsOnboarding
                 // A fresh setup has no real choice to respect yet — recommend
                 // based on whatever languages are already on file (usually
                 // none, which the recommendation treats the same as Parakeet).
                 // A returning user's own settings.model is left untouched.
-                : settings.needsOnboarding
-                    ? OnDeviceModel.recommended(for: settings.spokenLanguages)
-                    : settings.model
+                ? OnDeviceModel.recommended(for: settings.spokenLanguages)
+                : settings.model
         )
     }
 
@@ -312,37 +307,11 @@ private struct SpeechSetupStep: View {
                 title: Localization.appString("wizard.speech.title", fallback: "Choose your Plainsay experience"),
                 detail: Localization.appString(
                     "wizard.speech.detail",
-                    fallback: "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
+                    fallback: "Keep speech recognition and recorded audio on this Mac for free, or use Plainsay Cloud for the fastest setup without a model download. The next step configures whichever you pick."
                 )
             )
 
             HStack(alignment: .top, spacing: 14) {
-                PlanCard(
-                    isSelected: source == .cloud,
-                    icon: "cloud.fill",
-                    colors: [.indigo, .blue],
-                    eyebrow: Localization.appString("wizard.plan.cloud.eyebrow", fallback: "RECOMMENDED"),
-                    title: Localization.appString("wizard.plan.cloud.title", fallback: "Plainsay Cloud"),
-                    price: Localization.appString("wizard.plan.cloud.price", fallback: "≈ $3 / month"),
-                    features: [
-                        Localization.appString(
-                            "wizard.plan.cloud.feature1", fallback: "No model download or preparation"
-                        ),
-                        Localization.appString(
-                            "wizard.plan.cloud.feature2", fallback: "Transcription and Polishing included"
-                        ),
-                        Localization.appString("wizard.plan.cloud.feature3", fallback: "No API keys to configure"),
-                    ],
-                    caveats: [
-                        Localization.appString("wizard.plan.cloud.caveat1", fallback: "Needs an internet connection"),
-                        Localization.appString(
-                            "wizard.plan.cloud.caveat2",
-                            fallback: "Audio is sent to Plainsay Cloud to be transcribed"
-                        ),
-                    ],
-                    action: { source = .cloud }
-                )
-
                 PlanCard(
                     isSelected: source == .onDevice,
                     icon: "lock.shield.fill",
@@ -371,6 +340,32 @@ private struct SpeechSetupStep: View {
                         ),
                     ],
                     action: { source = .onDevice }
+                )
+
+                PlanCard(
+                    isSelected: source == .cloud,
+                    icon: "cloud.fill",
+                    colors: [.indigo, .blue],
+                    eyebrow: Localization.appString("wizard.plan.cloud.eyebrow", fallback: "FASTEST SETUP"),
+                    title: Localization.appString("wizard.plan.cloud.title", fallback: "Plainsay Cloud"),
+                    price: Localization.appString("wizard.plan.cloud.price", fallback: "≈ $3 / month"),
+                    features: [
+                        Localization.appString(
+                            "wizard.plan.cloud.feature1", fallback: "No model download or preparation"
+                        ),
+                        Localization.appString(
+                            "wizard.plan.cloud.feature2", fallback: "Transcription and Polishing included"
+                        ),
+                        Localization.appString("wizard.plan.cloud.feature3", fallback: "No API keys to configure"),
+                    ],
+                    caveats: [
+                        Localization.appString("wizard.plan.cloud.caveat1", fallback: "Needs an internet connection"),
+                        Localization.appString(
+                            "wizard.plan.cloud.caveat2",
+                            fallback: "Audio is sent to Plainsay Cloud to be transcribed"
+                        ),
+                    ],
+                    action: { source = .cloud }
                 )
             }
 

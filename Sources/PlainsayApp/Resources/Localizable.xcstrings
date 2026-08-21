@@ -18866,79 +18866,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "EMPFOHLEN"
+            "value": "SCHNELLSTE EINRICHTUNG"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMMENDED"
+            "value": "FASTEST SETUP"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMENDADO"
+            "value": "CONFIGURACIÓN MÁS RÁPIDA"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMMANDÉ"
+            "value": "CONFIGURATION LA PLUS RAPIDE"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "CONSIGLIATO"
+            "value": "CONFIGURAZIONE PIÙ RAPIDA"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "おすすめ"
+            "value": "最速セットアップ"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "추천"
+            "value": "가장 빠른 설정"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "AANBEVOLEN"
+            "value": "SNELSTE CONFIGURATIE"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "POLECANE"
+            "value": "NAJSZYBSZA KONFIGURACJA"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMENDADO"
+            "value": "CONFIGURAÇÃO MAIS RÁPIDA"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "РЕКОМЕНДУЕТСЯ"
+            "value": "САМАЯ БЫСТРАЯ НАСТРОЙКА"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "РЕКОМЕНДОВАНО"
+            "value": "НАЙШВИДШЕ НАЛАШТУВАННЯ"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "推荐"
+            "value": "最快设置"
           }
         }
       }
@@ -21660,7 +21660,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac. The next step configures whichever you pick."
+            "value": "Keep speech recognition and recorded audio on this Mac for free, or use Plainsay Cloud for the fastest setup without a model download. The next step configures whichever you pick."
           }
         },
         "es": {

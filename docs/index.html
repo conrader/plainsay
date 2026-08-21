@@ -23,8 +23,8 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay — On-device voice dictation for macOS</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on-device with Whisper or Parakeet — never in the cloud, never behind a login. An optional LLM cleanup pass uses a key you control. No subscription. No account required.">
+<title>Plainsay — Local-first voice dictation for macOS</title>
+<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a model download for about $3/month.">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -41,7 +41,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on-device with Whisper or Parakeet — never in the cloud, never behind a login. An optional LLM cleanup pass uses a key you control. No subscription. No account required.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a model download for about $3/month.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -300,7 +300,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
-          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. On-device, Plainsay makes no network call you didn&#x27;t ask for: no analytics, no telemetry, no phoning home.</p>
+          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. In Local mode, speech recognition and recorded audio stay on your Mac. There is no hidden analytics or telemetry.</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
@@ -318,8 +318,8 @@
       </figure>
       <div class="screens">
         <figure>
-          <img src="assets/screenshots/setup-speech.webp" alt="Choose Plainsay Cloud or keep everything local" loading="lazy" width="896" height="960">
-          <figcaption>Choose Plainsay Cloud or keep everything local</figcaption>
+          <img src="assets/screenshots/setup-speech.webp" alt="Choose Local speech or optional Plainsay Cloud" loading="lazy" width="896" height="960">
+          <figcaption>Choose Local speech or optional Plainsay Cloud</figcaption>
         </figure>
         <figure>
           <img src="assets/screenshots/settings-general.webp" alt="13 interface languages, applied instantly" loading="lazy" width="960" height="910">
@@ -376,7 +376,7 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Plainsay Cloud is the easiest way to start — no model download, nothing to configure. Prefer everything on your Mac? Local is free and fully capable, one extra setup step.</p>
+      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time model download. Plainsay Cloud is the fastest setup — about $3/month, with no model download or key to configure.</p>
       <div class="plans" id="plans"></div>
     </section>
 
@@ -478,8 +478,8 @@
     {
       id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper or Parakeet, on-device", "Nothing leaves the Mac", "No account, no subscription"],
-      caveats: ["One-time model download, 475–632 MB", "Keeps using memory while Plainsay is running"]
+      features: ["Whisper or Parakeet, on-device", "Recorded audio stays on this Mac", "No account, no subscription"],
+      caveats: ["One-time model download, 475–632 MB", "Cloud Polishing can send transcript text unless it is off or local", "Keeps using memory while Plainsay is running"]
     },
     {
       id: "cloud", eyebrow: "FASTEST SETUP", title: "Plainsay Cloud", price: "≈ $3 / month",

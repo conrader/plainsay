@@ -13,6 +13,14 @@ struct OnboardingSettingsTests {
         #expect(settings.needsOnboarding)
     }
 
+    @Test("A new setup starts with Local speech")
+    func newInstallStartsLocal() {
+        let settings = makeSettings()
+
+        #expect(settings.needsOnboarding)
+        #expect(settings.transcriptionSource == .onDevice)
+    }
+
     @Test("Completing setup persists its version")
     func completionPersists() {
         let defaults = makeDefaults()

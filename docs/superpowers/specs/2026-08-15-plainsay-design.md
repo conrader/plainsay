@@ -1,13 +1,19 @@
-# Plainsay — On-Device Voice Dictation for macOS
+# Plainsay — Original Local-Mode Design for macOS
 
 **Date:** 2026-08-15
-**Status:** Approved, in implementation
+**Status:** Historical implementation baseline
+
+> This document describes the original Local-only pipeline. The current app
+> defaults to Local mode and also offers explicit Plainsay Cloud and
+> bring-your-own-provider transcription paths; see the README for current
+> product behavior.
 
 ## Purpose
 
 A Wispr Flow-style dictation tool: hold a hotkey, speak, release, and cleaned-up
-written text appears in whatever app is focused. Transcription runs on-device.
-A cloud LLM pass turns spoken language into written language.
+written text appears in whatever app is focused. In this original scope,
+transcription runs on-device. A cloud LLM pass turns spoken language into
+written language.
 
 ## Non-goals (v1)
 

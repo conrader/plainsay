@@ -94,12 +94,12 @@
     <header class="hero">
       <div class="eyebrow">How it works</div>
       <h1>The engineering, not the pitch.</h1>
-      <p class="sub">Two on-device ASR engines, a reconciliation algorithm for typing words while you're still speaking them, and a cleanup pass designed to never lose a dictation to a bad network call. The real numbers, the actual tradeoffs, and one bug we shipped and fixed the same day.</p>
+      <p class="sub">Local mode has two on-device ASR engines; optional Plainsay Cloud and bring-your-own-provider modes handle speech remotely. A best-effort cleanup pass never gets to lose a dictation to a bad network call. Here are the real numbers and actual tradeoffs.</p>
     </header>
 
     <section>
-      <h2 class="big">Two transcription engines, both fully local</h2>
-      <p>Plainsay ships two on-device speech engines through Core ML, and you pick which one runs:</p>
+      <h2 class="big">Local mode: two fully on-device engines</h2>
+      <p>Local mode ships two speech engines through Core ML, and you pick which one runs. Recorded audio stays on your Mac in this mode:</p>
       <ul class="plain">
         <li><b>Whisper</b>, via <a href="https://github.com/argmaxinc/WhisperKit">WhisperKit</a> — OpenAI's model family, broad language coverage, running as a Core ML model on the Neural Engine.</li>
         <li><b>NVIDIA Parakeet TDT 0.6B v3</b>, via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a> — faster, and in our own benchmark <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">measurably more accurate</a> on English, with real Polish coverage most competitors don't market at all.</li>
@@ -115,7 +115,7 @@
 
     <section>
       <h2 class="big">Cleanup: best-effort, and never the reason a dictation is lost</h2>
-      <p>Raw ASR output is grammatically honest but reads like speech: filler words, false starts, no punctuation. The optional cleanup pass turns that into written text via an LLM call — by default Gemini Flash Lite, but switchable to your own key, a different provider, a local model, or off.</p>
+      <p>Raw ASR output is grammatically honest but reads like speech: filler words, false starts, no punctuation. The optional Polishing pass turns that into written text via an LLM call. It can use Plainsay Cloud, your own key, a compatible local endpoint, or be switched off.</p>
       <p>The design constraint that actually matters: <b>a failed cleanup call must never cost you the dictation.</b> The call has a <b>3-second timeout</b>; no key, no network, a timeout, or an HTTP error all fall back to inserting the raw transcript instead, and the HUD says so. <code>TextCleaning</code> is a protocol with one method — the whole pipeline doesn't know or care whether the concrete implementation is Gemini, OpenAI-compatible, Anthropic, or a no-op passthrough when cleanup is disabled.</p>
     </section>
 

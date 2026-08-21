@@ -1,20 +1,22 @@
 # Plainsay
 
-**Plainsay is a free, MIT-licensed dictation app for Mac.** Transcription runs
-on-device with Whisper or Parakeet — never in the cloud, never behind a
-login. An optional LLM cleanup pass uses a key you control. No subscription.
-No account required. [plainsay.app](https://plainsay.app)
+**Plainsay is a free, MIT-licensed dictation app for Mac.** In Local mode,
+Whisper or Parakeet transcribes entirely on your Mac — no account or
+subscription. Optional Plainsay Cloud sends recorded audio for hosted
+transcription and Polishing without a model download for about $3/month.
+[plainsay.app](https://plainsay.app)
 
-The free, open-source, on-device [Wispr Flow](https://plainsay.app/vs/wispr-flow/).
-Hold a key, speak, release — cleaned-up written text lands in whatever app
-you're using.
+The free, open-source [Wispr Flow](https://plainsay.app/vs/wispr-flow/)
+alternative with a fully local mode. Hold a key, speak, release — written
+text lands in whatever app you're using.
 
-Transcription runs entirely on your Mac. Choose Whisper via
+In Local mode, transcription runs entirely on your Mac. Choose Whisper via
 [WhisperKit](https://github.com/argmaxinc/WhisperKit), or multilingual NVIDIA
 Parakeet TDT 0.6B v3 via [FluidAudio](https://github.com/FluidInference/FluidAudio).
 Both run as Core ML models on Apple silicon, accelerated by the Neural Engine.
-A Gemini Flash Lite pass then turns spoken language into written language:
-filler words out, punctuation in, your wording intact — see
+Optional Polishing can then turn spoken language into written language:
+filler words out, punctuation in, your wording intact. It can use Plainsay
+Cloud, your own provider, a compatible local endpoint, or be turned off. See
 [why on-device](https://plainsay.app/why-on-device/) for exactly what that
 means, or [how it works](https://plainsay.app/how-it-works/) for the engine
 internals and the cleanup design.
@@ -81,11 +83,12 @@ are just what it's actually doing.
    paste, Input Monitoring to notice the hotkey while another app is focused.
    macOS only applies a new grant after a restart, so quit and reopen
    afterwards.
-3. **Optional: add a cleanup key** in Settings › Speech, if you want filler
-   words and punctuation cleaned up locally instead of through Plainsay
-   Cloud. Get one at [aistudio.google.com](https://aistudio.google.com) for
-   Gemini. It's stored in your Keychain. Without one, Plainsay still works —
-   it inserts the raw transcript.
+3. **Optional: configure Polishing** in Settings › Speech if you want filler
+   words removed and punctuation fixed. Plainsay Cloud includes it; you can
+   instead add your own provider key, point a compatible custom endpoint at a
+   local model, or turn it off. Cloud providers receive transcript text. Keys
+   are stored in your Keychain. Without Polishing, Plainsay inserts the raw
+   transcript.
 
 ## Using it
 
@@ -107,8 +110,8 @@ cleanup prompt. Parakeet itself does not currently accept decoder prompts.
 key down ──► capture frontmost app, show HUD, start recording
              AVAudioEngine → 16kHz mono float, lock-free ring buffer
 key up ────► stop, discard anything under 300ms
-             WhisperKit or FluidAudio/Parakeet transcribe
-             Gemini cleanup (3s timeout → falls back to raw transcript)
+             selected source transcribes: Local, Plainsay Cloud, or your API
+             optional Polishing (3s timeout → falls back to raw transcript)
              pasteboard snapshot → set text → ⌘V → restore snapshot
 ```
 

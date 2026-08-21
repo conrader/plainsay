@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs Wispr Flow — free, open source, on-device</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed, on-device dictation app for Mac. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
+<title>Plainsay vs Wispr Flow — free Local mode vs cloud subscription</title>
+<meta name="description" content="Plainsay is a free, MIT-licensed dictation app with an on-device Local mode and optional Cloud. Wispr Flow is a $144/year cloud subscription. Every claim here links to Wispr's own pages.">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/vs/wispr-flow/">
 <style>
@@ -99,8 +99,8 @@
 
     <header class="hero">
       <div class="eyebrow">Plainsay vs Wispr Flow</div>
-      <h1>Same idea. One costs $0 and never sees your voice.</h1>
-      <p class="sub">Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs on your Mac with Whisper or Parakeet — no account, no network call required to dictate. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
+      <h1>Same idea. One has a $0 mode that keeps your voice local.</h1>
+      <p class="sub">In Plainsay Local mode, Whisper or Parakeet transcribes on your Mac — no account or subscription. Optional Plainsay Cloud offers hosted transcription. Wispr Flow is a cloud subscription that, by its own documentation, always sends your voice off your device. Every claim about Wispr below links to Wispr's own pages.</p>
     </header>
 
     <section>
@@ -114,8 +114,8 @@
         </div>
         <div class="card">
           <div class="h">Your voice</div>
-          <div class="num">Stays local</div>
-          <p>Plainsay transcribes on the Mac. Wispr's own docs: <em>“transcription always happens in the cloud.”</em> Every word leaves your device.</p>
+          <div class="num">Local mode stays local</div>
+          <p>Plainsay defaults to on-Mac transcription, with optional Cloud as a separate choice. Wispr's own docs: <em>“transcription always happens in the cloud.”</em></p>
         </div>
         <div class="card">
           <div class="h">The code</div>
@@ -140,7 +140,7 @@
             </tr>
             <tr>
               <td class="axis">Transcription</td>
-              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet through Core ML. No account, no network call needed to dictate.</td>
+              <td class="plainsay col-plainsay"><b>Local:</b> Whisper or NVIDIA Parakeet on your Mac, no account. <b>Cloud:</b> optional hosted transcription.</td>
               <td class="wispr">“Transcription always happens in the cloud” (Wispr's own words). No offline mode by design.</td>
             </tr>
             <tr>
@@ -178,10 +178,10 @@
     <section>
       <h2 class="big">Your voice never has to leave the Mac</h2>
       <p class="lede">This is the difference that doesn't show up on a pricing page. Wispr Flow's own privacy documentation states that <em>“transcription always happens in the cloud.”</em> There is no offline mode — every word you dictate is uploaded, transcribed on someone else's servers, and returned.</p>
-      <p>Plainsay's transcription runs on your Mac through Core ML, on Whisper or NVIDIA Parakeet. Dictating needs no account and makes no network call you didn't ask for. Your voice — often the most sensitive thing you type — stays on the machine in your hands.</p>
+      <p>In Plainsay Local mode, Whisper or NVIDIA Parakeet runs through Core ML on your Mac. Dictating needs no account, and recorded audio stays on the machine in your hands. Optional Plainsay Cloud and bring-your-own-provider transcription are separate modes that send audio to the selected service.</p>
       <div class="callout">
-        <div class="t">Honest about the one place data can leave</div>
-        Plainsay's <em>transcription</em> is always local. The optional <em>cleanup</em> pass — the step that removes fillers and fixes punctuation — uses an AI model, and by default that's a cloud API. You can switch it off entirely, point it at your own API key, or use a local model. So the honest claim isn't “100% offline” — it's: <strong>your raw transcription is guaranteed local, and the one optional step that isn't is your choice, not locked to one vendor's cloud.</strong> Wispr gives you no such choice.
+        <div class="t">Honest about every place data can leave</div>
+        Local-mode speech recognition keeps recorded audio on your Mac. Optional Plainsay Cloud and bring-your-own-provider transcription send audio to the chosen service. Optional <em>Polishing</em> can also send transcript text unless it is off or uses a compatible local endpoint. The honest claim is not “every mode is 100% offline”; it is that <strong>Local is the default, every network path is a visible choice, and local dictation remains free.</strong> Wispr offers no local transcription mode.
       </div>
     </section>
 
@@ -199,7 +199,7 @@
         <li>You want a single cloud account that syncs across all your devices out of the box.</li>
         <li>You'd rather never see a model download or an API key, and $144/year is fine for that convenience.</li>
       </ul>
-      <p>If instead you want dictation that's free, that you can read the source of, and that keeps your voice on your Mac — that's Plainsay.</p>
+      <p>If instead you want a free Local mode whose source you can read and that keeps recorded audio on your Mac — that's Plainsay.</p>
     </section>
 
     <section class="final">
