@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import PlainsayCore
 
@@ -209,6 +210,14 @@ struct MenuContent: View {
             if settings.needsOnboarding {
                 Button("Finish Setup…") {
                     openSetupAssistant()
+                }
+            }
+
+            Divider()
+
+            Button(Localization.appString("menu.starOnGitHub", fallback: "Star Plainsay on GitHub…")) {
+                if let url = URL(string: "https://github.com/conrader/plainsay") {
+                    NSWorkspace.shared.open(url)
                 }
             }
 
