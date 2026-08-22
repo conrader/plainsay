@@ -50,7 +50,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a transcription-model download for 12 PLN/month (about US$3).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a transcription-model download for 12 PLN gross/month or 120 PLN gross/year, VAT included.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -293,7 +293,7 @@
       <span class="spacer"></span>
       <div class="links">
         <a href="#pricing">Pricing</a>
-        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://github.com/conrader/plainsay" aria-label="Star Plainsay on GitHub">★ GitHub</a>
         <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
         <select class="lang-switch" aria-label="Language" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/" selected>English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
@@ -381,7 +381,7 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs 12 PLN gross/month, VAT included (about US$3).</p>
+      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs 12 PLN gross/month or 120 PLN gross/year, VAT included.</p>
       <div class="plans" id="plans"></div>
     </section>
 
@@ -468,7 +468,7 @@
     { icon: "clock.arrow.circlepath", title: "Recoverable fallbacks", body: "If Polishing fails, Plainsay uses the raw transcript. If there is no safe paste target, text stays on the clipboard; Plainsay adds the completed transcript to local history before insertion." },
     { icon: "gearshape.2", title: "No vendor lock-in", body: "Multiple local and hosted transcription and Polishing providers are supported, including your own API key and OpenAI-compatible endpoint." },
     { icon: "waveform.badge.mic", title: "Voice filtering", body: "Voice enrollment is a best-effort local filter. If filtering is unavailable or fails, dictation continues unfiltered; Cloud or BYOK transcription may then receive unfiltered audio." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is 12 PLN gross/month, VAT included (about US$3). Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
+    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is 12 PLN gross/month or 120 PLN gross/year, VAT included. Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -490,7 +490,7 @@
       caveats: ["Recommended multilingual models: 475–632 MB; English-only from 150 MB", "Cloud Polishing can send transcript text unless it is off or local", "Keeps using memory while Plainsay is running"]
     },
     {
-      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "12 PLN gross / month · VAT included",
+      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "12 PLN gross/month<br><small>120 PLN gross/year · VAT included</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["No transcription-model download, no API keys", "Transcription and Polishing included"],
       caveats: ["Audio is sent to Plainsay Cloud to be transcribed", "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"]
