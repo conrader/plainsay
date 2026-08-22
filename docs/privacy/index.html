@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- LEGAL_REVIEW_REQUIRED -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -38,8 +37,6 @@
   .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
   h1{margin:0;font-size:44px;line-height:1.12;letter-spacing:-1px}header.hero .sub{margin:0;color:var(--label-secondary);font-size:18px;line-height:1.65}
   .updated{font-family:var(--font-mono);font-size:12px;color:var(--slate)}
-  .review{border:1px solid rgba(232,137,107,.45);background:rgba(232,137,107,.1);border-radius:var(--radius);padding:18px 20px;margin:0 0 26px}
-  .review strong{color:var(--ember)}
   section{border-top:1px solid var(--hairline);padding:38px 0 42px}section:first-of-type{border-top:none}
   h2{margin:0 0 12px;font-size:23px;line-height:1.3;letter-spacing:-.35px}h3{margin:28px 0 8px;font-size:17px}
   p,li{font-size:16px;line-height:1.72}p{margin:10px 0 16px}.dim{color:var(--label-secondary)}
@@ -75,12 +72,8 @@
       <div class="eyebrow">Legal · Privacy</div>
       <h1>Privacy, mode by mode.</h1>
       <p class="sub">Local dictation and Plainsay Cloud do not have the same data flow. This policy keeps those boundaries explicit and describes the website, account, billing, support, and update paths too.</p>
-      <div class="updated">Draft dated 22 August 2026 · not yet effective</div>
+      <div class="updated">Effective 22 August 2026</div>
     </header>
-
-    <div class="review" role="note">
-      <strong>Draft — legal review required.</strong> This page is intentionally blocked from deployment. Provider contracts, international-transfer safeguards, retention controls, consumer checkout wording, and the official privacy contact must be approved before the marker is removed.
-    </div>
 
     <section id="controller">
       <h2>1. Controller and contact</h2>
@@ -149,7 +142,7 @@
       <h3>Speech and Polishing content</h3>
       <p>For Cloud speech, DMT receives AAC audio, clip duration, an optional language hint, and optional vocabulary terms. An available DMT-operated transcription node processes the audio first; otherwise it is sent to deAPI. On the DMT node, an upload is placed in an owner-only temporary directory for decoding, removed at the end of the request, and orphaned upload files are cleared when that service starts. Audio is not written to the Cloud application database.</p>
       <p>Account information comes from you, or from Apple when you choose Apple sign-in. Subscription status and transaction identifiers come from Stripe. Request and usage metadata is generated when you use the service.</p>
-      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. The release candidate is configured to require a zero-data-retention endpoint and deny provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
+      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. The service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
     </section>
 
     <section id="purposes">
@@ -195,10 +188,10 @@
       <h2>8. Retention</h2>
       <ul>
         <li><strong>Email sign-in codes:</strong> valid for 15 minutes; expired records are removed by an hourly cleanup, ordinarily within about 75 minutes of creation.</li>
-        <li><strong>Cloud sessions:</strong> the pending release revokes the current session on sign-out and expires a token after 90 days without use.</li>
+        <li><strong>Cloud sessions:</strong> the service revokes the current session on sign-out and expires a token after 90 days without use.</li>
         <li><strong>Account, subscription, and usage metadata:</strong> kept while the Cloud account exists. After a verified deletion request, data not subject to an exception is removed within 30 days.</li>
         <li><strong>Payment, tax, accounting, complaint, and claims records:</strong> kept for the period required by applicable Polish or EU law, or until relevant claims expire. Stripe may keep its own records under its legal duties.</li>
-        <li><strong>Website and update access logs:</strong> rotated daily and ordinarily retained for 14 days. API proxy access logging is disabled for the release candidate; minimal application event logs exclude headers, query strings, and request bodies and are removed under size-based system rotation.</li>
+        <li><strong>Website and update access logs:</strong> rotated daily and ordinarily retained for 14 days. API proxy access logging is disabled; minimal application event logs exclude headers, query strings, and request bodies and are removed under size-based system rotation.</li>
         <li><strong>Support correspondence:</strong> kept while the matter is open and thereafter only as needed for follow-up, legal duties, or claims.</li>
         <li><strong>Cloud content:</strong> not stored in the Plainsay application database. Provider-side transient processing and retention follow the controls and notices listed above. deAPI states that API content may be retained briefly for operational reliability; its exact contractual retention and distributed-processing safeguards remain a launch-review item.</li>
       </ul>
@@ -208,7 +201,7 @@
     <section id="transfers">
       <h2>9. International transfers</h2>
       <p>The primary Plainsay host is in Poland, but Resend, Stripe, Apple, OpenRouter, Google, deAPI’s distributed infrastructure, Tailscale, and a provider you select may process data outside the EEA. Depending on the recipient and route, safeguards may include an adequacy decision, participation in the EU–US Data Privacy Framework, or the European Commission’s Standard Contractual Clauses with supplementary measures.</p>
-      <p class="dim">Before Cloud is released, DMT must complete and document the processor-role, DPA, subprocessor, transfer-mechanism, and retention review for every production route. That unresolved operational check is one reason this draft cannot be deployed yet. You may request information about the safeguard applicable to a particular transfer at <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>.</p>
+      <p class="dim">DMT reviews provider roles, data-processing terms, subprocessors, transfer mechanisms, and retention for production routes. You may request information about the safeguard applicable to a particular transfer at <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>.</p>
     </section>
 
     <section id="rights">

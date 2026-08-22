@@ -447,7 +447,7 @@
     { icon: "clock.arrow.circlepath", title: "Odzyskiwalne ścieżki awaryjne", body: "Gdy Polishing zawiedzie, Plainsay używa surowego transkryptu. Jeśli nie ma bezpiecznego miejsca do wklejenia, tekst zostaje w schowku; Plainsay dodaje ukończony transkrypt do lokalnej historii przed wstawieniem." },
     { icon: "gearshape.2", title: "Bez uzależnienia od dostawcy", body: "Obsługiwanych jest wiele lokalnych i hostowanych silników oraz dostawców transkrypcji i Polishing, w tym własny klucz API i endpoint zgodny z OpenAI." },
     { icon: "waveform.badge.mic", title: "Filtrowanie głosu", body: "Rejestracja głosu próbuje filtrować lokalnie, bez gwarancji wyniku. Jeśli filtrowanie jest niedostępne lub zawiedzie, dyktowanie trwa dalej bez filtra; transkrypcja Cloud lub BYOK może wtedy otrzymać nieprzefiltrowane audio." },
-    { icon: "checkmark.circle.fill", title: "Uczciwy cennik", body: "Plan hostowany kosztuje 12 PLN miesięcznie (około 3 USD). Tryb lokalny zapewnia pełne dyktowanie na urządzeniu — bez limitu minut ani słów i bez konta. Hostowana transkrypcja i Polishing są opcjonalne." }
+    { icon: "checkmark.circle.fill", title: "Uczciwy cennik", body: "Plan hostowany kosztuje 12 PLN brutto miesięcznie, z VAT (około 3 USD). Tryb lokalny zapewnia pełne dyktowanie na urządzeniu — bez limitu minut ani słów i bez konta. Hostowana transkrypcja i Polishing są opcjonalne." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -469,7 +469,7 @@
       caveats: ["Zalecane modele wielojęzyczne: 475–632 MB; modele tylko angielskie od 150 MB", "Zajmuje pamięć, dopóki Plainsay działa"]
     },
     {
-      id: "cloud", eyebrow: "BEZ POBIERANIA MODELU TRANSKRYPCJI", title: "Plainsay Cloud", price: "12 PLN / miesiąc (około 3 USD)",
+      id: "cloud", eyebrow: "BEZ POBIERANIA MODELU TRANSKRYPCJI", title: "Plainsay Cloud", price: "12 PLN brutto / miesiąc · VAT w cenie",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Bez pobierania modelu transkrypcji i bez kluczy API", "Transkrypcja i edycja w cenie"],
       caveats: ["Audio jest wysyłane do Plainsay Cloud w celu transkrypcji", "900 minut transkrypcji w dowolnym kroczącym oknie 30 dni; tryb lokalny nie jest mierzony"]

@@ -33,8 +33,8 @@ off or running on your Mac, dictation audio is not uploaded, no account or
 subscription is needed, and recognition works offline after the model download.
 Automatic checks for signed updates are enabled by default and can be disabled
 in Settings. Optional
-Plainsay Cloud provides hosted transcription and Polishing for 12 PLN/month
-(about US$3); that mode sends recorded audio to the service and includes up to
+Plainsay Cloud provides hosted transcription and Polishing for 12 PLN gross/month
+(VAT included; about US$3); that mode sends recorded audio to the service and includes up to
 900 transcription minutes in any rolling 30-day window.
 
 > **Requirements:** macOS 14 or newer and an Apple-silicon Mac. The app is
@@ -91,7 +91,7 @@ It is the simplest way to help more Mac users find the project.
 |---|---|---|---|---|
 | Local transcription, Polishing off or running on your Mac | Stays on your Mac | Stays on your Mac | No | Free |
 | Local transcription + hosted Polishing | Stays on your Mac | Sent to the provider you select | Depends on provider | Depends on provider |
-| Plainsay Cloud | Sent to Plainsay Cloud | Returned by Cloud; sent onward if Cloud Polishing is enabled | Yes | 12 PLN/month (about US$3); 900 transcription minutes per rolling 30 days |
+| Plainsay Cloud | Sent to Plainsay Cloud | Returned by Cloud; sent onward if Cloud Polishing is enabled | Yes | 12 PLN gross/month, VAT included (about US$3); 900 transcription minutes per rolling 30 days |
 | Your own speech API | Sent directly to the provider you configure | Returned to Plainsay | Provider key | Provider pricing |
 
 The hosted routes are explicit:

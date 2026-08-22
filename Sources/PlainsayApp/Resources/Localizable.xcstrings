@@ -9606,7 +9606,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/year"
+            "value": "120 PLN gross/year (VAT included)"
           }
         },
         "es": {
@@ -9648,7 +9648,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/rok"
+            "value": "120 PLN brutto/rok (VAT w cenie)"
           }
         },
         "pt": {
@@ -9688,7 +9688,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscribe — 12 PLN/month (about US$3)"
+            "value": "Subscribe — 12 PLN gross/month (VAT included)"
           }
         },
         "es": {
@@ -9730,7 +9730,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subskrybuj — 12 PLN/miesiąc (około 3 USD)"
+            "value": "Subskrybuj — 12 PLN brutto/miesiąc (VAT w cenie)"
           }
         },
         "pt": {
