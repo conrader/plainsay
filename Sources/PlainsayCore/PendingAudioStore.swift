@@ -12,6 +12,14 @@ import Foundation
 public struct PendingAudioStore: Sendable {
     private let directory: URL
 
+    /// How long an un-recovered recording is kept before `prune` discards it,
+    /// and how many are kept regardless of age. Recovery normally clears these
+    /// within a launch or two; the caps bound the failure case where recovery
+    /// cannot run (the model never becomes ready) or keeps failing, so raw voice
+    /// audio does not accumulate on disk forever with no way to notice.
+    public static let maxAge: TimeInterval = 7 * 24 * 60 * 60
+    public static let maxCount = 20
+
     public init(directory: URL? = nil) {
         let base = directory ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -63,6 +71,39 @@ public struct PendingAudioStore: Sendable {
         guard let data = try? Data(contentsOf: url), !data.isEmpty else { return nil }
         return data.withUnsafeBytes { raw in
             Array(raw.bindMemory(to: Float.self))
+        }
+    }
+
+    /// Discards staged audio older than `maxAge`, and the oldest beyond
+    /// `maxCount`, so a machine where recovery cannot run does not keep raw
+    /// voice audio indefinitely. Safe to call at every launch, before recovery.
+    public func prune(maxAge: TimeInterval = PendingAudioStore.maxAge, maxCount: Int = PendingAudioStore.maxCount) {
+        let now = Date()
+        // Oldest first, matching `recoverable()`.
+        let files = recoverable()
+        var survivors: [URL] = []
+        for url in files {
+            let modified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+                .contentModificationDate ?? .distantPast
+            if now.timeIntervalSince(modified) > maxAge {
+                discard(url)
+            } else {
+                survivors.append(url)
+            }
+        }
+        // Trim the oldest survivors past the count cap.
+        if survivors.count > maxCount {
+            for url in survivors.prefix(survivors.count - maxCount) {
+                discard(url)
+            }
+        }
+    }
+
+    /// Removes every staged recording — the raw-audio counterpart to clearing
+    /// transcript history.
+    public func purgeAll() {
+        for url in recoverable() {
+            discard(url)
         }
     }
 }
