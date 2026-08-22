@@ -255,7 +255,10 @@ private struct Harness {
     let coordinator: DictationCoordinator
     let history: TranscriptHistory
 
-    init(terms: [String] = []) {
+    init(
+        terms: [String] = [],
+        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { true }
+    ) {
         // An isolated defaults suite so tests never disturb real preferences.
         let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
         let settings = PlainsaySettings(defaults: suite)
@@ -279,6 +282,7 @@ private struct Harness {
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in cleaner },
+            microphoneAuthorized: microphoneAuthorized,
             usesInjectedEngine: true
         )
     }
@@ -341,6 +345,18 @@ struct PipelineTests {
         #expect(harness.cleaner.received == "um so the thing is uh it works")
         #expect(harness.inserter.inserted == ["The thing is, it works."])
         #expect(harness.coordinator.phase == .idle)
+    }
+
+    @Test("A missing microphone grant blocks recording before the recorder starts")
+    func missingMicrophonePermissionBlocksRecording() async {
+        let harness = Harness(microphoneAuthorized: { false })
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+
+        #expect(harness.coordinator.phase == .error("Plainsay needs microphone access"))
+        #expect(!harness.recorder.isRecording)
+        #expect(harness.recorder.stopCount == 0)
     }
 
     @Test("Reaching the recording boundary stops once and processes every retained sample")
@@ -1321,6 +1337,7 @@ struct PipelineTests {
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in NoCleanup() },
+            microphoneAuthorized: { true },
             usesInjectedEngine: true
         )
     }

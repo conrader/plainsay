@@ -117,6 +117,9 @@ public final class DictationCoordinator {
     private let makeCleaner: @MainActor (PlainsaySettings) -> any TextCleaning
     /// Injectable so phase timing stays deterministic in lifecycle tests.
     private let modelLoadNow: @MainActor @Sendable () -> Date
+    /// Keeps the real macOS authorization gate in production while allowing
+    /// recorder fakes to exercise the pipeline without depending on TCC.
+    private let microphoneAuthorized: @MainActor @Sendable () -> Bool
     /// Tests pass a fake engine; production resolves one from settings.
     private let usesInjectedEngine: Bool
 
@@ -149,6 +152,7 @@ public final class DictationCoordinator {
         },
         makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = ProviderFactory.makeCleaner,
         modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
+        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { AudioRecorder.microphoneAuthorized() },
         usesInjectedEngine: Bool = false
     ) {
         self.settings = settings
@@ -160,6 +164,7 @@ public final class DictationCoordinator {
         self.makeEngine = makeEngine
         self.makeCleaner = makeCleaner
         self.modelLoadNow = modelLoadNow
+        self.microphoneAuthorized = microphoneAuthorized
         self.usesInjectedEngine = usesInjectedEngine
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
@@ -677,7 +682,7 @@ public final class DictationCoordinator {
         // Never trigger a system prompt from the hotkey: it steals focus and
         // guarantees that the sentence being spoken is lost. The setup and
         // Settings permission buttons own that interaction.
-        guard AudioRecorder.microphoneAuthorized() else {
+        guard microphoneAuthorized() else {
             flashError(
                 Localization.coreString("coordinator.needsMicrophone", fallback: "Plainsay needs microphone access")
             )
