@@ -72,12 +72,14 @@
   .final{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 0 56px}
   .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
   .final .req{font-size:12px;color:var(--slate)}
-  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;width:100%;max-width:920px}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;max-width:920px}
   footer .text{font-size:12px;color:var(--slate)}
   footer .spacer{flex:1}
-  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18px;font-size:12px}
   footer .links a{color:var(--slate);text-decoration:none}
   footer .links a:hover{color:var(--bone)}
+  footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
+  @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
 </style>
 </head>
 <body>
@@ -174,8 +176,11 @@
       <a href="/">Home</a>
       <a href="/vs/wispr-flow/">vs Wispr Flow</a>
       <a href="/how-it-works/">How it works</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
       <a href="https://github.com/conrader/plainsay">Source</a>
     </div>
+    <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
   </footer>
 </div>
 </body>

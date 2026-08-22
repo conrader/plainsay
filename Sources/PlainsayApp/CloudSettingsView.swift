@@ -151,7 +151,7 @@ struct CloudSettingsView: View {
                     ) { Task { await subscribe(annual: true) } }
                 }
                 Spacer()
-                Button("Sign out", action: signOut)
+                Button("Sign out") { Task { await signOut() } }
                     .buttonStyle(.borderless)
                     .disabled(busy)
             }
@@ -173,7 +173,7 @@ struct CloudSettingsView: View {
                 Spacer()
                 Button("Retry") { Task { await refresh() } }
                     .disabled(busy)
-                Button("Sign out", action: signOut)
+                Button("Sign out") { Task { await signOut() } }
                     .buttonStyle(.borderless)
                     .disabled(busy)
             }
@@ -212,13 +212,14 @@ struct CloudSettingsView: View {
         await run(nil) { NSWorkspace.shared.open(try await cloud.portalURL()) }
     }
 
-    private func signOut() {
-        cloud.signOut()
-        if ProviderFactory.cloudSessionToken != nil {
-            clearCloudState()
-            onCredentialsChanged()
+    private func signOut() async {
+        await run(nil) {
+            try await cloud.signOut()
+            if ProviderFactory.cloudSessionToken != nil {
+                clearCloudState()
+                onCredentialsChanged()
+            }
         }
-        message = nil
     }
 
     /// Pulls account state and, if subscribed, the session token.

@@ -29,14 +29,24 @@ FEED_URL="https://api.plainsay.app"
 SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 [ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
-[ -f docs/privacy/index.html ] || {
-	echo "docs/privacy/index.html missing — add the reviewed policy with real operator details before releasing Cloud" >&2
-	exit 1
+validate_legal_page() {
+	local page="$1"
+	[ -s "$page" ] || {
+		echo "$page missing or empty — add the reviewed document before releasing Cloud" >&2
+		exit 1
+	}
+	grep -Fq "DMT Sp. z o.o." "$page" || {
+		echo "$page does not identify DMT Sp. z o.o. as the operator" >&2
+		exit 1
+	}
+	if grep -Fq "LEGAL_REVIEW_REQUIRED" "$page"; then
+		echo "$page still contains LEGAL_REVIEW_REQUIRED — complete legal review before releasing Cloud" >&2
+		exit 1
+	fi
 }
-[ -f docs/terms/index.html ] || {
-	echo "docs/terms/index.html missing — add the reviewed terms with real operator details before releasing Cloud" >&2
-	exit 1
-}
+
+validate_legal_page docs/privacy/index.html
+validate_legal_page docs/terms/index.html
 [ -z "$(git status --porcelain)" ] || {
 	echo "working tree is not clean — commit the exact source and legal documents before releasing" >&2
 	exit 1

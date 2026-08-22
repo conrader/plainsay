@@ -14,6 +14,8 @@ The client is fully open source; a separate, deliberately opt-in Plainsay
 Cloud tier exists for people who don't want to manage a local model or an API
 key.
 
+Plainsay and Plainsay Cloud are operated by DMT Sp. z o.o. in Poland.
+
 A single dictation can run for up to 10 minutes. Plainsay stops recording and
 processes the captured audio at that boundary.
 
@@ -23,6 +25,8 @@ processes the captured audio at that boundary.
 - [Source](https://github.com/conrader/plainsay): the whole client, MIT licensed
 - [Releases](https://github.com/conrader/plainsay/releases): notarized builds, changelog
 - [Homepage](https://plainsay.app/): overview, pricing, screenshots
+- [Privacy Policy](https://plainsay.app/privacy/): how the website, Mac client, optional providers, and Plainsay Cloud handle data
+- [Terms of Service](https://plainsay.app/terms/): terms for the website, free Local client, and optional Plainsay Cloud service
 - [Why on-device](https://plainsay.app/why-on-device/): exactly what runs locally vs. optionally in the cloud, stated precisely
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
 - [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands

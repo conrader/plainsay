@@ -13,14 +13,24 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-[ -f docs/privacy/index.html ] || {
-  echo "docs/privacy/index.html missing — do not deploy Cloud marketing without the reviewed policy" >&2
-  exit 1
+validate_legal_page() {
+  local page="$1"
+  [ -s "$page" ] || {
+    echo "$page missing or empty — do not deploy Cloud marketing without the reviewed document" >&2
+    exit 1
+  }
+  grep -Fq "DMT Sp. z o.o." "$page" || {
+    echo "$page does not identify DMT Sp. z o.o. as the operator" >&2
+    exit 1
+  }
+  if grep -Fq "LEGAL_REVIEW_REQUIRED" "$page"; then
+    echo "$page still contains LEGAL_REVIEW_REQUIRED — complete legal review before deploying" >&2
+    exit 1
+  fi
 }
-[ -f docs/terms/index.html ] || {
-  echo "docs/terms/index.html missing — do not deploy Cloud marketing without the reviewed terms" >&2
-  exit 1
-}
+
+validate_legal_page docs/privacy/index.html
+validate_legal_page docs/terms/index.html
 
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
