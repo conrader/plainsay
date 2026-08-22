@@ -3040,79 +3040,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Monatliches Plainsay-Cloud-Limit erreicht"
+            "value": "Rollierendes 30-Tage-Limit von Plainsay Cloud erreicht"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay Cloud monthly limit reached"
+            "value": "Plainsay Cloud rolling 30-day limit reached"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se alcanzó el límite mensual de Plainsay Cloud"
+            "value": "Se alcanzó el límite móvil de 30 días de Plainsay Cloud"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limite mensuelle de Plainsay Cloud atteinte"
+            "value": "Limite glissante de 30 jours de Plainsay Cloud atteinte"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limite mensile di Plainsay Cloud raggiunto"
+            "value": "Limite mobile di 30 giorni di Plainsay Cloud raggiunto"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay Cloudの月間上限に達しました"
+            "value": "Plainsay Cloudの連続30日間の上限に達しました"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay Cloud 월간 한도에 도달했습니다"
+            "value": "Plainsay Cloud의 연속 30일 한도에 도달했습니다"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maandelijkse limiet van Plainsay Cloud bereikt"
+            "value": "Voortschrijdende 30-dagenlimiet van Plainsay Cloud bereikt"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Osiągnięto miesięczny limit Plainsay Cloud"
+            "value": "Osiągnięto limit Plainsay Cloud dla ruchomego okresu 30 dni"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limite mensal do Plainsay Cloud atingido"
+            "value": "Limite contínuo de 30 dias do Plainsay Cloud atingido"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Достигнут месячный лимит Plainsay Cloud"
+            "value": "Достигнут лимит Plainsay Cloud за скользящие 30 дней"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Досягнуто місячний ліміт Plainsay Cloud"
+            "value": "Досягнуто ліміт Plainsay Cloud за ковзні 30 днів"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已达到 Plainsay Cloud 每月额度上限"
+            "value": "已达到 Plainsay Cloud 连续 30 天额度上限"
           }
         }
       }

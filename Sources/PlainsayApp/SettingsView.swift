@@ -441,7 +441,7 @@ private struct SpeechSettings: View {
         case .remote:
             Localization.appString(
                 "settings.sourceExplanation.remote",
-                fallback: "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+                fallback: "Audio is uploaded to a service you hold the key for. No transcription-model download; provider pricing applies."
             )
         case .cloud:
             Localization.appString(
