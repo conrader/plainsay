@@ -65,6 +65,12 @@ validate_legal_page docs/terms/index.html
 	echo "working tree is not clean — commit the exact source and legal documents before releasing" >&2
 	exit 1
 }
+# The site deploy runs near the end, after the update feed is already live.
+# Any reason it would refuse — a checkout behind origin, uncommitted docs —
+# has to surface now, or a release aborts having shipped a new app while
+# plainsay.app still describes the old one.
+./Scripts/deploy-site.sh --check-only
+
 if gh release view "v$VERSION" >/dev/null 2>&1; then
 	echo "GitHub Release v$VERSION already exists — choose a new version; this script never overwrites a release" >&2
 	exit 1

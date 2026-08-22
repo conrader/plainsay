@@ -13,6 +13,60 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# release.sh runs these same gates in its preflight, so a release that would
+# be refused here fails before anything is built, signed or published —
+# rather than after the update feed is already live, which would leave the
+# site describing a version that no longer matches the app being shipped.
+CHECK_ONLY=0
+[ "${1:-}" = "--check-only" ] && CHECK_ONLY=1
+
+# This publishes the *working tree*, not origin/main, with --delete. A stale
+# or dirty checkout therefore silently reverts the live site and removes any
+# page added since — which very nearly happened from a checkout 28 commits
+# behind, wiping a parallel branch's work. Neither condition is detectable
+# after the fact: rsync reports success either way.
+verify_checkout_is_current() {
+  # Not [ -d .git ]: inside a git worktree .git is a *file*, and that test
+  # silently skipped the whole check there — which is exactly the shape of
+  # checkout this guard exists to catch.
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+
+  if [ "${DEPLOY_SITE_SKIP_GIT_CHECK:-}" = "1" ]; then
+    echo "!! DEPLOY_SITE_SKIP_GIT_CHECK=1 — publishing this working tree unverified" >&2
+    return 0
+  fi
+
+  local branch remote
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  remote="origin/${DEPLOY_SITE_BRANCH:-main}"
+
+  git fetch --quiet origin "${DEPLOY_SITE_BRANCH:-main}" || {
+    echo "cannot reach origin to check whether this checkout is current." >&2
+    echo "Deploying blind can revert the live site. Re-run with DEPLOY_SITE_SKIP_GIT_CHECK=1 only if you are certain." >&2
+    exit 1
+  }
+
+  local behind
+  behind=$(git rev-list --count "HEAD..$remote")
+  if [ "$behind" -gt 0 ]; then
+    echo "refusing to deploy: this checkout is $behind commit(s) behind $remote (on $branch)." >&2
+    echo "Publishing it would revert the live site to an older version and delete anything added since." >&2
+    echo "Run: git pull --ff-only origin ${DEPLOY_SITE_BRANCH:-main}" >&2
+    exit 1
+  fi
+
+  # Anything uncommitted under docs/ goes live having passed through no review
+  # and exists nowhere in history to roll back to.
+  if [ -n "$(git status --porcelain -- docs/)" ]; then
+    echo "refusing to deploy: docs/ has uncommitted changes:" >&2
+    git status --short -- docs/ >&2
+    echo "Commit them (so the live site is reproducible from a tag) or stash them." >&2
+    exit 1
+  fi
+}
+
+verify_checkout_is_current
+
 validate_legal_page() {
   local page="$1"
   [ -s "$page" ] || {
@@ -31,6 +85,11 @@ validate_legal_page() {
 
 validate_legal_page docs/privacy/index.html
 validate_legal_page docs/terms/index.html
+
+if [ "$CHECK_ONLY" = "1" ]; then
+  echo "==> docs/ is publishable from this checkout"
+  exit 0
+fi
 
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
