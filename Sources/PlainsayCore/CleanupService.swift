@@ -13,6 +13,10 @@ public enum CleanupError: LocalizedError, Equatable {
     case http(status: Int, body: String)
     case emptyResponse
     case timedOut
+    /// The provider stopped at its output limit rather than at the end of the
+    /// text. What came back is a fragment, and a fragment is worse than no
+    /// editing at all: it reads as finished writing while missing its ending.
+    case truncated
 
     public var errorDescription: String? {
         switch self {
@@ -33,6 +37,10 @@ public enum CleanupError: LocalizedError, Equatable {
             Localization.coreString("cleanup.emptyResponse", fallback: "Cleanup provider returned no text")
         case .timedOut:
             Localization.coreString("cleanup.timedOut", fallback: "Cleanup timed out")
+        case .truncated:
+            Localization.coreString(
+                "cleanup.truncated", fallback: "Cleanup provider hit its output limit and returned partial text"
+            )
         }
     }
 }
@@ -114,10 +122,24 @@ public struct GeminiCleanupService: TextCleaning {
             )
         }
 
+        if Self.wasTruncated(data) { throw CleanupError.truncated }
+
         guard let text = Self.extractText(from: data) else {
             throw CleanupError.emptyResponse
         }
         return text
+    }
+
+    /// True when generation stopped at `maxOutputTokens`. Gemini still returns
+    /// the partial text with a 200, so without this the fragment is
+    /// indistinguishable from a finished answer.
+    static func wasTruncated(_ data: Data) -> Bool {
+        guard
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let candidates = root["candidates"] as? [[String: Any]],
+            let reason = candidates.first?["finishReason"] as? String
+        else { return false }
+        return reason.uppercased() == "MAX_TOKENS"
     }
 
     /// Pulls the concatenated text parts out of a `generateContent` response.
