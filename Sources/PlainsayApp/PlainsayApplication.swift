@@ -270,6 +270,11 @@ struct MenuContent: View {
             case nil:
                 return Localization.appString("menu.status.listening", fallback: "Listening — Esc cancels")
             }
+        case .recordingLimitReached:
+            return Localization.appString(
+                "menu.status.recordingLimitReached",
+                fallback: "10-minute limit reached — processing captured audio"
+            )
         case .transcribing:
             return Localization.appString("menu.status.transcribing", fallback: "Transcribing…")
         case .cleaning:
@@ -309,13 +314,6 @@ struct MenuContent: View {
                 "menu.status.lastNotPasted", fallback: "Last dictation wasn't pasted — it is in History"
             )
         }
-        if case .recordingLimitReached = coordinator.phase {
-            return Localization.appString(
-                "menu.status.recordingLimitReached",
-                fallback: "10-minute limit reached — processing captured audio"
-            )
-        }
-
         if settings.needsOnboarding, coordinator.modelState == .idle {
             return Localization.appString("menu.status.finishSetup", fallback: "Finish setup to start dictation")
         }
