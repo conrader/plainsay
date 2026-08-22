@@ -21,13 +21,49 @@ HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-updates
 FEED_URL="https://api.plainsay.app"
 
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+	echo "version must be plain semver, for example 0.2.23" >&2
+	exit 1
+}
+
 SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 [ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
+[ -f docs/privacy/index.html ] || {
+	echo "docs/privacy/index.html missing — add the reviewed policy with real operator details before releasing Cloud" >&2
+	exit 1
+}
+[ -f docs/terms/index.html ] || {
+	echo "docs/terms/index.html missing — add the reviewed terms with real operator details before releasing Cloud" >&2
+	exit 1
+}
+[ -z "$(git status --porcelain)" ] || {
+	echo "working tree is not clean — commit the exact source and legal documents before releasing" >&2
+	exit 1
+}
+if gh release view "v$VERSION" >/dev/null 2>&1; then
+	echo "GitHub Release v$VERSION already exists — choose a new version; this script never overwrites a release" >&2
+	exit 1
+fi
+if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null 2>&1; then
+	echo "remote tag v$VERSION already exists without a matching release — inspect it before continuing" >&2
+	exit 1
+fi
 
 # CFBundleVersion must increase monotonically; Sparkle compares it, not the
 # marketing string. Derived from the version so they cannot drift apart.
 BUILD=$(echo "$VERSION" | awk -F. '{ printf "%d", ($1*10000)+($2*100)+$3 }')
+CURRENT_FEED_BUILD=$(curl -fsSL "$FEED_URL/appcast.xml" \
+	| sed -n 's#.*<sparkle:version>\([0-9][0-9]*\)</sparkle:version>.*#\1#p' \
+	| head -1)
+[[ "$CURRENT_FEED_BUILD" =~ ^[0-9]+$ ]] || {
+	echo "could not read the current Sparkle build from $FEED_URL/appcast.xml" >&2
+	exit 1
+}
+[ "$BUILD" -gt "$CURRENT_FEED_BUILD" ] || {
+	echo "build $BUILD must be newer than the published Sparkle build $CURRENT_FEED_BUILD" >&2
+	exit 1
+}
 
 # Read rather than hardcoded a second time: this used to be a bare "15.0"
 # literal here that silently stopped matching Info.plist's own
@@ -37,10 +73,19 @@ BUILD=$(echo "$VERSION" | awk -F. '{ printf "%d", ($1*10000)+($2*100)+$3 }')
 # surfaced anywhere, so the mismatch meant exactly the macOS 14 users that
 # commit was meant to serve would silently never see another update again.
 MIN_SYSTEM_VERSION=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" Scripts/Info.plist)
+PLIST_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Scripts/Info.plist)
+PLIST_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Scripts/Info.plist)
+
+[ "$PLIST_VERSION" = "$VERSION" ] || {
+	echo "Info.plist is $PLIST_VERSION, not $VERSION — commit the version bump before releasing" >&2
+	exit 1
+}
+[ "$PLIST_BUILD" = "$BUILD" ] || {
+	echo "Info.plist build is $PLIST_BUILD, not $BUILD — commit the version bump before releasing" >&2
+	exit 1
+}
 
 echo "==> Version $VERSION (build $BUILD)"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Scripts/Info.plist
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Scripts/Info.plist
 
 ./Scripts/bundle.sh
 
@@ -184,34 +229,75 @@ cat > dist/appcast.xml <<XML
 </rss>
 XML
 
-echo "==> Publishing to $HOST"
-ssh "$HOST" "sudo mkdir -p $REMOTE_DIR/releases && sudo chown -R \$(whoami) $REMOTE_DIR"
-scp -q "$ZIP" "$HOST:$REMOTE_DIR/releases/"
-# Stable filename, not GitHub: the homepage's download link points at this
-# exact path and never has to change — every release just overwrites it.
-scp -q "$DMG" "$HOST:$REMOTE_DIR/releases/Plainsay-latest.dmg"
-scp -q dist/appcast.xml "$HOST:$REMOTE_DIR/appcast.xml"
-ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
-
-# The marketing site is a separate docroot with its own deploy. Run it here
-# so a release can never again leave plainsay.app describing a version of
-# the app that no longer exists.
-./Scripts/deploy-site.sh
-
-echo "==> Publishing GitHub Release v$VERSION"
 # Plain text for the release body: GitHub's own markdown renderer is what
 # displays it, not Sparkle's CDATA-wrapped HTML — reusing the HTML string
 # as-is would show literal <p> tags on the Releases page. Closing tags become
 # a blank line so multi-paragraph notes still read as separate paragraphs
 # instead of running together into one sentence.
 BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</p>#\n\n#g; s#<p>##g')
-if gh release view "v$VERSION" >/dev/null 2>&1; then
-	echo "    v$VERSION already exists on GitHub — skipping (release.sh does not overwrite a tag)"
-else
-	gh release create "v$VERSION" "$ZIP" "$DMG" \
-		--title "$VERSION" \
-		--notes "$BODY"
-fi
+
+# Prepare every external artifact before changing a public URL. Uploads land
+# in a unique directory on the same filesystem as the update feed, so the
+# final renames cannot expose a partially transferred file.
+echo "==> Staging update artifacts on $HOST"
+ssh "$HOST" "sudo mkdir -p '$REMOTE_DIR/releases' && sudo chown -R \$(whoami) '$REMOTE_DIR'"
+REMOTE_STAGE=$(ssh "$HOST" "mktemp -d '$REMOTE_DIR/.release-stage.XXXXXX'")
+case "$REMOTE_STAGE" in
+	"$REMOTE_DIR"/.release-stage.*) ;;
+	*) echo "unexpected remote staging path: $REMOTE_STAGE" >&2; exit 1 ;;
+esac
+
+ZIP_BASENAME=$(basename "$ZIP")
+DMG_BASENAME=$(basename "$DMG")
+scp -q "$ZIP" "$HOST:$REMOTE_STAGE/$ZIP_BASENAME"
+scp -q "$DMG" "$HOST:$REMOTE_STAGE/$DMG_BASENAME"
+scp -q dist/appcast.xml "$HOST:$REMOTE_STAGE/appcast.xml"
+
+LOCAL_ZIP_SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
+LOCAL_DMG_SHA=$(shasum -a 256 "$DMG" | awk '{print $1}')
+REMOTE_ZIP_SHA=$(ssh "$HOST" "sha256sum '$REMOTE_STAGE/$ZIP_BASENAME'" | awk '{print $1}')
+REMOTE_DMG_SHA=$(ssh "$HOST" "sha256sum '$REMOTE_STAGE/$DMG_BASENAME'" | awk '{print $1}')
+[ "$REMOTE_ZIP_SHA" = "$LOCAL_ZIP_SHA" ] || { echo "staged zip checksum mismatch" >&2; exit 1; }
+[ "$REMOTE_DMG_SHA" = "$LOCAL_DMG_SHA" ] || { echo "staged DMG checksum mismatch" >&2; exit 1; }
+
+echo "==> Creating private GitHub Release draft v$VERSION"
+RELEASE_COMMIT=$(git rev-parse HEAD)
+gh release create "v$VERSION" "$ZIP" "$DMG" \
+	--draft \
+	--target "$RELEASE_COMMIT" \
+	--title "$VERSION" \
+	--notes "$BODY"
+
+# At this point the signed assets exist in both destinations, but no public
+# download has moved. Publishing is one GitHub API operation, followed by
+# same-filesystem renames for the update feed.
+echo "==> Publishing GitHub Release v$VERSION"
+gh release edit "v$VERSION" --draft=false --latest
+
+echo "==> Activating update feed"
+ssh "$HOST" "set -e
+mv '$REMOTE_STAGE/$ZIP_BASENAME' '$REMOTE_DIR/releases/$ZIP_BASENAME'
+mv '$REMOTE_STAGE/$DMG_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'
+mv '$REMOTE_STAGE/appcast.xml' '$REMOTE_DIR/appcast.xml'
+rmdir '$REMOTE_STAGE'
+sudo chown -R www-data:www-data '$REMOTE_DIR'
+sudo chmod -R a+rX '$REMOTE_DIR'"
+
+# The marketing site is a separate docroot with its own deploy. Run it only
+# after the release, stable download, and update feed identify the same build.
+./Scripts/deploy-site.sh
+
+echo "==> Verifying public release channels"
+PUBLISHED_DMG_SHA=$(curl -fsSL "$FEED_URL/releases/Plainsay-latest.dmg" | shasum -a 256 | awk '{print $1}')
+[ "$PUBLISHED_DMG_SHA" = "$LOCAL_DMG_SHA" ] || { echo "published DMG checksum mismatch" >&2; exit 1; }
+curl -fsSL "$FEED_URL/appcast.xml" | grep -Fq "<sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>" || {
+	echo "published appcast does not advertise $VERSION" >&2
+	exit 1
+}
+gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -Fqx false || {
+	echo "GitHub Release v$VERSION is not public" >&2
+	exit 1
+}
 
 echo
 echo "Published $VERSION"

@@ -13,6 +13,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+[ -f docs/privacy/index.html ] || {
+  echo "docs/privacy/index.html missing — do not deploy Cloud marketing without the reviewed policy" >&2
+  exit 1
+}
+[ -f docs/terms/index.html ] || {
+  echo "docs/terms/index.html missing — do not deploy Cloud marketing without the reviewed terms" >&2
+  exit 1
+}
+
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
 
@@ -22,7 +31,11 @@ echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
 ssh "$HOST" "sudo mkdir -p $REMOTE_DIR && sudo chown -R \$(whoami) $REMOTE_DIR"
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
-rsync -az --delete docs/ "$HOST:$REMOTE_DIR/"
+# Internal planning material, if present, is not website content.
+rsync -az --delete --delete-excluded \
+  --exclude '/launch/' \
+  --exclude '/superpowers/' \
+  docs/ "$HOST:$REMOTE_DIR/"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
 echo "==> Live: https://plainsay.app/"
