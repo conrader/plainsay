@@ -149,12 +149,16 @@ rm -rf "$DMG_STAGING"
 trap - EXIT
 
 if [ "${NOTARIZE:-1}" = "1" ]; then
-	# The app inside is already stapled, but Gatekeeper also checks the DMG
-	# container itself on first mount — an unnotarized DMG still prompts a
-	# warning even though the app inside would pass on its own.
+	# The app inside is already signed and stapled, but Gatekeeper assesses the
+	# DMG container independently on first mount. Sign the container before
+	# notarizing it; a ticket alone is not a usable code signature and `spctl`
+	# will reject an unsigned DMG even when stapler can validate its ticket.
+	codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG"
+	codesign --verify --verbose=2 "$DMG"
 	xcrun notarytool submit "$DMG" --keychain-profile "plainsay-notary" --wait --timeout 20m >/dev/null
 	xcrun stapler staple "$DMG" >/dev/null
 	xcrun stapler validate "$DMG" >/dev/null
+	spctl -a -vvv -t open --context context:primary-signature "$DMG"
 fi
 
 PUBDATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
