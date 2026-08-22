@@ -1147,6 +1147,16 @@ private struct ShortcutSetupStep: View {
             Label(behaviorHint, systemImage: "info.circle")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+
+            Label(
+                Localization.appString(
+                    "dictation.cancelHint",
+                    fallback: "Press Esc to cancel the whole dictation without inserting anything."
+                ),
+                systemImage: "escape"
+            )
+            .font(.callout)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -1251,7 +1261,12 @@ private struct ReadySetupStep: View {
                     }
                 }
 
-                ModelLoadStatusView(state: coordinator.modelState)
+                ModelLoadStatusView(
+                    state: coordinator.modelState,
+                    timing: coordinator.modelLoadTiming,
+                    onRetry: { Task { await coordinator.retryModel() } },
+                    onRestart: restartPlainsay
+                )
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)

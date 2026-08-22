@@ -26,12 +26,14 @@ public final class DictationCoordinator {
         /// Nothing was focused to paste into. The text is safe on the
         /// clipboard, but it did not land anywhere on its own.
         case savedToClipboard
+        /// The user deliberately abandoned an active recording with Escape.
+        case cancelled
         case error(String)
 
         public var isBusy: Bool {
             switch self {
             case .recording, .recordingLimitReached, .transcribing, .cleaning: true
-            case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .error: false
+            case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error: false
             }
         }
     }
@@ -59,7 +61,24 @@ public final class DictationCoordinator {
     /// How many samples the ribbon shows — about four seconds at 30fps.
     public static let levelHistoryLength = 120
     public private(set) var modelState: SpeechModelLoadState = .idle
+    /// Timing for the actual engine-reported download or preparation phase.
+    /// It is `nil` before loading begins and after the load becomes terminal.
+    public private(set) var modelLoadTiming: SpeechModelLoadTiming?
     public private(set) var lastTranscript: String?
+    /// Survives the short HUD error so the menu remains a recovery surface.
+    public private(set) var lastErrorMessage: String?
+    /// Persists after the HUD fades until a later insertion works or the user
+    /// copies/dismisses the unresolved record. Derived from history so relaunch
+    /// and History-window recovery cannot drift out of sync with the menu.
+    public var lastInsertionNeedsManualPaste: Bool {
+        history.hasUnacknowledgedInsertion
+    }
+
+    /// In hybrid mode this changes after a quick release latches recording.
+    public var recordingStyle: HotkeyRecordingStyle? {
+        guard phase == .recording else { return nil }
+        return machine.recordingStyle
+    }
 
     /// The single technical answer to "will the hotkey work right now?" Setup
     /// completion is deliberately not part of this: after the user confirms a
@@ -89,10 +108,15 @@ public final class DictationCoordinator {
     /// Reloads form a short serial queue. This prevents an old FluidAudio
     /// cleanup from racing a newer model load through its shared Core ML cache.
     private var modelReloadTask: Task<Void, Never>?
+    /// Prevents model lifecycle success from dismissing an unrelated,
+    /// persistent microphone, hotkey, or transcription error.
+    private var lastErrorCameFromModelLoad = false
     /// Invalidates progress and completion from superseded model loads.
     private var modelLoadGeneration: UInt64 = 0
     private let makeEngine: @MainActor (OnDeviceModel, String?, @escaping @Sendable (SpeechModelLoadState) -> Void) -> any TranscriptionEngine
     private let makeCleaner: @MainActor (PlainsaySettings) -> any TextCleaning
+    /// Injectable so phase timing stays deterministic in lifecycle tests.
+    private let modelLoadNow: @MainActor @Sendable () -> Date
     /// Tests pass a fake engine; production resolves one from settings.
     private let usesInjectedEngine: Bool
 
@@ -100,6 +124,9 @@ public final class DictationCoordinator {
     private var machine: HotkeyStateMachine
     private var meterTask: Task<Void, Never>?
     private var previewTask: Task<Void, Never>?
+    /// Escape claims the session synchronously, while the heavier audio-engine
+    /// teardown is deferred until after the active event-tap callback returns.
+    private var cancellationPending = false
     private var voiceFilter: VoiceFilterEngine?
     /// Independent of `modelState`: a failed or still-loading voice filter
     /// must never block dictation. It only ever gates whether filtering is
@@ -121,6 +148,7 @@ public final class DictationCoordinator {
             WhisperKitEngine()
         },
         makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = ProviderFactory.makeCleaner,
+        modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
         usesInjectedEngine: Bool = false
     ) {
         self.settings = settings
@@ -131,6 +159,7 @@ public final class DictationCoordinator {
         self.inserter = inserter
         self.makeEngine = makeEngine
         self.makeCleaner = makeCleaner
+        self.modelLoadNow = modelLoadNow
         self.usesInjectedEngine = usesInjectedEngine
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
@@ -139,7 +168,7 @@ public final class DictationCoordinator {
             self?.handle(edge)
         }
         hotkeys.onCancel = { [weak self] in
-            self?.cancelDictation()
+            self?.requestCancellationFromHotkey() ?? false
         }
     }
 
@@ -161,6 +190,8 @@ public final class DictationCoordinator {
             try hotkeys.start()
         } catch {
             phase = .error(error.localizedDescription)
+            lastErrorMessage = error.localizedDescription
+            lastErrorCameFromModelLoad = false
         }
         await reloadModel()
         await reloadVoiceFilterIfNeeded()
@@ -225,11 +256,12 @@ public final class DictationCoordinator {
         // After hotkey-up, `phase` remains `.recording` for one scheduler turn
         // while the queued pipeline takes ownership of this work unit. Only
         // release it here if the recorder itself is still capturing.
-        let stoppedDuringRecording = phase == .recording && recorder.isRecording
+        let stoppedDuringRecording = (phase == .recording && recorder.isRecording) || cancellationPending
         hotkeys.stop()
         meterTask?.cancel()
         stopLivePreview()
         recorder.cancel()
+        cancellationPending = false
         machine.reset()
         phase = .idle
         if stoppedDuringRecording { finishEngineWork() }
@@ -239,6 +271,15 @@ public final class DictationCoordinator {
     public func settingsChanged() {
         hotkeys.binding = settings.binding
         machine.mode = settings.hotkeyMode
+    }
+
+    /// Clears menu-level recovery notices after the user has dealt with them.
+    public func dismissLastIssue() {
+        if lastInsertionNeedsManualPaste {
+            history.acknowledgeInsertionIssues()
+        }
+        lastErrorMessage = nil
+        lastErrorCameFromModelLoad = false
     }
 
     /// Refreshes Cloud credentials in memory to match `settings.cleanupProvider`
@@ -293,9 +334,27 @@ public final class DictationCoordinator {
     }
 
     public func reloadModel() async {
+        // A model/language change can arrive while Core ML is still preparing
+        // the previous choice. Keep that attempt's watchdog visible until its
+        // cancellation really unwinds, otherwise Settings can fall back to an
+        // untimed "Starting…" state indefinitely.
+        await queueModelReload(preserveProgressWhileCancelling: modelLoadTiming != nil)
+    }
+
+    /// User-initiated retry keeps the stalled timer and its recovery controls
+    /// visible until the old network operation has actually stopped. If that
+    /// cancellation itself hangs, the watchdog can still escalate to restart.
+    public func retryModel() async {
+        await queueModelReload(preserveProgressWhileCancelling: true)
+    }
+
+    private func queueModelReload(preserveProgressWhileCancelling: Bool) async {
         modelLoadGeneration &+= 1
         let generation = modelLoadGeneration
-        modelState = .idle
+        clearModelLoadError()
+        if !preserveProgressWhileCancelling {
+            applyModelState(.idle)
+        }
 
         let previousReload = modelReloadTask
         // Network downloads in FluidAudio are cancellation-aware. Stop a
@@ -308,6 +367,9 @@ public final class DictationCoordinator {
                   !Task.isCancelled,
                   generation == self.modelLoadGeneration
             else { return }
+            if preserveProgressWhileCancelling {
+                self.applyModelState(.idle)
+            }
             await self.performModelReload(generation: generation)
         }
         modelReloadTask = reload
@@ -413,7 +475,9 @@ public final class DictationCoordinator {
     /// successful load gets a brief confirmation; a failed load expands into
     /// the normal error treatment rather than leaving an endless progress bar.
     private func applyModelState(_ state: SpeechModelLoadState) {
+        updateModelLoadTiming(from: modelState, to: state)
         modelState = state
+        if state == .ready { clearModelLoadError() }
         guard phase == .modelLoading else { return }
 
         switch state {
@@ -423,10 +487,61 @@ public final class DictationCoordinator {
             flashError(
                 Localization.coreFormat(
                     "coordinator.modelStatus.failed", fallback: "Speech model failed to load: %@", message
-                )
+                ),
+                isModelLoadError: true
             )
         case .idle, .downloading, .loading:
             break
+        }
+    }
+
+    /// Updates phase markers only when the engine's state really changes.
+    /// Repeated progress callbacks keep the phase start stable; only a download
+    /// fraction above the all-time high refreshes the liveness marker. Duplicate,
+    /// regressing callbacks are not evidence that a stalled transfer is alive.
+    private func updateModelLoadTiming(
+        from previousState: SpeechModelLoadState,
+        to state: SpeechModelLoadState
+    ) {
+        switch state {
+        case .idle, .ready, .failed:
+            modelLoadTiming = nil
+
+        case .downloading(let progress):
+            let now = modelLoadNow()
+            guard let timing = modelLoadTiming, timing.phase == .downloading else {
+                modelLoadTiming = SpeechModelLoadTiming(
+                    phase: .downloading,
+                    startedAt: now,
+                    lastDownloadProgressAt: now,
+                    highestDownloadProgress: SpeechModelLoadState.clampedProgress(progress)
+                )
+                return
+            }
+
+            let previousProgress: Double?
+            if case .downloading(let value) = previousState {
+                previousProgress = SpeechModelLoadState.clampedProgress(value)
+            } else {
+                previousProgress = nil
+            }
+            let currentProgress = SpeechModelLoadState.clampedProgress(progress)
+            let previousHigh = timing.highestDownloadProgress ?? previousProgress ?? 0
+            let madeForwardProgress = currentProgress > previousHigh
+            modelLoadTiming = SpeechModelLoadTiming(
+                phase: .downloading,
+                startedAt: timing.startedAt,
+                lastDownloadProgressAt: madeForwardProgress ? now : timing.lastDownloadProgressAt,
+                highestDownloadProgress: max(previousHigh, currentProgress)
+            )
+
+        case .loading:
+            guard modelLoadTiming?.phase != .preparing else { return }
+            modelLoadTiming = SpeechModelLoadTiming(
+                phase: .preparing,
+                startedAt: modelLoadNow(),
+                lastDownloadProgressAt: nil
+            )
         }
     }
 
@@ -485,20 +600,44 @@ public final class DictationCoordinator {
     /// tap or macOS privacy prompts.
     @discardableResult
     public func cancelDictation() -> Bool {
-        guard phase == .recording, recorder.isRecording else { return false }
+        guard stageCancellation() else { return false }
+        completeStagedCancellation()
+        return true
+    }
+
+    /// The active event tap must decide whether to swallow Escape before it
+    /// returns the event to macOS. Claim the recording immediately, then defer
+    /// AVAudioEngine teardown so a long capture cannot stall keyboard delivery.
+    private func requestCancellationFromHotkey() -> Bool {
+        guard stageCancellation() else { return false }
+        Task { @MainActor [weak self] in
+            self?.completeStagedCancellation()
+        }
+        return true
+    }
+
+    private func stageCancellation() -> Bool {
+        guard !cancellationPending, phase == .recording, recorder.isRecording else { return false }
 
         resetTask?.cancel()
         stopMetering()
         stopLivePreview()
-        recorder.cancel()
         machine.reset()
         targetApp = nil
         elapsed = 0
         levelHistory = []
-        phase = .idle
-        finishEngineWork()
-        Log.pipeline.info("dictation cancelled")
+        phase = .cancelled
+        cancellationPending = true
         return true
+    }
+
+    private func completeStagedCancellation() {
+        guard cancellationPending else { return }
+        cancellationPending = false
+        recorder.cancel()
+        finishEngineWork()
+        scheduleReset(after: .milliseconds(900))
+        Log.pipeline.info("dictation cancelled")
     }
 
     private func handle(_ edge: HotkeyEdge) {
@@ -530,7 +669,7 @@ public final class DictationCoordinator {
             machine.reset()
             return
         case .failed:
-            flashError(modelStatusMessage)
+            flashError(modelStatusMessage, isModelLoadError: true)
             machine.reset()
             return
         }
@@ -558,6 +697,8 @@ public final class DictationCoordinator {
             return
         }
 
+        lastErrorMessage = nil
+        lastErrorCameFromModelLoad = false
         phase = .recording
         beginEngineWork()
         elapsed = 0
@@ -719,7 +860,7 @@ public final class DictationCoordinator {
 
         // Written down *before* the paste is attempted. Insertion is the one
         // step we cannot verify, so the history has to survive its failure.
-        record(
+        let historyID = record(
             text: finalText,
             raw: transcript,
             outcome: usedRaw ? .insertedWithoutCleanup : .inserted,
@@ -730,25 +871,31 @@ public final class DictationCoordinator {
 
         switch outcome {
         case .inserted:
+            history.acknowledgeInsertionIssues()
             phase = usedRaw ? .insertedRaw : .idle
             scheduleReset()
+            playSound("Pop")
         case .noFocusedElement:
             // Longer than the normal reset: this is the one outcome that
             // needs the user to actually read and act on it before it fades.
+            history.updateOutcome(id: historyID, to: .insertionUnverified)
             phase = .savedToClipboard
             scheduleReset(after: .seconds(5))
+            playSound("Funk")
         }
-        playSound("Pop")
     }
 
-    private func record(text: String, raw: String, outcome: DictationOutcome, duration: Double) {
-        history.add(TranscriptRecord(
+    @discardableResult
+    private func record(text: String, raw: String, outcome: DictationOutcome, duration: Double) -> UUID {
+        let record = TranscriptRecord(
             text: text,
             rawText: raw,
             outcome: outcome,
             durationSeconds: duration,
             targetApp: targetApp?.bundleIdentifier
-        ))
+        )
+        history.add(record)
+        return record.id
     }
 
     private func insert(_ text: String) async -> TextInsertionOutcome {
@@ -829,10 +976,18 @@ public final class DictationCoordinator {
         livePreviewText = ""
     }
 
-    private func flashError(_ message: String) {
+    private func clearModelLoadError() {
+        guard lastErrorCameFromModelLoad else { return }
+        lastErrorMessage = nil
+        lastErrorCameFromModelLoad = false
+    }
+
+    private func flashError(_ message: String, isModelLoadError: Bool = false) {
         stopMetering()
         stopLivePreview()
         recorder.cancel()
+        lastErrorMessage = message
+        lastErrorCameFromModelLoad = isModelLoadError
         phase = .error(message)
         scheduleReset(after: .seconds(4))
     }

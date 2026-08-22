@@ -5008,79 +5008,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Konnte nicht auf die Tastenkombination hören. Erteile Plainsay Zugriff in Systemeinstellungen › Datenschutz & Sicherheit › Input Monitoring und starte es dann neu."
+            "value": "Konnte nicht auf die Tastenkombination hören. Erteile Plainsay unter Systemeinstellungen › Datenschutz & Sicherheit Zugriff auf Bedienungshilfen und Eingabeüberwachung und starte es dann neu."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Could not listen for the hotkey. Grant Plainsay access in System Settings › Privacy & Security › Input Monitoring, then restart it."
+            "value": "Could not listen for the hotkey. Grant Plainsay Accessibility and Input Monitoring access in System Settings › Privacy & Security, then restart it."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se pudo escuchar el atajo. Concede acceso a Plainsay en Ajustes del sistema › Privacidad y seguridad › Monitorización de entrada, y luego reinícialo."
+            "value": "No se pudo escuchar el atajo. Concede a Plainsay acceso a Accesibilidad y Monitorización de entrada en Ajustes del sistema › Privacidad y seguridad, y luego reinícialo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossible d'écouter le raccourci. Autorisez Plainsay dans Réglages Système › Confidentialité et sécurité › Surveillance des saisies, puis redémarrez l'app."
+            "value": "Impossible d'écouter le raccourci. Autorisez Plainsay pour Accessibilité et Surveillance des saisies dans Réglages Système › Confidentialité et sécurité, puis redémarrez l'app."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Impossibile ascoltare la scorciatoia. Concedi l'accesso a Plainsay in Impostazioni di sistema › Privacy e sicurezza › Monitoraggio input, poi riavvialo."
+            "value": "Impossibile ascoltare la scorciatoia. Concedi a Plainsay l'accesso ad Accessibilità e Monitoraggio input in Impostazioni di sistema › Privacy e sicurezza, poi riavvialo."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ホットキーを監視できませんでした。システム設定 › プライバシーとセキュリティ › 入力監視でPlainsayにアクセスを許可し、再起動してください。"
+            "value": "ホットキーを監視できませんでした。システム設定 › プライバシーとセキュリティでPlainsayにアクセシビリティと入力監視を許可し、再起動してください。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "단축키를 감지할 수 없었습니다. 시스템 설정 › 개인정보 보호 및 보안 › 입력 모니터링에서 Plainsay에 접근을 허용한 후 다시 시작하세요."
+            "value": "단축키를 감지할 수 없었습니다. 시스템 설정 › 개인정보 보호 및 보안에서 Plainsay에 손쉬운 사용 및 입력 모니터링 접근을 허용한 후 다시 시작하세요."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kon niet naar de sneltoets luisteren. Geef Plainsay toegang in Systeeminstellingen › Privacy en beveiliging › Invoermonitoring, en start het opnieuw op."
+            "value": "Kon niet naar de sneltoets luisteren. Geef Plainsay toegang tot Toegankelijkheid en Invoermonitoring in Systeeminstellingen › Privacy en beveiliging, en start het opnieuw op."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nie można nasłuchiwać skrótu. Przyznaj Plainsay dostęp w Ustawieniach systemowych › Prywatność i ochrona › Monitorowanie wejścia, a następnie uruchom ją ponownie."
+            "value": "Nie można nasłuchiwać skrótu. Przyznaj Plainsay dostęp do Dostępności oraz Monitorowania wejścia w Ustawieniach systemowych › Prywatność i ochrona, a następnie uruchom ją ponownie."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível escutar o atalho. Concede acesso ao Plainsay em Definições do sistema › Privacidade e Segurança › Monitorização de Entrada, e depois reinicia-o."
+            "value": "Não foi possível escutar o atalho. Concede ao Plainsay acesso a Acessibilidade e Monitorização de Entrada em Definições do sistema › Privacidade e Segurança, e depois reinicia-o."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не удалось начать отслеживание клавиши. Предоставьте Plainsay доступ в Системных настройках › Конфиденциальность и безопасность › Мониторинг ввода, затем перезапустите приложение."
+            "value": "Не удалось начать отслеживание клавиши. Предоставьте Plainsay доступ к Универсальному доступу и Мониторингу ввода в Системных настройках › Конфиденциальность и безопасность, затем перезапустите приложение."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не вдалося почати відстеження клавіші. Надайте Plainsay доступ у Системних налаштуваннях › Конфіденційність і безпека › Моніторинг вводу, потім перезапустіть застосунок."
+            "value": "Не вдалося почати відстеження клавіші. Надайте Plainsay доступ до Універсального доступу й Моніторингу вводу в Системних налаштуваннях › Конфіденційність і безпека, потім перезапустіть застосунок."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法监听快捷键。请在「系统设置 › 隐私与安全性 › 输入监control」中为 Plainsay 授权，然后重新启动应用。"
+            "value": "无法监听快捷键。请在「系统设置 › 隐私与安全性」中为 Plainsay 开启辅助功能和输入监控权限，然后重新启动应用。"
           }
         }
       }
@@ -6320,79 +6320,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um deine Stimme aufzunehmen, während die Tastenkombination gehalten wird."
+            "value": "Um deine Stimme aufzunehmen, während das Diktieren aktiv ist."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "To record your voice while the hotkey is held."
+            "value": "To record your voice while dictation is active."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para grabar tu voz mientras mantienes pulsado el atajo."
+            "value": "Para grabar tu voz mientras el dictado está activo."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pour enregistrer votre voix pendant que le raccourci est maintenu."
+            "value": "Pour enregistrer votre voix pendant que la dictée est active."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Per registrare la tua voce mentre tieni premuta la scorciatoia."
+            "value": "Per registrare la tua voce mentre la dettatura è attiva."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ホットキーを押している間、声を録音するため。"
+            "value": "ディクテーション中に声を録音するため。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "단축키를 누르고 있는 동안 목소리를 녹음하기 위해서입니다."
+            "value": "받아쓰기가 활성화된 동안 음성을 녹음하기 위해서입니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Om je stem op te nemen terwijl de sneltoets is ingedrukt."
+            "value": "Om je stem op te nemen terwijl dicteren actief is."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "By nagrywać Twój głos, gdy skrót jest przytrzymany."
+            "value": "Aby nagrywać Twój głos, gdy dyktowanie jest aktywne."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Para gravar a tua voz enquanto mantens o atalho premido."
+            "value": "Para gravar a tua voz enquanto o ditado está ativo."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для записи вашего голоса, пока удерживается клавиша."
+            "value": "Для записи вашего голоса, пока активен диктант."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для запису вашого голосу, поки утримується клавіша."
+            "value": "Для запису вашого голосу, поки активний диктант."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用于在按住快捷键时录制你的声音。"
+            "value": "用于在听写处于活动状态时录制你的声音。"
           }
         }
       }

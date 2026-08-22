@@ -34,6 +34,18 @@ private struct MenuBarIcon: View {
 
     var body: some View {
         Group {
+            if coordinator.modelLoadTiming != nil {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    icon(at: context.date)
+                }
+            } else {
+                icon(at: Date())
+            }
+        }
+    }
+
+    private func icon(at now: Date) -> some View {
+        Group {
             // The brand mark replaces the plain "waveform" glyph for the one
             // state most people see the most: ready and idle. Every other
             // state (recording, working, error, unavailable) keeps its
@@ -46,8 +58,8 @@ private struct MenuBarIcon: View {
                     .symbolRenderingMode(.hierarchical)
             }
         }
-        .accessibilityLabel(accessibilityLabel)
-        .help(accessibilityLabel)
+        .accessibilityLabel(accessibilityLabel(at: now))
+        .help(accessibilityLabel(at: now))
     }
 
     private var symbol: String {
@@ -55,7 +67,7 @@ private struct MenuBarIcon: View {
         case .recording: "waveform.circle.fill"
         case .recordingLimitReached, .transcribing, .cleaning, .modelLoading: "waveform.circle"
         case .error: "waveform.slash"
-        case .insertedRaw, .savedToClipboard: canDictate ? "waveform" : unavailableSymbol
+        case .insertedRaw, .savedToClipboard, .cancelled: canDictate ? "waveform" : unavailableSymbol
         case .idle:
             canDictate ? "waveform" : unavailableSymbol
         }
@@ -72,7 +84,7 @@ private struct MenuBarIcon: View {
         coordinator.isReadyForDictation && permissionStatus.allGranted
     }
 
-    private var accessibilityLabel: String {
+    private func accessibilityLabel(at now: Date) -> String {
         switch coordinator.phase {
         case .recording: Localization.appString("menu.a11y.listening", fallback: "Plainsay is listening")
         case .recordingLimitReached:
@@ -82,7 +94,7 @@ private struct MenuBarIcon: View {
             )
         case .transcribing: Localization.appString("menu.a11y.transcribing", fallback: "Plainsay is transcribing")
         case .cleaning: Localization.appString("menu.a11y.polishing", fallback: "Plainsay is polishing the transcript")
-        case .modelLoading: modelAccessibilityLabel
+        case .modelLoading: modelAccessibilityLabel(at: now)
         case .error(let message):
             Localization.appFormat("menu.a11y.error", fallback: "Plainsay error: %@", message)
         case .insertedRaw:
@@ -92,11 +104,13 @@ private struct MenuBarIcon: View {
                 "menu.a11y.savedToClipboard",
                 fallback: "Plainsay saved the dictation to the clipboard — nothing was focused to paste into"
             )
-        case .idle: readinessAccessibilityLabel
+        case .cancelled:
+            Localization.appString("menu.a11y.cancelled", fallback: "Plainsay cancelled the dictation")
+        case .idle: readinessAccessibilityLabel(at: now)
         }
     }
 
-    private var readinessAccessibilityLabel: String {
+    private func readinessAccessibilityLabel(at now: Date) -> String {
         if canDictate {
             return Localization.appString("menu.a11y.ready", fallback: "Plainsay is ready")
         }
@@ -111,37 +125,33 @@ private struct MenuBarIcon: View {
                 "menu.a11y.missingPermissions", fallback: "Plainsay is not ready; missing permissions: %@", missing
             )
         }
-        return modelAccessibilityLabel
+        return modelAccessibilityLabel(at: now)
     }
 
-    private var modelAccessibilityLabel: String {
-        switch coordinator.modelState {
-        case .ready: Localization.appString("menu.a11y.ready", fallback: "Plainsay is ready")
-        case .idle: Localization.appString("menu.a11y.notReady", fallback: "Plainsay is not ready")
-        case .downloading(let progress):
-            Localization.appFormat(
-                "menu.a11y.downloading", fallback: "Plainsay is downloading the speech model, %d percent",
-                percentage(progress)
-            )
-        case .loading(let progress):
-            if let progress {
-                Localization.appFormat(
-                    "menu.a11y.preparingWithProgress",
-                    fallback: "Plainsay is preparing the speech model, %d percent", percentage(progress)
-                )
-            } else {
-                Localization.appString("menu.a11y.preparing", fallback: "Plainsay is preparing the speech model")
-            }
+    private func modelAccessibilityLabel(at now: Date) -> String {
+        let base = switch coordinator.modelState {
+        case .ready:
+            Localization.appString("menu.a11y.ready", fallback: "Plainsay is ready")
+        case .idle:
+            Localization.appString("menu.a11y.notReady", fallback: "Plainsay is not ready")
+        case .downloading:
+            Localization.appString("modelStatus.a11y.downloading", fallback: "Downloading speech model")
+        case .loading:
+            Localization.appString("menu.a11y.preparing", fallback: "Plainsay is preparing the speech model")
         case .failed:
             Localization.appString(
                 "menu.a11y.modelFailed", fallback: "Plainsay is not ready because the speech model failed to load"
             )
         }
-    }
 
-    private func percentage(_ value: Double) -> Int {
-        guard value.isFinite else { return 0 }
-        return Int((min(max(value, 0), 1) * 100).rounded())
+        let presentation = ModelLoadPresentation(
+            state: coordinator.modelState,
+            timing: coordinator.modelLoadTiming,
+            now: now
+        )
+        return [base, presentation.accessibilityProgress, presentation.attentionMessage]
+            .compactMap { $0 }
+            .joined(separator: ". ")
     }
 }
 
@@ -153,7 +163,13 @@ struct MenuContent: View {
 
     var body: some View {
         Group {
-            Text(statusLine)
+            if coordinator.modelLoadTiming != nil {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    statusHeader(at: context.date)
+                }
+            } else {
+                statusHeader(at: Date())
+            }
 
             if !permissionStatus.allGranted {
                 Divider()
@@ -176,11 +192,17 @@ struct MenuContent: View {
 
             // The recovery path when a paste didn't land: get the words back
             // without hunting through Settings.
-            if let last = coordinator.history.mostRecent, !last.text.isEmpty {
+            if let last = coordinator.history.records.first(where: { !$0.text.isEmpty }) {
                 Button("Copy last dictation") {
                     coordinator.history.copyToClipboard(last)
                 }
                 .keyboardShortcut("c", modifiers: [.command, .shift])
+            }
+
+            if coordinator.lastErrorMessage != nil || coordinator.lastInsertionNeedsManualPaste {
+                Button(Localization.appString("menu.dismissIssue", fallback: "Dismiss Last Notice")) {
+                    coordinator.dismissLastIssue()
+                }
             }
 
             // Distributed outside the App Store, so nothing updates this app but
@@ -215,10 +237,77 @@ struct MenuContent: View {
             : Localization.appString("menu.fixInSettings", fallback: "Fix in Settings…")
     }
 
+    @ViewBuilder
+    private func statusHeader(at now: Date) -> some View {
+        Text(statusLine(at: now))
+        switch modelRecoveryAction(at: now) {
+        case .retry:
+            Button(Localization.appString("menu.retryModel", fallback: "Try Loading Model Again")) {
+                Task { await coordinator.retryModel() }
+            }
+        case .restart:
+            Button(Localization.appString("menu.restartModel", fallback: "Restart Plainsay to Retry")) {
+                restartPlainsay()
+            }
+        case nil:
+            EmptyView()
+        }
+    }
+
     /// One line that answers "can I dictate right now?"
-    private var statusLine: String {
-        if case .error(let message) = coordinator.phase {
+    private func statusLine(at now: Date) -> String {
+        switch coordinator.phase {
+        case .recording:
+            switch coordinator.recordingStyle {
+            case .releaseToFinish:
+                return Localization.appString(
+                    "menu.status.listeningRelease", fallback: "Listening — release to finish; Esc cancels"
+                )
+            case .tapToFinish:
+                return Localization.appString(
+                    "menu.status.listeningTap", fallback: "Listening — tap again to finish; Esc cancels"
+                )
+            case nil:
+                return Localization.appString("menu.status.listening", fallback: "Listening — Esc cancels")
+            }
+        case .transcribing:
+            return Localization.appString("menu.status.transcribing", fallback: "Transcribing…")
+        case .cleaning:
+            return Localization.appString("menu.status.polishing", fallback: "Polishing transcript…")
+        case .modelLoading:
+            return modelStatusLine(at: now)
+        case .insertedRaw:
+            return Localization.appString("menu.status.insertedRaw", fallback: "Inserted without Polishing")
+        case .savedToClipboard:
+            return Localization.appString(
+                "menu.status.savedToClipboard", fallback: "Not pasted — dictation saved to the clipboard"
+            )
+        case .cancelled:
+            return Localization.appString("menu.status.cancelled", fallback: "Dictation cancelled")
+        case .error(let message):
             return Localization.appFormat("menu.status.error", fallback: "Not ready — %@", message)
+        case .idle:
+            break
+        }
+
+        // A live load is the information someone needs right now. Keep older
+        // recoverable notices in memory, but do not let them hide the model
+        // timer or its watchdog while a new attempt is moving forward.
+        switch coordinator.modelState {
+        case .downloading, .loading:
+            return modelStatusLine(at: now)
+        case .idle, .ready, .failed:
+            break
+        }
+
+        if let message = coordinator.lastErrorMessage {
+            return Localization.appFormat("menu.status.lastError", fallback: "Last issue — %@", message)
+        }
+
+        if coordinator.lastInsertionNeedsManualPaste {
+            return Localization.appString(
+                "menu.status.lastNotPasted", fallback: "Last dictation wasn't pasted — it is in History"
+            )
         }
         if case .recordingLimitReached = coordinator.phase {
             return Localization.appString(
@@ -237,6 +326,39 @@ struct MenuContent: View {
             )
         }
 
+        return modelStatusLine(at: now)
+    }
+
+    private func modelStatusLine(at now: Date) -> String {
+        let presentation = ModelLoadPresentation(
+            state: coordinator.modelState,
+            timing: coordinator.modelLoadTiming,
+            now: now
+        )
+
+        if let summary = presentation.progressSummary {
+            switch presentation.attention {
+            case .downloadStalled:
+                return Localization.appFormat(
+                    "menu.status.downloadStalled", fallback: "Download may be stalled · %@", summary
+                )
+            case .downloadActionRequired:
+                return Localization.appFormat(
+                    "menu.status.modelMayBeStuck", fallback: "Speech model may be stuck · %@", summary
+                )
+            case .firstPreparation, .takingLonger:
+                return Localization.appFormat(
+                    "menu.status.stillPreparing", fallback: "Still preparing speech model · %@", summary
+                )
+            case .actionRequired:
+                return Localization.appFormat(
+                    "menu.status.modelMayBeStuck", fallback: "Speech model may be stuck · %@", summary
+                )
+            case nil:
+                break
+            }
+        }
+
         switch coordinator.modelState {
         case .ready:
             let key: String
@@ -253,14 +375,15 @@ struct MenuContent: View {
             }
             return Localization.appFormat(key, fallback: fallback, settings.binding.localizedDisplayName)
         case .downloading(let progress):
+            let summary = presentation.progressSummary
+                ?? Localization.appFormat("menu.status.percentage", fallback: "%d%%", percentage(progress))
             return Localization.appFormat(
-                "menu.status.downloading", fallback: "Downloading speech model… %d%%", percentage(progress)
+                "menu.status.downloadingSummary", fallback: "Downloading speech model… %@", summary
             )
-        case .loading(let progress):
-            if let progress {
+        case .loading:
+            if let summary = presentation.progressSummary {
                 return Localization.appFormat(
-                    "menu.status.preparingWithProgress", fallback: "Preparing speech model… %d%%",
-                    percentage(progress)
+                    "menu.status.preparingSummary", fallback: "Preparing speech model… %@", summary
                 )
             }
             return Localization.appString(
@@ -273,8 +396,49 @@ struct MenuContent: View {
         }
     }
 
+    private func modelRecoveryAction(at now: Date) -> ModelLoadPresentation.RecoveryAction? {
+        ModelLoadPresentation(
+            state: coordinator.modelState,
+            timing: coordinator.modelLoadTiming,
+            now: now
+        ).recoveryAction
+    }
+
     private func percentage(_ value: Double) -> Int {
         guard value.isFinite else { return 0 }
         return Int((min(max(value, 0), 1) * 100).rounded())
+    }
+}
+
+/// Core ML model preparation is not reliably cancellation-aware. Once the
+/// watchdog says it may be stuck, a process restart is the only honest retry:
+/// queue a tiny helper that waits for this process to exit, then reopens the
+/// exact app bundle. The helper receives paths as positional arguments so no
+/// user-controlled string is interpreted as shell code.
+@MainActor
+func restartPlainsay() {
+    let bundleURL = Bundle.main.bundleURL
+    guard bundleURL.pathExtension == "app" else {
+        NSSound.beep()
+        return
+    }
+
+    let helper = Process()
+    helper.executableURL = URL(fileURLWithPath: "/bin/sh")
+    helper.arguments = [
+        "-c",
+        "while kill -0 \"$1\" 2>/dev/null; do sleep 0.1; done; exec /usr/bin/open \"$2\"",
+        "plainsay-relauncher",
+        String(ProcessInfo.processInfo.processIdentifier),
+        bundleURL.path,
+    ]
+    helper.standardOutput = FileHandle.nullDevice
+    helper.standardError = FileHandle.nullDevice
+
+    do {
+        try helper.run()
+        NSApp.terminate(nil)
+    } catch {
+        NSSound.beep()
     }
 }

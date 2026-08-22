@@ -34,6 +34,9 @@ public enum DictationOutcome: String, Codable, Sendable {
     case microphoneUnavailable
     case modelNotReady
     case insertionUnverified
+    /// The paste still was not verified, but the user has seen or recovered
+    /// the record and dismissed the persistent reminder.
+    case insertionUnverifiedAcknowledged
     /// Transcribed on a later launch, after the original run was interrupted.
     case recovered
 }

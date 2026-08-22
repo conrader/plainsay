@@ -102,4 +102,68 @@ struct TranscriptHistoryTests {
         // A cleanup that mangles the meaning must not destroy the original.
         #expect(history.mostRecent?.rawText == "um i'll uh be there tuesday")
     }
+
+    @Test("A clipboard fallback updates the original record and persists")
+    func updateOutcomePersists() {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-history-\(UUID().uuidString)")
+        let history = TranscriptHistory(directory: dir)
+        let original = record("copy me")
+        history.add(original)
+
+        history.updateOutcome(id: original.id, to: .insertionUnverified)
+
+        #expect(history.records.count == 1)
+        #expect(history.mostRecent?.outcome == .insertionUnverified)
+        #expect(TranscriptHistory(directory: dir).mostRecent?.outcome == .insertionUnverified)
+    }
+
+    @Test("Acknowledging a paste warning survives relaunch and ignores newer empty events")
+    func insertionAcknowledgementPersists() {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-history-\(UUID().uuidString)")
+        let history = TranscriptHistory(directory: dir)
+        let failedPaste = TranscriptRecord(
+            text: "recover me",
+            rawText: "recover me",
+            outcome: .insertionUnverified,
+            durationSeconds: 1,
+            targetApp: nil
+        )
+        history.add(failedPaste)
+        history.add(TranscriptRecord(
+            text: "",
+            rawText: "",
+            outcome: .tooShort,
+            durationSeconds: 0.1,
+            targetApp: nil
+        ))
+
+        #expect(history.hasUnacknowledgedInsertion)
+        history.acknowledgeInsertionIssues()
+        #expect(!history.hasUnacknowledgedInsertion)
+
+        let relaunched = TranscriptHistory(directory: dir)
+        #expect(!relaunched.hasUnacknowledgedInsertion)
+        #expect(relaunched.records.first(where: { $0.id == failedPaste.id })?.outcome == .insertionUnverifiedAcknowledged)
+    }
+
+    @Test("Copying an unresolved dictation acknowledges its reminder")
+    func copyingAcknowledgesInsertionIssue() {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-history-\(UUID().uuidString)")
+        let history = TranscriptHistory(directory: dir)
+        let record = TranscriptRecord(
+            text: "safe copy",
+            rawText: "safe copy",
+            outcome: .insertionUnverified,
+            durationSeconds: 1,
+            targetApp: nil
+        )
+        history.add(record)
+
+        #expect(history.copyToClipboard(record))
+        #expect(!history.hasUnacknowledgedInsertion)
+        #expect(history.mostRecent?.outcome == .insertionUnverifiedAcknowledged)
+    }
 }

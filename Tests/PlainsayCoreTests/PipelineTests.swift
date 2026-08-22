@@ -142,6 +142,41 @@ private final class ModelStateCallbackBox {
     var report: (@Sendable (SpeechModelLoadState) -> Void)?
 }
 
+@MainActor
+private final class ModelLoadTestClock {
+    var now: Date
+
+    init(secondsSince1970: TimeInterval = 0) {
+        now = Date(timeIntervalSince1970: secondsSince1970)
+    }
+
+    func set(_ secondsSince1970: TimeInterval) {
+        now = Date(timeIntervalSince1970: secondsSince1970)
+    }
+}
+
+/// Holds `prepare()` open while a test sends model-state callbacks by hand.
+private actor TimingTestEngine: TranscriptionEngine {
+    private let gate: AsyncTestGate
+    private let failureMessage: String?
+
+    init(gate: AsyncTestGate, failureMessage: String? = nil) {
+        self.gate = gate
+        self.failureMessage = failureMessage
+    }
+
+    func prepare() async throws {
+        await gate.wait()
+        if let failureMessage {
+            throw TranscriptionError.failed(failureMessage)
+        }
+    }
+
+    func transcribe(samples: [Float], prompt: String?) async throws -> String {
+        "unused"
+    }
+}
+
 private actor ControlledTranscriptionEngine: TranscriptionEngine {
     private let gate: AsyncTestGate
     private(set) var shutdownCount = 0
@@ -459,6 +494,17 @@ struct PipelineTests {
         // landed changes, not whether the dictation survived.
         #expect(harness.inserter.inserted == ["The thing is, it works."])
         #expect(harness.coordinator.phase == .savedToClipboard)
+        #expect(harness.coordinator.lastInsertionNeedsManualPaste)
+        #expect(harness.history.mostRecent?.outcome == .insertionUnverified)
+
+        // A later successful insertion resolves the persistent recovery
+        // notice without rewriting the earlier history record.
+        harness.inserter.outcome = .inserted
+        harness.dictate()
+        try await harness.settle()
+        #expect(!harness.coordinator.lastInsertionNeedsManualPaste)
+        #expect(harness.history.mostRecent?.outcome == .inserted)
+        #expect(harness.history.records.contains { $0.outcome == .insertionUnverifiedAcknowledged })
     }
 
     @Test("A stray tap shorter than the minimum inserts nothing")
@@ -503,6 +549,13 @@ struct PipelineTests {
         if case .error = harness.coordinator.phase {} else {
             Issue.record("expected an error phase, got \(harness.coordinator.phase)")
         }
+
+        // A model lifecycle success is unrelated to this transcription error
+        // and must not erase its persistent recovery notice.
+        let persistentError = try #require(harness.coordinator.lastErrorMessage)
+        await harness.coordinator.reloadModel()
+        #expect(harness.coordinator.modelState == .ready)
+        #expect(harness.coordinator.lastErrorMessage == persistentError)
     }
 
     @Test("The vocabulary reaches the speech model as a decoder prompt")
@@ -614,7 +667,7 @@ struct PipelineTests {
         #expect(harness.coordinator.phase == .recording)
 
         #expect(harness.coordinator.cancelDictation())
-        #expect(harness.coordinator.phase == .idle)
+        #expect(harness.coordinator.phase == .cancelled)
         #expect(!harness.recorder.isRecording)
         #expect(harness.recorder.cancelCount == 1)
         #expect(harness.engine.receivedSampleCount == 0)
@@ -640,7 +693,7 @@ struct PipelineTests {
         // The release belonging to the abandoned press must not start the
         // pipeline or affect a later recording.
         harness.coordinator.handleHotkeyEdge(.up(at: 1))
-        #expect(harness.coordinator.phase == .idle)
+        #expect(harness.coordinator.phase == .cancelled)
         #expect(harness.engine.receivedSampleCount == 0)
         #expect(harness.inserter.inserted.isEmpty)
         #expect(harness.history.mostRecent == nil)
@@ -739,10 +792,13 @@ struct PipelineTests {
         }
         await oldGate.waitUntilStarted()
         try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
+        let existingTiming = try #require(coordinator.modelLoadTiming)
 
         settings.model = .smallEN
         let latestLoad = Task { await coordinator.reloadModel() }
-        try await waitForModelState(.idle, coordinator: coordinator)
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelState == .loading(progress: nil))
+        #expect(coordinator.modelLoadTiming == existingTiming)
 
         #expect(!(await newGate.started))
         await oldGate.open()
@@ -791,6 +847,277 @@ struct PipelineTests {
         #expect(coordinator.modelState == .ready)
     }
 
+    @Test("Download timing keeps its start while real progress refreshes liveness")
+    func downloadTimingTracksProgressWithoutRestartingPhase() async throws {
+        let settings = isolatedSettings("download-timing")
+        let callback = ModelStateCallbackBox()
+        let clock = ModelLoadTestClock(secondsSince1970: 10)
+        let gate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("download-timing-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("download-timing-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                callback.report = onState
+                return TimingTestEngine(gate: gate)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            modelLoadNow: { clock.now },
+            usesInjectedEngine: true
+        )
+
+        let load = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+
+        callback.report?(.downloading(progress: 0.1))
+        try await waitForModelState(.downloading(progress: 0.1), coordinator: coordinator)
+        let startedAt = Date(timeIntervalSince1970: 10)
+        #expect(coordinator.modelLoadTiming == SpeechModelLoadTiming(
+            phase: .downloading,
+            startedAt: startedAt,
+            lastDownloadProgressAt: startedAt,
+            highestDownloadProgress: 0.1
+        ))
+
+        // A duplicate callback is not real progress and must move neither
+        // marker, even though the wall clock has advanced.
+        clock.set(20)
+        callback.report?(.downloading(progress: 0.1))
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelLoadTiming?.startedAt == startedAt)
+        #expect(coordinator.modelLoadTiming?.lastDownloadProgressAt == startedAt)
+
+        // A changed fraction refreshes liveness without restarting the phase.
+        clock.set(30)
+        callback.report?(.downloading(progress: 0.2))
+        try await waitForModelState(.downloading(progress: 0.2), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming?.startedAt == startedAt)
+        #expect(coordinator.modelLoadTiming?.lastDownloadProgressAt == Date(timeIntervalSince1970: 30))
+
+        // A provider can briefly report an older aggregate fraction while
+        // switching files. That is not forward progress and must not hide a
+        // genuinely stalled download.
+        clock.set(40)
+        callback.report?(.downloading(progress: 0.15))
+        try await waitForModelState(.downloading(progress: 0.15), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming?.lastDownloadProgressAt == Date(timeIntervalSince1970: 30))
+
+        // Rising from a regressed subtotal still does not count until the
+        // previous all-time high is exceeded.
+        clock.set(50)
+        callback.report?(.downloading(progress: 0.16))
+        try await waitForModelState(.downloading(progress: 0.16), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming?.lastDownloadProgressAt == Date(timeIntervalSince1970: 30))
+        #expect(coordinator.modelLoadTiming?.highestDownloadProgress == 0.2)
+
+        clock.set(60)
+        callback.report?(.downloading(progress: 0.21))
+        try await waitForModelState(.downloading(progress: 0.21), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming?.lastDownloadProgressAt == Date(timeIntervalSince1970: 60))
+        #expect(coordinator.modelLoadTiming?.highestDownloadProgress == 0.21)
+
+        await gate.open()
+        await load.value
+    }
+
+    @Test("Retry keeps a stalled timer visible until the previous load really stops")
+    func retryPreservesTimingWhileCancellationUnwinds() async throws {
+        let settings = isolatedSettings("retry-preserves-timing")
+        let firstCallback = ModelStateCallbackBox()
+        let retryCallback = ModelStateCallbackBox()
+        let clock = ModelLoadTestClock(secondsSince1970: 10)
+        let firstGate = AsyncTestGate()
+        let retryGate = AsyncTestGate()
+        var buildCount = 0
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("retry-timing-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("retry-timing-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                buildCount += 1
+                if buildCount == 1 {
+                    firstCallback.report = onState
+                    return TimingTestEngine(gate: firstGate)
+                }
+                retryCallback.report = onState
+                return TimingTestEngine(gate: retryGate)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            modelLoadNow: { clock.now },
+            usesInjectedEngine: true
+        )
+
+        let firstLoad = Task { await coordinator.reloadModel() }
+        await firstGate.waitUntilStarted()
+        firstCallback.report?(.downloading(progress: 0.25))
+        try await waitForModelState(.downloading(progress: 0.25), coordinator: coordinator)
+        let stalledTiming = try #require(coordinator.modelLoadTiming)
+
+        let retry = Task { await coordinator.retryModel() }
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelState == .downloading(progress: 0.25))
+        #expect(coordinator.modelLoadTiming == stalledTiming)
+        #expect(!(await retryGate.started))
+
+        await firstGate.open()
+        await retryGate.waitUntilStarted()
+        #expect(coordinator.modelState == .idle)
+        #expect(coordinator.modelLoadTiming == nil)
+
+        clock.set(40)
+        retryCallback.report?(.downloading(progress: 0.1))
+        try await waitForModelState(.downloading(progress: 0.1), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming?.startedAt == Date(timeIntervalSince1970: 40))
+
+        await retryGate.open()
+        await firstLoad.value
+        await retry.value
+    }
+
+    @Test("Preparation gets a new start and ready clears model timing")
+    func preparationTimingStartsAtPhaseTransitionAndClearsAtReady() async throws {
+        let settings = isolatedSettings("preparation-timing")
+        let callback = ModelStateCallbackBox()
+        let clock = ModelLoadTestClock(secondsSince1970: 10)
+        let gate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("preparation-timing-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("preparation-timing-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                callback.report = onState
+                return TimingTestEngine(gate: gate)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            modelLoadNow: { clock.now },
+            usesInjectedEngine: true
+        )
+
+        let load = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+        callback.report?(.downloading(progress: 0.5))
+        try await waitForModelState(.downloading(progress: 0.5), coordinator: coordinator)
+
+        clock.set(40)
+        callback.report?(.loading(progress: nil))
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming == SpeechModelLoadTiming(
+            phase: .preparing,
+            startedAt: Date(timeIntervalSince1970: 40),
+            lastDownloadProgressAt: nil
+        ))
+
+        await gate.open()
+        await load.value
+        #expect(coordinator.modelState == .ready)
+        #expect(coordinator.modelLoadTiming == nil)
+    }
+
+    @Test("A failed model load clears model timing")
+    func failedModelLoadClearsTiming() async throws {
+        let settings = isolatedSettings("failed-model-timing")
+        let callback = ModelStateCallbackBox()
+        let clock = ModelLoadTestClock(secondsSince1970: 10)
+        let gate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("failed-model-timing-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("failed-model-timing-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, onState in
+                callback.report = onState
+                return TimingTestEngine(gate: gate, failureMessage: "timing failure")
+            },
+            makeCleaner: { _ in NoCleanup() },
+            modelLoadNow: { clock.now },
+            usesInjectedEngine: true
+        )
+
+        let load = Task { await coordinator.reloadModel() }
+        await gate.waitUntilStarted()
+        callback.report?(.loading(progress: nil))
+        try await waitForModelState(.loading(progress: nil), coordinator: coordinator)
+        #expect(coordinator.modelLoadTiming != nil)
+
+        await gate.open()
+        await load.value
+        #expect(coordinator.modelState == .failed("Transcription failed: timing failure"))
+        #expect(coordinator.modelLoadTiming == nil)
+    }
+
+    @Test("Superseded generation callbacks cannot change current model timing")
+    func supersededGenerationCannotChangeModelTiming() async throws {
+        let settings = isolatedSettings("superseded-model-timing")
+        settings.model = .largeV3Turbo
+        let oldCallback = ModelStateCallbackBox()
+        let latestCallback = ModelStateCallbackBox()
+        let clock = ModelLoadTestClock(secondsSince1970: 10)
+        let oldGate = AsyncTestGate()
+        let latestGate = AsyncTestGate()
+        let coordinator = DictationCoordinator(
+            settings: settings,
+            history: TranscriptHistory(directory: temporaryDirectory("superseded-timing-history")),
+            pendingAudio: PendingAudioStore(directory: temporaryDirectory("superseded-timing-pending")),
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { model, _, onState in
+                if model == .largeV3Turbo {
+                    oldCallback.report = onState
+                    return TimingTestEngine(gate: oldGate)
+                }
+                latestCallback.report = onState
+                return TimingTestEngine(gate: latestGate)
+            },
+            makeCleaner: { _ in NoCleanup() },
+            modelLoadNow: { clock.now },
+            usesInjectedEngine: true
+        )
+
+        let oldLoad = Task { await coordinator.reloadModel() }
+        await oldGate.waitUntilStarted()
+        oldCallback.report?(.downloading(progress: 0.1))
+        try await waitForModelState(.downloading(progress: 0.1), coordinator: coordinator)
+        let oldTiming = try #require(coordinator.modelLoadTiming)
+
+        settings.model = .smallEN
+        let latestLoad = Task { await coordinator.reloadModel() }
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelState == .downloading(progress: 0.1))
+        #expect(coordinator.modelLoadTiming == oldTiming)
+
+        // The old callback is already invalid as soon as the generation
+        // changes, even while its cancelled prepare is unwinding.
+        clock.set(20)
+        oldCallback.report?(.downloading(progress: 0.8))
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelState == .downloading(progress: 0.1))
+        #expect(coordinator.modelLoadTiming == oldTiming)
+
+        await oldGate.open()
+        await latestGate.waitUntilStarted()
+        clock.set(30)
+        latestCallback.report?(.downloading(progress: 0.2))
+        try await waitForModelState(.downloading(progress: 0.2), coordinator: coordinator)
+        let latestTiming = coordinator.modelLoadTiming
+
+        clock.set(40)
+        oldCallback.report?(.loading(progress: nil))
+        await drainModelStateCallbacks()
+        #expect(coordinator.modelState == .downloading(progress: 0.2))
+        #expect(coordinator.modelLoadTiming == latestTiming)
+
+        await latestGate.open()
+        await oldLoad.value
+        await latestLoad.value
+    }
+
     @Test("The model progress HUD dismisses after loading completes")
     func modelLoadingHUDCompletes() async throws {
         let settings = isolatedSettings("model-hud-completes")
@@ -830,14 +1157,19 @@ struct PipelineTests {
     func modelLoadingHUDFails() async throws {
         let settings = isolatedSettings("model-hud-fails")
         let gate = AsyncTestGate()
+        var loadAttempt = 0
         let coordinator = DictationCoordinator(
             settings: settings,
             history: TranscriptHistory(directory: temporaryDirectory("model-failure-history")),
             pendingAudio: PendingAudioStore(directory: temporaryDirectory("model-failure-pending")),
             recorder: FakeRecorder(),
             inserter: FakeInserter(),
-            makeEngine: { _, _, onState in
-                ControlledFailingLoadingEngine(gate: gate, onStateChange: onState)
+            makeEngine: { _, _, onState -> any TranscriptionEngine in
+                loadAttempt += 1
+                if loadAttempt == 1 {
+                    return ControlledFailingLoadingEngine(gate: gate, onStateChange: onState)
+                }
+                return FakeEngine()
             },
             makeCleaner: { _ in NoCleanup() },
             usesInjectedEngine: true
@@ -857,6 +1189,14 @@ struct PipelineTests {
         } else {
             Issue.record("expected model load error, got \(coordinator.phase)")
         }
+
+        // Asking to dictate while the model is failed repeats that model
+        // notice. A later successful retry must still recognize and clear it.
+        coordinator.handleHotkeyEdge(.down(at: 1))
+        #expect(coordinator.lastErrorMessage?.contains("controlled load failure") == true)
+        await coordinator.retryModel()
+        #expect(coordinator.modelState == .ready)
+        #expect(coordinator.lastErrorMessage == nil)
     }
 
     @Test("A reload waits for an active transcription and blocks overlap")
@@ -1000,5 +1340,9 @@ struct PipelineTests {
             try await Task.sleep(for: .milliseconds(1))
         }
         try #require(coordinator.modelState == expected)
+    }
+
+    private func drainModelStateCallbacks() async {
+        for _ in 0..<10 { await Task.yield() }
     }
 }
