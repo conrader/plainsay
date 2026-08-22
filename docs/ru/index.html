@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. В локальном режиме Whisper или Parakeet выполняет всю расшифровку на вашем Mac — без учётной записи и подписки. Опциональный Plainsay Cloud отправляет записанное аудио для облачной расшифровки и редактирования, без загрузки модели расшифровки, за 12 PLN в месяц (около 3 USD).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay — бесплатное приложение для диктовки на Mac с лицензией MIT. В локальном режиме Whisper или Parakeet выполняет всю расшифровку на вашем Mac — без учётной записи и подписки. Опциональный Plainsay Cloud отправляет записанное аудио для облачной расшифровки и редактирования, без загрузки модели расшифровки, за 12 PLN в месяц или 120 PLN в год, включая НДС.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (ежемесячно, включая НДС)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (ежегодно, включая НДС)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -273,7 +273,7 @@
       <span class="spacer"></span>
       <div class="links">
         <a href="#pricing">Тарифы</a>
-        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://github.com/conrader/plainsay" aria-label="Поставить Plainsay звезду на GitHub">★ GitHub</a>
         <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Скачать</a>
         <select class="lang-switch" aria-label="Язык" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/" selected>Русский</option><option value="/uk/">Українська</option></select>
       </div>
@@ -447,7 +447,7 @@
     { icon: "clock.arrow.circlepath", title: "Восстанавливаемые резервные пути", body: "Если Polishing не сработал, Plainsay использует необработанную расшифровку. Если нет безопасного места для вставки, текст остаётся в буфере обмена; Plainsay добавляет готовую расшифровку в локальную историю до вставки." },
     { icon: "gearshape.2", title: "Никакой зависимости от поставщика", body: "Поддерживаются разные локальные и облачные движки и провайдеры для расшифровки и Polishing, включая собственный API-ключ и OpenAI-совместимый endpoint." },
     { icon: "waveform.badge.mic", title: "Фильтрация голоса", body: "Регистрация голоса — локальный фильтр без гарантии результата. Если он недоступен или не сработал, диктовка продолжается без фильтра; расшифровка Cloud или BYOK может получить неотфильтрованное аудио." },
-    { icon: "checkmark.circle.fill", title: "Честные цены", body: "Облачный тариф стоит 12 PLN в месяц (около 3 USD). Локальный режим обеспечивает полноценную диктовку на устройстве — без лимитов по минутам или словам и без аккаунта. Облачная расшифровка и Polishing опциональны." }
+    { icon: "checkmark.circle.fill", title: "Честные цены", body: "Облачный тариф стоит 12 PLN в месяц или 120 PLN в год, включая НДС. Локальный режим обеспечивает полноценную диктовку на устройстве — без лимитов по минутам или словам и без аккаунта. Облачная расшифровка и Polishing опциональны." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -469,7 +469,7 @@
       caveats: ["Рекомендуемые многоязычные модели: 475–632 МБ; модели только для английского — от 150 МБ", "Занимает память, пока Plainsay работает"]
     },
     {
-      id: "cloud", eyebrow: "БЕЗ ЗАГРУЗКИ МОДЕЛИ РАСШИФРОВКИ", title: "Plainsay Cloud", price: "12 PLN / месяц (около 3 USD)",
+      id: "cloud", eyebrow: "БЕЗ ЗАГРУЗКИ МОДЕЛИ РАСШИФРОВКИ", title: "Plainsay Cloud", price: "12 PLN/месяц<br><small>120 PLN/год · включая НДС</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Без загрузки модели расшифровки и API-ключей", "Расшифровка и редактирование включены"],
       caveats: ["Аудио отправляется в Plainsay Cloud для расшифровки", "900 минут расшифровки в любом скользящем 30-дневном окне; локальный режим не учитывается"]

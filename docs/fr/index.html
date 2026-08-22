@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay est une application de dictée gratuite et sous licence MIT pour Mac. En mode Local, Whisper ou Parakeet transcrit entièrement sur votre Mac — sans compte ni abonnement. L'option Plainsay Cloud envoie l'audio enregistré pour une transcription et une mise au propre hébergées, sans téléchargement de modèle de transcription, pour 12 PLN/mois (environ 3 $US).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay est une application de dictée gratuite et sous licence MIT pour Mac. En mode Local, Whisper ou Parakeet transcrit entièrement sur votre Mac — sans compte ni abonnement. L'option Plainsay Cloud envoie l'audio enregistré pour une transcription et une mise au propre hébergées, sans téléchargement de modèle de transcription, pour 12 PLN TTC par mois ou 120 PLN TTC par an, TVA incluse.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (mensuel, TVA incluse)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (annuel, TVA incluse)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -273,7 +273,7 @@
       <span class="spacer"></span>
       <div class="links">
         <a href="#pricing">Tarifs</a>
-        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://github.com/conrader/plainsay" aria-label="Ajouter une étoile à Plainsay sur GitHub">★ GitHub</a>
         <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Télécharger</a>
         <select class="lang-switch" aria-label="Langue" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/" selected>Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
@@ -447,7 +447,7 @@
     { icon: "clock.arrow.circlepath", title: "Solutions de repli récupérables", body: "Si Polishing échoue, Plainsay utilise le transcript brut. S'il n'existe aucune cible sûre pour le collage, le texte reste dans le presse-papiers ; Plainsay ajoute la transcription terminée à l'historique local avant l'insertion." },
     { icon: "gearshape.2", title: "Aucune dépendance à un fournisseur", body: "Plusieurs moteurs et fournisseurs locaux ou hébergés sont pris en charge pour la transcription et Polishing, dont votre propre clé API et un endpoint compatible OpenAI." },
     { icon: "waveform.badge.mic", title: "Filtrage de la voix", body: "L'enregistrement de la voix tente de filtrer localement, sans garantie de résultat. S'il est indisponible ou échoue, la dictée continue sans filtre ; la transcription Cloud ou BYOK peut alors recevoir un audio non filtré." },
-    { icon: "checkmark.circle.fill", title: "Des tarifs honnêtes", body: "L'offre hébergée coûte 12 PLN/mois (environ 3 $US). Le mode Local offre une dictée complète sur l'appareil, sans quota de minutes ni de mots et sans compte. La transcription hébergée et le Polishing sont facultatifs." }
+    { icon: "checkmark.circle.fill", title: "Des tarifs honnêtes", body: "L'offre hébergée coûte 12 PLN TTC par mois ou 120 PLN TTC par an, TVA incluse. Le mode Local offre une dictée complète sur l'appareil, sans quota de minutes ni de mots et sans compte. La transcription hébergée et le Polishing sont facultatifs." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -469,7 +469,7 @@
       caveats: ["Modèles multilingues recommandés : 475–632 Mo ; modèles anglais dès 150 Mo", "Consomme de la mémoire tant que Plainsay tourne"]
     },
     {
-      id: "cloud", eyebrow: "AUCUN MODÈLE DE TRANSCRIPTION À TÉLÉCHARGER", title: "Plainsay Cloud", price: "12 PLN / mois (environ 3 $US)",
+      id: "cloud", eyebrow: "AUCUN MODÈLE DE TRANSCRIPTION À TÉLÉCHARGER", title: "Plainsay Cloud", price: "12 PLN TTC/mois<br><small>120 PLN TTC/an · TVA incluse</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["Aucun modèle de transcription à télécharger, aucune clé API", "Transcription et édition incluses"],
       caveats: ["L'audio est envoyé à Plainsay Cloud pour être transcrit", "900 minutes de transcription sur toute période glissante de 30 jours ; le mode Local n'est pas comptabilisé"]

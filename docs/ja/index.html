@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、文字起こしモデルのダウンロードなしで月額12 PLN（約3米ドル）です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、文字起こしモデルのダウンロードなしで月額12 PLNまたは年額120 PLN（VAT込み）です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud（月額、VAT込み）"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud（年額、VAT込み）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -273,7 +273,7 @@
       <span class="spacer"></span>
       <div class="links">
         <a href="#pricing">料金</a>
-        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://github.com/conrader/plainsay" aria-label="GitHubでPlainsayにスターを付ける">★ GitHub</a>
         <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">ダウンロード</a>
         <select class="lang-switch" aria-label="言語" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/" selected>日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
@@ -447,7 +447,7 @@
     { icon: "clock.arrow.circlepath", title: "復旧できるフォールバック", body: "Polishingに失敗すると、Plainsayは生の文字起こしを使います。安全な貼り付け先がなければテキストはクリップボードに残り、Plainsayは挿入前に完了した文字起こしをローカル履歴へ追加します。" },
     { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしとPolishingでは、複数のローカルおよびホスト型エンジンやプロバイダーに対応しています。独自のAPIキーやOpenAI互換エンドポイントも利用できます。" },
     { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "声の登録はベストエフォートのローカルフィルターです。利用できない場合や失敗した場合、口述筆記はフィルターなしで続行し、CloudまたはBYOK文字起こしに未処理の音声が送られることがあります。" },
-    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLN（約3米ドル）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
+    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLNまたは年額120 PLN（VAT込み）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -469,7 +469,7 @@
       caveats: ["推奨多言語モデルは475〜632MB、英語専用モデルは150MBから", "Plainsayの実行中はメモリを使用し続けます"]
     },
     {
-      id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN（約3米ドル）",
+      id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN<br><small>年額120 PLN · VAT込み</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み"],
       caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます", "文字起こしは任意の連続30日間で900分まで。ローカルモードは計測されません"]

@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 로컬 모드에서는 Whisper 또는 Parakeet가 Mac에서만 음성을 텍스트로 변환하므로 계정이나 구독이 필요 없습니다. 선택 사항인 Plainsay Cloud는 녹음된 오디오를 전송해 호스팅된 받아쓰기와 문장 다듬기를 제공하며, 필사 모델 다운로드 없이 월 12 PLN(약 3달러)입니다.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay는 Mac용 무료 MIT 라이선스 받아쓰기 앱입니다. 로컬 모드에서는 Whisper 또는 Parakeet가 Mac에서만 음성을 텍스트로 변환하므로 계정이나 구독이 필요 없습니다. 선택 사항인 Plainsay Cloud는 녹음된 오디오를 전송해 호스팅된 받아쓰기와 문장 다듬기를 제공하며, 필사 모델 다운로드 없이 월 12 PLN 또는 연 120 PLN(VAT 포함)입니다.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud(월간, VAT 포함)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud(연간, VAT 포함)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -273,7 +273,7 @@
       <span class="spacer"></span>
       <div class="links">
         <a href="#pricing">요금제</a>
-        <a href="https://github.com/conrader/plainsay">GitHub</a>
+        <a href="https://github.com/conrader/plainsay" aria-label="GitHub에서 Plainsay에 스타 표시">★ GitHub</a>
         <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">다운로드</a>
         <select class="lang-switch" aria-label="언어" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/">English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/" selected>한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
       </div>
@@ -447,7 +447,7 @@
     { icon: "clock.arrow.circlepath", title: "복구 가능한 대체 경로", body: "Polishing이 실패하면 Plainsay는 원본 필사본을 사용합니다. 안전한 붙여넣기 대상이 없으면 텍스트가 클립보드에 남고, Plainsay는 삽입 전에 완료된 필사본을 로컬 기록에 추가합니다." },
     { icon: "gearshape.2", title: "벤더 종속 없음", body: "필사와 Polishing에 여러 로컬 및 호스팅 엔진과 제공사를 지원하며, 자체 API 키와 OpenAI 호환 엔드포인트도 사용할 수 있습니다." },
     { icon: "waveform.badge.mic", title: "음성 필터링", body: "목소리 등록은 결과를 보장하지 않는 로컬 필터입니다. 필터링을 사용할 수 없거나 실패하면 받아쓰기는 필터 없이 계속되며, Cloud 또는 BYOK 필사에 필터링되지 않은 음성이 전송될 수 있습니다." },
-    { icon: "checkmark.circle.fill", title: "솔직한 가격", body: "호스팅 요금제는 월 12 PLN(약 3달러)입니다. 로컬 모드에서는 분 또는 단어 수 할당량과 계정 없이 온디바이스 받아쓰기를 사용할 수 있습니다. 호스팅 방식의 음성 인식과 Polishing은 선택 사항입니다." }
+    { icon: "checkmark.circle.fill", title: "솔직한 가격", body: "호스팅 요금제는 월 12 PLN 또는 연 120 PLN(VAT 포함)입니다. 로컬 모드에서는 분 또는 단어 수 할당량과 계정 없이 온디바이스 받아쓰기를 사용할 수 있습니다. 호스팅 방식의 음성 인식과 Polishing은 선택 사항입니다." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -469,7 +469,7 @@
       caveats: ["권장 다국어 모델은 475–632MB, 영어 전용 모델은 150MB부터", "Plainsay가 실행되는 동안 메모리를 계속 사용"]
     },
     {
-      id: "cloud", eyebrow: "필사 모델 다운로드 불필요", title: "Plainsay Cloud", price: "월 12 PLN(약 3달러)",
+      id: "cloud", eyebrow: "필사 모델 다운로드 불필요", title: "Plainsay Cloud", price: "월 12 PLN<br><small>연 120 PLN · VAT 포함</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["필사 모델 다운로드 불필요, API 키 불필요", "필사와 편집 포함"],
       caveats: ["음성이 필사를 위해 Plainsay Cloud로 전송됩니다", "필사는 연속된 모든 30일 기간마다 900분까지이며, 로컬 모드는 사용량을 측정하지 않습니다"]
