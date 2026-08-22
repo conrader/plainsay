@@ -11,7 +11,8 @@
 </p>
 
 <p align="center">
-  <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download Plainsay.dmg</strong></a>
+  <a href="https://github.com/conrader/plainsay"><strong>Star Plainsay on GitHub ★</strong></a>
+  · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download Plainsay.dmg</strong></a>
   · <a href="#install">Homebrew</a>
   · <a href="https://plainsay.app/">Website</a>
   · <a href="BENCHMARK.md">Benchmark</a>
@@ -25,7 +26,11 @@
 </p>
 
 <p align="center">
-  <img src="Screenshots/hud-listening.svg" alt="Plainsay listening beside the text cursor" width="520">
+  <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><img src="docs/assets/social-preview.png" alt="Hold a key, speak, and release to put locally transcribed text at your cursor with Plainsay" width="820"></a>
+</p>
+
+<p align="center">
+  <strong>12 MB native app · free Local mode · no account · no telemetry</strong>
 </p>
 
 Plainsay is free and MIT-licensed. With **Local transcription** and Polishing
@@ -54,8 +59,7 @@ has checksums and release notes.
 ### Homebrew
 
 ```sh
-brew tap conrader/plainsay
-brew install --cask plainsay
+brew install --cask conrader/plainsay/plainsay
 ```
 
 Plainsay checks for signed updates automatically. You can also use **Check for

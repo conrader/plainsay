@@ -144,6 +144,8 @@
   header.hero h1 { margin: 0; font-size: 52px; line-height: 1.12; font-weight: 700; letter-spacing: -1.2px; max-width: 15ch; text-wrap: balance; }
   header.hero .sub { margin: 0; font-size: 17px; line-height: 1.6; color: var(--label-secondary); max-width: 52ch; text-wrap: pretty; }
   header.hero .cta { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 6px; }
+  header.hero .cta-actions { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .btn.secondary { background: rgba(255,255,255,0.06); border-color: var(--hairline); color: var(--bone); }
   header.hero .req { font-size: 12px; color: var(--slate); }
   @media (max-width: 620px) { header.hero h1 { font-size: 38px; } }
 
@@ -288,7 +290,10 @@
         <span class="trust-badge"><span class="dot"></span>Sicuro per progettazione</span>
       </div>
       <div class="cta">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Scarica per macOS</a>
+        <div class="cta-actions">
+          <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Scarica per macOS</a>
+          <a class="btn secondary" href="https://github.com/conrader/plainsay" aria-label="Aggiungi una stella a Plainsay su GitHub">★ GitHub</a>
+        </div>
         <span class="req">Gratis · Licenza MIT · macOS 14+, Apple silicon</span>
       </div>
     </header>
