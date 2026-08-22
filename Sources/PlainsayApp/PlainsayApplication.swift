@@ -33,15 +33,12 @@ private struct MenuBarIcon: View {
     let permissionStatus: PermissionStatus
 
     var body: some View {
-        Group {
-            if coordinator.modelLoadTiming != nil {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    icon(at: context.date)
-                }
-            } else {
-                icon(at: Date())
-            }
-        }
+        // Do not put a periodically-updating TimelineView in a MenuBarExtra
+        // label. On macOS 26 it can enter a continuous render loop while the
+        // model is loading, consuming a full core and unbounded memory. The
+        // icon itself only changes when observable coordinator state changes;
+        // an elapsed-time snapshot is sufficient for its help text.
+        icon(at: Date())
     }
 
     private func icon(at now: Date) -> some View {
@@ -163,13 +160,10 @@ struct MenuContent: View {
 
     var body: some View {
         Group {
-            if coordinator.modelLoadTiming != nil {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    statusHeader(at: context.date)
-                }
-            } else {
-                statusHeader(at: Date())
-            }
+            // MenuBarExtra menus share the same fragile hosting path as their
+            // labels. Refresh the elapsed value whenever the menu is rendered
+            // instead of installing a repeating timeline inside the menu.
+            statusHeader(at: Date())
 
             if !permissionStatus.allGranted {
                 Divider()
