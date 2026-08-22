@@ -23,7 +23,26 @@ struct AudioSampleSinkTests {
         samples.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
 
         #expect(sink.count == 4)
+        #expect(sink.isAtCapacity)
         #expect(sink.didOverflow)
+    }
+
+    @Test("The exact final sample signals capacity before anything is dropped")
+    func exactCapacitySignalsBeforeOverflow() {
+        let sink = AudioSampleSink(seconds: 1, sampleRate: 4)
+        var exactFit: [Float] = [0.1, 0.2, 0.3, 0.4]
+
+        exactFit.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+
+        #expect(sink.count == 4)
+        #expect(sink.isAtCapacity)
+        #expect(!sink.didOverflow)
+
+        var extra: [Float] = [0.5]
+        extra.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+        #expect(sink.count == 4)
+        #expect(sink.didOverflow)
+        #expect(sink.drain() == exactFit)
     }
 
     @Test("Reset rewinds for the next recording")
@@ -35,6 +54,7 @@ struct AudioSampleSinkTests {
         sink.reset()
 
         #expect(sink.count == 0)
+        #expect(!sink.isAtCapacity)
         #expect(sink.drain().isEmpty)
         #expect(sink.level == 0)
     }

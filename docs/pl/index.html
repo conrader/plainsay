@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — dyktowanie głosowe na Macu, lokalnie na urządzeniu</title>
-<meta name="description" content="Plainsay to darmowa aplikacja do dyktowania na Maca, licencjonowana na MIT. Transkrypcja działa lokalnie na urządzeniu — Whisper lub Parakeet — nigdy w chmurze, nigdy za logowaniem. Opcjonalny etap czyszczenia LLM korzysta z klucza, który sam kontrolujesz. Bez subskrypcji. Bez konta.">
+<meta name="description" content="Plainsay to darmowa aplikacja do dyktowania na Maca na licencji MIT. Tryb Lokalny uruchamia Whisper lub Parakeet na Twoim Macu — bez konta i subskrypcji.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay — dyktowanie głosowe na Macu, lokalnie na urządzeniu">
+<meta property="og:description" content="Plainsay to darmowa aplikacja do dyktowania na Maca na licencji MIT. Tryb Lokalny uruchamia Whisper lub Parakeet na Twoim Macu — bez konta i subskrypcji.">
+<meta property="og:url" content="https://plainsay.app/pl/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/pl/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay to darmowa aplikacja do dyktowania na Maca, licencjonowana na MIT. Transkrypcja działa lokalnie na urządzeniu — Whisper lub Parakeet — nigdy w chmurze, nigdy za logowaniem. Opcjonalny etap czyszczenia LLM korzysta z klucza, który sam kontrolujesz. Bez subskrypcji. Bez konta.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay to darmowa, objęta licencją MIT aplikacja do dyktowania na Maca. W trybie lokalnym Whisper lub Parakeet wykonuje całą transkrypcję na Twoim Macu — bez konta i subskrypcji. Opcjonalny Plainsay Cloud wysyła nagrane audio do hostowanej transkrypcji i redakcji tekstu, bez pobierania modelu transkrypcji, za 12 PLN miesięcznie (około 3 USD).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -93,7 +102,11 @@
   nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
   nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
   nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 480px) { nav.top .links { gap: 14px; } }
+  @media (max-width: 620px) {
+    nav.top .links { gap: 12px; }
+    nav.top .links a:first-child { display: none; }
+    .lang-switch { max-width: 82px; }
+  }
 
   .lang-switch {
     -webkit-appearance: none; appearance: none;
@@ -236,12 +249,18 @@
   section.final .sub { margin: 0; font-size: 13px; color: var(--slate); }
 
   /* Footer */
-  footer { border-top: 1px solid var(--hairline); padding: 28px 0 44px; display: flex; align-items: center; gap: 10px; }
+  footer { border-top: 1px solid var(--hairline); padding: 28px 0 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   footer .text { font-size: 12px; color: var(--slate); }
   footer .spacer { flex: 1; }
-  footer .links { display: flex; gap: 18px; font-size: 12px; }
+  footer .links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 18px; font-size: 12px; }
   footer .links a { color: var(--slate); text-decoration: none; }
   footer .links a:hover { color: var(--bone); }
+  footer .imprint { flex: 0 0 100%; margin-top: 4px; color: var(--slate); font-size: 10.5px; line-height: 1.55; overflow-wrap: anywhere; }
+  @media (max-width: 620px) {
+    footer .spacer { display: none; }
+    footer .links { width: 100%; justify-content: flex-start; gap: 12px 18px; }
+    footer .imprint { margin-top: 0; font-size: 10px; line-height: 1.6; }
+  }
 </style>
 </head>
 <body>
@@ -262,7 +281,7 @@
 
     <header class="hero">
       <h1>Przytrzymaj klawisz, powiedz, puść.</h1>
-      <p class="sub">Czysty, napisany tekst ląduje w dowolnej aplikacji, z której korzystasz. Transkrypcja może działać w całości na Twoim Macu — nagrane audio nie musi go nigdy opuszczać.</p>
+      <p class="sub">Tekst trafia do kursora w wielu aplikacjach na Macu; jeśli bezpieczne wstawienie jest niedostępne, zostaje w schowku. Przy lokalnej transkrypcji rozpoznawanie mowy i nagrane audio pozostają na Macu.</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>Open source</span>
         <span class="trust-badge"><span class="dot"></span>Przejrzyste</span>
@@ -274,42 +293,28 @@
       </div>
     </header>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, przejrzyste, bezpieczne</h2>
-      <p class="lede">Zaufanie to tutaj nie deklaracja — to coś, co możesz sam przeczytać. Cały klient ma licencję MIT i jest publiczny: potok przetwarzania, HUD, ustawienia, wszystko. Nie „open core” i nie „otwarte teraz, zamknięte później” — możesz forkować, modyfikować i hostować u siebie bez ograniczeń w czasie.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">CO JEST OTWARTE</span>
-          <p>Cały klient dyktowania — transkrypcja, edycja, HUD, Ustawienia, Asystent konfiguracji. Działając lokalnie, Plainsay nie wykonuje żadnego połączenia sieciowego, o które nie poprosiłeś: brak analityki, brak telemetrii, brak łączenia się bez wiedzy.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">CO NIE JEST</span>
-          <p>Backend rozliczeniowy dla płatnego planu Cloud — przechowuje dane płatności i dane dostawców, i właśnie dlatego pozostaje oddzielny i prywatny. Sam proces dyktowania, z którego korzystasz, jest w pełni otwarty.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — przeczytaj każdą linię</p>
-    </section>
-
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">Zobacz jak to działa</h2>
       <figure class="hud-figure">
         <img src="../assets/screenshots/hud-listening.svg" alt="HUD — dokładnie tam, gdzie już piszesz" loading="lazy" width="420" height="140">
         <figcaption>HUD — dokładnie tam, gdzie już piszesz</figcaption>
       </figure>
-      <div class="screens">
-        <figure>
-          <img src="../assets/screenshots/setup-speech.webp" alt="Wybierz Plainsay Cloud albo zostań w pełni lokalnie" loading="lazy" width="896" height="960">
-          <figcaption>Wybierz Plainsay Cloud albo zostań w pełni lokalnie</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/settings-general.webp" alt="13 języków interfejsu, zmiana działa natychmiast" loading="lazy" width="960" height="910">
-          <figcaption>13 języków interfejsu, zmiana działa natychmiast</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/setup-permissions.webp" alt="Trzy uprawnienia, każde z jednym wąskim zadaniem" loading="lazy" width="900" height="960">
-          <figcaption>Trzy uprawnienia, każde z jednym wąskim zadaniem</figcaption>
-        </figure>
+    </section>
+
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, przejrzyste, bezpieczne</h2>
+      <p class="lede">Zaufanie to tutaj nie deklaracja: możesz sam przeczytać kod. Kod źródłowy klienta Plainsay na Maca jest publiczny na licencji MIT. Każde wydanie już opublikowane na MIT pozostaje dostępne do forkowania, modyfikowania i samodzielnego budowania; komponenty i modele innych twórców mają własne licencje.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">CO JEST OTWARTE</span>
+          <p>Kod źródłowy klienta Plainsay na Maca obejmuje integracje transkrypcji i Polishing, HUD, Ustawienia oraz Asystenta konfiguracji. Komponenty i modele innych twórców zachowują własne licencje. Klient Mac nie wysyła analityki ani telemetrii. Sprawdzanie podpisanych aktualizacji domyślnie łączy się z api.plainsay.app i można je wyłączyć w Ustawieniach. Opcjonalny Cloud zapisuje metadane konta, subskrypcji i użycia potrzebne do działania płatnej usługi.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">CO NIE JEST</span>
+          <p>Backend płatnego planu Cloud zarządza stanem subskrypcji przez Stripe, przechowuje dane dostępowe dostawców i zapisuje metadane konta, subskrypcji oraz użycia potrzebne do płatnej usługi. Kod źródłowy klienta Plainsay na Maca jest otwarty; opcjonalna usługa Cloud nie.</p>
+        </div>
       </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — przejrzyj kod źródłowy klienta na Maca</p>
     </section>
 
     <section id="how">
@@ -324,7 +329,7 @@
           <p>Czy możemy przesunąć spotkanie zespołu na jutro na 10:30? Mam rano wizytę u dentysty.</p>
         </div>
       </div>
-      <p class="compare-note">Etap czyszczenia usuwa wtrącenia i fałszywe starty, poprawia interpunkcję i zachowuje Twoje właściwe słowa — to nie jest przepisywanie od nowa. Dostawcę można zmienić (Gemini, OpenRouter, OpenAI, Claude lub własny endpoint), można go też całkowicie wyłączyć, a każdy błąd kończy się powrotem do surowego transkryptu zamiast przerwania dyktowania.</p>
+      <p class="compare-note">Etap czyszczenia usuwa wtrącenia i fałszywe starty oraz poprawia interpunkcję. Polishing otrzymuje polecenie zachowania słów, znaczenia, tonu i języka; ważny tekst warto sprawdzić. Dostawcę można zmienić (Gemini, OpenRouter, OpenAI, Claude lub własny endpoint), można go też całkowicie wyłączyć, a każdy błąd kończy się powrotem do surowego transkryptu zamiast przerwania dyktowania.</p>
     </section>
 
     <section id="why">
@@ -336,13 +341,13 @@
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <h2 class="kicker" style="margin:0;">Niezawodność</h2>
-          <p class="headline">Dyktowanie nigdy nie ginie po cichu.</p>
+          <p class="headline">Jasne ścieżki odzyskiwania po zakończeniu nagrania.</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">Edycja się nie udaje — brak klucza, brak sieci, timeout</span><p class="then">Automatyczny powrót do surowego transkryptu, z powiadomieniem w HUD-zie.</p></div>
+          <div class="failure"><span class="when">Skonfigurowany dostawca Polishing nie zadziała</span><p class="then">Automatyczny powrót do surowego transkryptu, z powiadomieniem w HUD-zie.</p></div>
           <div class="failure"><span class="when">Nic nie było aktywne, by wkleić tekst</span><p class="then">Tekst zostaje w schowku, z podpowiedzią w HUD-zie, by nacisnąć ⌘V.</p></div>
-          <div class="failure"><span class="when">Awaria lub wymuszone zamknięcie w trakcie nagrywania</span><p class="then">Audio jest zapisywane na dysku jeszcze przed transkrypcją i odzyskiwane przy kolejnym uruchomieniu.</p></div>
-          <div class="failure"><span class="when">Wklejenie nie powiedzie się z innego powodu</span><p class="then">Dyktowanie jest już w lokalnej historii — zapisane tam, zanim w ogóle spróbowano je wstawić.</p></div>
+          <div class="failure"><span class="when">Aplikacja zamknie się po zakończeniu nagrania</span><p class="then">Plainsay próbuje przygotować gotowe audio przed transkrypcją. Jeśli zapis się powiedzie, może ponowić próbę przy kolejnym uruchomieniu.</p></div>
+          <div class="failure"><span class="when">Wklejenie nie powiedzie się z innego powodu</span><p class="then">Plainsay dodaje ukończony transkrypt do lokalnej historii przed próbą wstawienia.</p></div>
         </div>
       </div>
     </section>
@@ -350,21 +355,20 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">Nadchodzi</h2>
-        <p>Pełne pisanie na żywo już działa — jako eksperymentalna opcja w Ustawieniach › Mowa › Pisanie na żywo (domyślnie wyłączona). Rezygnuje z gwarancji „najpierw oczyść, potem wstaw raz” na rzecz żywego odczucia: surowe słowa lądują w dokumencie, gdy jeszcze mówisz, a po zakończeniu czyszczenia są poprawiane w tym samym miejscu.</p>
         <p class="dim">Poza tym: dalsza praca nad automatycznym wykrywaniem języka oraz zmiany domyślnego modelu w miarę rozwoju modeli lokalnych.</p>
       </div>
     </section>
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Trzy sposoby uruchomienia</h2>
-      <p class="lede">Plainsay Cloud to najprostszy sposób na start — bez pobierania modelu, bez konfiguracji. Wolisz mieć wszystko na swoim Macu? Plan lokalny jest darmowy i w pełni funkcjonalny, kosztem jednego dodatkowego kroku konfiguracji.</p>
+      <p class="lede">Plainsay Cloud nie wymaga pobierania modelu transkrypcji ani konfigurowania klucza API. Wolisz mieć wszystko na swoim Macu? Tryb lokalny zapewnia bezpłatne, pełne dyktowanie na urządzeniu — bez limitu minut ani słów i bez konta; hostowana transkrypcja i Polishing pozostają opcjonalne.</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Zacznij dyktować w około dwie minuty.</p>
-      <p class="sub">Asystent konfiguracji przeprowadzi Cię przez wszystko przy pierwszym uruchomieniu.</p>
+      <p class="headline">Zacznij dyktować z pomocą asystenta konfiguracji.</p>
+      <p class="sub">Czas zależy od pobrania wybranego modelu transkrypcji; Cloud nie wymaga tego modelu.</p>
       <div style="margin-top:6px;">
         <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Pobierz na macOS</a>
       </div>
@@ -380,8 +384,11 @@
         <a href="/how-it-works/">How it works</a>
         <a href="https://github.com/conrader/plainsay">Kod źródłowy</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">Wydania</a>
+        <a href="/privacy/" hreflang="en">Privacy (EN)</a>
+        <a href="/terms/" hreflang="en">Terms (EN)</a>
         <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>
       </div>
+      <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
     </footer>
 
   </div>
@@ -435,12 +442,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "Licencja MIT, cały klient publiczny — każda linia potoku przetwarzania, HUD-u, ustawień. Trwałe zobowiązanie, nie chwilowy stan. Sprawdź dokładnie, co dzieje się z Twoim głosem." },
-    { icon: "lock.shield.fill", title: "Przejrzyste domyślnie", body: "Whisper lub NVIDIA Parakeet działają lokalnie przez Core ML. Nagrane audio nie musi nigdy opuścić Maca — to nie opcja do zaznaczenia, to domyślne zachowanie. Żadnej ukrytej telemetrii, żadnego łączenia się bez wiedzy." },
-    { icon: "clock.arrow.circlepath", title: "Bezpieczne: nic nie ginie po cichu", body: "Każde dyktowanie trafia do lokalnej historii, zanim w ogóle spróbujemy je wstawić. Błędy to stany do odzyskania, a nie zniknięty tekst." },
-    { icon: "gearshape.2", title: "Bez uzależnienia od dostawcy", body: "Pięć sposobów na transkrypcję, pięć sposobów na edycję — wybierz dowolną kombinację, w tym własny klucz API i endpoint. Nic nie jest przypisane na sztywno do jednego dostawcy AI." },
-    { icon: "waveform.badge.mic", title: "Filtrowanie głosu", body: "Zarejestruj swój głos raz; pozostałe osoby w pomieszczeniu są odfiltrowywane lokalnie, jeszcze zanim ruszy transkrypcja." },
-    { icon: "checkmark.circle.fill", title: "Uczciwy cennik", body: "Plan hostowany kosztuje około 3 dolarów miesięcznie. Plan lokalny jest darmowy, w pełni funkcjonalny i nie wymaga konta — to ten sam produkt, nie okrojona wersja." }
+    { icon: "text.quote", title: "Open source", body: "Kod źródłowy klienta Plainsay na Maca jest publiczny na licencji MIT. Każde wydanie już opublikowane na MIT pozostaje dostępne do forkowania i modyfikowania; komponenty i modele innych twórców mają własne licencje." },
+    { icon: "lock.shield.fill", title: "Przejrzyste domyślnie", body: "Klient Mac nie wysyła analityki ani telemetrii. Sprawdzanie podpisanych aktualizacji domyślnie łączy się z api.plainsay.app i można je wyłączyć w Ustawieniach. Opcjonalny Cloud zapisuje metadane konta, subskrypcji i użycia potrzebne do działania płatnej usługi." },
+    { icon: "clock.arrow.circlepath", title: "Odzyskiwalne ścieżki awaryjne", body: "Gdy Polishing zawiedzie, Plainsay używa surowego transkryptu. Jeśli nie ma bezpiecznego miejsca do wklejenia, tekst zostaje w schowku; Plainsay dodaje ukończony transkrypt do lokalnej historii przed wstawieniem." },
+    { icon: "gearshape.2", title: "Bez uzależnienia od dostawcy", body: "Obsługiwanych jest wiele lokalnych i hostowanych silników oraz dostawców transkrypcji i Polishing, w tym własny klucz API i endpoint zgodny z OpenAI." },
+    { icon: "waveform.badge.mic", title: "Filtrowanie głosu", body: "Rejestracja głosu próbuje filtrować lokalnie, bez gwarancji wyniku. Jeśli filtrowanie jest niedostępne lub zawiedzie, dyktowanie trwa dalej bez filtra; transkrypcja Cloud lub BYOK może wtedy otrzymać nieprzefiltrowane audio." },
+    { icon: "checkmark.circle.fill", title: "Uczciwy cennik", body: "Plan hostowany kosztuje 12 PLN brutto miesięcznie, z VAT (około 3 USD). Tryb lokalny zapewnia pełne dyktowanie na urządzeniu — bez limitu minut ani słów i bez konta. Hostowana transkrypcja i Polishing są opcjonalne." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -458,14 +465,14 @@
     {
       id: "local", eyebrow: "LOKALNA MOWA", title: "Na tym Macu", price: "Za darmo",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper lub Parakeet, na urządzeniu", "Nic nie opuszcza Maca", "Bez konta, bez subskrypcji"],
-      caveats: ["Jednorazowe pobranie modelu, 475–632 MB", "Zajmuje pamięć, dopóki Plainsay działa"]
+      features: ["Whisper lub Parakeet, na urządzeniu", "Lokalna transkrypcja utrzymuje nagrane audio na tym Macu", "Bez konta, bez subskrypcji"],
+      caveats: ["Zalecane modele wielojęzyczne: 475–632 MB; modele tylko angielskie od 150 MB", "Zajmuje pamięć, dopóki Plainsay działa"]
     },
     {
-      id: "cloud", eyebrow: "POLECANE", title: "Plainsay Cloud", price: "≈ 3 USD / miesiąc",
+      id: "cloud", eyebrow: "BEZ POBIERANIA MODELU TRANSKRYPCJI", title: "Plainsay Cloud", price: "12 PLN brutto / miesiąc · VAT w cenie",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["Bez pobierania modelu, bez kluczy", "Transkrypcja i edycja w cenie"],
-      caveats: ["Audio jest wysyłane do Plainsay Cloud w celu transkrypcji"]
+      features: ["Bez pobierania modelu transkrypcji i bez kluczy API", "Transkrypcja i edycja w cenie"],
+      caveats: ["Audio jest wysyłane do Plainsay Cloud w celu transkrypcji", "900 minut transkrypcji w dowolnym kroczącym oknie 30 dni; tryb lokalny nie jest mierzony"]
     },
     {
       id: "byok", eyebrow: "TWÓJ DOSTAWCA", title: "Użyj własnego klucza", price: "Stawki dostawcy",
@@ -475,7 +482,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

@@ -1,16 +1,23 @@
 # Plainsay
 
-> Plainsay is a free, MIT-licensed dictation app for Mac. Transcription runs
-> on-device with Whisper or Parakeet — never in the cloud, never behind a
-> login. An optional LLM cleanup pass uses a key you control. No subscription.
-> No account required.
+> Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode,
+> Whisper or Parakeet transcribes entirely on your Mac — no account or
+> subscription. Optional Plainsay Cloud sends recorded audio for hosted
+> transcription and Polishing without a transcription-model download for 12
+> PLN gross/month (VAT included; about US$3), with 900 transcription minutes per rolling 30 days.
 
 Plainsay is a from-scratch Swift/SwiftUI menu-bar app: global hotkey capture,
-on-device Core ML transcription (WhisperKit or NVIDIA Parakeet TDT 0.6B v3 via
-FluidAudio), an optional cleanup pass that turns spoken language into written
-language, and paste-based text insertion. The client is fully open source; a
-separate, deliberately opt-in Plainsay Cloud tier exists for people who don't
-want to manage a local model or an API key.
+a choice of local Core ML transcription (WhisperKit or NVIDIA Parakeet TDT
+0.6B v3 via FluidAudio), hosted transcription, an optional Polishing pass that
+turns spoken language into written language, and paste-based text insertion.
+The client is fully open source; a separate, deliberately opt-in Plainsay
+Cloud tier exists for people who don't want to manage a local model or an API
+key.
+
+Plainsay and Plainsay Cloud are operated by DMT Sp. z o.o. in Poland.
+
+A single dictation can run for up to 10 minutes. Plainsay stops recording and
+processes the captured audio at that boundary.
 
 ## Docs
 
@@ -18,9 +25,11 @@ want to manage a local model or an API key.
 - [Source](https://github.com/conrader/plainsay): the whole client, MIT licensed
 - [Releases](https://github.com/conrader/plainsay/releases): notarized builds, changelog
 - [Homepage](https://plainsay.app/): overview, pricing, screenshots
+- [Privacy Policy](https://plainsay.app/privacy/): how the website, Mac client, optional providers, and Plainsay Cloud handle data
+- [Terms of Service](https://plainsay.app/terms/): terms for the website, free Local client, and optional Plainsay Cloud service
 - [Why on-device](https://plainsay.app/why-on-device/): exactly what runs locally vs. optionally in the cloud, stated precisely
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
-- [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with one command
+- [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands
 - [Compare Mac dictation apps](https://plainsay.app/compare/): all the main options side by side — Plainsay, Wispr Flow, superwhisper, VoiceInk, Apple Dictation — including which cases we recommend a competitor for
 - [vs Wispr Flow](https://plainsay.app/vs/wispr-flow/): a sourced, factual comparison against the closed-source, cloud-only incumbent
 - [vs VoiceInk](https://plainsay.app/vs/voiceink/): a sourced comparison against another genuinely on-device, open-source competitor
@@ -32,7 +41,8 @@ want to manage a local model or an API key.
 - Every claim about competitors on plainsay.app links to that competitor's own
   page — verify before repeating a price or a claim, since competitors ship
   weekly.
-- "On-device" describes transcription specifically. The optional cleanup pass
-  (filler-word removal, punctuation) defaults to a cloud LLM call unless
-  turned off or pointed at a local/BYOK model — don't conflate the two when
-  summarizing what Plainsay does with audio.
+- "On-device" describes transcription in Local mode specifically. Plainsay
+  Cloud and bring-your-own-provider transcription send recorded audio to the
+  selected service. Optional Polishing may also send transcript text unless
+  it is off or uses a compatible local endpoint. Keep those paths distinct
+  when summarizing what Plainsay does with audio and text.

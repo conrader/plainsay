@@ -13,6 +13,25 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+validate_legal_page() {
+  local page="$1"
+  [ -s "$page" ] || {
+    echo "$page missing or empty — do not deploy Cloud marketing without the reviewed document" >&2
+    exit 1
+  }
+  grep -Fq "DMT Sp. z o.o." "$page" || {
+    echo "$page does not identify DMT Sp. z o.o. as the operator" >&2
+    exit 1
+  }
+  if grep -Fq "LEGAL_REVIEW_REQUIRED" "$page"; then
+    echo "$page still contains LEGAL_REVIEW_REQUIRED — complete legal review before deploying" >&2
+    exit 1
+  fi
+}
+
+validate_legal_page docs/privacy/index.html
+validate_legal_page docs/terms/index.html
+
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
 
@@ -22,7 +41,11 @@ echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
 ssh "$HOST" "sudo mkdir -p $REMOTE_DIR && sudo chown -R \$(whoami) $REMOTE_DIR"
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
-rsync -az --delete docs/ "$HOST:$REMOTE_DIR/"
+# Internal planning material, if present, is not website content.
+rsync -az --delete --delete-excluded \
+  --exclude '/launch/' \
+  --exclude '/superpowers/' \
+  docs/ "$HOST:$REMOTE_DIR/"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
 echo "==> Live: https://plainsay.app/"

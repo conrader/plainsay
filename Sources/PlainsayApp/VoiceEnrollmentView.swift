@@ -17,7 +17,12 @@ struct VoiceEnrollmentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Toggle("Only transcribe my voice (ignore background voices)", isOn: $settings.voiceFilterEnabled)
+            Toggle(
+                Localization.appString(
+                    "voice.filterToggle", fallback: "Try to focus on my voice (best effort)"
+                ),
+                isOn: $settings.voiceFilterEnabled
+            )
                 .disabled(settings.voiceEmbedding == nil)
                 .font(.callout)
 
@@ -61,7 +66,12 @@ struct VoiceEnrollmentView: View {
                     .foregroundStyle(.orange)
             }
 
-            Text("Speak a sentence or two on your own, so Plainsay learns what your voice sounds like. Used only to filter out other voices before transcription — the sample never leaves this Mac.")
+            Text(
+                Localization.appString(
+                    "voice.filterDetail",
+                    fallback: "Speak a sentence or two on your own so Plainsay can try to focus on your voice. The sample stays on this Mac. Enabling filtering downloads a separate local model. If filtering is unavailable or fails, dictation continues with unfiltered audio; Cloud or bring-your-own-provider modes may then send that audio to the selected service."
+                )
+            )
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

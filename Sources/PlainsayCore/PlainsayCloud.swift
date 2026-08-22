@@ -85,7 +85,23 @@ public final class PlainsayCloudClient {
     /// provider key, it cannot itself be spent against anyone else's bill.
     public var sessionToken: String? { tokenStore.token }
 
-    public func signOut() {
+    /// Revokes the current server-side session before removing its local
+    /// Keychain token. A network failure deliberately leaves the account
+    /// signed in so the user can retry instead of creating an orphaned token
+    /// that remains usable until its idle expiry.
+    public func signOut() async throws {
+        guard isSignedIn else {
+            account = nil
+            return
+        }
+
+        do {
+            _ = try await post("/v1/auth/signout", body: [:], authorized: true)
+        } catch CloudError.http(let status, _) where status == 401 {
+            // An expired or already-revoked token has the same desired final
+            // state: no live server session and no local credential.
+        }
+
         tokenStore.token = nil
         account = nil
     }

@@ -1,145 +1,214 @@
-# Plainsay
-
-**Plainsay is a free, MIT-licensed dictation app for Mac.** Transcription runs
-on-device with Whisper or Parakeet — never in the cloud, never behind a
-login. An optional LLM cleanup pass uses a key you control. No subscription.
-No account required. [plainsay.app](https://plainsay.app)
-
-The free, open-source, on-device [Wispr Flow](https://plainsay.app/vs/wispr-flow/).
-Hold a key, speak, release — cleaned-up written text lands in whatever app
-you're using.
-
-Transcription runs entirely on your Mac. Choose Whisper via
-[WhisperKit](https://github.com/argmaxinc/WhisperKit), or multilingual NVIDIA
-Parakeet TDT 0.6B v3 via [FluidAudio](https://github.com/FluidInference/FluidAudio).
-Both run as Core ML models on Apple silicon, accelerated by the Neural Engine.
-A Gemini Flash Lite pass then turns spoken language into written language:
-filler words out, punctuation in, your wording intact — see
-[why on-device](https://plainsay.app/why-on-device/) for exactly what that
-means, or [how it works](https://plainsay.app/how-it-works/) for the engine
-internals and the cleanup design.
-
-## Screenshots
-
 <p align="center">
-  <img src="Screenshots/hud-listening.svg" alt="Plainsay's HUD while listening" width="420">
-  <br><sub>The HUD, right where you're already typing</sub>
+  <img src="docs/assets/logo.svg" alt="Plainsay" width="96" height="96">
 </p>
 
-**Setup Assistant** — walks through everything on first run:
+<h1 align="center">Plainsay</h1>
 
-<table>
-<tr>
-<td width="33%"><a href="Screenshots/setup-speech.png"><img src="Screenshots/setup-speech.png" alt="Setup Assistant: choose Plainsay Cloud or local speech"></a><br><sub>Choose Plainsay Cloud or local speech</sub></td>
-<td width="33%"><a href="Screenshots/setup-configure.png"><img src="Screenshots/setup-configure.png" alt="Setup Assistant: choose a local speech model"></a><br><sub>Pick a local model — Parakeet or Whisper</sub></td>
-<td width="33%"><a href="Screenshots/setup-refine.png"><img src="Screenshots/setup-refine.png" alt="Setup Assistant: languages spoken and cleanup provider"></a><br><sub>Languages you speak, and cleanup</sub></td>
-</tr>
-<tr>
-<td width="33%"><a href="Screenshots/setup-voice.png"><img src="Screenshots/setup-voice.png" alt="Setup Assistant: optionally filter out other voices"></a><br><sub>Optional: ignore other voices in the room</sub></td>
-<td width="33%"><a href="Screenshots/setup-shortcut.png"><img src="Screenshots/setup-shortcut.png" alt="Setup Assistant: pick a dictation shortcut"></a><br><sub>Pick your dictation shortcut</sub></td>
-<td width="33%"><a href="Screenshots/setup-permissions.png"><img src="Screenshots/setup-permissions.png" alt="Setup Assistant: grant the three permissions"></a><br><sub>Grant the three permissions</sub></td>
-</tr>
-</table>
+<p align="center"><strong>Hold a key. Speak. Release. Get text at your cursor—or safely on the clipboard.</strong></p>
 
-**Settings** — always one click away from the menu bar:
+<p align="center">
+  A native Mac dictation app in a 12 MB download, with Whisper and Parakeet running locally.
+</p>
 
-<table>
-<tr>
-<td width="33%"><a href="Screenshots/settings-speech.png"><img src="Screenshots/settings-speech.png" alt="Settings: Speech tab"></a><br><sub>Speech — model, live preview, languages</sub></td>
-<td width="33%"><a href="Screenshots/settings-general.png"><img src="Screenshots/settings-general.png" alt="Settings: General tab, with the interface language picker"></a><br><sub>General — interface language, hotkey</sub></td>
-<td width="33%"><a href="Screenshots/settings-permissions.png"><img src="Screenshots/settings-permissions.png" alt="Settings: Permissions tab"></a><br><sub>Permissions</sub></td>
-</tr>
-</table>
+<p align="center">
+  <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download Plainsay.dmg</strong></a>
+  · <a href="#install">Homebrew</a>
+  · <a href="https://plainsay.app/">Website</a>
+  · <a href="BENCHMARK.md">Benchmark</a>
+</p>
 
-## Download
+<p align="center">
+  <a href="https://github.com/conrader/plainsay/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/conrader/plainsay?style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/conrader/plainsay?style=flat-square"></a>
+  <img alt="macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-14161A?style=flat-square&logo=apple">
+  <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-required-14161A?style=flat-square&logo=apple">
+</p>
 
-**[Download the latest release](https://github.com/conrader/plainsay/releases/latest)**
-— a notarized, ready-to-run `Plainsay.app`. That link always resolves to
-whatever `Scripts/release.sh` shipped most recently, so it never needs
-updating by hand. The [Releases page](https://github.com/conrader/plainsay/releases)
-is the changelog: every version's notes, oldest to newest.
+<p align="center">
+  <img src="Screenshots/hud-listening.svg" alt="Plainsay listening beside the text cursor" width="520">
+</p>
 
-Or via Homebrew:
+Plainsay is free and MIT-licensed. With **Local transcription** and Polishing
+off or running on your Mac, dictation audio is not uploaded, no account or
+subscription is needed, and recognition works offline after the model download.
+Automatic checks for signed updates are enabled by default and can be disabled
+in Settings. Optional
+Plainsay Cloud provides hosted transcription and Polishing for 12 PLN gross/month
+(VAT included; about US$3); that mode sends recorded audio to the service and includes up to
+900 transcription minutes in any rolling 30-day window.
+
+> **Requirements:** macOS 14 or newer and an Apple-silicon Mac. The app is
+> signed and notarized. Recommended multilingual models are separate one-time
+> downloads of approximately 475–632 MB; smaller English-only options start at
+> about 150 MB.
+
+## Install
+
+### Direct download
+
+**[Download the latest notarized DMG](https://api.plainsay.app/releases/Plainsay-latest.dmg)**
+and drag Plainsay to Applications. The stable link always points to the latest
+release; the [release page](https://github.com/conrader/plainsay/releases/latest)
+has checksums and release notes.
+
+### Homebrew
 
 ```sh
 brew tap conrader/plainsay
 brew install --cask plainsay
 ```
 
-Already running Plainsay? It checks for updates itself — no need to
-re-download. See **Check for Updates…** in the menu bar.
+Plainsay checks for signed updates automatically. You can also use **Check for
+Updates…** from its menu-bar menu.
 
-## First launch
+If Plainsay earns a place in your menu bar, **[star the repository](https://github.com/conrader/plainsay)**.
+It is the simplest way to help more Mac users find the project.
 
-The Setup Assistant walks through all of this on its own — the steps below
-are just what it's actually doing.
+## Why Plainsay?
 
-1. **Pick how speech gets transcribed** — Plainsay Cloud (no download,
-   ≈$3/month), on-device Whisper or NVIDIA Parakeet (free, ~475–632 MB
-   download, cached after the first run), or your own API key.
-2. **Grant three permissions** — Microphone to hear you, Accessibility to
-   paste, Input Monitoring to notice the hotkey while another app is focused.
-   macOS only applies a new grant after a restart, so quit and reopen
-   afterwards.
-3. **Optional: add a cleanup key** in Settings › Speech, if you want filler
-   words and punctuation cleaned up locally instead of through Plainsay
-   Cloud. Get one at [aistudio.google.com](https://aistudio.google.com) for
-   Gemini. It's stored in your Keychain. Without one, Plainsay still works —
-   it inserts the raw transcript.
+- **Small, native Mac app.** The current notarized DMG is about 12 MB. Plainsay
+  is written in Swift and stays out of the way in the menu bar.
+- **Two genuinely local engines.** Choose Whisper through
+  [WhisperKit](https://github.com/argmaxinc/WhisperKit) or multilingual NVIDIA
+  Parakeet through [FluidAudio](https://github.com/FluidInference/FluidAudio).
+- **Measured, not hand-waved.** The committed benchmark records every
+  reference, hypothesis, and timing. On the benchmark machine and its disclosed
+  50-clip English sample, prepared-model average latency was 0.10 s for Parakeet
+  and 0.68 s for Whisper, with the first inference included.
+- **Broad insertion support.** Plainsay uses the standard paste flow across
+  many native apps, Electron apps, web views, and terminals, then attempts to
+  restore the previous clipboard contents.
+- **Safe fallback.** Polishing is optional and time-bounded. If it is disabled,
+  offline, or fails, Plainsay continues with the raw transcript. If no safe
+  paste target is found, the text stays on the clipboard.
+- **Clear open-source boundary.** The Mac client code, benchmark harness, and
+  release scripts are MIT-licensed and auditable; the committed LibriSpeech
+  clips are CC BY 4.0. Plainsay Cloud is a separate optional hosted service.
 
-## Using it
+## What leaves your Mac?
 
-Default hotkey is **Right ⌘**, in hybrid mode:
+| Configuration | Recorded audio | Transcript text | Account | Cost |
+|---|---|---|---|---|
+| Local transcription, Polishing off or running on your Mac | Stays on your Mac | Stays on your Mac | No | Free |
+| Local transcription + hosted Polishing | Stays on your Mac | Sent to the provider you select | Depends on provider | Depends on provider |
+| Plainsay Cloud | Sent to Plainsay Cloud | Returned by Cloud; sent onward if Cloud Polishing is enabled | Yes | 12 PLN gross/month, VAT included (about US$3); 900 transcription minutes per rolling 30 days |
+| Your own speech API | Sent directly to the provider you configure | Returned to Plainsay | Provider key | Provider pricing |
 
-- **Hold** it and speak — recording ends when you let go.
-- **Tap** it once — recording latches on; tap again to stop.
+The hosted routes are explicit:
 
-Settings › General switches to hold-only or toggle-only if the hybrid behavior
-gets in your way.
+- **Your own provider:** audio, a language hint, and optional vocabulary prompt
+  go directly to the speech endpoint you configure (Groq, deAPI, OpenAI, or a
+  compatible custom service). Hosted Polishing sends transcript text and
+  vocabulary terms directly to Google Gemini, Anthropic, OpenRouter, OpenAI,
+  or the compatible endpoint you configure.
+- **Plainsay Cloud:** encoded audio, clip duration, language, and an optional
+  vocabulary prompt go to `api.plainsay.app`. Speech may be processed on a
+  Plainsay-operated transcription node or forwarded to deAPI. If Cloud
+  Polishing is enabled, transcript text and vocabulary terms are sent from
+  Plainsay Cloud to OpenRouter, using its configured Gemini model.
+- **Optional Voice Filter:** filtering runs on the Mac, but it is best-effort.
+  If the filter is unavailable or fails, a hosted speech mode receives the
+  unfiltered recording.
 
-Add names and jargon under Settings › Speech › Vocabulary. Whisper and hosted
-models receive them as decoder conditioning; every model also uses them in the
-cleanup prompt. Parakeet itself does not currently accept decoder prompts.
+Plainsay Cloud's application database stores account, authentication,
+subscription, and usage records: an email address and/or Apple account
+identifier, session records, Stripe customer/subscription identifiers and
+status, plus each operation's timestamp, type, audio duration, estimated cost,
+and Polishing token counts. It deliberately stores neither recorded audio nor
+transcript text. Stripe receives the account email and handles checkout and
+payment details; Apple handles Apple sign-in, and the configured email-delivery
+service receives the address and sign-in message.
+
+Normal API access logs still contain request metadata such as network address,
+method, path, status, and time. The current client puts language and vocabulary
+metadata in a header that the application logger redacts; the default proxy log
+does not include request headers.
+
+Local mode does not mean the app never uses the network: the selected model
+must be downloaded once, and the default update check contacts
+`api.plainsay.app` (it can be switched off). The Mac client sends no analytics
+or telemetry. On disk, Plainsay keeps up to 100 raw and final transcript records
+for recovery and History until they are cleared or age out. Audio is staged in
+an owner-only local folder while a dictation is processed and removed after a
+successful or completed attempt; an interrupted recording can remain there for
+recovery on the next launch. These files are excluded from backups.
+
+API keys and the Plainsay Cloud session token are stored in macOS Keychain.
+Local mode is the default choice on a new installation; cloud use requires an
+explicit choice.
+
+## First dictation
+
+1. Choose **On this Mac** for Local mode, then pick the recommended model for
+   your languages.
+2. Grant Microphone, Accessibility, and Input Monitoring permissions. macOS
+   may ask you to reopen the app after a new permission is granted.
+3. Hold **Right Command**, speak, and release. Tap it once instead if you prefer
+   toggle mode; tap again to stop.
+
+Each dictation can run for up to 10 minutes. At the boundary, Plainsay stops
+recording automatically, shows a notice, and processes the captured audio.
+
+The shortcut, languages, vocabulary, model, and hold/toggle behavior can all be
+changed later in Settings.
 
 ## How it works
 
-```
-key down ──► capture frontmost app, show HUD, start recording
-             AVAudioEngine → 16kHz mono float, lock-free ring buffer
-key up ────► stop, discard anything under 300ms
-             WhisperKit or FluidAudio/Parakeet transcribe
-             Gemini cleanup (3s timeout → falls back to raw transcript)
-             pasteboard snapshot → set text → ⌘V → restore snapshot
+```text
+key down ──► remember frontmost app → show HUD → record 16 kHz mono audio
+key up ────► transcribe locally, in Plainsay Cloud, or through your API
+             optional Polishing (bounded timeout → raw-transcript fallback)
+             snapshot clipboard → paste text → attempt clipboard restore
 ```
 
-Cleanup is best-effort by design. No key, no network, a timeout, an HTTP error
-— you still get the raw transcript, and the HUD says it fell back. A dictation
-is never lost to a failed API call.
+The local engines run as Core ML models accelerated on Apple silicon.
+Polishing asks the selected model to turn spoken language into written language
+while preserving wording, meaning, tone, and language; review important text.
+It can use Plainsay Cloud, your provider, a compatible local endpoint, or
+remain off.
 
-Text is inserted by pasting rather than through the Accessibility API, which
-fails silently in Electron apps, web views, and terminals. Your clipboard is
-snapshotted and restored around the paste.
+Read [How it works](https://plainsay.app/how-it-works/) for the pipeline and
+[Why on-device](https://plainsay.app/why-on-device/) for the privacy trade-offs.
 
-### Layout
+## Reproducible benchmark
 
-- `Sources/PlainsayCore` — the pipeline. No UI, unit-testable.
-- `Sources/PlainsayApp` — menu bar, HUD panel, settings.
-- `docs/superpowers/specs/` — design document.
+| Local engine | Word error rate | Average latency | Real-time factor |
+|---|---:|---:|---:|
+| Parakeet TDT 0.6B v3 | **2.50%** | **0.10 s** | 0.014 |
+| Whisper large-v3-turbo | **2.89%** | **0.68 s** | 0.095 |
 
-`TranscriptionEngine` and `TextCleaning` are protocols, so switching between
-WhisperKit and Parakeet, or Gemini and another cleanup model, does not touch the
-pipeline.
+These are prepared-model results on a disclosed 50-utterance sample from
+LibriSpeech `test-clean`; the first inference is included and no hidden
+transcription warm-up is subtracted. They are not a claim about every language
+or noisy real-world dictation. The exact Mac, source commit, dependency pins,
+methodology, limitations, raw results, and one-command harness are in
+[BENCHMARK.md](BENCHMARK.md).
 
-Building from source, and running the tests, are covered in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+## Screenshots
 
-### Benchmark
+<table>
+<tr>
+<td width="50%"><a href="Screenshots/settings-speech.png"><img src="Screenshots/settings-speech.png" alt="Speech settings with local Parakeet ready"></a><br><sub>Local speech, languages, and Polishing</sub></td>
+<td width="50%"><a href="Screenshots/settings-general.png"><img src="Screenshots/settings-general.png" alt="General settings with shortcut options"></a><br><sub>Interface language and shortcut behavior</sub></td>
+</tr>
+</table>
 
-[Word error rate and latency for both on-device engines](BENCHMARK.md),
-measured on a public dataset with published reference transcripts —
-reproducible with one command.
+## Build and contribute
+
+Bug reports, small fixes, tests, documentation improvements, and focused
+feature proposals are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md),
+which covers the development build, tests, and how to propose a change.
+
+```sh
+swift build
+swift test
+```
+
+For security issues, please follow [SECURITY.md](SECURITY.md) instead of
+opening a public issue.
 
 ## Contact
 
-Bugs and feature requests: [open an issue](https://github.com/conrader/plainsay/issues).
-Everything else: [hi@plainsay.app](mailto:hi@plainsay.app).
+- Bugs: [open an issue](https://github.com/conrader/plainsay/issues/new/choose)
+- Ideas and questions: [GitHub Discussions](https://github.com/conrader/plainsay/discussions)
+- Everything else: [hi@plainsay.app](mailto:hi@plainsay.app)

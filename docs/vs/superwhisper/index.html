@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs superwhisper — free and open source vs closed source</title>
-<meta name="description" content="Plainsay is free, MIT-licensed, and open source. superwhisper is closed source with a free trial and a paid Pro tier. Every claim here links to superwhisper's own pages.">
+<title>Plainsay vs superwhisper — open-source Local mode vs a broader Pro app</title>
+<meta name="description" content="Compare Plainsay’s free MIT-licensed Local mode with superwhisper’s proprietary Free and Pro tiers, broader platform support, and local and cloud models.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay vs superwhisper">
+<meta property="og:description" content="A free, MIT-licensed Mac client and optional Cloud compared with superwhisper's broader proprietary app and Pro tiers.">
+<meta property="og:url" content="https://plainsay.app/vs/superwhisper/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/vs/superwhisper/">
 <style>
@@ -74,12 +83,14 @@
   .final .req{font-size:12px;color:var(--slate)}
   .sources{font-size:12.5px;color:var(--slate);line-height:1.9}
   .sources a{color:var(--slate)}
-  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   footer .text{font-size:12px;color:var(--slate)}
   footer .spacer{flex:1}
-  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18px;font-size:12px}
   footer .links a{color:var(--slate);text-decoration:none}
   footer .links a:hover{color:var(--bone)}
+  footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
+  @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
 </style>
 </head>
 <body>
@@ -99,8 +110,8 @@
 
     <header class="hero">
       <div class="eyebrow">Plainsay vs superwhisper</div>
-      <h1>Free and open, vs closed and metered.</h1>
-      <p class="sub">superwhisper is a capable dictation app for Mac, iOS, and Windows, with a free tier and local model options. It's also closed source, requires a login for licensing, and its AI cleanup pass is cloud-only. Plainsay is free for everyone, MIT-licensed, and its cleanup step is your choice — cloud, your own key, or off.</p>
+      <h1>Open Local mode, or a broader Pro app?</h1>
+      <p class="sub">superwhisper is a capable proprietary app for macOS, Windows, and iOS. It offers local and cloud transcription, and its Pro tier can also run the optional language-model pass locally on macOS. Plainsay's MIT-licensed Mac client is narrower: Local is free and unmetered, while optional Cloud and Polishing choices are explicit.</p>
     </header>
 
     <section>
@@ -109,17 +120,17 @@
         <div class="card">
           <div class="h">Price</div>
           <div class="num">$0</div>
-          <p>Plainsay is free, no tier, no limits. superwhisper's free tier gives 15 minutes of Pro-feature trial, then falls back to unlimited local small models — check their current pricing page for the Pro plan cost.</p>
+          <p>Plainsay Local is free and unmetered; optional Cloud costs 12 PLN/month or 120 PLN/year and includes 900 transcription minutes per rolling 30 days. superwhisper has a free tier; Pro is $8.49/month, $84.99/year, or $249.99 once. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official pricing</a></p>
         </div>
         <div class="card">
           <div class="h">Source</div>
           <div class="num">MIT, public</div>
-          <p>Plainsay's entire client is open. superwhisper is closed source — you get an app, not the code behind it.</p>
+          <p>Plainsay's Mac client is public under MIT; its optional Cloud backend is separate and closed. superwhisper's terms prohibit extracting its source code. <a href="https://superwhisper.com/terms">Official terms</a></p>
         </div>
         <div class="card">
           <div class="h">Cleanup pass</div>
-          <div class="num dim">Your choice</div>
-          <p>Plainsay's cleanup is cloud by default but switchable to your own key or off. superwhisper's AI formatting runs through cloud LLM providers, with no local option surfaced.</p>
+          <div class="num dim">Both offer choice</div>
+          <p>Plainsay Polishing can use its hosted tier, your provider, a compatible local endpoint, or be switched off. superwhisper Pro documents cloud language models and on-device language models on macOS. <a href="https://superwhisper.com/docs/security/sensitive-data">Official data-flow guide</a></p>
         </div>
       </div>
     </section>
@@ -134,76 +145,80 @@
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Free</b>, forever, no limits.</td>
-              <td class="wispr">Free tier: 15-minute Pro trial, then unlimited use of local small models. Paid Pro tier exists — check superwhisper.com/pricing for the current figure, since we couldn't reliably confirm it from their page.</td>
+              <td class="plainsay col-plainsay"><b>Local mode is free</b> and unmetered. Optional Cloud is 12 PLN/month or 120 PLN/year, with 900 transcription minutes per rolling 30 days.</td>
+              <td class="wispr">Free tier. Pro: $8.49/month, $84.99/year, or $249.99 once. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official Pro page</a></td>
             </tr>
             <tr>
               <td class="axis">Transcription</td>
-              <td class="plainsay col-plainsay"><b>On your Mac</b> — Whisper or NVIDIA Parakeet via Core ML, always local.</td>
-              <td class="wispr">Both offline (default: local Whisper Large on Apple silicon) and cloud models, depending on plan and hardware.</td>
+              <td class="plainsay col-plainsay"><b>Local:</b> Whisper or NVIDIA Parakeet on your Mac. <b>Cloud:</b> optional hosted transcription.</td>
+              <td class="wispr">On-device and cloud voice models. The catalog labels Fast, Nano, and Standard on-device models as Free, but the Pro comparison table lists local voice models only under Pro; verify the current entitlement before choosing. <a href="https://superwhisper.com/models">Model catalog</a> · <a href="https://superwhisper.com/docs/get-started/sw-pro">Pro table</a></td>
             </tr>
             <tr>
               <td class="axis">Cleanup pass</td>
-              <td class="plainsay col-plainsay">Cloud by default, but switchable to your own key, another provider, or off entirely.</td>
-              <td class="wispr">Cloud LLM providers (GPT-5, Claude, Gemini, and others) — no local cleanup option found.</td>
+              <td class="plainsay col-plainsay">Optional: Plainsay Cloud, your own provider, a compatible local endpoint, or off.</td>
+              <td class="wispr">Optional. Pro includes cloud language models and on-device language models; superwhisper documents fully local post-processing on macOS. <a href="https://superwhisper.com/docs/security/sensitive-data">Official data-flow guide</a></td>
             </tr>
             <tr>
               <td class="axis">Source</td>
-              <td class="plainsay col-plainsay"><b>MIT licensed</b>, fully public.</td>
-              <td class="wispr">Closed source, proprietary.</td>
+              <td class="plainsay col-plainsay"><b>MIT-licensed Mac client</b>, public; optional Cloud backend is separate and closed.</td>
+              <td class="wispr">Proprietary; its terms prohibit reverse engineering or extracting the app's source code. <a href="https://superwhisper.com/terms">Official terms</a></td>
             </tr>
             <tr>
               <td class="axis">Account</td>
               <td class="plainsay col-plainsay"><b>None required</b> to dictate locally.</td>
-              <td class="wispr">Login required for license activation.</td>
+              <td class="wispr">The official guide documents license-key activation for Pro; a basic-tier account requirement is not specified there. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official activation guide</a></td>
             </tr>
             <tr>
               <td class="axis">Platform</td>
               <td class="plainsay col-plainsay">macOS (Apple silicon).</td>
-              <td class="wispr">macOS (Intel + Apple silicon), Windows, iOS.</td>
+              <td class="wispr">macOS 13.3+, Windows 10+, and iOS 18+. <a href="https://superwhisper.com/download">Official downloads</a></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p class="mono-src">superwhisper figures from superwhisper.com, 2026. Prices change — check the source links below. We were unable to reliably confirm superwhisper's exact Pro price from their page and have not stated a number.</p>
+      <p class="mono-src">Checked against superwhisper's official pages on 22 August 2026. Its model catalog and Pro table currently disagree about free local voice-model access, so that discrepancy is shown rather than resolved by assumption. Prices and availability can change.</p>
     </section>
 
     <section>
       <h2 class="big">Open, so you don't have to take our word for it</h2>
       <p class="lede">A closed-source app asks you to trust that it does what it says. An open one lets you read the code.</p>
-      <p>Plainsay's entire client is <strong>MIT licensed and public</strong> — the pipeline, the recorder, the settings, all of it. superwhisper is closed source: you get a capable app, but no way to verify its claims by reading the implementation, and no way to fork or self-host it if the company changes direction.</p>
-      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
+      <p>Plainsay's Mac client is <strong>MIT licensed and public</strong> — the pipeline, recorder, settings, and release tooling. You can inspect it, fork it, and build your own copy; the optional Plainsay Cloud backend is separate and not open source. superwhisper is proprietary: its terms say intellectual-property rights belong to the company or its licensors and prohibit extracting the app's source code.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — inspect the MIT-licensed Mac client</p>
     </section>
 
     <section>
-      <h2 class="big">Cleanup: your choice, or theirs</h2>
-      <p class="lede">Both apps offer an AI pass that turns raw transcription into cleaner written text. Where they differ is who decides which model handles it, and whether that's negotiable.</p>
-      <p>Plainsay's cleanup defaults to a cloud model but is fully switchable — bring your own API key, pick a different provider, or turn it off and keep the raw transcript. superwhisper's cleanup runs through cloud LLM providers they've integrated (GPT-5, Claude, Gemini, and others); we found no local-cleanup option in their current docs. Transcription itself, for both apps, has a local option — this difference is specifically about the formatting pass, not the core dictation.</p>
+      <h2 class="big">Both can keep both stages local</h2>
+      <p class="lede">Both apps separate speech recognition from an optional language-model pass, and both let you avoid that second pass.</p>
+      <p>Plainsay Polishing is switchable — use Plainsay Cloud, bring your own API key, point a compatible custom endpoint at a local model, or turn it off and keep the raw transcript. superwhisper also documents independent local or cloud choices for transcription and post-processing, including local language models on macOS. Its cloud requests pass through the superwhisper proxy; its official data-flow guide says API providers process them under zero-data-retention terms. <a href="https://superwhisper.com/docs/security/sensitive-data">Read superwhisper's data-flow guide</a>.</p>
     </section>
 
     <section>
       <h2 class="kicker">Where superwhisper is the better pick — honestly</h2>
       <ul class="plain">
         <li>You need <strong>Windows or iOS</strong> — Plainsay is macOS-only today, superwhisper covers all three.</li>
-        <li>You want built-in meeting notes, file transcription, and 40+ app integrations (Slack, Gmail, Notion, and more) out of the box.</li>
-        <li>You want predefined output modes (Message, Email, Voice) without configuring your own cleanup prompt.</li>
+        <li>You want built-in meeting summaries, speaker separation, and audio/video file transcription out of the box. <a href="https://superwhisper.com/docs/modes/meeting">Meeting mode</a> · <a href="https://superwhisper.com/docs/get-started/transcribe-files">File transcription</a></li>
+        <li>You want predefined output modes (Message, Email, Voice) without configuring your own cleanup prompt. <a href="https://superwhisper.com/docs/modes/modes">Official modes guide</a></li>
       </ul>
-      <p>If instead you want free, open-source dictation with no account and a cleanup step you fully control — that's Plainsay.</p>
+      <p>If instead you want a free, open-source Local mode with no account and a Polishing step you fully control — that's Plainsay.</p>
     </section>
 
     <section class="final">
       <img src="/assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Try the free, open one.</p>
+      <p class="headline">Try the free, open-source client.</p>
       <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-      <span class="req">Free · MIT licensed · macOS 14+, Apple silicon</span>
+      <span class="req">Free Local mode · MIT-licensed Mac client · macOS 14+, Apple silicon</span>
     </section>
 
     <section>
       <h2 class="kicker">Sources</h2>
       <p class="sources">
-        superwhisper pricing and features — <a href="https://superwhisper.com">superwhisper.com</a><br>
+        superwhisper Pro features and prices — <a href="https://superwhisper.com/docs/get-started/sw-pro">superwhisper.com/docs/get-started/sw-pro</a><br>
+        superwhisper transcription and language models — <a href="https://superwhisper.com/models">superwhisper.com/models</a><br>
+        superwhisper local/cloud data flow — <a href="https://superwhisper.com/docs/security/sensitive-data">superwhisper.com/docs/security/sensitive-data</a><br>
+        superwhisper platforms and requirements — <a href="https://superwhisper.com/download">superwhisper.com/download</a><br>
+        superwhisper software terms — <a href="https://superwhisper.com/terms">superwhisper.com/terms</a><br>
         Plainsay source — <a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a><br>
-        <span class="mono-src">superwhisper figures were current as of 2026 and are quoted from superwhisper's own pages, except the exact Pro price, which we could not reliably extract and have deliberately omitted. Verify at the link above.</span>
+        <span class="mono-src">superwhisper facts were checked against the company's own pages on 22 August 2026. Verify changing prices, model availability, and platform requirements at those links.</span>
       </p>
     </section>
 
@@ -214,14 +229,17 @@
 
     <footer>
       <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
-      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <span class="text">Plainsay · dictation for macOS · MIT-licensed Mac client</span>
       <span class="spacer"></span>
       <div class="links">
         <a href="/">Home</a>
         <a href="/why-on-device/">Why on-device</a>
         <a href="/how-it-works/">How it works</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
         <a href="https://github.com/conrader/plainsay">Source</a>
       </div>
+      <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
     </footer>
 
   </div>

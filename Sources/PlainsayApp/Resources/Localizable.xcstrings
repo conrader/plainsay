@@ -8693,6 +8693,334 @@
         }
       }
     },
+    "cleanup.plainsay.anySource": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funktioniert mit jeder Transkriptionsquelle, auch vollständig auf dem Gerät"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Works with any transcription source, including fully on-device"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funciona con cualquier fuente de transcripción, incluida la opción íntegramente local"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fonctionne avec toute source de transcription, y compris entièrement sur l’appareil"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funziona con qualsiasi sorgente di trascrizione, anche interamente sul dispositivo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完全オンデバイスを含む、どの文字起こし元でも利用可能"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완전한 온디바이스 방식을 포함한 모든 필사 소스에서 작동"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Werkt met elke transcriptiebron, ook volledig op het apparaat"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Działa z dowolnym źródłem transkrypcji, także w pełni lokalnym"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Funciona com qualquer fonte de transcrição, incluindo totalmente no dispositivo"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Работает с любым источником расшифровки, включая полностью локальный"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Працює з будь-яким джерелом розшифрування, зокрема повністю локальним"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "适用于任何转录来源，包括完全在设备上运行的模式"
+          }
+        }
+      }
+    },
+    "cleanup.plainsay.noKey": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Anbieter-Schlüssel zum Einfügen — einmal anmelden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No provider key to paste — sign in once"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin clave de proveedor que pegar: inicia sesión una vez"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune clé de fournisseur à coller — connectez-vous une fois"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuna chiave del fornitore da incollare: accedi una volta"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロバイダーキーの貼り付けは不要 — 一度サインインするだけ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "제공업체 키를 붙여넣을 필요 없음 — 한 번만 로그인"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen providersleutel om te plakken — meld je één keer aan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bez wklejania klucza dostawcy — wystarczy zalogować się raz"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem chave de fornecedor para colar — inicia sessão uma vez"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не нужно вставлять ключ провайдера — войдите один раз"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не потрібно вставляти ключ постачальника — увійдіть один раз"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需粘贴服务商密钥 — 登录一次即可"
+          }
+        }
+      }
+    },
+    "cleanup.plainsay.subscription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In einem aktiven Plainsay-Cloud-Abonnement enthalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Included with an active Plainsay Cloud subscription"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluido con una suscripción activa a Plainsay Cloud"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inclus avec un abonnement Plainsay Cloud actif"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluso con un abbonamento Plainsay Cloud attivo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効なPlainsay Cloudサブスクリプションに含まれます"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "활성 Plainsay Cloud 구독에 포함"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inbegrepen bij een actief Plainsay Cloud-abonnement"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wliczone w aktywną subskrypcję Plainsay Cloud"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluído numa subscrição ativa do Plainsay Cloud"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включено в активную подписку Plainsay Cloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включено в активну передплату Plainsay Cloud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有效的 Plainsay Cloud 订阅已包含"
+          }
+        }
+      }
+    },
+    "cleanup.plainsay.summary": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in Cloud enthalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "included with Cloud"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "incluido con Cloud"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inclus avec Cloud"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "incluso con Cloud"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloudに含まれます"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud에 포함"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inbegrepen bij Cloud"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wliczone w Cloud"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "incluído no Cloud"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "включено в Cloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "включено в Cloud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud 已包含"
+          }
+        }
+      }
+    },
     "cloud.checking": {
       "localizations": {
         "de": {
@@ -8944,79 +9272,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d von %d Minuten diesen Monat"
+            "value": "%d von %d Minuten in den letzten 30 Tagen verbraucht"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d of %d minutes this month"
+            "value": "%d of %d minutes used in the last 30 days"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d de %d minutos este mes"
+            "value": "%d de %d minutos usados en los últimos 30 días"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d sur %d minutes ce mois-ci"
+            "value": "%d minutes utilisées sur %d au cours des 30 derniers jours"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d di %d minuti questo mese"
+            "value": "%d di %d minuti utilizzati negli ultimi 30 giorni"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今月 %d / %d 分"
+            "value": "過去30日間で%d / %d分を使用"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "이번 달 %d / %d분"
+            "value": "최근 30일 동안 %d / %d분 사용"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d van %d minuten deze maand"
+            "value": "%d van %d minuten gebruikt in de afgelopen 30 dagen"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d z %d minut w tym miesiącu"
+            "value": "Wykorzystano %d z %d minut w ciągu ostatnich 30 dni"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d de %d minutos este mês"
+            "value": "%d de %d minutos usados nos últimos 30 dias"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d из %d минут в этом месяце"
+            "value": "Использовано %d из %d минут за последние 30 дней"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d із %d хвилин цього місяця"
+            "value": "Використано %d із %d хвилин за останні 30 днів"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "本月已用 %d / %d 分钟"
+            "value": "过去 30 天已使用 %d / %d 分钟"
           }
         }
       }
@@ -9103,6 +9431,88 @@
         }
       }
     },
+    "cloud.rollingLimit": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bis zu 900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum; der lokale Modus ist unbegrenzt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to 900 transcription minutes in any rolling 30-day window; Local mode is unmetered."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hasta 900 minutos de transcripción en cualquier periodo móvil de 30 días; el modo Local no tiene contador."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jusqu’à 900 minutes de transcription sur toute période glissante de 30 jours ; le mode Local est illimité."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fino a 900 minuti di trascrizione in qualsiasi periodo mobile di 30 giorni; la modalità Locale non è conteggiata."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任意の連続する30日間で文字起こしは最大900分。ローカルモードは無制限です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연속 30일 기준 최대 900분 필사; 로컬 모드는 사용량 제한이 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximaal 900 transcriptieminuten in elke voortschrijdende periode van 30 dagen; de lokale modus is onbeperkt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do 900 minut transkrypcji w dowolnym kroczącym okresie 30 dni; tryb lokalny jest bez limitu."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Até 900 minutos de transcrição em qualquer período móvel de 30 dias; o modo Local não tem limite."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "До 900 минут расшифровки за любой скользящий 30-дневный период; локальный режим без лимита."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "До 900 хвилин розшифрування за будь-який ковзний 30-денний період; локальний режим без ліміту."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任意滚动 30 天内最多转录 900 分钟；本地模式不计量。"
+          }
+        }
+      }
+    },
     "cloud.signedIn": {
       "localizations": {
         "de": {
@@ -9181,6 +9591,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "已登录"
+          }
+        }
+      }
+    },
+    "cloud.subscribeAnnual": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/Jahr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN gross/year (VAT included)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/año"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/an"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/anno"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年額120 PLN"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연 120 PLN"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/jaar"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN brutto/rok (VAT w cenie)"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/ano"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/год"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/рік"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 PLN/年"
+          }
+        }
+      }
+    },
+    "cloud.subscribeMonthly": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonnieren — 12 PLN/Monat (etwa 3 US-Dollar)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscribe — 12 PLN gross/month (VAT included)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suscribirse — 12 PLN/mes (unos 3 USD)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’abonner — 12 PLN/mois (environ 3 USD)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbonati — 12 PLN/mese (circa 3 USD)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登録 — 月額12 PLN（約3米ドル）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "구독 — 월 12 PLN(약 3 USD)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abonneren — 12 PLN/maand (ongeveer US$ 3)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subskrybuj — 12 PLN brutto/miesiąc (VAT w cenie)"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscrever — 12 PLN/mês (cerca de 3 USD)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подписаться — 12 PLN/месяц (около 3 долларов США)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підписатися — 12 PLN/місяць (близько 3 доларів США)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "订阅 — 12 PLN/月（约 3 美元）"
           }
         }
       }
@@ -9509,6 +10083,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ 秒"
+          }
+        }
+      }
+    },
+    "history.emptyDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halte dein Tastenkürzel gedrückt und sprich. Fertige Transkripte erscheinen hier, bevor Plainsay sie einzufügen versucht. So kannst du sie bei Bedarf erneut kopieren."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold your hotkey and speak. Completed transcripts appear here before Plainsay attempts to insert them, so you can copy one again if needed."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado el atajo y habla. Las transcripciones terminadas aparecen aquí antes de que Plainsay intente insertarlas, para que puedas volver a copiarlas si hace falta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenez votre raccourci et parlez. Les transcriptions terminées apparaissent ici avant que Plainsay tente de les insérer, afin que vous puissiez les recopier si nécessaire."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni premuta la scorciatoia e parla. Le trascrizioni completate appaiono qui prima che Plainsay provi a inserirle, così puoi copiarle di nuovo se serve."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ホットキーを押したまま話してください。完了した文字起こしは、Plainsayが挿入を試みる前にここへ表示されるため、必要ならもう一度コピーできます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "단축키를 누른 채 말하세요. 완료된 필사문은 Plainsay가 삽입을 시도하기 전에 여기에 표시되므로 필요하면 다시 복사할 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd je sneltoets ingedrukt en spreek. Voltooide transcripties verschijnen hier voordat Plainsay ze probeert in te voegen, zodat je ze zo nodig opnieuw kunt kopiëren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przytrzymaj skrót i mów. Gotowe transkrypcje pojawiają się tutaj, zanim Plainsay spróbuje je wstawić, więc w razie potrzeby możesz skopiować je ponownie."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantém o atalho premido e fala. As transcrições concluídas aparecem aqui antes de o Plainsay tentar inseri-las, para que possas voltar a copiá-las se necessário."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживайте сочетание клавиш и говорите. Готовые расшифровки появляются здесь до того, как Plainsay попытается их вставить, поэтому при необходимости их можно скопировать снова."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Утримуйте комбінацію клавіш і говоріть. Готові розшифрування з’являються тут до того, як Plainsay спробує їх вставити, тож за потреби їх можна скопіювати знову."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住快捷键并说话。完成的转录会在 Plainsay 尝试插入前显示在这里，方便你在需要时再次复制。"
           }
         }
       }
@@ -10579,6 +11235,88 @@
         }
       }
     },
+    "hud.a11y.recordingLimitReached": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das zehnminütige Aufnahmelimit wurde erreicht. Die Aufnahme wurde automatisch beendet; das erfasste Audio wird verarbeitet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten-minute recording limit reached. Recording stopped automatically; processing the captured audio."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se alcanzó el límite de grabación de diez minutos. La grabación se detuvo automáticamente; se está procesando el audio capturado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La limite d’enregistrement de dix minutes est atteinte. L’enregistrement s’est arrêté automatiquement ; l’audio capturé est en cours de traitement."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raggiunto il limite di registrazione di dieci minuti. La registrazione si è fermata automaticamente; l’audio acquisito è in elaborazione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10分の録音上限に達しました。録音は自動的に停止し、収録した音声を処理しています。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10분 녹음 제한에 도달했습니다. 녹음이 자동으로 중지되었으며 캡처한 오디오를 처리하고 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De opnamelimiet van tien minuten is bereikt. De opname is automatisch gestopt; de opgenomen audio wordt verwerkt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Osiągnięto dziesięciominutowy limit nagrania. Nagrywanie zatrzymano automatycznie; zarejestrowane audio jest przetwarzane."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Foi atingido o limite de gravação de dez minutos. A gravação parou automaticamente; o áudio captado está a ser processado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Достигнут десятиминутный лимит записи. Запись остановлена автоматически; записанное аудио обрабатывается."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Досягнуто десятихвилинного ліміту запису. Запис зупинено автоматично; записане аудіо обробляється."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达到十分钟录音上限。录音已自动停止，正在处理已录制的音频。"
+          }
+        }
+      }
+    },
     "hud.a11y.savedToClipboard": {
       "localizations": {
         "de": {
@@ -11235,6 +11973,88 @@
         }
       }
     },
+    "hud.label.recordingLimitReached": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10-MINUTEN-LIMIT"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10-MINUTE LIMIT"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LÍMITE DE 10 MINUTOS"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMITE DE 10 MINUTES"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMITE DI 10 MINUTI"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10分の上限"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10분 제한"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMIET VAN 10 MINUTEN"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMIT 10 MINUT"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LIMITE DE 10 MINUTOS"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЛИМИТ 10 МИНУТ"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ЛІМІТ 10 ХВИЛИН"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10 分钟上限"
+          }
+        }
+      }
+    },
     "hud.label.savedToClipboard": {
       "localizations": {
         "de": {
@@ -11395,6 +12215,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在转录"
+          }
+        }
+      }
+    },
+    "hud.notice.recordingLimitReached": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Aufnahme wurde automatisch beendet. Das erfasste Audio wird verarbeitet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recording stopped automatically. The captured audio is being processed."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La grabación se detuvo automáticamente. Se está procesando el audio capturado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’enregistrement s’est arrêté automatiquement. L’audio capturé est en cours de traitement."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La registrazione si è fermata automaticamente. L’audio acquisito è in elaborazione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "録音は自動的に停止しました。収録した音声を処理しています。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "녹음이 자동으로 중지되었습니다. 캡처한 오디오를 처리하고 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De opname is automatisch gestopt. De opgenomen audio wordt verwerkt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nagrywanie zatrzymano automatycznie. Zarejestrowane audio jest przetwarzane."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A gravação parou automaticamente. O áudio captado está a ser processado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись остановлена автоматически. Записанное аудио обрабатывается."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис зупинено автоматично. Записане аудіо обробляється."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音已自动停止。正在处理已录制的音频。"
           }
         }
       }
@@ -12957,6 +13859,88 @@
         }
       }
     },
+    "menu.a11y.recordingLimitReached": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay hat das zehnminütige Aufnahmelimit erreicht und verarbeitet das erfasste Audio."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay reached the ten-minute recording limit and is processing the captured audio"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay alcanzó el límite de grabación de diez minutos y está procesando el audio capturado."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay a atteint la limite d’enregistrement de dix minutes et traite l’audio capturé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay ha raggiunto il limite di registrazione di dieci minuti e sta elaborando l’audio acquisito."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsayは10分の録音上限に達し、収録した音声を処理しています。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay가 10분 녹음 제한에 도달하여 캡처한 오디오를 처리하고 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay heeft de opnamelimiet van tien minuten bereikt en verwerkt de opgenomen audio."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay osiągnął dziesięciominutowy limit nagrania i przetwarza zarejestrowane audio."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Plainsay atingiu o limite de gravação de dez minutos e está a processar o áudio captado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay достиг десятиминутного лимита записи и обрабатывает записанное аудио."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay досяг десятихвилинного ліміту запису й обробляє записане аудіо."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay 已达到十分钟录音上限，正在处理已录制的音频。"
+          }
+        }
+      }
+    },
     "menu.a11y.savedToClipboard": {
       "localizations": {
         "de": {
@@ -14019,6 +15003,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在准备语音模型… %d%%"
+          }
+        }
+      }
+    },
+    "menu.status.recordingLimitReached": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10-Minuten-Limit erreicht — erfasstes Audio wird verarbeitet"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10-minute limit reached — processing captured audio"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Límite de 10 minutos alcanzado — procesando el audio capturado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite de 10 minutes atteinte — traitement de l’audio capturé"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite di 10 minuti raggiunto — elaborazione dell’audio acquisito"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10分の上限に到達 — 収録した音声を処理中"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "10분 제한 도달 — 캡처한 오디오 처리 중"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limiet van 10 minuten bereikt — opgenomen audio wordt verwerkt"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Osiągnięto limit 10 minut — przetwarzanie zarejestrowanego audio"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Limite de 10 minutos atingido — a processar o áudio captado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Достигнут лимит 10 минут — обработка записанного аудио"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Досягнуто ліміту 10 хвилин — обробка записаного аудіо"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已达到 10 分钟上限 — 正在处理已录制的音频"
           }
         }
       }
@@ -15745,84 +16811,166 @@
         }
       }
     },
-    "settings.sourceExplanation.cloud": {
+    "settings.polishingExplanation": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Etwa 3 $/Monat: Transkription und Bearbeitung sind inklusive, ohne Modell-Download oder Schlüsselverwaltung. Audio wird an Plainsay Cloud hochgeladen."
+            "value": "Weist das ausgewählte Modell an, Füllwörter und Fehlstarts zu entfernen und dabei Bedeutung, Ton und Sprache beizubehalten. Prüfe wichtige Texte oder deaktiviere Polishing, um das Rohtranskript einzufügen."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About $3/month: transcription and Polishing are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
+            "value": "Asks the selected model to remove filler words and false starts while preserving meaning, tone, and language. Review important text, or turn Polishing off to insert the raw transcript."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unos 3 $/mes: la transcripción y la edición están incluidas, sin descarga de modelo ni claves que gestionar. El audio se sube a Plainsay Cloud."
+            "value": "Pide al modelo seleccionado que elimine muletillas y falsos comienzos, conservando el significado, el tono y el idioma. Revisa los textos importantes o desactiva Polishing para insertar la transcripción sin editar."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Environ 3 $/mois : transcription et nettoyage inclus, sans téléchargement de modèle ni clés à gérer. L'audio est envoyé à Plainsay Cloud."
+            "value": "Demande au modèle sélectionné de supprimer les mots de remplissage et les faux départs tout en préservant le sens, le ton et la langue. Relisez les textes importants ou désactivez Polishing pour insérer la transcription brute."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Circa 3 $/mese: trascrizione e pulizia sono incluse, senza download di modelli né chiavi da gestire. L'audio viene caricato su Plainsay Cloud."
+            "value": "Chiede al modello selezionato di rimuovere riempitivi e false partenze preservando significato, tono e lingua. Rivedi i testi importanti oppure disattiva Polishing per inserire la trascrizione grezza."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額約3ドル: 文字起こしとクリーンアップが含まれ、モデルのダウンロードや管理するキーは不要です。音声はPlainsay Cloudにアップロードされます。"
+            "value": "選択したモデルに、意味・語調・言語を保ちながらフィラー語や言い直しを取り除くよう指示します。重要な文章は確認してください。Polishingをオフにすると未編集の文字起こしを挿入します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 약 3달러: 필사와 정리가 포함되며, 모델 다운로드나 관리할 키가 필요 없습니다. 오디오는 Plainsay Cloud로 업로드됩니다."
+            "value": "선택한 모델에 의미, 어조, 언어를 유지하면서 군더더기 표현과 말실수를 제거하도록 요청합니다. 중요한 텍스트는 검토하거나, 원본 필사문을 삽입하려면 Polishing을 끄세요."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ongeveer $3/maand: transcriptie en opschonen zijn inbegrepen, zonder modeldownload of sleutels om te beheren. Audio wordt geüpload naar Plainsay Cloud."
+            "value": "Vraagt het gekozen model om stopwoorden en valse starts te verwijderen met behoud van betekenis, toon en taal. Controleer belangrijke tekst of schakel Polishing uit om het ruwe transcript in te voegen."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Około 3 USD/miesiąc: transkrypcja i Korekta tekstu są wliczone, bez pobierania modelu ani zarządzania kluczami. Audio jest przesyłane do Plainsay Cloud."
+            "value": "Prosi wybrany model o usunięcie wypełniaczy i fałszywych startów przy zachowaniu znaczenia, tonu i języka. Sprawdź ważny tekst albo wyłącz Polishing, aby wstawić surową transkrypcję."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cerca de 3 $/mês: a transcrição e a edição estão incluídas, sem transferência de modelo nem chaves para gerir. O áudio é enviado para o Plainsay Cloud."
+            "value": "Pede ao modelo selecionado que remova palavras de preenchimento e falsos arranques, preservando o significado, o tom e o idioma. Revê textos importantes ou desativa o Polishing para inserir a transcrição sem edição."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Около 3 $/месяц: расшифровка и редактирование включены, без загрузки модели и ключей для настройки. Аудио загружается в Plainsay Cloud."
+            "value": "Просит выбранную модель убрать слова-паразиты и неудачные начала, сохраняя смысл, тон и язык. Проверяйте важный текст или отключите Polishing, чтобы вставлять исходную расшифровку."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приблизно 3 $/місяць: розшифровка і редагування включені, без завантаження моделі чи ключів для налаштування. Аудіо завантажується в Plainsay Cloud."
+            "value": "Просить вибрану модель прибрати слова-паразити й невдалі початки, зберігаючи зміст, тон і мову. Перевіряйте важливий текст або вимкніть Polishing, щоб вставляти початкове розшифрування."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "约 3 美元/月：包含转录与清理功能，无需下载模型或管理密钥。音频会上传到 Plainsay Cloud。"
+            "value": "要求所选模型去除填充词和说错后重说的片段，同时保留原意、语气和语言。请检查重要文本；关闭 Polishing 可插入原始转录。"
+          }
+        }
+      }
+    },
+    "settings.sourceExplanation.cloud": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/Monat (etwa 3 US-Dollar): Transkription und Polishing sind enthalten, ohne Download eines Transkriptionsmodells oder Schlüsselverwaltung. Enthält bis zu 900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum. Audio wird in die Plainsay Cloud hochgeladen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/month (about US$3): transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/mes (unos 3 USD): incluye transcripción y Polishing, sin descargar un modelo de transcripción ni gestionar claves. Incluye hasta 900 minutos de transcripción en cualquier periodo móvil de 30 días. El audio se sube a Plainsay Cloud."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/mois (environ 3 USD) : transcription et Polishing inclus, sans téléchargement de modèle de transcription ni gestion de clés. Comprend jusqu’à 900 minutes de transcription sur toute période glissante de 30 jours. L’audio est envoyé à Plainsay Cloud."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/mese (circa 3 USD): trascrizione e Polishing inclusi, senza scaricare un modello di trascrizione né gestire chiavi. Include fino a 900 minuti di trascrizione in qualsiasi periodo mobile di 30 giorni. L’audio viene caricato su Plainsay Cloud."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月額12 PLN（約3米ドル）：文字起こしとPolishingが含まれ、文字起こしモデルのダウンロードやキー管理は不要です。任意の連続する30日間で最大900分の文字起こしを利用できます。音声はPlainsay Cloudへアップロードされます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "월 12 PLN(약 3 USD): 필사와 Polishing이 포함되며, 필사 모델을 다운로드하거나 키를 관리할 필요가 없습니다. 연속 30일 기준 최대 900분의 필사가 포함됩니다. 오디오는 Plainsay Cloud로 업로드됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/maand (ongeveer US$ 3): transcriptie en Polishing zijn inbegrepen, zonder download van een transcriptiemodel of sleutelbeheer. Inclusief maximaal 900 transcriptieminuten in elke voortschrijdende periode van 30 dagen. Audio wordt naar Plainsay Cloud geüpload."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/miesiąc (około 3 USD): transkrypcja i Polishing są wliczone, bez pobierania modelu transkrypcji ani zarządzania kluczami. Pakiet obejmuje do 900 minut transkrypcji w dowolnym kroczącym okresie 30 dni. Audio jest przesyłane do Plainsay Cloud."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/mês (cerca de 3 USD): transcrição e Polishing incluídos, sem transferir um modelo de transcrição nem gerir chaves. Inclui até 900 minutos de transcrição em qualquer período móvel de 30 dias. O áudio é enviado para o Plainsay Cloud."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/месяц (около 3 долларов США): расшифровка и Polishing включены, без загрузки модели расшифровки и настройки ключей. Включает до 900 минут расшифровки за любой скользящий 30-дневный период. Аудио загружается в Plainsay Cloud."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/місяць (близько 3 доларів США): розшифрування і Polishing включені, без завантаження моделі розшифрування та налаштування ключів. Включає до 900 хвилин розшифрування за будь-який ковзний 30-денний період. Аудіо завантажується в Plainsay Cloud."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "12 PLN/月（约 3 美元）：包含转录与 Polishing，无需下载转录模型或管理密钥。任意滚动 30 天内最多可转录 900 分钟。音频会上传到 Plainsay Cloud。"
           }
         }
       }
@@ -15914,79 +17062,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Audio wird an einen Dienst hochgeladen, für den du den Schlüssel besitzt. Kein Modell-Download, Abrechnung pro Minute."
+            "value": "Audio wird zu einem Dienst hochgeladen, dessen Schlüssel du besitzt. Kein Download eines Transkriptionsmodells; es gelten die Preise des Anbieters."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+            "value": "Audio is uploaded to a service you hold the key for. No transcription-model download; provider pricing applies."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "El audio se sube a un servicio del que tienes la clave. Sin descarga de modelo, se factura por minuto."
+            "value": "El audio se sube a un servicio cuya clave controlas. No se descarga ningún modelo de transcripción; se aplican las tarifas del proveedor."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "L'audio est envoyé à un service dont vous détenez la clé. Aucun téléchargement de modèle, facturé à la minute."
+            "value": "L’audio est envoyé à un service dont vous détenez la clé. Aucun téléchargement de modèle de transcription ; les tarifs du fournisseur s’appliquent."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "L'audio viene caricato su un servizio di cui possiedi la chiave. Nessun download di modello, fatturazione al minuto."
+            "value": "L’audio viene caricato su un servizio di cui possiedi la chiave. Nessun download del modello di trascrizione; si applicano le tariffe del fornitore."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "音声は、あなたがキーを持つサービスにアップロードされます。モデルのダウンロードは不要で、分単位で課金されます。"
+            "value": "音声は、自分でキーを管理するサービスへアップロードされます。文字起こしモデルのダウンロードは不要で、プロバイダーの料金が適用されます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "오디오는 당신이 키를 가진 서비스로 업로드됩니다. 모델 다운로드가 필요 없고, 분 단위로 청구됩니다."
+            "value": "오디오는 사용자가 키를 보유한 서비스로 업로드됩니다. 필사 모델을 다운로드할 필요가 없으며 제공업체 요금이 적용됩니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Audio wordt geüpload naar een dienst waarvoor jij de sleutel hebt. Geen modeldownload, gefactureerd per minuut."
+            "value": "Audio wordt geüpload naar een dienst waarvoor jij de sleutel beheert. Geen download van een transcriptiemodel; de tarieven van de provider gelden."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Audio jest przesyłane do usługi, dla której masz klucz. Bez pobierania modelu, rozliczane za minutę."
+            "value": "Audio jest przesyłane do usługi, do której masz własny klucz. Bez pobierania modelu transkrypcji; obowiązuje cennik dostawcy."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "O áudio é enviado para um serviço de que tens a chave. Sem transferência de modelo, faturado por minuto."
+            "value": "O áudio é enviado para um serviço cuja chave controlas. Sem transferência do modelo de transcrição; aplicam-se os preços do fornecedor."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Аудио загружается в сервис, для которого у вас есть ключ. Без загрузки модели, оплата по минутам."
+            "value": "Аудио загружается в сервис, ключ от которого принадлежит вам. Модель расшифровки загружать не нужно; действуют тарифы провайдера."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Аудіо завантажується в сервіс, для якого у вас є ключ. Без завантаження моделі, оплата за хвилинами."
+            "value": "Аудіо завантажується в сервіс, ключ від якого належить вам. Модель розшифрування завантажувати не потрібно; діють тарифи постачальника."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "音频会上传到你持有密钥的服务。无需下载模型，按分钟计费。"
+            "value": "音频会上传到由你持有密钥的服务。无需下载转录模型；按服务商定价收费。"
           }
         }
       }
@@ -16561,6 +17709,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "从未"
+          }
+        }
+      }
+    },
+    "voice.filterDetail": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sprich allein ein oder zwei Sätze, damit Plainsay versuchen kann, deine Stimme hervorzuheben. Die Aufnahme bleibt auf diesem Mac. Wenn du den Filter aktivierst, wird ein separates lokales Modell geladen. Ist der Filter nicht verfügbar oder schlägt er fehl, läuft das Diktat mit ungefiltertem Audio weiter; Cloud- oder BYOK-Modi können dieses Audio dann an den gewählten Dienst senden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speak a sentence or two on your own so Plainsay can try to focus on your voice. The sample stays on this Mac. Enabling filtering downloads a separate local model. If filtering is unavailable or fails, dictation continues with unfiltered audio; Cloud or bring-your-own-provider modes may then send that audio to the selected service."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Di una o dos frases a solas para que Plainsay pueda intentar centrarse en tu voz. La muestra permanece en este Mac. Al activar el filtro se descarga otro modelo local. Si el filtro no está disponible o falla, el dictado continúa con el audio sin filtrar; los modos Cloud o con proveedor propio pueden enviar entonces ese audio al servicio elegido."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prononcez seul une ou deux phrases pour que Plainsay puisse essayer de se concentrer sur votre voix. L’échantillon reste sur ce Mac. L’activation du filtre télécharge un modèle local distinct. Si le filtre est indisponible ou échoue, la dictée continue avec l’audio non filtré ; les modes Cloud ou avec votre propre fournisseur peuvent alors envoyer cet audio au service choisi."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pronuncia da solo una o due frasi per consentire a Plainsay di provare a concentrarsi sulla tua voce. Il campione resta su questo Mac. L’attivazione del filtro scarica un modello locale separato. Se il filtro non è disponibile o non riesce, la dettatura continua con l’audio non filtrato; le modalità Cloud o con un proprio provider possono quindi inviarlo al servizio scelto."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一人で1〜2文話すと、Plainsayがあなたの声に集中しやすくなります。サンプルはこのMacに残ります。フィルタリングを有効にすると、別のローカルモデルをダウンロードします。フィルターが利用できない、または失敗した場合は未フィルタリング音声で口述筆記を続行し、Cloudや独自プロバイダーのモードではその音声が選択したサービスへ送信されることがあります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "혼자 한두 문장을 말하면 Plainsay가 내 목소리에 집중을 시도합니다. 샘플은 이 Mac에만 남습니다. 필터링을 켜면 별도의 로컬 모델을 다운로드합니다. 필터를 사용할 수 없거나 실패하면 필터링되지 않은 오디오로 받아쓰기가 계속되며, Cloud 또는 자체 제공업체 모드에서는 해당 오디오가 선택한 서비스로 전송될 수 있습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spreek alleen een of twee zinnen in, zodat Plainsay kan proberen op je stem te focussen. De opname blijft op deze Mac. Bij inschakelen van filtering wordt een apart lokaal model gedownload. Als filtering niet beschikbaar is of mislukt, gaat dicteren door met ongefilterde audio; Cloud- of eigen-provider-modussen kunnen die audio dan naar de gekozen dienst sturen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Powiedz samodzielnie jedno lub dwa zdania, aby Plainsay mógł spróbować skupić się na Twoim głosie. Próbka pozostaje na tym Macu. Włączenie filtrowania pobiera oddzielny model lokalny. Jeśli filtr jest niedostępny albo zawiedzie, dyktowanie trwa dalej z nieprzefiltrowanym audio; tryb Cloud lub własnego dostawcy może wtedy przesłać je do wybranej usługi."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diz uma ou duas frases sozinho para o Plainsay tentar focar a tua voz. A amostra fica neste Mac. Ativar o filtro transfere um modelo local separado. Se o filtro não estiver disponível ou falhar, o ditado continua com áudio não filtrado; os modos Cloud ou com fornecedor próprio podem então enviar esse áudio para o serviço escolhido."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Произнесите в одиночестве одно-два предложения, чтобы Plainsay мог постараться выделить ваш голос. Образец остаётся на этом Mac. При включении фильтра загружается отдельная локальная модель. Если фильтр недоступен или не сработал, диктовка продолжится с нефильтрованным аудио; в режимах Cloud или собственного провайдера это аудио затем может быть отправлено выбранному сервису."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Промовте наодинці одне-два речення, щоб Plainsay міг спробувати виділити ваш голос. Зразок залишається на цьому Mac. Після ввімкнення фільтра завантажується окрема локальна модель. Якщо фільтр недоступний або не спрацював, диктування продовжиться з нефільтрованим аудіо; у режимах Cloud або власного постачальника це аудіо може бути надіслане вибраному сервісу."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请单独说一两句话，让 Plainsay 尝试聚焦你的声音。样本仅保留在这台 Mac 上。启用过滤会下载一个独立的本地模型。如果过滤不可用或失败，听写会继续使用未过滤的音频；Cloud 或自带服务商模式随后可能将该音频发送到所选服务。"
+          }
+        }
+      }
+    },
+    "voice.filterToggle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versuchen, meine Stimme hervorzuheben (nach bestem Bemühen)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try to focus on my voice (best effort)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intentar centrarse en mi voz (en la medida de lo posible)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer de se concentrer sur ma voix (au mieux)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prova a concentrarti sulla mia voce (best effort)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自分の声に集中する（ベストエフォート）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내 목소리에 집중 시도(최대한)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proberen op mijn stem te focussen (best effort)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spróbuj skupić się na moim głosie (w miarę możliwości)"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tentar focar a minha voz (na medida do possível)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Стараться выделять мой голос (по возможности)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Намагатися виділяти мій голос (за можливості)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尝试聚焦我的声音（尽力而为）"
           }
         }
       }
@@ -19189,84 +20501,166 @@
         }
       }
     },
-    "wizard.plan.cloud.eyebrow": {
+    "wizard.plan.cloud.caveat3": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "EMPFOHLEN"
+            "value": "900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum; der lokale Modus ist unbegrenzt"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMMENDED"
+            "value": "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMENDADO"
+            "value": "900 minutos de transcripción en cualquier periodo móvil de 30 días; el modo Local no tiene contador"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMMANDÉ"
+            "value": "900 minutes de transcription sur toute période glissante de 30 jours ; le mode Local est illimité"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "CONSIGLIATO"
+            "value": "900 minuti di trascrizione in qualsiasi periodo mobile di 30 giorni; la modalità Locale non è conteggiata"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "おすすめ"
+            "value": "任意の連続する30日間で文字起こしは900分まで。ローカルモードは無制限"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "추천"
+            "value": "연속 30일 기준 900분 필사; 로컬 모드는 사용량 제한 없음"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "AANBEVOLEN"
+            "value": "900 transcriptieminuten in elke voortschrijdende periode van 30 dagen; lokale modus is onbeperkt"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "POLECANE"
+            "value": "900 minut transkrypcji w dowolnym kroczącym okresie 30 dni; tryb lokalny jest bez limitu"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "RECOMENDADO"
+            "value": "900 minutos de transcrição em qualquer período móvel de 30 dias; o modo Local não tem limite"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "РЕКОМЕНДУЕТСЯ"
+            "value": "900 минут расшифровки за любой скользящий 30-дневный период; локальный режим без лимита"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "РЕКОМЕНДОВАНО"
+            "value": "900 хвилин розшифрування за будь-який ковзний 30-денний період; локальний режим без ліміту"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "推荐"
+            "value": "任意滚动 30 天内可转录 900 分钟；本地模式不计量"
+          }
+        }
+      }
+    },
+    "wizard.plan.cloud.eyebrow": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KEIN DOWNLOAD EINES TRANSKRIPTIONSMODELLS"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO TRANSCRIPTION-MODEL DOWNLOAD"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIN DESCARGA DE MODELO DE TRANSCRIPCIÓN"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AUCUN TÉLÉCHARGEMENT DE MODÈLE DE TRANSCRIPTION"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NESSUN DOWNLOAD DEL MODELLO DI TRASCRIZIONE"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字起こしモデルのダウンロード不要"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "필사 모델 다운로드 없음"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GEEN DOWNLOAD VAN EEN TRANSCRIPTIEMODEL"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BEZ POBIERANIA MODELU TRANSKRYPCJI"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SEM TRANSFERÊNCIA DO MODELO DE TRANSCRIÇÃO"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "БЕЗ ЗАГРУЗКИ МОДЕЛИ РАСШИФРОВКИ"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "БЕЗ ЗАВАНТАЖЕННЯ МОДЕЛІ РОЗШИФРУВАННЯ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需下载转录模型"
           }
         }
       }
@@ -19276,79 +20670,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kein Modell-Download oder -Vorbereitung"
+            "value": "Kein Download oder Vorbereiten eines Transkriptionsmodells"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No model download or preparation"
+            "value": "No transcription-model download or preparation"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sin descarga ni preparación de modelo"
+            "value": "Sin descargar ni preparar un modelo de transcripción"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun téléchargement ou préparation de modèle"
+            "value": "Aucun téléchargement ni préparation de modèle de transcription"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nessun download o preparazione del modello"
+            "value": "Nessun download o preparazione del modello di trascrizione"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "モデルのダウンロードや準備が不要"
+            "value": "文字起こしモデルのダウンロードや準備が不要"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "모델 다운로드나 준비 불필요"
+            "value": "필사 모델 다운로드나 준비 불필요"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geen modeldownload of -voorbereiding"
+            "value": "Geen download of voorbereiding van een transcriptiemodel"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bez pobierania ani przygotowania modelu"
+            "value": "Bez pobierania ani przygotowania modelu transkrypcji"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sem transferência nem preparação de modelo"
+            "value": "Sem transferência nem preparação do modelo de transcrição"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Без загрузки и подготовки модели"
+            "value": "Без загрузки и подготовки модели расшифровки"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Без завантаження і підготовки моделі"
+            "value": "Без завантаження і підготовки моделі розшифрування"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无需下载或准备模型"
+            "value": "无需下载或准备转录模型"
           }
         }
       }
@@ -19522,79 +20916,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / Monat"
+            "value": "12 PLN / Monat (etwa 3 US-Dollar)"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ $3 / month"
+            "value": "12 PLN / month (about US$3)"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / mes"
+            "value": "12 PLN / mes (unos 3 USD)"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / mois"
+            "value": "12 PLN / mois (environ 3 USD)"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / mese"
+            "value": "12 PLN / mese (circa 3 USD)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額約3ドル"
+            "value": "月額12 PLN（約3米ドル）"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 약 3달러"
+            "value": "월 12 PLN(약 3 USD)"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ $3 / maand"
+            "value": "12 PLN / maand (ongeveer US$ 3)"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 USD / miesiąc"
+            "value": "12 PLN / miesiąc (około 3 USD)"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / mês"
+            "value": "12 PLN / mês (cerca de 3 USD)"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / месяц"
+            "value": "12 PLN / месяц (около 3 долларов США)"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "≈ 3 $ / місяць"
+            "value": "12 PLN / місяць (близько 3 доларів США)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "约 3 美元 / 月"
+            "value": "12 PLN / 月（约 3 美元）"
           }
         }
       }
@@ -20506,79 +21900,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Du kannst in jede App diktieren. Einstellungen sind jederzeit über die Menüleiste verfügbar."
+            "value": "Du kannst in vielen Mac-Apps diktieren. Ist kein sicheres Einfügen möglich, bleibt dein Text in der Zwischenablage. Die Einstellungen sind jederzeit über die Menüleiste verfügbar."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can dictate into any app. Settings are always available from the menu bar."
+            "value": "You can dictate in many Mac apps. If safe insertion is unavailable, your text stays on the clipboard. Settings are always available from the menu bar."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Puedes dictar en cualquier app. Los ajustes siempre están disponibles desde la barra de menús."
+            "value": "Puedes dictar en muchas apps del Mac. Si no es posible insertar el texto de forma segura, se queda en el portapapeles. Los ajustes siempre están disponibles desde la barra de menús."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vous pouvez dicter dans n'importe quelle app. Les réglages sont toujours accessibles depuis la barre de menus."
+            "value": "Vous pouvez dicter dans de nombreuses apps Mac. Si l’insertion sécurisée est indisponible, votre texte reste dans le presse-papiers. Les réglages sont toujours accessibles depuis la barre des menus."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Puoi dettare in qualsiasi app. Le impostazioni sono sempre disponibili dalla barra dei menu."
+            "value": "Puoi dettare in molte app per Mac. Se l’inserimento sicuro non è disponibile, il testo resta negli appunti. Le impostazioni sono sempre disponibili dalla barra dei menu."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どのアプリでも口述筆記できます。設定はいつでもメニューバーから利用できます。"
+            "value": "多くのMacアプリで口述筆記できます。安全に挿入できない場合、テキストはクリップボードに残ります。設定はいつでもメニューバーから開けます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "어떤 앱에서든 받아쓰기를 할 수 있습니다. 설정은 언제든 메뉴 막대에서 이용할 수 있습니다."
+            "value": "여러 Mac 앱에서 받아쓰기를 할 수 있습니다. 안전하게 삽입할 수 없으면 텍스트가 클립보드에 남습니다. 설정은 언제든 메뉴 막대에서 열 수 있습니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Je kunt in elke app dicteren. Instellingen zijn altijd beschikbaar via de menubalk."
+            "value": "Je kunt in veel Mac-apps dicteren. Als veilig invoegen niet beschikbaar is, blijft je tekst op het klembord staan. Instellingen zijn altijd beschikbaar via de menubalk."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Możesz dyktować w dowolnej aplikacji. Ustawienia są zawsze dostępne z paska menu."
+            "value": "Możesz dyktować w wielu aplikacjach na Macu. Jeśli bezpieczne wstawienie tekstu nie jest możliwe, pozostaje on w schowku. Ustawienia są zawsze dostępne z paska menu."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Podes ditar em qualquer app. As definições estão sempre disponíveis a partir da barra de menus."
+            "value": "Podes ditar em muitas apps no Mac. Se não for possível inserir o texto em segurança, este fica na área de transferência. As definições estão sempre disponíveis na barra de menus."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вы можете диктовать в любое приложение. Настройки всегда доступны из строки меню."
+            "value": "Вы можете диктовать во многих приложениях на Mac. Если безопасная вставка недоступна, текст останется в буфере обмена. Настройки всегда доступны из строки меню."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ви можете диктувати в будь-який застосунок. Налаштування завжди доступні з рядка меню."
+            "value": "Ви можете диктувати в багатьох програмах на Mac. Якщо безпечне вставлення недоступне, текст залишиться в буфері обміну. Налаштування завжди доступні з рядка меню."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "你可以在任意应用中听写。设置随时可以从菜单栏打开。"
+            "value": "你可以在许多 Mac 应用中听写。如果无法安全插入，文本会保留在剪贴板中。设置随时可以从菜单栏打开。"
           }
         }
       }
@@ -20916,79 +22310,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Etwa 3 $/Monat · Transkription und Bearbeitung inklusive"
+            "value": "12 PLN/Monat (etwa 3 US-Dollar) · Transkription und Polishing enthalten · kein Download eines Transkriptionsmodells"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About $3/month · transcription and Polishing included"
+            "value": "12 PLN/month (about US$3) · transcription and Polishing included · no transcription-model download"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unos 3 $/mes · transcripción y edición incluidas"
+            "value": "12 PLN/mes (unos 3 USD) · transcripción y Polishing incluidos · sin descargar un modelo de transcripción"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Environ 3 $/mois · transcription et édition incluses"
+            "value": "12 PLN/mois (environ 3 USD) · transcription et Polishing inclus · aucun téléchargement de modèle de transcription"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Circa 3 $/mese · trascrizione ed editing inclusi"
+            "value": "12 PLN/mese (circa 3 USD) · trascrizione e Polishing inclusi · nessun download del modello di trascrizione"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額約3ドル · 文字起こしとクリーンアップ込み"
+            "value": "月額12 PLN（約3米ドル）· 文字起こしとPolishing込み · 文字起こしモデルのダウンロード不要"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 약 3달러 · 필사와 정리 포함"
+            "value": "월 12 PLN(약 3 USD) · 필사와 Polishing 포함 · 필사 모델 다운로드 없음"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ongeveer $3/maand · transcriptie en opschonen inbegrepen"
+            "value": "12 PLN/maand (ongeveer US$ 3) · transcriptie en Polishing inbegrepen · geen download van een transcriptiemodel"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Około 3 USD/miesiąc · transkrypcja i Korekta tekstu w cenie"
+            "value": "12 PLN/miesiąc (około 3 USD) · transkrypcja i Polishing wliczone · bez pobierania modelu transkrypcji"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cerca de 3 $/mês · transcrição e edição incluídas"
+            "value": "12 PLN/mês (cerca de 3 USD) · transcrição e Polishing incluídos · sem transferência do modelo de transcrição"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Около 3 $/месяц · расшифровка и редактирование включены"
+            "value": "12 PLN/месяц (около 3 долларов США) · расшифровка и Polishing включены · без загрузки модели расшифровки"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приблизно 3 $/місяць · розшифровка і редагування включені"
+            "value": "12 PLN/місяць (близько 3 доларів США) · розшифрування і Polishing включені · без завантаження моделі розшифрування"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "约 3 美元/月 · 包含转录与清理功能"
+            "value": "12 PLN/月（约 3 美元）· 包含转录与 Polishing · 无需下载转录模型"
           }
         }
       }
@@ -21982,79 +23376,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Starte ohne Modell-Download mit Plainsay Cloud, oder behalte Spracherkennung und aufgenommenes Audio auf diesem Mac."
+            "value": "Mit Local bleiben Spracherkennung und aufgenommenes Audio kostenlos auf diesem Mac. Cloud kommt ohne Download eines Transkriptionsmodells aus. Im nächsten Schritt richtest du deine Auswahl ein."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start without a model download with Plainsay Cloud, or keep speech recognition and recorded audio on this Mac."
+            "value": "Local keeps speech recognition and recorded audio on this Mac for free. Cloud avoids a transcription-model download. The next step configures whichever you pick."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Empieza sin descargar ningún modelo con Plainsay Cloud, o mantén el reconocimiento de voz y el audio grabado en este Mac."
+            "value": "Local mantiene gratis en este Mac el reconocimiento de voz y el audio grabado. Cloud evita descargar un modelo de transcripción. El siguiente paso configura la opción que elijas."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commencez sans téléchargement de modèle avec Plainsay Cloud, ou gardez la reconnaissance vocale et l'audio enregistré sur ce Mac."
+            "value": "Local conserve gratuitement sur ce Mac la reconnaissance vocale et l’audio enregistré. Cloud évite le téléchargement d’un modèle de transcription. L’étape suivante configure votre choix."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inizia senza scaricare alcun modello con Plainsay Cloud, oppure mantieni il riconoscimento vocale e l'audio registrato su questo Mac."
+            "value": "Local mantiene gratuitamente su questo Mac il riconoscimento vocale e l’audio registrato. Cloud evita il download di un modello di trascrizione. Il prossimo passaggio configura l’opzione scelta."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay Cloudならモデルのダウンロードなしで始められます。あるいは音声認識と録音をこのMac上に留めることもできます。"
+            "value": "Localなら音声認識と録音音声を無料でこのMac上に保持します。Cloudなら文字起こしモデルのダウンロードが不要です。次のステップで選んだ方を設定します。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay Cloud로 모델 다운로드 없이 시작하거나, 음성 인식과 녹음을 이 Mac에 유지할 수 있습니다."
+            "value": "Local은 음성 인식과 녹음 오디오를 이 Mac에 무료로 보관합니다. Cloud는 필사 모델을 다운로드하지 않아도 됩니다. 다음 단계에서 선택한 방식을 구성합니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Begin zonder modeldownload met Plainsay Cloud, of houd spraakherkenning en opgenomen audio op deze Mac."
+            "value": "Met Local blijven spraakherkenning en opgenomen audio gratis op deze Mac. Met Cloud hoef je geen transcriptiemodel te downloaden. In de volgende stap stel je je keuze in."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zacznij bez pobierania modelu dzięki Plainsay Cloud albo zachowaj rozpoznawanie mowy i nagrane audio na tym Macu."
+            "value": "Local bezpłatnie zachowuje rozpoznawanie mowy i nagrane audio na tym Macu. Cloud nie wymaga pobierania modelu transkrypcji. Następny krok skonfiguruje wybraną opcję."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Começa sem transferir qualquer modelo com o Plainsay Cloud, ou mantém o reconhecimento de voz e o áudio gravado neste Mac."
+            "value": "O modo Local mantém gratuitamente neste Mac o reconhecimento de voz e o áudio gravado. O Cloud evita a transferência de um modelo de transcrição. O passo seguinte configura a opção que escolheres."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Начните без загрузки модели с Plainsay Cloud, либо оставьте распознавание речи и записанное аудио на этом Mac."
+            "value": "В режиме Local распознавание речи и записанное аудио бесплатно остаются на этом Mac. В Cloud не нужно загружать модель расшифровки. Следующий шаг настроит выбранный вариант."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Почніть без завантаження моделі з Plainsay Cloud, або залиште розпізнавання мовлення й записане аудіо на цьому Mac."
+            "value": "У режимі Local розпізнавання мовлення й записане аудіо безкоштовно залишаються на цьому Mac. У Cloud не потрібно завантажувати модель розшифрування. Наступний крок налаштує обраний варіант."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择 Plainsay Cloud，无需下载模型即可开始；或者将语音识别和录制的音频保留在这台 Mac 上。"
+            "value": "Local 可免费将语音识别和录制的音频保留在这台 Mac 上。Cloud 无需下载转录模型。下一步会配置你选择的选项。"
           }
         }
       }
@@ -22802,79 +24196,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wenn du oft dort diktierst, wo andere Leute sprechen, kann Plainsay deine Stimme lernen und alle anderen vor der Transkription herausfiltern."
+            "value": "Dafür wird ein separates lokales Stimmenfilter-Modell geladen. Der Filter arbeitet nach bestem Bemühen; ist er nicht verfügbar oder schlägt er fehl, läuft das Diktat mit ungefiltertem Audio weiter. Cloud- oder BYOK-Modi können dieses Audio dann an den gewählten Dienst senden."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "If you often dictate somewhere with other people talking, Plainsay can learn your voice and filter everyone else out before transcription."
+            "value": "This downloads a separate local voice-filter model. Filtering is best effort; if it is unavailable or fails, dictation continues with unfiltered audio. Cloud or BYOK modes may then send that audio to the selected service."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si sueles dictar en un sitio con otras personas hablando, Plainsay puede aprender tu voz y filtrar a todos los demás antes de la transcripción."
+            "value": "Esto descarga otro modelo local para filtrar voces. El filtro hace lo posible; si no está disponible o falla, el dictado continúa con el audio sin filtrar. Los modos Cloud o BYOK pueden enviar entonces ese audio al servicio elegido."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Si vous dictez souvent dans un endroit où d'autres personnes parlent, Plainsay peut apprendre votre voix et filtrer tout le reste avant la transcription."
+            "value": "Cela télécharge un modèle local distinct pour filtrer les voix. Le filtrage fait de son mieux ; s’il est indisponible ou échoue, la dictée continue avec l’audio non filtré. Les modes Cloud ou BYOK peuvent alors envoyer cet audio au service choisi."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se spesso detti in un posto con altre persone che parlano, Plainsay può imparare la tua voce e filtrare tutti gli altri prima della trascrizione."
+            "value": "Questo scarica un modello locale separato per filtrare le voci. Il filtro opera in modalità best effort; se non è disponibile o non riesce, la dettatura continua con l’audio non filtrato. Le modalità Cloud o BYOK possono quindi inviarlo al servizio scelto."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "他の人が話している場所でよく口述筆記をするなら、Plainsayにあなたの声を学習させて、文字起こしの前に他の声をすべて除外できます。"
+            "value": "別のローカル音声フィルターモデルをダウンロードします。フィルタリングはベストエフォートです。利用できない、または失敗した場合は未フィルタリング音声で口述筆記を続行し、CloudやBYOKモードではその音声が選択したサービスへ送信されることがあります。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "다른 사람들이 이야기하는 곳에서 자주 받아쓰기를 한다면, Plainsay가 당신의 목소리를 학습하여 필사 전에 나머지 목소리를 모두 걸러낼 수 있습니다."
+            "value": "별도의 로컬 음성 필터 모델을 다운로드합니다. 필터링은 가능한 범위에서 작동하며, 사용할 수 없거나 실패하면 필터링되지 않은 오디오로 받아쓰기가 계속됩니다. Cloud 또는 BYOK 모드에서는 해당 오디오가 선택한 서비스로 전송될 수 있습니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Als je vaak dicteert op plekken waar andere mensen praten, kan Plainsay je stem leren herkennen en iedereen anders eruit filteren vóór transcriptie."
+            "value": "Hiervoor wordt een apart lokaal stemfiltermodel gedownload. Filtering werkt naar beste vermogen; als het niet beschikbaar is of mislukt, gaat dicteren door met ongefilterde audio. Cloud- of BYOK-modussen kunnen die audio dan naar de gekozen dienst sturen."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jeśli często dyktujesz tam, gdzie mówią inne osoby, Plainsay może nauczyć się Twojego głosu i odfiltrować resztę przed transkrypcją."
+            "value": "Ta opcja pobiera oddzielny lokalny model filtrowania głosu. Filtrowanie działa w miarę możliwości; jeśli jest niedostępne albo zawiedzie, dyktowanie trwa dalej z nieprzefiltrowanym audio. Tryb Cloud lub BYOK może wtedy przesłać je do wybranej usługi."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Se costumas ditar num sítio com outras pessoas a falar, o Plainsay pode aprender a tua voz e filtrar todas as outras antes da transcrição."
+            "value": "Esta opção transfere um modelo local separado para filtrar vozes. O filtro funciona em modo de melhor esforço; se não estiver disponível ou falhar, o ditado continua com áudio não filtrado. Os modos Cloud ou BYOK podem então enviar esse áudio para o serviço escolhido."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Если вы часто диктуете там, где рядом разговаривают другие люди, Plainsay может научиться распознавать ваш голос и отфильтровывать остальные перед расшифровкой."
+            "value": "Будет загружена отдельная локальная модель фильтрации голоса. Фильтр работает по возможности; если он недоступен или не сработал, диктовка продолжится с нефильтрованным аудио. В режимах Cloud или BYOK это аудио затем может быть отправлено выбранному сервису."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Якщо ви часто диктуєте там, де поруч розмовляють інші люди, Plainsay може навчитися розпізнавати ваш голос і відфільтровувати решту перед розшифровкою."
+            "value": "Буде завантажено окрему локальну модель фільтрування голосу. Фільтр працює за можливості; якщо він недоступний або не спрацював, диктування продовжиться з нефільтрованим аудіо. У режимах Cloud або BYOK це аудіо може бути надіслане вибраному сервісу."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如果你经常在有其他人说话的环境中听写，Plainsay 可以学习你的声音，并在转录前过滤掉其他所有人的声音。"
+            "value": "此选项会下载一个独立的本地声音过滤模型。过滤功能会尽力运行；如果不可用或失败，听写会继续使用未过滤的音频。Cloud 或 BYOK 模式随后可能将该音频发送到所选服务。"
           }
         }
       }
@@ -22884,79 +24278,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Andere Stimmen ignorieren (optional)"
+            "value": "Auf deine Stimme konzentrieren (optional, nach bestem Bemühen)"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignore other voices (optional)"
+            "value": "Focus on your voice (optional, best effort)"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignorar otras voces (opcional)"
+            "value": "Centrarse en tu voz (opcional, en la medida de lo posible)"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignorer les autres voix (facultatif)"
+            "value": "Se concentrer sur votre voix (facultatif, au mieux)"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignora le altre voci (opzionale)"
+            "value": "Concentrati sulla tua voce (opzionale, best effort)"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "他の声を無視する（任意）"
+            "value": "自分の声に集中する（任意、ベストエフォート）"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "다른 목소리 무시 (선택 사항)"
+            "value": "내 목소리에 집중(선택 사항, 최대한)"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Andere stemmen negeren (optioneel)"
+            "value": "Op je stem focussen (optioneel, best effort)"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignoruj inne głosy (opcjonalne)"
+            "value": "Skupienie na Twoim głosie (opcjonalne, w miarę możliwości)"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ignorar outras vozes (opcional)"
+            "value": "Focar a tua voz (opcional, na medida do possível)"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Игнорировать другие голоса (необязательно)"
+            "value": "Сосредоточиться на вашем голосе (необязательно, по возможности)"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ігнорувати інші голоси (необов'язково)"
+            "value": "Зосередитися на вашому голосі (необов’язково, за можливості)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "忽略其他声音（可选）"
+            "value": "聚焦你的声音（可选，尽力而为）"
           }
         }
       }

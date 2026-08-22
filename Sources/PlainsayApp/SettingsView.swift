@@ -293,7 +293,12 @@ private struct SpeechSettings: View {
             } header: {
                 Text("Polishing")
             } footer: {
-                Text("Removes filler words and false starts, fixes punctuation, and keeps your wording. Turn it off to insert the raw transcript.")
+                Text(
+                    Localization.appString(
+                        "settings.polishingExplanation",
+                        fallback: "Asks the selected model to remove filler words and false starts while preserving meaning, tone, and language. Review important text, or turn Polishing off to insert the raw transcript."
+                    )
+                )
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -304,11 +309,7 @@ private struct SpeechSettings: View {
                         ForEach(CleanupProvider.allCases) { provider in
                             Text(
                                 provider == .plainsay
-                                    ? Localization.appFormat(
-                                        "settings.cleanupProvider.plainsayOption",
-                                        fallback: "%@ — easiest, no limits, $3/mo",
-                                        provider.displayName
-                                    )
+                                    ? "\(provider.displayName) — \(Localization.appString("cleanup.plainsay.summary", fallback: "included with Cloud"))"
                                     : provider.displayName
                             )
                             .tag(provider)
@@ -317,9 +318,26 @@ private struct SpeechSettings: View {
 
                     if settings.cleanupProvider == .plainsay {
                         VStack(alignment: .leading, spacing: 6) {
-                            Label("Nothing to paste in — sign in once and it just works", systemImage: "checkmark.circle")
-                            Label("No usage cap — Polishing itself is never rate-limited", systemImage: "checkmark.circle")
-                            Label("Works with any transcription source, including fully on-device", systemImage: "checkmark.circle")
+                            Label(
+                                Localization.appString(
+                                    "cleanup.plainsay.noKey", fallback: "No provider key to paste — sign in once"
+                                ),
+                                systemImage: "checkmark.circle"
+                            )
+                            Label(
+                                Localization.appString(
+                                    "cleanup.plainsay.subscription",
+                                    fallback: "Included with an active Plainsay Cloud subscription"
+                                ),
+                                systemImage: "checkmark.circle"
+                            )
+                            Label(
+                                Localization.appString(
+                                    "cleanup.plainsay.anySource",
+                                    fallback: "Works with any transcription source, including fully on-device"
+                                ),
+                                systemImage: "checkmark.circle"
+                            )
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -434,12 +452,12 @@ private struct SpeechSettings: View {
         case .remote:
             Localization.appString(
                 "settings.sourceExplanation.remote",
-                fallback: "Audio is uploaded to a service you hold the key for. No model download, billed per minute."
+                fallback: "Audio is uploaded to a service you hold the key for. No transcription-model download; provider pricing applies."
             )
         case .cloud:
             Localization.appString(
                 "settings.sourceExplanation.cloud",
-                fallback: "About $3/month: transcription and Polishing are included, with no model download or keys to manage. Audio is uploaded to Plainsay Cloud."
+                fallback: "12 PLN/month (about US$3): transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
             )
         }
     }

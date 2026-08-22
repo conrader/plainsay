@@ -27,6 +27,11 @@ public enum TranscriptionSource: String, Codable, CaseIterable, Sendable, Identi
 
     /// True when choosing this uploads recorded audio.
     public var leavesTheMachine: Bool { self != .onDevice }
+
+    /// Plainsay Cloud is the one speech plan whose subscription also supplies
+    /// the Polishing pass. Local and BYOK speech keep editing as an independent
+    /// choice, including the option to turn it off entirely.
+    public var bundlesPolishing: Bool { self == .cloud }
 }
 
 /// Cloud speech-to-text providers, all speaking the OpenAI dialect.

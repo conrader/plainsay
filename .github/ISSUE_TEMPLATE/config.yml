@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and early ideas
+    url: https://github.com/conrader/plainsay/discussions
+    about: Use Discussions when the problem or solution is not yet clear.
+  - name: Security report
+    url: https://github.com/conrader/plainsay/security/policy
+    about: Report vulnerabilities privately, never in a public issue.

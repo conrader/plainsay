@@ -65,17 +65,44 @@ struct PlainsayCloudTests {
         #expect(try await makeClient().refreshAccount().isActive)
     }
 
-    @Test("Signing out drops the token")
+    @Test("Signing out revokes the server session before dropping the token")
     func signOutClears() async throws {
         MockURLProtocol.respond(host: cloudHost, json: #"{"status":"active","usage":{"usedSeconds":0,"limitSeconds":1}}"#)
+        MockURLProtocol.reset(host: cloudHost)
 
         let client = makeClient()
         _ = try await client.refreshAccount()
         #expect(client.account != nil)
 
-        client.signOut()
+        try await client.signOut()
 
         #expect(client.account == nil)
+        #expect(!client.isSignedIn)
+        let request = try #require(MockURLProtocol.lastRequest(for: cloudHost))
+        #expect(request.httpMethod == "POST")
+        #expect(request.url?.path == "/v1/auth/signout")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer psk_test")
+    }
+
+    @Test("A failed revocation keeps the token so sign-out can be retried")
+    func failedSignOutCanRetry() async {
+        MockURLProtocol.respond(host: cloudHost, status: 503, json: #"{"error":"temporarily unavailable"}"#)
+
+        let client = makeClient()
+        await #expect(throws: CloudError.http(status: 503, message: "temporarily unavailable")) {
+            try await client.signOut()
+        }
+
+        #expect(client.isSignedIn)
+    }
+
+    @Test("An already-invalid server token is cleared locally")
+    func invalidTokenClears() async throws {
+        MockURLProtocol.respond(host: cloudHost, status: 401, json: #"{"error":"Unknown or revoked token"}"#)
+
+        let client = makeClient()
+        try await client.signOut()
+
         #expect(!client.isSignedIn)
     }
 }
@@ -184,14 +211,22 @@ struct CloudTranscriptionEngineTests {
         #expect(request.value(forHTTPHeaderField: "Content-Type") == AudioUploadFormat.m4a.mimeType)
 
         let url = try #require(request.url)
-        let query = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
-        #expect(query.first { $0.name == "language" }?.value == "pl")
-        #expect(query.first { $0.name == "prompt" }?.value == "Plainsay")
+        #expect(url.path == "/v1/transcribe")
+        #expect(url.query == nil)
+
+        let encoded = try #require(request.value(forHTTPHeaderField: "X-Plainsay-Metadata"))
+        var base64 = encoded.replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
+        let metadataData = try #require(Data(base64Encoded: base64))
+        let metadata = try #require(try JSONSerialization.jsonObject(with: metadataData) as? [String: Any])
+        #expect(metadata["language"] as? String == "pl")
+        #expect(metadata["prompt"] as? String == "Plainsay")
         // Duration comes from the sample count the client actually recorded,
         // not from re-parsing the encoded upload — the server trusts this
         // value for both the fair-use cap and its own usage accounting.
-        let seconds = try #require(query.first { $0.name == "durationSeconds" }?.value).flatMap(Double.init)
-        #expect(abs(seconds! - 2.0) < 0.01)
+        let seconds = try #require(metadata["durationSeconds"] as? Double)
+        #expect(abs(seconds - 2.0) < 0.01)
     }
 
     @Test("A 402 reports the subscription as the problem")

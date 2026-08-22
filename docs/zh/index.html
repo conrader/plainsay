@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — 面向 Mac 的本地设备端语音听写</title>
-<meta name="description" content="Plainsay 是一款面向 Mac 的免费、MIT 许可听写应用。转录在设备本地通过 Whisper 或 Parakeet 完成——绝不经过云端，也绝不需要登录。可选的 LLM 清理步骤使用你自己掌控的密钥。无需订阅。无需账户。">
+<meta name="description" content="Plainsay 是一款适用于 Mac 的免费语音听写应用，采用 MIT 许可证开放源代码。本地模式使用 Whisper 或 Parakeet，完全在你的 Mac 上将语音转为文字，不会把录音发送到外部，也无需账户或订阅。支持 macOS 14 及更高版本，可将说出的内容输入常用应用。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay — 面向 Mac 的本地设备端语音听写">
+<meta property="og:description" content="Plainsay 是一款适用于 Mac 的免费语音听写应用，采用 MIT 许可证开放源代码。本地模式使用 Whisper 或 Parakeet，完全在你的 Mac 上将语音转为文字，不会把录音发送到外部，也无需账户或订阅。支持 macOS 14 及更高版本，可将说出的内容输入常用应用。">
+<meta property="og:url" content="https://plainsay.app/zh/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/zh/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费、MIT 许可听写应用。转录在设备本地通过 Whisper 或 Parakeet 完成——绝不经过云端，也绝不需要登录。可选的 LLM 清理步骤使用你自己掌控的密钥。无需订阅。无需账户。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频，用于托管转录和文本润色，无需下载转录模型，每月 12 PLN（约 3 美元）。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -93,7 +102,11 @@
   nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
   nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
   nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 480px) { nav.top .links { gap: 14px; } }
+  @media (max-width: 620px) {
+    nav.top .links { gap: 12px; }
+    nav.top .links a:first-child { display: none; }
+    .lang-switch { max-width: 82px; }
+  }
 
   .lang-switch {
     -webkit-appearance: none; appearance: none;
@@ -236,12 +249,18 @@
   section.final .sub { margin: 0; font-size: 13px; color: var(--slate); }
 
   /* Footer */
-  footer { border-top: 1px solid var(--hairline); padding: 28px 0 44px; display: flex; align-items: center; gap: 10px; }
+  footer { border-top: 1px solid var(--hairline); padding: 28px 0 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   footer .text { font-size: 12px; color: var(--slate); }
   footer .spacer { flex: 1; }
-  footer .links { display: flex; gap: 18px; font-size: 12px; }
+  footer .links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 18px; font-size: 12px; }
   footer .links a { color: var(--slate); text-decoration: none; }
   footer .links a:hover { color: var(--bone); }
+  footer .imprint { flex: 0 0 100%; margin-top: 4px; color: var(--slate); font-size: 10.5px; line-height: 1.55; overflow-wrap: anywhere; }
+  @media (max-width: 620px) {
+    footer .spacer { display: none; }
+    footer .links { width: 100%; justify-content: flex-start; gap: 12px 18px; }
+    footer .imprint { margin-top: 0; font-size: 10px; line-height: 1.6; }
+  }
 </style>
 </head>
 <body>
@@ -262,7 +281,7 @@
 
     <header class="hero">
       <h1>按住一个键，说话，松开。</h1>
-      <p class="sub">干净的文字会输入到你正在使用的任何应用中。转录可以完全在你的 Mac 上运行——录制的音频完全不需要离开你的电脑。</p>
+      <p class="sub">在许多 Mac 应用中，文字会出现在光标处；如果无法安全插入，就会保留在剪贴板中。使用本地转录时，语音识别和录制音频都会留在你的 Mac 上。</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>开源</span>
         <span class="trust-badge"><span class="dot"></span>透明</span>
@@ -274,42 +293,28 @@
       </div>
     </header>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">开源、透明、安全</h2>
-      <p class="lede">在这里，信任不是一句口号——而是你可以亲自去读的东西。整个客户端都以 MIT 许可开源公开：处理流程、HUD、设置，全部都是。不是「开源核心」，也不是「现在开放、以后关闭」——你可以自由地 fork、修改，并无限期自行托管。</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
-          <p>整个听写客户端——转录、编辑、HUD、设置、设置助理。在设备端运行的 Plainsay 不会发起任何你未主动要求的网络请求：没有数据分析、没有遥测、没有偷偷回传。</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
-          <p>付费 Cloud 套餐的计费后端——它保存着支付凭证和服务商凭证，正因如此才需要保持独立和私密。你实际使用的听写体验本身是完全开放的。</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——逐行阅读源码</p>
-    </section>
-
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">实际界面</h2>
       <figure class="hud-figure">
         <img src="../assets/screenshots/hud-listening.svg" alt="HUD——就在你正在输入的地方" loading="lazy" width="420" height="140">
         <figcaption>HUD——就在你正在输入的地方</figcaption>
       </figure>
-      <div class="screens">
-        <figure>
-          <img src="../assets/screenshots/setup-speech.webp" alt="选择 Plainsay Cloud，或者完全留在本地" loading="lazy" width="896" height="960">
-          <figcaption>选择 Plainsay Cloud，或者完全留在本地</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/settings-general.webp" alt="13 种界面语言，切换立即生效" loading="lazy" width="960" height="910">
-          <figcaption>13 种界面语言，切换立即生效</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/setup-permissions.webp" alt="三项权限，每项只做一件明确的事" loading="lazy" width="900" height="960">
-          <figcaption>三项权限，每项只做一件明确的事</figcaption>
-        </figure>
+    </section>
+
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">开源、透明、安全</h2>
+      <p class="lede">在这里，信任不是一句口号：你可以亲自阅读代码。Plainsay Mac 客户端源码以 MIT 许可公开。每个已按 MIT 发布的版本都可以自由复刻、修改和自行构建；第三方组件和模型各有自己的许可证。</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
+          <p>Plainsay Mac 客户端源码包括转录和 Polishing 集成、HUD、设置及设置助理。第三方组件和模型保留各自的许可证。Mac 客户端不会发送分析或遥测数据。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
+          <p>付费 Cloud 套餐的后端通过 Stripe 管理订阅状态，保存服务提供商凭证，并记录付费服务所需的账户、订阅和用量元数据。Plainsay Mac 客户端源码开放；可选的 Cloud 服务不开放。</p>
+        </div>
       </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——查看 Mac 客户端源码</p>
     </section>
 
     <section id="how">
@@ -324,7 +329,7 @@
           <p>我们能把明天的站会挪到 10:30 吗？我早上有个牙医预约。</p>
         </div>
       </div>
-      <p class="compare-note">清理这一步会去掉口头禅和重新起头的话，修正标点，并保留你实际说的措辞——它不是重写。转录/编辑的提供方可以更换（Gemini、OpenRouter、OpenAI、Claude，或自定义端点），也可以完全关闭，一旦失败就会回退到原始转录文本，而不是让整次听写失败。</p>
+      <p class="compare-note">清理步骤会去掉口头禅和重新起头的话，并修正标点。Polishing 会收到保留措辞、含义、语气和语言的指示；重要文字请复核。供应商可以更换（Gemini、OpenRouter、OpenAI、Claude 或自定义端点），也可以完全关闭；处理失败时会回退到原始转录文本，而不会让整次听写失败。</p>
     </section>
 
     <section id="why">
@@ -336,13 +341,13 @@
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <h2 class="kicker" style="margin:0;">可靠性</h2>
-          <p class="headline">一次听写绝不会悄悄丢失。</p>
+          <p class="headline">录音完成后有明确的恢复路径。</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">编辑失败——没有密钥、没有网络、超时</span><p class="then">自动回退到原始转录文本，并在 HUD 中提示。</p></div>
+          <div class="failure"><span class="when">已配置的 Polishing 供应商处理失败</span><p class="then">自动回退到原始转录文本，并在 HUD 中提示。</p></div>
           <div class="failure"><span class="when">没有可粘贴的焦点位置</span><p class="then">文字会保留在剪贴板中，HUD 会提示按 ⌘V。</p></div>
-          <div class="failure"><span class="when">录音过程中崩溃或被强制退出</span><p class="then">音频会在转录前先暂存到磁盘，并在下次启动时恢复。</p></div>
-          <div class="failure"><span class="when">粘贴因其他原因失败</span><p class="then">听写内容早已写入本地历史记录——写入时间早于尝试插入之前。</p></div>
+          <div class="failure"><span class="when">录音完成后应用关闭</span><p class="then">Plainsay 会尝试在转录前暂存完成的音频。暂存成功后，可在下次启动时重试。</p></div>
+          <div class="failure"><span class="when">粘贴因其他原因失败</span><p class="then">Plainsay 会在尝试插入前将完成的转录加入本地历史记录。</p></div>
         </div>
       </div>
     </section>
@@ -350,21 +355,20 @@
     <section id="coming">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">即将推出</h2>
-        <p>完整的实时输入已经上线，作为实验性选项——设置 › 语音 › 实时输入（默认关闭）。它放弃了“先清理、再一次性插入”的保证，换来一种实时的感觉：粗糙的文字在你仍在说话时就直接出现，清理完成后再就地修正。</p>
         <p class="dim">此外：语言自动检测方面的持续工作，以及随着本地模型不断进步而调整的默认模型。</p>
       </div>
     </section>
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">三种使用方式</h2>
-      <p class="lede">Plainsay Cloud 是最简单的上手方式——无需下载模型，也无需任何配置。更愿意一切都留在 Mac 本地？本地版免费且功能完整，只是多一个设置步骤。</p>
+      <p class="lede">Plainsay Cloud 无需下载转录模型，也无需配置 API 密钥。更愿意一切都留在 Mac 本地？本地模式免费提供完整的设备端听写，不设分钟数或字数配额，也无需账号；托管转录和 Polishing 均为可选项。</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">大约两分钟即可开始听写。</p>
-      <p class="sub">首次运行时，设置助理会引导你完成一切。</p>
+      <p class="headline">通过引导式设置开始听写。</p>
+      <p class="sub">所需时间取决于所选转录模型的下载；Cloud 无需该模型。</p>
       <div style="margin-top:6px;">
         <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">下载 macOS 版</a>
       </div>
@@ -380,8 +384,11 @@
         <a href="/how-it-works/">How it works</a>
         <a href="https://github.com/conrader/plainsay">源代码</a>
         <a href="https://github.com/conrader/plainsay/releases/latest">发行版</a>
+        <a href="/privacy/" hreflang="en">Privacy (EN)</a>
+        <a href="/terms/" hreflang="en">Terms (EN)</a>
         <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>
       </div>
+      <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
     </footer>
 
   </div>
@@ -435,12 +442,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "开源", body: "MIT 许可，整个客户端公开——处理流程、HUD、设置的每一行代码都可查阅。这是一项永久承诺，而不是一时的状态。你可以准确读到你的声音发生了什么。" },
-    { icon: "lock.shield.fill", title: "默认透明", body: "Whisper 或 NVIDIA Parakeet 通过 Core ML 在本地运行。录制的音频完全不需要离开 Mac——这不是一个可勾选的选项，而是默认行为。没有隐藏的遥测，没有偷偷回传数据。" },
-    { icon: "clock.arrow.circlepath", title: "安全：绝不会悄悄丢失", body: "每一次听写在尝试插入之前就已保存到本地历史记录。失败是可恢复的状态，而不是消失的文字。" },
-    { icon: "gearshape.2", title: "不绑定单一供应商", body: "五种转录方式，五种编辑方式——任意组合，包括使用你自己的 API 密钥和端点。没有任何部分被硬编码绑定到某一家 AI 供应商。" },
-    { icon: "waveform.badge.mic", title: "人声过滤", body: "只需注册一次你的声音；房间里的其他说话者会在本地被过滤掉，甚至在转录开始之前就已完成。" },
-    { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐大约每月 3 美元。本地版免费、功能完整、无需账号——是同一款产品，而不是阉割版。" }
+    { icon: "text.quote", title: "开源", body: "Plainsay Mac 客户端源码以 MIT 许可公开。每个已按 MIT 发布的版本都可以自由复刻和修改；第三方组件和模型各有自己的许可证。" },
+    { icon: "lock.shield.fill", title: "默认透明", body: "Mac 客户端不会发送分析或遥测数据。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。" },
+    { icon: "clock.arrow.circlepath", title: "可恢复的备用路径", body: "Polishing 失败时，Plainsay 会使用原始转录文本。没有安全的粘贴目标时，文字会留在剪贴板中；Plainsay 会在插入前将完成的转录加入本地历史记录。" },
+    { icon: "gearshape.2", title: "不绑定单一供应商", body: "转录和 Polishing 支持多种本地及托管引擎和供应商，包括你自己的 API 密钥和 OpenAI 兼容端点。" },
+    { icon: "waveform.badge.mic", title: "人声过滤", body: "声音注册是一项尽力而为的本地过滤。如果过滤不可用或失败，听写会在不过滤的情况下继续；Cloud 或 BYOK 转录随后可能收到未过滤的音频。" },
+    { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐每月 12 PLN（约 3 美元）。本地模式提供完整的设备端听写，不设分钟数或字数配额，也无需账号；托管转录和 Polishing 均为可选项。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -458,14 +465,14 @@
     {
       id: "local", eyebrow: "本地语音", title: "在这台 Mac 上", price: "免费",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper 或 Parakeet，设备端运行", "什么都不会离开 Mac", "无需账号，无需订阅"],
-      caveats: ["一次性模型下载，475–632 MB", "Plainsay 运行期间会持续占用内存"]
+      features: ["Whisper 或 Parakeet，设备端运行", "本地转录会将录制音频保留在这台 Mac 上", "无需账号，无需订阅"],
+      caveats: ["推荐多语言模型为 475–632 MB；纯英文模型从 150 MB 起", "Plainsay 运行期间会持续占用内存"]
     },
     {
-      id: "cloud", eyebrow: "推荐", title: "Plainsay Cloud", price: "约 3 美元 / 月",
+      id: "cloud", eyebrow: "无需下载转录模型", title: "Plainsay Cloud", price: "每月 12 PLN（约 3 美元）",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["无需下载模型，无需密钥", "包含转录与编辑"],
-      caveats: ["音频会被发送到 Plainsay Cloud 进行转录"]
+      features: ["无需下载转录模型或 API 密钥", "包含转录与编辑"],
+      caveats: ["音频会被发送到 Plainsay Cloud 进行转录", "任意连续 30 天内可转录 900 分钟；本地模式不计量"]
     },
     {
       id: "byok", eyebrow: "自带供应商", title: "使用你自己的密钥", price: "按供应商费率",
@@ -475,7 +482,7 @@
     }
   ];
   var plansEl = document.getElementById("plans");
-  var selectedPlan = "cloud";
+  var selectedPlan = "local";
 
   function renderPlans() {
     plansEl.innerHTML = "";

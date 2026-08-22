@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose a focused improvement to Plainsay
+title: "[Idea]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Start with the problem and workflow. A concrete use case is more useful than a long feature list.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      placeholder: When I dictate in …, I need … because …
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include any current workaround.
+  - type: dropdown
+    id: data_flow
+    attributes:
+      label: Would this change what leaves the Mac?
+      options:
+        - No
+        - Yes — audio
+        - Yes — transcript or other text
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and discussions first.
+          required: true

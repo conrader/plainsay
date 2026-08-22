@@ -26,6 +26,22 @@ let port: NWEndpoint.Port = {
     return 8098
 }()
 
+// A process crash can bypass the per-request `defer` below. Keep uploads in a
+// dedicated owner-only directory, remove any orphaned files before loading the
+// model, and then recreate the directory before accepting traffic.
+let audioTempDirectory = FileManager.default.temporaryDirectory
+    .appendingPathComponent("plainsay-mini-transcribe", isDirectory: true)
+try? FileManager.default.removeItem(at: audioTempDirectory)
+try FileManager.default.createDirectory(
+    at: audioTempDirectory,
+    withIntermediateDirectories: true,
+    attributes: [.posixPermissions: NSNumber(value: 0o700)]
+)
+try FileManager.default.setAttributes(
+    [.posixPermissions: NSNumber(value: 0o700)],
+    ofItemAtPath: audioTempDirectory.path
+)
+
 print("Loading Parakeet TDT 0.6B v3 (this compiles the CoreML model on first run)...")
 let parakeet = ParakeetEngine(language: nil)
 try await parakeet.prepare()
@@ -238,9 +254,13 @@ func transcribe(request: ParsedRequest) async throws -> String {
     // it ever touches a path — nothing that could smuggle a "/" or ".."
     // through `appendingPathComponent`.
     let ext = sanitizedExtension(from: field.filename)
-    let tempURL = FileManager.default.temporaryDirectory
+    let tempURL = audioTempDirectory
         .appendingPathComponent("mini-transcribe-\(UUID().uuidString)\(ext)")
     try field.data.write(to: tempURL)
+    try FileManager.default.setAttributes(
+        [.posixPermissions: NSNumber(value: 0o600)],
+        ofItemAtPath: tempURL.path
+    )
     defer { try? FileManager.default.removeItem(at: tempURL) }
 
     let samples = try loadSamples(fileURL: tempURL)

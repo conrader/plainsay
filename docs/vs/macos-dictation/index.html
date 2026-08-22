@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay vs macOS Dictation — when the built-in feature isn't enough</title>
-<meta name="description" content="macOS Dictation is free and built in. Plainsay is also free, adds a vocabulary, an optional cleanup pass, and a choice of Whisper or Parakeet — an honest look at when each makes sense.">
+<meta name="description" content="Apple Dictation is built in and free. See when Plainsay’s vocabulary, model choice, optional Polishing, and explicit Local mode make a second app useful.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay vs macOS Dictation">
+<meta property="og:description" content="An honest look at when Apple's built-in Dictation is enough and when local Whisper or Parakeet helps.">
+<meta property="og:url" content="https://plainsay.app/vs/macos-dictation/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/vs/macos-dictation/">
 <style>
@@ -74,12 +83,14 @@
   .final .req{font-size:12px;color:var(--slate)}
   .sources{font-size:12.5px;color:var(--slate);line-height:1.9}
   .sources a{color:var(--slate)}
-  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   footer .text{font-size:12px;color:var(--slate)}
   footer .spacer{flex:1}
-  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18px;font-size:12px}
   footer .links a{color:var(--slate);text-decoration:none}
   footer .links a:hover{color:var(--bone)}
+  footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
+  @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
 </style>
 </head>
 <body>
@@ -139,7 +150,7 @@
             </tr>
             <tr>
               <td class="axis">Where it runs</td>
-              <td class="plainsay col-plainsay"><b>Always on your Mac</b> — Whisper or Parakeet via Core ML, verifiable in the open-source code.</td>
+              <td class="plainsay col-plainsay"><b>Local mode:</b> Whisper or Parakeet on your Mac, verifiable in the open-source code. Optional Cloud is a separate choice.</td>
               <td class="wispr">Configurable — Apple's own docs say to check Keyboard settings for whether your voice is processed on-device or sent to Siri servers. Not an unconditional local guarantee.</td>
             </tr>
             <tr>
@@ -149,17 +160,17 @@
             </tr>
             <tr>
               <td class="axis">Cleanup pass</td>
-              <td class="plainsay col-plainsay">Optional — removes filler words, fixes phrasing, keeps your wording. Switchable to your own key or off.</td>
+              <td class="plainsay col-plainsay">Optional — asks the selected model to remove filler words and improve phrasing while preserving meaning. Review important text; switchable to your own key or off.</td>
               <td class="wispr">Automatic punctuation only (commas, periods, question marks) — no filler-word removal or rephrasing.</td>
             </tr>
             <tr>
               <td class="axis">Model choice</td>
-              <td class="plainsay col-plainsay"><b>Yes</b> — Whisper (language breadth) or Parakeet (fast, strong Polish + English).</td>
+              <td class="plainsay col-plainsay"><b>Yes</b> — Whisper (language breadth) or Parakeet (fast and multilingual, including Polish and English).</td>
               <td class="wispr">Single built-in engine, no alternative.</td>
             </tr>
             <tr>
               <td class="axis">Time limit</td>
-              <td class="plainsay col-plainsay">None.</td>
+              <td class="plainsay col-plainsay">Up to 10 minutes per dictation; Plainsay stops and transcribes at the limit.</td>
               <td class="wispr">None currently, per Apple's docs — "dictate text of any length without a timeout."</td>
             </tr>
             <tr>
@@ -176,13 +187,13 @@
     <section>
       <h2 class="big">"Processed on your device" is a setting, not a guarantee</h2>
       <p class="lede">This is the one place we want to be precise rather than score a point. Apple's own support documentation says you can check Keyboard settings to see whether your dictation is processed on-device or sent to Siri's servers — it's something you can configure and verify, not an unconditional promise either way.</p>
-      <p>Plainsay's transcription is always on your Mac, by design and in the open-source code — there's no setting to check because there's no cloud path for transcription to begin with. If knowing exactly where your voice goes without checking a settings pane matters to you, that's the practical difference.</p>
+      <p>Plainsay defaults to Local mode, where transcription runs on your Mac by design and in the open-source code. Its separate Cloud and bring-your-own-provider choices say that recorded audio is sent to the selected service. If knowing exactly where your voice goes matters to you, the active mode makes that path explicit.</p>
     </section>
 
     <section>
       <h2 class="big">A vocabulary, and a real cleanup pass</h2>
       <p class="lede">Apple's Dictation is solid raw transcription with light, automatic punctuation — genuinely good for short text. It doesn't appear to support a personal dictionary for names or jargon, and it doesn't rewrite what you said.</p>
-      <p>Plainsay adds two things on top of transcription: a vocabulary you control, so uncommon names and terms stop getting misheard, and an optional cleanup pass that removes filler words and false starts while keeping your own wording — not just punctuation, an actual second draft.</p>
+      <p>Plainsay adds two things on top of transcription: a vocabulary you control for uncommon names and terms, and an optional Polishing pass that asks the selected model to remove filler words and false starts while preserving meaning. It is an AI rewrite, so review important text.</p>
     </section>
 
     <section>
@@ -224,8 +235,11 @@
         <a href="/">Home</a>
         <a href="/why-on-device/">Why on-device</a>
         <a href="/how-it-works/">How it works</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
         <a href="https://github.com/conrader/plainsay">Source</a>
       </div>
+      <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
     </footer>
 
   </div>

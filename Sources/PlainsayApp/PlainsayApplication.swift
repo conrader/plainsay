@@ -62,7 +62,7 @@ private struct MenuBarIcon: View {
     private var symbol: String {
         switch coordinator.phase {
         case .recording: "waveform.circle.fill"
-        case .transcribing, .cleaning, .modelLoading: "waveform.circle"
+        case .recordingLimitReached, .transcribing, .cleaning, .modelLoading: "waveform.circle"
         case .error: "waveform.slash"
         case .insertedRaw, .savedToClipboard, .cancelled: canDictate ? "waveform" : unavailableSymbol
         case .idle:
@@ -84,6 +84,11 @@ private struct MenuBarIcon: View {
     private func accessibilityLabel(at now: Date) -> String {
         switch coordinator.phase {
         case .recording: Localization.appString("menu.a11y.listening", fallback: "Plainsay is listening")
+        case .recordingLimitReached:
+            Localization.appString(
+                "menu.a11y.recordingLimitReached",
+                fallback: "Plainsay reached the ten-minute recording limit and is processing the captured audio"
+            )
         case .transcribing: Localization.appString("menu.a11y.transcribing", fallback: "Plainsay is transcribing")
         case .cleaning: Localization.appString("menu.a11y.polishing", fallback: "Plainsay is polishing the transcript")
         case .modelLoading: modelAccessibilityLabel(at: now)
@@ -259,6 +264,11 @@ struct MenuContent: View {
             case nil:
                 return Localization.appString("menu.status.listening", fallback: "Listening — Esc cancels")
             }
+        case .recordingLimitReached:
+            return Localization.appString(
+                "menu.status.recordingLimitReached",
+                fallback: "10-minute limit reached — processing captured audio"
+            )
         case .transcribing:
             return Localization.appString("menu.status.transcribing", fallback: "Transcribing…")
         case .cleaning:
@@ -298,7 +308,6 @@ struct MenuContent: View {
                 "menu.status.lastNotPasted", fallback: "Last dictation wasn't pasted — it is in History"
             )
         }
-
         if settings.needsOnboarding, coordinator.modelState == .idle {
             return Localization.appString("menu.status.finishSetup", fallback: "Finish setup to start dictation")
         }

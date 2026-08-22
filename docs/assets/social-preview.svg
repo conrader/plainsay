@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Plainsay — local-first dictation for macOS</title>
+  <desc id="desc">A dark social card showing the Plainsay waveform, a Command key, and the words Hold a key. Speak. Release.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101216"/>
+      <stop offset="1" stop-color="#191d24"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="48%" r="47%">
+      <stop offset="0" stop-color="#6fd3c7" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#6fd3c7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" rx="28" fill="url(#bg)"/>
+  <rect width="1280" height="640" rx="28" fill="url(#glow)"/>
+  <path d="M0 518 C260 472 412 602 675 552 C887 512 1057 418 1280 458 V640 H0Z" fill="#6fd3c7" opacity=".035"/>
+
+  <g transform="translate(88 72)">
+    <rect x="0" y="13" width="6" height="18" rx="3" fill="#f2efe9"/>
+    <rect x="11" y="7" width="6" height="30" rx="3" fill="#f2efe9"/>
+    <rect x="22" y="0" width="6" height="44" rx="3" fill="#f2efe9"/>
+    <rect x="33" y="8" width="6" height="28" rx="3" fill="#f2efe9"/>
+    <rect x="44" y="14" width="6" height="16" rx="3" fill="#f2efe9"/>
+    <text x="68" y="34" fill="#f2efe9" font-family="-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="-.4">Plainsay</text>
+  </g>
+
+  <g transform="translate(88 192)" font-family="-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif">
+    <text fill="#f2efe9" font-size="66" font-weight="730" letter-spacing="-2.1">
+      <tspan x="0" y="0">Hold a key.</tspan>
+      <tspan x="0" y="76">Speak. Release.</tspan>
+    </text>
+    <text x="2" y="130" fill="#a8aebd" font-size="25" letter-spacing="-.2">Local-first, native dictation for macOS.</text>
+
+    <g transform="translate(0 175)" font-size="17" font-weight="650">
+      <g>
+        <rect width="153" height="42" rx="21" fill="#6fd3c7" fill-opacity=".10" stroke="#6fd3c7" stroke-opacity=".42"/>
+        <circle cx="22" cy="21" r="4" fill="#6fd3c7"/>
+        <text x="37" y="27" fill="#f2efe9">Free local mode</text>
+      </g>
+      <g transform="translate(167)">
+        <rect width="135" height="42" rx="21" fill="#6fd3c7" fill-opacity=".10" stroke="#6fd3c7" stroke-opacity=".42"/>
+        <circle cx="22" cy="21" r="4" fill="#6fd3c7"/>
+        <text x="37" y="27" fill="#f2efe9">MIT licensed</text>
+      </g>
+      <g transform="translate(316)">
+        <rect width="186" height="42" rx="21" fill="#6fd3c7" fill-opacity=".10" stroke="#6fd3c7" stroke-opacity=".42"/>
+        <circle cx="22" cy="21" r="4" fill="#6fd3c7"/>
+        <text x="37" y="27" fill="#f2efe9">Whisper + Parakeet</text>
+      </g>
+    </g>
+  </g>
+
+  <g transform="translate(778 84)" filter="url(#shadow)" font-family="-apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif">
+    <rect width="414" height="472" rx="28" fill="#1d2128" stroke="#ffffff" stroke-opacity=".14"/>
+    <text x="32" y="47" fill="#7a8194" font-size="13" font-weight="700" letter-spacing="2.4">LOCAL MODE</text>
+    <circle cx="370" cy="41" r="5" fill="#6fd3c7"/>
+
+    <g transform="translate(32 82)">
+      <rect width="102" height="102" rx="25" fill="#252a33" stroke="#ffffff" stroke-opacity=".15"/>
+      <text x="51" y="69" text-anchor="middle" fill="#f2efe9" font-size="47" font-weight="500">⌘</text>
+      <text x="127" y="43" fill="#f2efe9" font-size="23" font-weight="700">Right Command</text>
+      <text x="127" y="73" fill="#a8aebd" font-size="17">hold while you speak</text>
+    </g>
+
+    <g transform="translate(32 222)">
+      <rect width="350" height="76" rx="22" fill="#14161a" stroke="#ffffff" stroke-opacity=".16"/>
+      <g transform="translate(28 20)" fill="#f2efe9">
+        <rect x="0" y="12" width="4" height="12" rx="2" opacity=".50"/>
+        <rect x="8" y="7" width="4" height="22" rx="2" opacity=".65"/>
+        <rect x="16" y="2" width="4" height="32" rx="2" opacity=".8"/>
+        <rect x="24" y="8" width="4" height="20" rx="2"/>
+        <rect x="32" y="4" width="4" height="28" rx="2"/>
+        <rect x="40" y="11" width="4" height="14" rx="2"/>
+        <rect x="48" y="6" width="4" height="24" rx="2"/>
+        <rect x="56" y="1" width="4" height="34" rx="2"/>
+        <rect x="64" y="9" width="4" height="18" rx="2"/>
+        <rect x="72" y="4" width="4" height="28" rx="2"/>
+        <rect x="80" y="12" width="4" height="12" rx="2" opacity=".65"/>
+      </g>
+      <text x="137" y="45" fill="#f2efe9" font-size="13" font-weight="750" letter-spacing="3.4">LISTENING</text>
+      <text x="310" y="45" fill="#7a8194" font-size="14">0:14</text>
+    </g>
+
+    <path d="M207 325 V357" stroke="#6fd3c7" stroke-width="2" stroke-linecap="round" opacity=".65"/>
+    <path d="M199 349 L207 357 L215 349" fill="none" stroke="#6fd3c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".65"/>
+
+    <g transform="translate(32 374)">
+      <rect width="350" height="66" rx="18" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".12"/>
+      <text x="24" y="40" fill="#f2efe9" font-size="19">Text at your cursor or clipboard.</text>
+    </g>
+  </g>
+
+  <text x="90" y="574" fill="#7a8194" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">github.com/conrader/plainsay</text>
+  <rect x="88" y="596" width="1104" height="2" rx="1" fill="#6fd3c7" opacity=".28"/>
+</svg>

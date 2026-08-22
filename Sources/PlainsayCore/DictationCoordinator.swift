@@ -11,6 +11,10 @@ public final class DictationCoordinator {
     public enum Phase: Equatable, Sendable {
         case idle
         case recording
+        /// Capture reached its ten-minute in-memory boundary and stopped
+        /// automatically. The retained audio is moving through the normal
+        /// transcription pipeline while the HUD explains why recording ended.
+        case recordingLimitReached
         case transcribing
         case cleaning
         /// The hotkey was pressed while the selected speech model was still
@@ -28,7 +32,7 @@ public final class DictationCoordinator {
 
         public var isBusy: Bool {
             switch self {
-            case .recording, .transcribing, .cleaning: true
+            case .recording, .recordingLimitReached, .transcribing, .cleaning: true
             case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error: false
             }
         }
@@ -113,6 +117,9 @@ public final class DictationCoordinator {
     private let makeCleaner: @MainActor (PlainsaySettings) -> any TextCleaning
     /// Injectable so phase timing stays deterministic in lifecycle tests.
     private let modelLoadNow: @MainActor @Sendable () -> Date
+    /// Keeps the real macOS authorization gate in production while allowing
+    /// recorder fakes to exercise the pipeline without depending on TCC.
+    private let microphoneAuthorized: @MainActor @Sendable () -> Bool
     /// Tests pass a fake engine; production resolves one from settings.
     private let usesInjectedEngine: Bool
 
@@ -145,6 +152,7 @@ public final class DictationCoordinator {
         },
         makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = ProviderFactory.makeCleaner,
         modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
+        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { AudioRecorder.microphoneAuthorized() },
         usesInjectedEngine: Bool = false
     ) {
         self.settings = settings
@@ -156,6 +164,7 @@ public final class DictationCoordinator {
         self.makeEngine = makeEngine
         self.makeCleaner = makeCleaner
         self.modelLoadNow = modelLoadNow
+        self.microphoneAuthorized = microphoneAuthorized
         self.usesInjectedEngine = usesInjectedEngine
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
@@ -673,7 +682,7 @@ public final class DictationCoordinator {
         // Never trigger a system prompt from the hotkey: it steals focus and
         // guarantees that the sentence being spoken is lost. The setup and
         // Settings permission buttons own that interaction.
-        guard AudioRecorder.microphoneAuthorized() else {
+        guard microphoneAuthorized() else {
             flashError(
                 Localization.coreString("coordinator.needsMicrophone", fallback: "Plainsay needs microphone access")
             )
@@ -706,11 +715,20 @@ public final class DictationCoordinator {
         startLivePreview()
     }
 
-    private func endRecording() {
+    private func endRecording(reachedMaximumDuration: Bool = false) {
         stopMetering()
         stopLivePreview()
         let samples = recorder.stop()
         guard phase == .recording else { return }
+
+        if reachedMaximumDuration {
+            // The matching key-up (or the next toggle press) belongs to the
+            // recording that just ended. Resetting prevents it from stopping
+            // or starting an unrelated future dictation.
+            machine.reset()
+            phase = .recordingLimitReached
+            Log.pipeline.info("recording reached the 10-minute limit; processing captured audio")
+        }
 
         let duration = Double(samples.count) / whisperSampleRate
         guard duration >= Self.minimumDuration else {
@@ -724,19 +742,33 @@ public final class DictationCoordinator {
             return
         }
 
-        Task { await process(samples) }
+        Task { await process(samples, stoppedAtRecordingLimit: reachedMaximumDuration) }
+    }
+
+    /// Stops capture at the recorder's exact sample boundary. Internal rather
+    /// than private so the state transition can be tested synchronously,
+    /// without making a test wait ten real minutes or race a timer tick.
+    @discardableResult
+    func enforceRecordingLimitIfNeeded() -> Bool {
+        guard phase == .recording,
+              recorder.isRecording,
+              recorder.hasReachedMaximumDuration
+        else { return false }
+
+        endRecording(reachedMaximumDuration: true)
+        return true
     }
 
     // MARK: - Pipeline
 
-    private func process(_ samples: [Float]) async {
+    private func process(_ samples: [Float], stoppedAtRecordingLimit: Bool) async {
         defer { finishEngineWork() }
         // On disk before transcription, deleted after. Whatever survives a
         // crash here is a dictation that was never turned into text.
         let staged = pendingAudio.save(samples)
         defer { pendingAudio.discard(staged) }
 
-        await runPipeline(samples)
+        await runPipeline(samples, stoppedAtRecordingLimit: stoppedAtRecordingLimit)
     }
 
     private func beginEngineWork() {
@@ -760,7 +792,7 @@ public final class DictationCoordinator {
         }
     }
 
-    private func runPipeline(_ samples: [Float]) async {
+    private func runPipeline(_ samples: [Float], stoppedAtRecordingLimit: Bool) async {
         let duration = Double(samples.count) / whisperSampleRate
 
         guard let engine else {
@@ -769,7 +801,10 @@ public final class DictationCoordinator {
             return
         }
 
-        phase = .transcribing
+        // A limit-ended recording stays in its explicit notice phase while it
+        // is processed. The pipeline is otherwise identical, and any actual
+        // error below still replaces the notice with the normal error state.
+        if !stoppedAtRecordingLimit { phase = .transcribing }
         let prompt = settings.dictionary.asrPrompt()
         // Filtering happens on the full recording, before transcription and
         // before anything leaves this Mac for a remote/Cloud engine — a
@@ -805,7 +840,7 @@ public final class DictationCoordinator {
         // corrections at all unless editing happens to catch them too.
         transcript = settings.dictionary.applyCorrections(to: transcript)
 
-        phase = .cleaning
+        if !stoppedAtRecordingLimit { phase = .cleaning }
         let dictionary = settings.dictionary
         let cleaner = makeCleaner(settings)
 
@@ -886,6 +921,7 @@ public final class DictationCoordinator {
         meterTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self, self.recorder.isRecording else { return }
+                if self.enforceRecordingLimitIfNeeded() { return }
                 let level = self.recorder.normalizedLevel
                 self.level = level
                 self.levelHistory.append(level)

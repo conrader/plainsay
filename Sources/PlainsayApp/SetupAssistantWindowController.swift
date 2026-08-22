@@ -25,12 +25,6 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
     }
 
     func show() {
-        // Recommend Cloud only on the very first presentation. If setup was
-        // interrupted after the speech choice had already been confirmed,
-        // rebuilding the window must reflect the saved choice instead of
-        // silently switching the draft back to Cloud.
-        let preferCloudOnFirstPresentation = settings.needsOnboarding
-            && !settings.onboardingWasPresented
         settings.onboardingWasPresented = true
 
         if window == nil {
@@ -52,7 +46,6 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
                     settings: settings,
                     coordinator: coordinator,
                     permissionStatus: permissionStatus,
-                    preferCloudOnFirstPresentation: preferCloudOnFirstPresentation,
                     onSpeechConfirmed: onSpeechConfirmed,
                     onFinish: { [weak self] in self?.finish() }
                 )

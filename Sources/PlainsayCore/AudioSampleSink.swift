@@ -18,8 +18,10 @@ public final class AudioSampleSink: @unchecked Sendable {
     private var levelBitsValue: UInt32 = 0
     private var overflowedValue = false
 
-    /// - Parameter seconds: how much audio to reserve room for. Recording stops
-    ///   accepting samples past this; ten minutes is far beyond any dictation.
+    /// - Parameter seconds: how much audio to reserve room for. Reaching this
+    ///   boundary is exposed through `isAtCapacity` so the coordinator can
+    ///   stop capture and process every sample retained by the sink instead of
+    ///   silently continuing a truncated recording.
     public init(seconds: Double = 600, sampleRate: Double = 16_000) {
         capacity = Int(seconds * sampleRate)
         storage = .allocate(capacity: capacity)
@@ -76,6 +78,15 @@ public final class AudioSampleSink: @unchecked Sendable {
         os_unfair_lock_lock(lock)
         defer { os_unfair_lock_unlock(lock) }
         return overflowedValue
+    }
+
+    /// True as soon as the final available slot has been written. Unlike
+    /// `didOverflow`, this does not wait for a later callback to discover that
+    /// samples would have to be discarded.
+    public var isAtCapacity: Bool {
+        os_unfair_lock_lock(lock)
+        defer { os_unfair_lock_unlock(lock) }
+        return writeIndexValue >= capacity
     }
 
     /// Raw RMS of the most recent buffer, roughly 0...1.

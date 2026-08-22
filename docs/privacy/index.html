@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Plainsay</title>
+<meta name="description" content="How DMT Sp. z o.o. handles data in Plainsay Local, Cloud, the website, billing, authentication, support, and update checks.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay Privacy Policy">
+<meta property="og:description" content="A mode-by-mode account of what stays on your Mac, what Cloud receives, why, for how long, and through which providers.">
+<meta property="og:url" content="https://plainsay.app/privacy/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="canonical" href="https://plainsay.app/privacy/">
+<style>
+  :root{
+    --ink:#14161a;--bone:#f2efe9;--slate:#7a8194;--signal:#6fd3c7;--ember:#e8896b;
+    --hairline:rgba(255,255,255,.16);--label-secondary:#a8aebd;
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,monospace;--radius:18px;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--font-ui);-webkit-font-smoothing:antialiased;line-height:1.55}
+  a{color:var(--bone);text-decoration:underline;text-decoration-color:rgba(242,239,233,.35);text-underline-offset:3px}
+  a:hover{text-decoration-color:var(--bone)}a:focus-visible{outline:2px solid var(--signal);outline-offset:3px}
+  .page{min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .wrap{width:100%;max-width:820px;padding:0 32px;display:flex;flex-direction:column}
+  nav.top{display:flex;align-items:center;gap:10px;padding:30px 0;width:100%;max-width:920px}
+  nav.top .word{font-size:15px;font-weight:600;letter-spacing:-.3px}nav.top .word a{text-decoration:none}
+  nav.top .spacer,footer .spacer{flex:1}nav.top .links{display:flex;align-items:center;gap:22px;font-size:13px}
+  nav.top .links a{text-decoration:none;opacity:.9}nav.top .links a:hover{opacity:1;text-decoration:underline}
+  header.hero{padding:62px 0 30px;display:flex;flex-direction:column;gap:16px}
+  .eyebrow{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:1.1px;color:var(--signal);text-transform:uppercase}
+  h1{margin:0;font-size:44px;line-height:1.12;letter-spacing:-1px}header.hero .sub{margin:0;color:var(--label-secondary);font-size:18px;line-height:1.65}
+  .updated{font-family:var(--font-mono);font-size:12px;color:var(--slate)}
+  section{border-top:1px solid var(--hairline);padding:38px 0 42px}section:first-of-type{border-top:none}
+  h2{margin:0 0 12px;font-size:23px;line-height:1.3;letter-spacing:-.35px}h3{margin:28px 0 8px;font-size:17px}
+  p,li{font-size:16px;line-height:1.72}p{margin:10px 0 16px}.dim{color:var(--label-secondary)}
+  ul,ol{padding-left:23px;margin:12px 0}li{margin:8px 0}
+  .card{border:1px solid var(--hairline);border-radius:var(--radius);padding:18px 20px;margin:16px 0;background:rgba(255,255,255,.025)}
+  .card strong,.accent{color:var(--signal)}address{font-style:normal;line-height:1.75}
+  .table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--hairline);border-radius:var(--radius)}
+  table{border-collapse:collapse;width:100%;min-width:720px;background:rgba(255,255,255,.02)}
+  th,td{text-align:left;vertical-align:top;padding:13px 15px;border-bottom:1px solid var(--hairline);font-size:14px;line-height:1.55}
+  th{color:var(--signal);font-size:12px;text-transform:uppercase;letter-spacing:.45px}tr:last-child td{border-bottom:none}
+  code{font-family:var(--font-mono);font-size:.9em;background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;width:100%;max-width:920px;flex-wrap:wrap}
+  footer .text{font-size:12px;color:var(--slate)}footer .links{display:flex;gap:18px;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+  footer .links a{color:var(--slate);text-decoration:none}footer .links a:hover{color:var(--bone)}
+  @media(max-width:620px){.wrap{padding:0 20px}header.hero h1{font-size:34px}nav.top .links{gap:14px}footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="top">
+    <img src="/assets/logo.svg" alt="" width="28" height="28" style="display:block">
+    <span class="word"><a href="/">Plainsay</a></span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/why-on-device/">Why on-device</a>
+      <a href="https://github.com/conrader/plainsay">GitHub</a>
+      <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="eyebrow">Legal · Privacy</div>
+      <h1>Privacy, mode by mode.</h1>
+      <p class="sub">Local dictation and Plainsay Cloud do not have the same data flow. This policy keeps those boundaries explicit and describes the website, account, billing, support, and update paths too.</p>
+      <div class="updated">Effective 22 August 2026</div>
+    </header>
+
+    <section id="controller">
+      <h2>1. Controller and contact</h2>
+      <p>For the website and Plainsay Cloud, the controller is:</p>
+      <div class="card">
+        <address>
+          <strong>DMT Sp. z o.o.</strong><br>
+          ul. Budowlanych 1A<br>
+          62-081 Baranowo, Poland<br>
+          KRS 0000836521 · REGON 385877414<br>
+          NIP 7812007881 · EU VAT PL7812007881<br>
+          Share capital: PLN 25,000<br>
+          Registry court: District Court Poznań–Nowe Miasto and Wilda in Poznań, 8th Commercial Division of the National Court Register<br>
+          Email: <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>
+        </address>
+      </div>
+      <p>“Plainsay”, “we”, and “us” below mean DMT Sp. z o.o. This policy covers the Plainsay Mac app, <code>plainsay.app</code>, <code>api.plainsay.app</code>, Plainsay Cloud, update delivery, and support. A provider you configure directly in bring-your-own-key mode processes data under its own terms and privacy notice.</p>
+    </section>
+
+    <section id="summary">
+      <h2>2. The short version</h2>
+      <ul>
+        <li><strong class="accent">Local transcription:</strong> recorded audio and transcript text stay on your Mac when Polishing is off or uses a local endpoint. No Plainsay account is needed.</li>
+        <li><strong class="accent">Plainsay Cloud speech:</strong> the app sends recorded audio and limited request metadata to DMT. DMT processes it on an operated node when available or forwards it to deAPI as a fallback.</li>
+        <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the provider selected for Polishing. Plainsay Cloud routes them through OpenRouter to the configured model.</li>
+        <li><strong class="accent">No advertising analytics:</strong> the Mac client has no analytics or telemetry SDK, and the website has no advertising or analytics cookies.</li>
+        <li><strong class="accent">Content database:</strong> Plainsay Cloud does not store recorded audio or transcript text in its application database. It does store account, subscription, session, and usage metadata.</li>
+      </ul>
+    </section>
+
+    <section id="modes">
+      <h2>3. What happens in each mode</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Configuration</th><th>Recorded audio</th><th>Transcript or vocabulary</th><th>DMT account</th></tr></thead>
+          <tbody>
+            <tr><td>Local speech; Polishing off or local</td><td>Remains on the Mac</td><td>Remains on the Mac</td><td>Not required</td></tr>
+            <tr><td>Local speech; hosted Polishing</td><td>Remains on the Mac</td><td>Sent directly to the selected provider, or to Plainsay Cloud if selected</td><td>Only for Plainsay Cloud Polishing</td></tr>
+            <tr><td>Plainsay Cloud speech</td><td>Sent to DMT and possibly deAPI</td><td>Vocabulary and language hint accompany the request; the resulting transcript returns to the app</td><td>Required</td></tr>
+            <tr><td>Your own speech API</td><td>Sent directly to the provider you configure</td><td>Language and optional vocabulary hint may be sent directly too</td><td>Not required by DMT</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The optional Voice Filter runs on the Mac and is best-effort. If it is unavailable or fails, transcription continues. In a hosted speech mode, the selected service may therefore receive the unfiltered recording, including another person’s voice. Use Local mode when audio must not leave the device.</p>
+    </section>
+
+    <section id="local-data">
+      <h2>4. Data kept on your Mac</h2>
+      <p>The following data is controlled through the app and is not uploaded to DMT merely because it exists:</p>
+      <ul>
+        <li>up to 100 history records containing raw and final text, time, duration, insertion outcome, and the destination app’s bundle identifier; old records are overwritten and History can be cleared;</li>
+        <li>an interrupted recording in a private recovery folder until it is successfully processed or you remove it;</li>
+        <li>settings, languages, vocabulary, provider choices, and an optional 256-dimensional speaker embedding derived from the voice-enrolment sample;</li>
+        <li>provider API keys and the Plainsay Cloud session token in macOS Keychain; and</li>
+        <li>a temporary in-memory copy of clipboard contents while Plainsay attempts to paste and restore them.</li>
+      </ul>
+      <p>History and pending-audio files use owner-only permissions and are excluded from normal backups by the app. The voice enrolment recording is converted locally to an embedding; the recording itself is not retained by Plainsay after enrolment. Deleting the app alone may not remove Application Support, model, preference, or Keychain data.</p>
+    </section>
+
+    <section id="cloud-data">
+      <h2>5. Data received by Plainsay Cloud</h2>
+      <h3>Account and authentication</h3>
+      <p>We receive an email address when you request an email sign-in code. If Sign in with Apple is used, we receive Apple’s stable account identifier and, when Apple supplies it, an email address that may be a private relay address. We generate a random session token. Email codes are stored as salted hashes rather than readable codes.</p>
+      <h3>Subscription and usage</h3>
+      <p>We store an internal user ID, account creation time, Stripe customer and subscription identifiers, subscription status and period end, session creation and last-use times, and one usage record per operation. A usage record contains its time, type, audio duration, estimated upstream cost, and — for Polishing — input and output token counts. The application database deliberately contains neither recorded audio nor transcript text.</p>
+      <h3>Speech and Polishing content</h3>
+      <p>For Cloud speech, DMT receives AAC audio, clip duration, an optional language hint, and optional vocabulary terms. An available DMT-operated transcription node processes the audio first; otherwise it is sent to deAPI. On the DMT node, an upload is placed in an owner-only temporary directory for decoding, removed at the end of the request, and orphaned upload files are cleared when that service starts. Audio is not written to the Cloud application database.</p>
+      <p>Account information comes from you, or from Apple when you choose Apple sign-in. Subscription status and transaction identifiers come from Stripe. Request and usage metadata is generated when you use the service.</p>
+      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. The service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
+    </section>
+
+    <section id="purposes">
+      <h2>6. Purposes, legal bases, and necessity</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Purpose</th><th>Data</th><th>GDPR basis</th><th>If not provided</th></tr></thead>
+          <tbody>
+            <tr><td>Create and authenticate a Cloud account</td><td>Email or Apple identifier; session and sign-in records</td><td>Contract steps and performance, Art. 6(1)(b)</td><td>Cloud cannot be used; Local remains available</td></tr>
+            <tr><td>Provide Cloud speech, Polishing, and allowance</td><td>Request content and metadata; usage records</td><td>Contract performance, Art. 6(1)(b)</td><td>The requested hosted operation cannot run</td></tr>
+            <tr><td>Manage subscription and payment</td><td>Account, Stripe identifiers, status, transaction records</td><td>Contract, Art. 6(1)(b); tax/accounting duties, Art. 6(1)(c)</td><td>A paid subscription cannot be activated or maintained</td></tr>
+            <tr><td>Secure, troubleshoot, and prevent abuse</td><td>Minimal network, route, status, session, and usage metadata</td><td>Legitimate interests in service security, reliability, and fraud prevention, Art. 6(1)(f)</td><td>Some network metadata arises automatically; Local can be used offline after model download</td></tr>
+            <tr><td>Answer support, complaints, and rights requests</td><td>Contact details and the content of correspondence</td><td>Contract or pre-contract steps, Art. 6(1)(b); legal obligations, Art. 6(1)(c); claims and support interests, Art. 6(1)(f)</td><td>We may be unable to answer or verify the request</td></tr>
+            <tr><td>Deliver signed app updates</td><td>Ordinary request metadata such as network address, time, requested file, and status</td><td>Contract/service security and legitimate interest in safe software, Art. 6(1)(b) and (f)</td><td>Automatic update checks can be disabled</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>We do not use consent as a catch-all basis. Plainsay currently sends no marketing email and performs no advertising profiling. Subscription status and the rolling usage allowance are evaluated automatically to allow or refuse a Cloud request, but this does not produce a legal or similarly significant effect within Article 22 GDPR.</p>
+    </section>
+
+    <section id="recipients">
+      <h2>7. Recipients and service providers</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Recipient</th><th>Purpose and data</th><th>Location or route</th></tr></thead>
+          <tbody>
+            <tr><td>OVHcloud / OVH sp. z o.o.</td><td>Hosting the website, API, update files, and Cloud database</td><td>Warsaw-region infrastructure, Poland</td></tr>
+            <tr><td>Stripe</td><td>Checkout, payment method, billing address where requested, customer and subscription management; DMT receives identifiers and status, not full card data</td><td>Stripe’s applicable European entity and global infrastructure</td></tr>
+            <tr><td>Apple</td><td>Optional Sign in with Apple verification; Apple identifier and optional relay/email address</td><td>Apple’s applicable regional and global infrastructure</td></tr>
+            <tr><td>Resend (Plus Five Five, Inc.)</td><td>Delivery of the one-time sign-in email; email address and message content</td><td>United States and listed subprocessors</td></tr>
+            <tr><td>DMT-operated transcription node</td><td>Temporary processing of Cloud audio for speech recognition</td><td>Poland, reached through a private Tailscale connection</td></tr>
+            <tr><td>Tailscale, Inc.</td><td>Private encrypted network routing between DMT’s API host and operated transcription node; associated connection and device metadata</td><td>Global control-plane infrastructure; audio remains encrypted in transit</td></tr>
+            <tr><td>deAPI / CoinAxe Ltd</td><td>Fallback Cloud speech: recorded audio, language, and vocabulary hint</td><td>Malta-based service using distributed GPU infrastructure that may involve other countries</td></tr>
+            <tr><td>OpenRouter, Inc. and the selected model endpoint</td><td>Cloud Polishing: transcript and vocabulary; request metadata such as token counts</td><td>OpenRouter and Google Vertex infrastructure, potentially outside the EEA</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>We may also disclose data when required by law, to protect users and the service, or as part of a corporate transaction subject to appropriate confidentiality and notice. Bring-your-own-key providers receive data directly at your direction; current integrations include Groq, deAPI, OpenAI, Google Gemini, Anthropic, OpenRouter, and compatible custom endpoints.</p>
+      <p>Provider notices: <a href="https://stripe.com/privacy">Stripe privacy</a>, <a href="https://www.apple.com/legal/privacy/">Apple privacy</a>, <a href="https://resend.com/legal/privacy-policy">Resend privacy</a> and <a href="https://resend.com/legal/dpa">DPA</a>, <a href="https://deapi.ai/privacy-policy">deAPI privacy</a>, and <a href="https://openrouter.ai/privacy/">OpenRouter privacy</a>. Provider roles can vary by operation; naming a recipient here does not by itself classify every recipient as DMT’s processor.</p>
+    </section>
+
+    <section id="retention">
+      <h2>8. Retention</h2>
+      <ul>
+        <li><strong>Email sign-in codes:</strong> valid for 15 minutes; expired records are removed by an hourly cleanup, ordinarily within about 75 minutes of creation.</li>
+        <li><strong>Cloud sessions:</strong> the service revokes the current session on sign-out and expires a token after 90 days without use.</li>
+        <li><strong>Account, subscription, and usage metadata:</strong> kept while the Cloud account exists. After a verified deletion request, data not subject to an exception is removed within 30 days.</li>
+        <li><strong>Payment, tax, accounting, complaint, and claims records:</strong> kept for the period required by applicable Polish or EU law, or until relevant claims expire. Stripe may keep its own records under its legal duties.</li>
+        <li><strong>Website and update access logs:</strong> rotated daily and ordinarily retained for 14 days. API proxy access logging is disabled; minimal application event logs exclude headers, query strings, and request bodies and are removed under size-based system rotation.</li>
+        <li><strong>Support correspondence:</strong> kept while the matter is open and thereafter only as needed for follow-up, legal duties, or claims.</li>
+        <li><strong>Cloud content:</strong> not stored in the Plainsay application database. Provider-side transient processing and retention follow the controls and notices listed above. deAPI states that API content may be retained briefly for operational reliability; its exact contractual retention and distributed-processing safeguards remain a launch-review item.</li>
+      </ul>
+      <p>A request for erasure does not necessarily remove data that must be retained by law, is needed to establish or defend claims, or belongs to a third party’s independent records. We will explain any applicable exception.</p>
+    </section>
+
+    <section id="transfers">
+      <h2>9. International transfers</h2>
+      <p>The primary Plainsay host is in Poland, but Resend, Stripe, Apple, OpenRouter, Google, deAPI’s distributed infrastructure, Tailscale, and a provider you select may process data outside the EEA. Depending on the recipient and route, safeguards may include an adequacy decision, participation in the EU–US Data Privacy Framework, or the European Commission’s Standard Contractual Clauses with supplementary measures.</p>
+      <p class="dim">DMT reviews provider roles, data-processing terms, subprocessors, transfer mechanisms, and retention for production routes. You may request information about the safeguard applicable to a particular transfer at <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>.</p>
+    </section>
+
+    <section id="rights">
+      <h2>10. Your data-protection rights</h2>
+      <p>Subject to the GDPR’s conditions and exceptions, you can request access and a copy, correction, erasure, restriction, portability, or object to processing based on legitimate interests. Where processing is based on consent, you can withdraw it without affecting earlier processing. You can also ask us to close a Cloud account; cancelling a subscription and deleting an account are separate actions.</p>
+      <p>Send a request to <a href="mailto:hi@plainsay.app">hi@plainsay.app</a> or the postal address above. We may ask for proportionate information to verify that the request concerns your account. We normally respond within one month, with the extensions permitted by law for complex or numerous requests.</p>
+      <p>You may complain to the supervisory authority where you live or work or where the alleged infringement occurred. DMT’s competent Polish supervisory authority is the <a href="https://uodo.gov.pl/526">President of the Personal Data Protection Office (UODO)</a>, ul. Stanisława Moniuszki 1A, 00-014 Warsaw, Poland.</p>
+    </section>
+
+    <section id="sensitive-data">
+      <h2>11. Sensitive data and other people</h2>
+      <p>Dictation can contain health, political, religious, biometric, confidential, or other sensitive information, and a microphone can capture people nearby. Plainsay does not need those categories to run the service. Do not use a hosted mode for content you are not entitled to record or disclose. Local mode is the safer choice for confidential or special-category material.</p>
+      <p>If you dictate personal data about another person, you remain responsible for having a lawful basis to record and submit it. DMT processes that material only to provide the requested operation and does not use it for advertising or to build a user profile.</p>
+    </section>
+
+    <section id="website-storage">
+      <h2>12. Website storage, cookies, and analytics</h2>
+      <p>The public website sets no advertising or analytics cookies. Its language picker stores one value named <code>plainsay-path</code> in your browser’s local storage so the root page can return to the language you selected. The value stays until you clear site data or replace it with another language choice; it is not sent as a separate tracking identifier.</p>
+      <p>Stripe Checkout, Apple, GitHub, provider pages, and other websites you open from a link have their own storage and tracking practices. They are not loaded merely because you read this static page.</p>
+    </section>
+
+    <section id="security">
+      <h2>13. Security</h2>
+      <p>Measures include TLS in transit, signed and notarized app distribution, signed update metadata, macOS Keychain for secrets, owner-only local recovery files, hashed email codes, random session tokens, Stripe webhook verification, a dedicated restricted server account, request-size and duration bounds, log redaction, and minimal Cloud database content. No system is perfectly secure. Report a suspected vulnerability through the private process in the project’s <a href="https://github.com/conrader/plainsay/security/policy">Security Policy</a>, not a public issue.</p>
+    </section>
+
+    <section id="children">
+      <h2>14. Children</h2>
+      <p>Plainsay Cloud is not directed to children under 16. A paid Cloud subscription may be created only by an adult or a person otherwise legally able and authorized to enter the contract. If you believe a child supplied account data without appropriate authorization, contact us so we can investigate and remove it where required.</p>
+    </section>
+
+    <section id="changes">
+      <h2>15. Changes and contact</h2>
+      <p>We may update this policy when the service, providers, or law changes. The page will show the new date. For a material change affecting an active Cloud account, we will provide additional notice where required and will not use an updated policy to legitimize incompatible past processing.</p>
+      <p>Questions, rights requests, and privacy complaints: <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>. Contract and consumer terms are in the <a href="/terms/">Terms of Service</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
+    <span class="text">Plainsay · operated by DMT Sp. z o.o.</span>
+    <span class="spacer"></span>
+    <div class="links">
+      <a href="/">Home</a>
+      <a href="/privacy/" aria-current="page">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="https://github.com/conrader/plainsay">Source</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

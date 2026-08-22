@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Why on-device — Plainsay keeps your voice on your Mac</title>
-<meta name="description" content="Plainsay transcribes your voice on your Mac, not in the cloud. What that means exactly, why it matters, and the one place data can leave — stated precisely, not as a slogan.">
+<title>Why Local mode — keep your voice on your Mac with Plainsay</title>
+<meta name="description" content="See exactly what stays on your Mac in Plainsay Local mode, and when optional Cloud, Polishing, model downloads, or update checks use the network.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Why Local mode — keep your voice on your Mac with Plainsay">
+<meta property="og:description" content="Exactly what stays on your Mac in Local mode, and what optional Cloud and Polishing modes can send.">
+<meta property="og:url" content="https://plainsay.app/why-on-device/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/why-on-device/">
 <style>
@@ -63,12 +72,14 @@
   .final{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 0 56px}
   .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
   .final .req{font-size:12px;color:var(--slate)}
-  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;width:100%;max-width:920px}
+  footer{border-top:1px solid var(--hairline);padding:28px 0 44px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;max-width:920px}
   footer .text{font-size:12px;color:var(--slate)}
   footer .spacer{flex:1}
-  footer .links{display:flex;gap:18px;font-size:12px}
+  footer .links{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18px;font-size:12px}
   footer .links a{color:var(--slate);text-decoration:none}
   footer .links a:hover{color:var(--bone)}
+  footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
+  @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
 </style>
 </head>
 <body>
@@ -88,20 +99,20 @@
 
     <header class="hero">
       <div class="eyebrow">Why on-device</div>
-      <h1>Your voice should never have to leave your Mac.</h1>
-      <p class="sub">Most dictation tools upload everything you say to a server before you see a single word. Plainsay doesn't. Here's exactly what runs where — stated precisely, not as a slogan.</p>
+      <h1>Keep your dictation on your Mac.</h1>
+      <p class="sub">Many cloud-first dictation tools upload what you say before returning text. Plainsay defaults to a Local mode that doesn't. Optional Cloud and Polishing choices are separate and explicit. Here's exactly what runs where.</p>
     </header>
 
     <section>
-      <h2 class="big">What actually happens when you dictate</h2>
-      <p class="dim">Two steps, and only one of them can ever touch the network:</p>
+      <h2 class="big">What happens in Local mode</h2>
+      <p class="dim">Speech recognition and optional Polishing are separate choices:</p>
       <div class="flow">
-        <div class="step"><span class="where local">ON YOUR MAC</span><span class="what">You hold the key and speak. Audio is captured and transcribed locally — Whisper or NVIDIA Parakeet, running through Core ML on Apple silicon. No account. No upload. This step never needs the network.</span></div>
-        <div class="step"><span class="where cloud">YOUR CHOICE</span><span class="what">An optional cleanup pass removes fillers and false starts and fixes punctuation. By default this calls an AI model in the cloud — but you can turn it off, bring your own API key, or use a local model. Switched off, the raw transcript is what you get, and nothing leaves the Mac at all.</span></div>
+        <div class="step"><span class="where local">ON YOUR MAC</span><span class="what">You hold the key and speak. Audio is captured and transcribed locally — Whisper or NVIDIA Parakeet, running through Core ML on Apple silicon. No account and no dictation upload. Once the model is downloaded, recognition needs no network.</span></div>
+        <div class="step"><span class="where cloud">YOUR CHOICE</span><span class="what">An optional Polishing pass removes fillers and false starts and fixes punctuation. Leave it off or run a compatible endpoint on your Mac to keep transcript text local. A hosted Polishing provider receives the transcript and vocabulary terms.</span></div>
       </div>
       <div class="callout">
         <div class="t">The honest line</div>
-        Plainsay's <strong>transcription is guaranteed local</strong>. The one optional step that can leave the Mac — cleanup — is <strong>your choice</strong>, not locked to one vendor's cloud. We don't claim “100% offline,” because if you leave cloud cleanup on, that one step isn't. We tell you exactly where the line is, and you decide where to draw it.
+        In <strong>Local mode</strong>, speech recognition and recorded audio stay on your Mac. Optional hosted Polishing sends transcript text and vocabulary terms to its configured provider. The separate Plainsay Cloud and bring-your-own-provider speech modes send recorded audio, language, and optional vocabulary hints to the selected service. We tell you which path you picked instead of calling every mode “100% offline.”
       </div>
     </section>
 
@@ -109,22 +120,44 @@
       <h2 class="big">Why it's worth it</h2>
       <ul class="plain">
         <li><b>Privacy that isn't a checkbox.</b> Your voice is often the most sensitive thing you type — passwords read aloud, medical notes, half-formed ideas, other people's names. When transcription is local, that audio never becomes someone else's server log, training set, or breach.</li>
-        <li><b>It's faster.</b> No round trip to a data center and back. On Apple silicon, a short dictation is transcribed in a fraction of the time an upload alone would take — and it works the same on a plane, a train, or a bad hotel Wi-Fi.</li>
-        <li><b>It works offline.</b> A cloud dictation app is a paperweight without a connection. Local transcription doesn't care.</li>
-        <li><b>No lock-in.</b> Whisper or Parakeet for transcription; your choice of provider (or none) for cleanup. Nothing is hard-wired to one AI vendor's pricing or availability.</li>
+        <li><b>It avoids a network round trip.</b> Local transcription does not wait for an upload or a server response, and it works the same on a plane, a train, or bad hotel Wi-Fi.</li>
+        <li><b>It works offline.</b> Cloud-only dictation stops working without a connection. Local transcription does not, once its model is downloaded.</li>
+        <li><b>No hosted lock-in for the core function.</b> Local mode can use Whisper or Parakeet without depending on a speech provider's pricing or availability. Polishing can remain off or use an endpoint you choose.</li>
         <li><b>No meter running.</b> Local dictation is free and unmetered — no per-word caps, no monthly subscription for the core function.</li>
       </ul>
     </section>
 
     <section>
+      <h2 class="big">What hosted choices send</h2>
+      <ul class="plain">
+        <li><b>Your own provider.</b> Speech sends recorded audio, a language hint, and an optional vocabulary prompt directly to Groq, deAPI, OpenAI, or a compatible custom endpoint. Hosted Polishing sends transcript text and vocabulary terms directly to Google Gemini, Anthropic, OpenRouter, OpenAI, or the compatible endpoint you configure.</li>
+        <li><b>Plainsay Cloud transcription.</b> Encoded audio, clip duration, language, and an optional vocabulary prompt go to <code>api.plainsay.app</code>. Speech may run on a Plainsay-operated transcription node or be forwarded to deAPI.</li>
+        <li><b>Plainsay Cloud Polishing.</b> Transcript text and vocabulary terms go through Plainsay Cloud to OpenRouter, using its configured Gemini model.</li>
+        <li><b>Voice Filter is best-effort.</b> It runs on the Mac. If it is unavailable or fails, dictation continues; a selected hosted speech service can then receive the unfiltered recording.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="big">What is stored</h2>
+      <p>Plainsay Cloud keeps the records needed to run an account and subscription: an email address and/or Apple account identifier, session records, Stripe customer and subscription identifiers and status, and per-operation usage metadata such as timestamp, type, audio duration, estimated cost, and Polishing token counts. Its application database deliberately stores neither recorded audio nor transcript text. Stripe receives the account email and handles checkout and payment details; Apple handles Apple sign-in, and the configured email-delivery service receives the address and sign-in message.</p>
+      <p>Normal API access logs still include request metadata such as network address, method, path, status, and time. The current client puts language and vocabulary metadata in a header that the application logger redacts; the default proxy log does not include request headers.</p>
+      <p>On the Mac, Plainsay keeps up to 100 raw and final transcript records for recovery and History until you clear them or they age out. Audio is staged in an owner-only local folder during processing and then removed; if processing is interrupted, that recording can remain for recovery on the next launch. These files are excluded from backups.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Local mode can still contact the network</h2>
+      <p>The selected speech model is downloaded once. By default, Plainsay also contacts <code>api.plainsay.app</code> to check for signed updates; you can disable automatic checks in Settings. Those connections do not upload a dictation. The Mac client sends no analytics or telemetry. Provider API keys and the Plainsay Cloud session token are kept in macOS Keychain.</p>
+    </section>
+
+    <section>
       <h2 class="big">You don't have to take our word for it</h2>
-      <p>A closed cloud app can promise anything in a privacy policy. Plainsay's entire client is <strong>MIT licensed and public</strong> — you, or anyone you trust, can read exactly what it does with your audio: where it goes, when it goes anywhere, and what happens if you turn cleanup off. There is no hidden telemetry and nothing phones home. If that mattered enough to read this page, it's worth reading the source.</p>
-      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — the whole thing, every line</p>
+      <p>A closed cloud app can promise anything in a privacy policy. Plainsay's entire Mac client is <strong>MIT licensed and public</strong> — you, or anyone you trust, can inspect each speech, Polishing, storage, and update path. Plainsay Cloud is a separate hosted service, so this page describes that boundary instead of implying the server is covered by the client's MIT license. If that mattered enough to read this page, it's worth reading the source.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — inspect the MIT-licensed Mac client</p>
     </section>
 
     <section>
       <h2 class="big">The contrast, in one sentence</h2>
-      <p>Tools like Wispr Flow state plainly that <em>“transcription always happens in the cloud”</em> — every word leaves your device by design. Plainsay flips the default: local first, cloud only for the one optional step you control. <a href="/vs/wispr-flow/">See the full comparison →</a></p>
+      <p>Tools like Wispr Flow state plainly that <em>“transcription always happens in the cloud”</em> — every word leaves your device by design. Plainsay defaults to Local, while its hosted transcription and Polishing paths remain separate choices you can see and change. <a href="/vs/wispr-flow/">See the full comparison →</a></p>
     </section>
 
     <div class="final">
@@ -143,8 +176,11 @@
       <a href="/">Home</a>
       <a href="/vs/wispr-flow/">vs Wispr Flow</a>
       <a href="/how-it-works/">How it works</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
       <a href="https://github.com/conrader/plainsay">Source</a>
     </div>
+    <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
   </footer>
 </div>
 </body>

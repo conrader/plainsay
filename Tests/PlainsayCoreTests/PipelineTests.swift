@@ -10,10 +10,12 @@ final class FakeRecorder: AudioRecording {
     var isRecording = false
     var normalizedLevel: Float = 0.5
     var elapsed: TimeInterval = 0
+    var hasReachedMaximumDuration = false
     var startError: Error?
     /// Seconds of audio `stop()` will claim to have captured.
     var duration: TimeInterval = 2.0
     private(set) var cancelCount = 0
+    private(set) var stopCount = 0
 
     func start() throws {
         if let startError { throw startError }
@@ -23,6 +25,7 @@ final class FakeRecorder: AudioRecording {
     func stop() -> [Float] {
         guard isRecording else { return [] }
         isRecording = false
+        stopCount += 1
         return [Float](repeating: 0.1, count: Int(duration * whisperSampleRate))
     }
 
@@ -252,7 +255,10 @@ private struct Harness {
     let coordinator: DictationCoordinator
     let history: TranscriptHistory
 
-    init(terms: [String] = []) {
+    init(
+        terms: [String] = [],
+        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { true }
+    ) {
         // An isolated defaults suite so tests never disturb real preferences.
         let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
         let settings = PlainsaySettings(defaults: suite)
@@ -276,6 +282,7 @@ private struct Harness {
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in cleaner },
+            microphoneAuthorized: microphoneAuthorized,
             usesInjectedEngine: true
         )
     }
@@ -338,6 +345,46 @@ struct PipelineTests {
         #expect(harness.cleaner.received == "um so the thing is uh it works")
         #expect(harness.inserter.inserted == ["The thing is, it works."])
         #expect(harness.coordinator.phase == .idle)
+    }
+
+    @Test("A missing microphone grant blocks recording before the recorder starts")
+    func missingMicrophonePermissionBlocksRecording() async {
+        let harness = Harness(microphoneAuthorized: { false })
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+
+        #expect(harness.coordinator.phase == .error("Plainsay needs microphone access"))
+        #expect(!harness.recorder.isRecording)
+        #expect(harness.recorder.stopCount == 0)
+    }
+
+    @Test("Reaching the recording boundary stops once and processes every retained sample")
+    func recordingLimitStopsAndProcessesCapture() async throws {
+        let harness = Harness()
+        harness.recorder.duration = 2
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        harness.recorder.hasReachedMaximumDuration = true
+
+        #expect(harness.coordinator.enforceRecordingLimitIfNeeded())
+        #expect(harness.coordinator.phase == .recordingLimitReached)
+        #expect(!harness.recorder.isRecording)
+        #expect(harness.recorder.stopCount == 1)
+
+        // The release from the automatically ended hold is swallowed after
+        // the state machine reset and cannot start or stop another capture.
+        harness.coordinator.handleHotkeyEdge(.up(at: 600))
+        #expect(!harness.recorder.isRecording)
+        #expect(!harness.coordinator.enforceRecordingLimitIfNeeded())
+
+        try await harness.settle()
+
+        #expect(harness.engine.receivedSampleCount == Int(2 * whisperSampleRate))
+        #expect(harness.inserter.inserted == ["The thing is, it works."])
+        #expect(harness.recorder.stopCount == 1)
+        #expect(harness.history.mostRecent?.durationSeconds == 2)
     }
 
     @Test("Live preview stays off by default, even while recording")
@@ -1290,6 +1337,7 @@ struct PipelineTests {
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in NoCleanup() },
+            microphoneAuthorized: { true },
             usesInjectedEngine: true
         )
     }

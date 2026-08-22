@@ -23,7 +23,12 @@ struct HistoryView: View {
                 ContentUnavailableView(
                     "No dictations yet",
                     systemImage: "text.quote",
-                    description: Text("Hold your hotkey and speak. Everything you dictate is saved here, so a paste that doesn't land is never lost.")
+                    description: Text(
+                        Localization.appString(
+                            "history.emptyDescription",
+                            fallback: "Hold your hotkey and speak. Completed transcripts appear here before Plainsay attempts to insert them, so you can copy one again if needed."
+                        )
+                    )
                 )
             } else {
                 List {
