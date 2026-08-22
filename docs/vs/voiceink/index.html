@@ -3,8 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay vs VoiceInk — free Local mode vs one-time purchase</title>
-<meta name="description" content="Plainsay Local is free and MIT-licensed. VoiceInk is a one-time purchase, $29–69, under GPL-3.0. Both offer on-device transcription; Plainsay also offers optional Cloud.">
+<title>Plainsay vs VoiceInk — free signed download vs free self-build</title>
+<meta name="description" content="Plainsay offers a free signed and notarized DMG under MIT. VoiceInk is GPL-3.0: build it free from source, or buy its signed build and support for $29–69.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay vs VoiceInk">
+<meta property="og:description" content="Two open-source, on-device Mac dictation apps: a free signed MIT app, or a free GPL self-build with optional paid signed builds.">
+<meta property="og:url" content="https://plainsay.app/vs/voiceink/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/vs/voiceink/">
 <style>
@@ -99,8 +108,8 @@
 
     <header class="hero">
       <div class="eyebrow">Plainsay vs VoiceInk</div>
-      <h1>Both offer on-device transcription. One is free.</h1>
-      <p class="sub">VoiceInk is a real on-device dictation app for Mac — genuinely local transcription, GPL-3.0 licensed, one-time purchase instead of a subscription. It's one of the more honest competitors out there. The differences that remain: price, and what "free" actually gets you.</p>
+      <h1>Both can be free. The route is different.</h1>
+      <p class="sub">VoiceInk is a real on-device dictation app for Mac: genuinely local transcription and GPL-3.0 source you can build for free. Its $29–69 purchase buys an official signed build and support, not access to otherwise closed code. Plainsay instead provides its signed and notarized MIT app as a free download.</p>
     </header>
 
     <section>
@@ -108,8 +117,8 @@
       <div class="cards">
         <div class="card">
           <div class="h">Price</div>
-          <div class="num">$0</div>
-          <p>Plainsay Local is free, with no word limits; optional Plainsay Cloud is paid. VoiceInk is a one-time purchase: $29 (1 Mac) to $69 (3 Macs) — not a subscription, which is genuinely better than most of this market.</p>
+          <div class="num">Two free paths</div>
+          <p>Plainsay's signed and notarized DMG is free, with no Local-mode word limits. VoiceInk can be built from its GPL source for free; its official signed build and support cost $29 (1 Mac) to $69 (3 Macs), once.</p>
         </div>
         <div class="card">
           <div class="h">Transcription</div>
@@ -134,8 +143,13 @@
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Local mode is free</b>, with no word limits. Optional Cloud ≈ $3/mo.</td>
-              <td class="wispr">One-time purchase: $29 (1 Mac), $49 (2 Macs), $69 (3 Macs). 14-day money-back guarantee.</td>
+              <td class="plainsay col-plainsay"><b>Free signed and notarized DMG.</b> Local mode is unmetered. Optional Cloud is 12 PLN/month (about US$3), with 900 transcription minutes per rolling 30 days.</td>
+              <td class="wispr"><b>Free when built from source.</b> Official signed build and support: $29 (1 Mac), $49 (2 Macs), or $69 (3 Macs), once. 14-day money-back guarantee.</td>
+            </tr>
+            <tr>
+              <td class="axis">Free install</td>
+              <td class="plainsay col-plainsay"><b>Download and open the signed, notarized app</b> — no compiler or Apple developer setup required.</td>
+              <td class="wispr">Build the GPL-3.0 source yourself. The ready-to-run signed build is the paid option.</td>
             </tr>
             <tr>
               <td class="axis">Transcription</td>
@@ -169,31 +183,32 @@
     </section>
 
     <section>
-      <h2 class="big">Free vs one-time — and what that buys</h2>
-      <p class="lede">VoiceInk is not a subscription trap. $29–69 once, no recurring charge, which is a genuinely fair way to sell software. Plainsay's pitch is different, not "cheaper than VoiceInk" — its Local mode is free with no purchase decision, and the source stays MIT rather than GPL.</p>
-      <p>If you'd rather pay once and own a polished, actively-developed app with a support relationship behind it, VoiceInk is a legitimate choice. If you'd rather never take out your card for local dictation, Plainsay offers on-device transcription at $0.</p>
+      <h2 class="big">Free download vs free self-build</h2>
+      <p class="lede">VoiceInk is not a subscription trap, and it is not paywalled source. You can build the GPL-3.0 project yourself for $0. Its $29–69 one-time purchase is a fair charge for an official signed build and support. Plainsay removes the build step too: its signed and notarized Local app is a free download, while optional Cloud remains paid.</p>
+      <p>If you are comfortable building from source, both apps offer a genuinely free route. If you want a ready-to-run app, Plainsay is free; VoiceInk asks for a one-time purchase that supports its developer.</p>
     </section>
 
     <section>
       <h2 class="big">Openness: MIT vs GPL-3.0</h2>
       <p class="lede">Both are open source — this isn't a privacy argument the way it is against closed, cloud-only competitors. The real difference is the license terms and how open the project is to outside contribution right now.</p>
-      <p>Plainsay is MIT licensed: permissive, no obligation on anything built with it. VoiceInk is GPL-3.0: also genuinely open, but copyleft, and as of this writing its GitHub repo isn't accepting external pull requests — you can read the code, but contributing back isn't currently open the way it is with Plainsay.</p>
-      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line, PRs welcome</p>
+      <p>Plainsay is MIT licensed: permissive, with no copyleft obligation on derivative work. VoiceInk is GPL-3.0: also genuinely open and free to self-build, but derivative distributions must follow its copyleft terms. As of this writing its GitHub repo isn't accepting external pull requests, while Plainsay welcomes them.</p>
+      <p class="link"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — inspect the MIT-licensed Mac client; PRs welcome</p>
     </section>
 
     <section>
       <h2 class="kicker">Where VoiceInk is the better pick — honestly</h2>
       <ul class="plain">
         <li>You want an <strong>iOS app</strong> too — Plainsay is Mac-only today, VoiceInk now supports iOS.</li>
+        <li>You are comfortable building from source and prefer VoiceInk's features — its GPL repository gives you a free route without buying the signed build.</li>
         <li>You'd rather pay once for a supported, actively-maintained product than rely on volunteer open-source goodwill.</li>
         <li>You want built-in support for a wider range of cloud cleanup providers out of the box (Groq, Cerebras, Mistral, OpenRouter, and more).</li>
       </ul>
-      <p>If instead you want on-device transcription with no purchase at all, and an MIT-licensed codebase open to contribution — that's Plainsay Local.</p>
+      <p>If instead you want a ready-to-run signed and notarized app at no charge, with a permissive MIT codebase open to contribution — that's Plainsay Local.</p>
     </section>
 
     <section class="final">
       <img src="/assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Try the free one.</p>
+      <p class="headline">Try the free signed download.</p>
       <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
       <span class="req">Free · MIT licensed · macOS 14+, Apple silicon</span>
     </section>

@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How Plainsay actually works</title>
 <meta name="description" content="The ASR engines, the cleanup pass, and text insertion — with the real numbers and the actual tradeoffs, not a marketing gloss.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="How Plainsay actually works">
+<meta property="og:description" content="The ASR engines, Polishing, and reliable text insertion — with real numbers and explicit trade-offs.">
+<meta property="og:url" content="https://plainsay.app/how-it-works/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/how-it-works/">
 <style>
@@ -102,32 +111,33 @@
       <p>Local mode ships two speech engines through Core ML, and you pick which one runs. Recorded audio stays on your Mac in this mode:</p>
       <ul class="plain">
         <li><b>Whisper</b>, via <a href="https://github.com/argmaxinc/WhisperKit">WhisperKit</a> — OpenAI's model family, broad language coverage, running as a Core ML model on the Neural Engine.</li>
-        <li><b>NVIDIA Parakeet TDT 0.6B v3</b>, via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a> — faster, and in our own benchmark <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">measurably more accurate</a> on English, with real Polish coverage most competitors don't market at all.</li>
+        <li><b>NVIDIA Parakeet TDT 0.6B v3</b>, via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a> — faster and, in our disclosed 50-clip English benchmark, <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">measurably more accurate</a>; the model also supports Polish.</li>
       </ul>
       <p>The Parakeet integration has a couple of specific choices worth stating plainly:</p>
       <ul class="plain">
-        <li>The encoder loads at <b>int8 precision</b> (<code>AsrModels.downloadAndLoad(version: .v3, encoderPrecision: .int8, …)</code>) — smaller download, faster inference, negligible accuracy cost for this task.</li>
-        <li><b>Mel-context carry-over is disabled</b> (<code>ASRConfig(melChunkContext: false)</code>), on FluidAudio's own recommendation for multilingual v3 recordings longer than one model window — without it, later chunks of a Polish sentence measurably drift toward English as the model's context window fills with the wrong language's statistics.</li>
+        <li>The encoder loads at <b>int8 precision</b> (<code>AsrModels.downloadAndLoad(version: .v3, encoderPrecision: .int8, …)</code>) to reduce model size and inference cost. This benchmark does not compare int8 with fp16, so it makes no claim about the accuracy difference between them.</li>
+        <li><b>Mel-context carry-over is disabled</b> (<code>ASRConfig(melChunkContext: false)</code>) for multilingual v3 recordings. FluidAudio's pinned <a href="https://github.com/FluidInference/FluidAudio/blob/v0.15.6/Documentation/ASR/LongTranscription.md#current-paths">v0.15.6 long-transcription notes</a> document this path as protection against wrong-language drift at chunk boundaries.</li>
         <li><b>Decoder state is fresh for every single utterance</b> — a new <code>TdtDecoderState</code> per <code>transcribe()</code> call, deliberately never reused across dictations, so nothing you said in one dictation can leak linguistic context into the next.</li>
       </ul>
       <p>Which model to default to isn't hardcoded, either. <code>OnDeviceModel.recommended(for:)</code> takes the languages you actually speak (set once in the Setup Assistant) and checks them against FluidAudio's own <code>Language.allCases</code> — Parakeet's real, current language coverage, not a table we maintain by hand and let go stale. Speak a language outside that list and the recommendation falls back to Whisper automatically.</p>
     </section>
 
     <section>
-      <h2 class="big">Cleanup: best-effort, and never the reason a dictation is lost</h2>
+      <h2 class="big">Polishing: best-effort, with a raw-text fallback</h2>
       <p>Raw ASR output is grammatically honest but reads like speech: filler words, false starts, no punctuation. The optional Polishing pass turns that into written text via an LLM call. It can use Plainsay Cloud, your own key, a compatible local endpoint, or be switched off.</p>
-      <p>The design constraint that actually matters: <b>a failed cleanup call must never cost you the dictation.</b> The call has a <b>3-second timeout</b>; no key, no network, a timeout, or an HTTP error all fall back to inserting the raw transcript instead, and the HUD says so. <code>TextCleaning</code> is a protocol with one method — the whole pipeline doesn't know or care whether the concrete implementation is Gemini, OpenAI-compatible, Anthropic, or a no-op passthrough when cleanup is disabled.</p>
+      <p>The design constraint that actually matters: <b>a failed Polishing call falls back to the raw transcript.</b> If Polishing is off or lacks a configured credential, the raw transcript is inserted without a network call. A configured provider has a bounded timeout; network, timeout, and HTTP failures fall back to raw text with a HUD notice. <code>TextCleaning</code> is a protocol with one method — the whole pipeline doesn't know or care whether the concrete implementation is Gemini, OpenAI-compatible, Anthropic, or a no-op passthrough when Polishing is disabled.</p>
     </section>
 
     <section>
       <h2 class="big">Getting text into someone else's app</h2>
-      <p>Text lands via the pasteboard and a synthetic <code>⌘V</code>, not Apple's Accessibility text-insertion API. The Accessibility route is cleaner in theory and fails silently in practice — in Electron apps, web views, and most terminals, which cover a large share of where people actually dictate. Pasting works everywhere a human can paste.</p>
-      <p>The cost is briefly borrowing the real clipboard: your existing clipboard contents are snapshotted before the write and restored after, so a dictation never permanently clobbers whatever you had copied a moment ago.</p>
+      <p>Each recording is bounded at <b>10 minutes</b>. When it reaches that boundary, Plainsay stops capture automatically, keeps the full bounded recording, shows a notice, and continues through transcription and insertion.</p>
+      <p>Text lands via the pasteboard and a synthetic <code>⌘V</code>, not Apple's Accessibility text-insertion API. This works across many native apps, Electron apps, web views, and terminals. If Plainsay cannot identify a safe destination, the text remains on the clipboard so it can be pasted manually.</p>
+      <p>The cost is briefly borrowing the real clipboard: Plainsay snapshots the existing contents before the write and attempts to restore them after insertion. If it cannot identify a safe destination, it leaves the transcript on the clipboard for manual paste.</p>
     </section>
 
     <section>
       <h2 class="kicker">Read the rest</h2>
-      <p><a href="/why-on-device/">Why on-device</a> — the privacy case, stated precisely. <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">Benchmark</a> — WER and latency for both engines, reproducible with one command. <a href="https://github.com/conrader/plainsay">Source</a> — all of the above, every line, MIT licensed.</p>
+      <p><a href="/why-on-device/">Why on-device</a> — the privacy case, stated precisely. <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">Benchmark</a> — WER and latency for both engines, reproducible with the documented build-and-run commands. <a href="https://github.com/conrader/plainsay">Plainsay client source</a> — MIT licensed; third-party licenses are listed in <a href="https://github.com/conrader/plainsay/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
     </section>
 
     <div class="final">

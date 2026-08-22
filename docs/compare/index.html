@@ -4,13 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mac dictation apps compared — free, paid, on-device and cloud</title>
-<meta name="description" content="An honest side-by-side of the main Mac dictation apps: Plainsay, Wispr Flow, superwhisper, VoiceInk and Apple's built-in Dictation. Which transcribe on-device, which need an account, and what each actually costs.">
+<meta name="description" content="Compare Plainsay, Wispr Flow, superwhisper, VoiceInk and Apple Dictation: local vs cloud processing, free and paid tiers, accounts, and pricing.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Mac dictation apps compared — free, paid, on-device and cloud">
+<meta property="og:description" content="An honest side-by-side of the main Mac dictation apps: what stays local, what needs an account, and what each costs.">
+<meta property="og:url" content="https://plainsay.app/compare/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/compare/">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Which Mac dictation apps transcribe on-device?","acceptedAnswer":{"@type":"Answer","text":"Plainsay offers a free Local mode using Whisper or Parakeet on the Mac; it also has an optional hosted Cloud mode. VoiceInk transcribes locally. superwhisper offers local models including on its free tier. Apple's Dictation processing path depends on its settings. Wispr Flow is cloud-only."}},
-{"@type":"Question","name":"What is the best free dictation app for Mac?","acceptedAnswer":{"@type":"Answer","text":"Apple's built-in Dictation is free and already installed, and is enough if you only need basic punctuation. Plainsay Local is free and MIT-licensed, and adds custom vocabulary and optional Polishing. superwhisper has a free tier that falls back to unlimited local models."}},
-{"@type":"Question","name":"Is there a free alternative to Wispr Flow?","acceptedAnswer":{"@type":"Answer","text":"Plainsay Local is free and open source, and transcribes on the Mac. Optional Plainsay Cloud offers hosted transcription. Wispr Flow costs $15/month, or $12/month billed annually, and supports more platforms including Windows and Android."}},
+{"@type":"Question","name":"Which Mac dictation apps transcribe on-device?","acceptedAnswer":{"@type":"Answer","text":"Plainsay offers a free Local mode using Whisper or Parakeet on the Mac; it also has an optional hosted Cloud mode. VoiceInk transcribes locally. superwhisper offers local and cloud models, although its official pages currently disagree about free local-model access. Apple's Dictation processing path depends on its settings. Wispr Flow is cloud-only."}},
+{"@type":"Question","name":"What is the best free dictation app for Mac?","acceptedAnswer":{"@type":"Answer","text":"Apple's built-in Dictation is free and already installed. Plainsay offers a free signed Local app, VoiceInk can be built free from source, and superwhisper has a free tier. The best fit depends on setup, platforms, and whether speech must stay local."}},
+{"@type":"Question","name":"Is there a free alternative to Wispr Flow?","acceptedAnswer":{"@type":"Answer","text":"Plainsay Local is free, its Mac client is open source, and it transcribes on the Mac. Optional Plainsay Cloud offers hosted transcription. Wispr Flow costs $15/month, or $12/month billed annually, and supports more platforms including Windows and Android."}},
 {"@type":"Question","name":"Which Mac dictation app keeps everything local, including the cleanup pass?","acceptedAnswer":{"@type":"Answer","text":"VoiceInk supports local cleanup through Ollama alongside cloud providers. Plainsay Local keeps recorded audio on the Mac; turn Polishing off or use a compatible local endpoint to keep transcript text local too."}}]}</script>
 <style>
   :root{
@@ -114,7 +123,7 @@
         <div class="card">
           <div class="h">Nothing should leave my Mac</div>
           <div class="num">Plainsay Local · VoiceInk</div>
-          <p>Both offer local transcription without an account. VoiceInk is a one-time purchase; Plainsay Local is free. Apple's built-in Dictation can also process on-device, depending on its settings.</p>
+          <p>Both offer local transcription without an account. Plainsay provides a free signed app; VoiceInk can be built free from source, while its official signed build is a one-time purchase. Apple's Dictation can also process on-device, depending on its settings.</p>
         </div>
         <div class="card">
           <div class="h">I want the most polished product</div>
@@ -124,7 +133,7 @@
         <div class="card">
           <div class="h">I just want something now</div>
           <div class="num dim">Apple Dictation</div>
-          <p>Already installed, free, on-device, zero setup. If basic punctuation is enough and you don't need custom vocabulary or a cleanup pass, you may not need any of the rest of this page.</p>
+          <p>Already installed and free. Check Keyboard settings: Apple says general text Dictation may be processed on-device, or sent to its servers, depending on the configuration. <a href="https://support.apple.com/guide/mac-help/mh40584/mac">Apple's Dictation guide</a></p>
         </div>
       </div>
     </section>
@@ -147,25 +156,25 @@
           <tbody>
             <tr>
               <td class="axis">Price</td>
-              <td class="plainsay col-plainsay"><b>Free</b> on-device. Optional cloud ~$3/mo.</td>
+              <td class="plainsay col-plainsay"><b>Local is free</b> and unmetered. Optional Cloud is 12 PLN/month or 120 PLN/year, with 900 transcription minutes per rolling 30 days.</td>
               <td class="wispr">$15/mo, or $12/mo billed annually. Limited free tier.</td>
-              <td class="wispr">Free tier, then a paid Pro plan.</td>
-              <td class="wispr">One-time $29–$69.</td>
+              <td class="wispr">Free tier. Pro: $8.49/month, $84.99/year, or $249.99 once. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official pricing</a></td>
+              <td class="wispr">Free self-build from GPL source; official signed build and support cost $29–$69 once.</td>
               <td class="wispr">Free, built in.</td>
             </tr>
             <tr>
               <td class="axis">Transcription</td>
               <td class="plainsay col-plainsay"><b>Local:</b> Whisper or Parakeet on your Mac. <b>Cloud:</b> optional hosted transcription.</td>
               <td class="wispr">Cloud only — "transcription always happens in the cloud".</td>
-              <td class="wispr">Local models available, including on the free tier.</td>
+              <td class="wispr">On-device and cloud models. Its catalog labels three on-device Whisper models as Free, while its Pro table lists local voice models only under Pro. <a href="https://superwhisper.com/models">Model catalog</a> · <a href="https://superwhisper.com/docs/get-started/sw-pro">Pro table</a></td>
               <td class="wispr">On your Mac — whisper.cpp, Parakeet and others.</td>
-              <td class="wispr">On-device on Apple silicon.</td>
+              <td class="wispr">Configuration-dependent: general text Dictation may run on-device; otherwise audio and transcripts are sent to Apple servers. <a href="https://www.apple.com/legal/privacy/data/en/ask-siri-dictation/">Apple privacy notice</a></td>
             </tr>
             <tr>
               <td class="axis">Source code</td>
-              <td class="plainsay col-plainsay"><b>MIT</b>, fully public.</td>
+              <td class="plainsay col-plainsay"><b>MIT-licensed Mac client</b>, public; optional Cloud backend is separate and closed.</td>
               <td class="wispr">Closed.</td>
-              <td class="wispr">Closed.</td>
+              <td class="wispr">Proprietary; its terms prohibit extracting source code. <a href="https://superwhisper.com/terms">Official terms</a></td>
               <td class="wispr">GPL-3.0, public.</td>
               <td class="wispr">Closed.</td>
             </tr>
@@ -173,7 +182,7 @@
               <td class="axis">Account required</td>
               <td class="plainsay col-plainsay"><b>No</b> — only for the optional cloud tier.</td>
               <td class="wispr">Yes.</td>
-              <td class="wispr">Not for local use.</td>
+              <td class="wispr">The official guide documents license-key activation for Pro; a basic-tier account requirement is not specified there. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official guide</a></td>
               <td class="wispr">No.</td>
               <td class="wispr">No.</td>
             </tr>
@@ -181,7 +190,7 @@
               <td class="axis">Custom vocabulary</td>
               <td class="plainsay col-plainsay"><b>Yes</b> — names and jargon you add.</td>
               <td class="wispr">Yes.</td>
-              <td class="wispr">Yes.</td>
+              <td class="wispr">Yes, on Pro. <a href="https://superwhisper.com/docs/get-started/sw-pro">Official Pro table</a></td>
               <td class="wispr">Yes.</td>
               <td class="wispr">None documented.</td>
             </tr>
@@ -189,7 +198,7 @@
               <td class="axis">Cleanup / formatting pass</td>
               <td class="plainsay col-plainsay">Optional, your key or ours, or off.</td>
               <td class="wispr">Yes, cloud.</td>
-              <td class="wispr">Yes, cloud providers.</td>
+              <td class="wispr">Yes, on Pro — cloud and on-device language models; local post-processing is documented on macOS. <a href="https://superwhisper.com/docs/security/sensitive-data">Official data-flow guide</a></td>
               <td class="wispr">Yes, cloud <em>and</em> local (Ollama).</td>
               <td class="wispr">Auto-punctuation only.</td>
             </tr>
@@ -197,7 +206,7 @@
               <td class="axis">Platforms</td>
               <td class="plainsay col-plainsay">macOS 14+, Apple silicon.</td>
               <td class="wispr">macOS, Windows, iOS, Android.</td>
-              <td class="wispr">macOS, iOS.</td>
+              <td class="wispr">macOS, Windows, iOS. <a href="https://superwhisper.com/download">Official downloads</a></td>
               <td class="wispr">macOS 14.4+, iOS.</td>
               <td class="wispr">macOS, iOS and more.</td>
             </tr>
@@ -214,19 +223,19 @@
         <p><b>You need Windows, Android, or an Intel Mac.</b> Plainsay is Apple silicon only. Wispr Flow covers the most platforms. (A Windows port is in progress, but it isn't shipped.)</p>
         <p><b>You want a first-class local cleanup integration.</b> VoiceInk supports Ollama directly. Plainsay can keep Polishing local through a compatible custom endpoint, or leave it off, but it does not have a dedicated Ollama setup flow.</p>
         <p><b>You want to pay once and never think about it.</b> VoiceInk's one-time purchase is a fair model and avoids depending on whether we keep the servers running.</p>
-        <p><b>Apple's Dictation already does what you need.</b> It's free, built in, and on-device. We wrote a <a href="/vs/macos-dictation/">whole page</a> on when it's genuinely enough.</p>
+        <p><b>Apple's Dictation already does what you need.</b> It's free and built in. Its Keyboard settings indicate whether general text Dictation is processed on-device or sent to Apple's servers. We wrote a <a href="/vs/macos-dictation/">whole page</a> on when it's genuinely enough.</p>
       </div>
     </section>
 
     <section class="final">
       <h2 class="big">What Plainsay is for</h2>
-      <p>Local-mode dictation where recorded audio stays on your Mac, the code is readable, and there's no account or subscription in the way. Hold a key, speak, release — the text lands where your cursor is.</p>
+      <p>Local-mode dictation where recorded audio stays on your Mac, the Mac client code is readable, and there's no account or subscription in the way. Hold a key, speak, release — Plainsay attempts to insert the result in the active app and leaves it on the clipboard as a fallback.</p>
       <p><a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a></p>
     </section>
 
     <footer>
       <img src="/assets/logo.svg" alt="" width="18" height="18" style="display:block">
-      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
+      <span class="text">Plainsay · dictation for macOS · MIT-licensed Mac client</span>
       <span class="spacer"></span>
       <div class="links">
         <a href="/">Home</a>

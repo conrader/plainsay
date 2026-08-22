@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Spraakdictatie op je Mac, lokaal verwerkt</title>
-<meta name="description" content="Plainsay is een gratis, MIT-gelicentieerde dicteerapp voor Mac. In de lokale modus transcribeert Whisper of Parakeet volledig op je Mac, zonder account of abonnement. Het optionele Plainsay Cloud stuurt opgenomen audio naar gehoste transcriptie en tekstbewerking, zonder modeldownload, voor ongeveer $3 per maand.">
+<meta name="description" content="Plainsay is een gratis dicteerapp voor Mac met MIT-licentie. In de lokale modus draait Whisper of Parakeet volledig op je Mac, zonder account of abonnement.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay — Spraakdictatie op je Mac, lokaal verwerkt">
+<meta property="og:description" content="Plainsay is een gratis dicteerapp voor Mac met MIT-licentie. In de lokale modus draait Whisper of Parakeet volledig op je Mac, zonder account of abonnement.">
+<meta property="og:url" content="https://plainsay.app/nl/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/nl/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is een gratis, MIT-gelicentieerde dicteerapp voor Mac. In de lokale modus transcribeert Whisper of Parakeet volledig op je Mac, zonder account of abonnement. Het optionele Plainsay Cloud stuurt opgenomen audio naar gehoste transcriptie en tekstbewerking, zonder modeldownload, voor ongeveer $3 per maand.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is een gratis, MIT-gelicentieerde dicteerapp voor Mac. In de lokale modus transcribeert Whisper of Parakeet volledig op je Mac, zonder account of abonnement. Het optionele Plainsay Cloud stuurt opgenomen audio naar gehoste transcriptie en tekstbewerking, zonder download van een transcriptiemodel, voor 12 PLN per maand (ongeveer US$ 3).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -93,7 +102,11 @@
   nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
   nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
   nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 480px) { nav.top .links { gap: 14px; } }
+  @media (max-width: 620px) {
+    nav.top .links { gap: 12px; }
+    nav.top .links a:first-child { display: none; }
+    .lang-switch { max-width: 82px; }
+  }
 
   .lang-switch {
     -webkit-appearance: none; appearance: none;
@@ -262,7 +275,7 @@
 
     <header class="hero">
       <h1>Houd een toets ingedrukt, spreek, laat los.</h1>
-      <p class="sub">Schone geschreven tekst verschijnt in de app die je gebruikt. Transcriptie kan volledig op je Mac draaien — opgenomen audio hoeft hem nooit te verlaten.</p>
+      <p class="sub">Tekst verschijnt bij de cursor in veel Mac-apps; als veilig invoegen niet mogelijk is, blijft hij op het klembord. Met lokale transcriptie blijven spraakherkenning en opgenomen audio op je Mac.</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>Open source</span>
         <span class="trust-badge"><span class="dot"></span>Transparant</span>
@@ -274,42 +287,28 @@
       </div>
     </header>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparant, veilig</h2>
-      <p class="lede">Vertrouwen is hier geen bewering — het is iets wat je zelf kunt nalezen. De hele client is MIT-gelicentieerd en openbaar: de pipeline, de HUD, de instellingen, alles. Geen “open core”, en geen “nu open, later dicht” — vrij om te forken, aan te passen en voor altijd zelf te hosten.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">WAT OPEN IS</span>
-          <p>De hele dictatie-client — transcriptie, bewerken, de HUD, Instellingen, de Setup-assistent. Lokaal verwerkt maakt Plainsay geen enkele netwerkoproep die je niet zelf hebt gevraagd: geen analytics, geen telemetrie, geen stiekem naar huis bellen.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">WAT NIET</span>
-          <p>De facturatie-backend voor het betaalde Cloud-abonnement — die bevat betalings- en providergegevens, en juist daarom blijft die apart en privé. De dictatie-ervaring die je daadwerkelijk gebruikt, is volledig open.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — lees elke regel</p>
-    </section>
-
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">Zo ziet het eruit</h2>
       <figure class="hud-figure">
         <img src="../assets/screenshots/hud-listening.svg" alt="De HUD — precies waar je al aan het typen bent" loading="lazy" width="420" height="140">
         <figcaption>De HUD — precies waar je al aan het typen bent</figcaption>
       </figure>
-      <div class="screens">
-        <figure>
-          <img src="../assets/screenshots/setup-speech.webp" alt="Kies Plainsay Cloud of blijf volledig lokaal" loading="lazy" width="896" height="960">
-          <figcaption>Kies Plainsay Cloud of blijf volledig lokaal</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/settings-general.webp" alt="13 interfacetalen, direct van kracht" loading="lazy" width="960" height="910">
-          <figcaption>13 interfacetalen, direct van kracht</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/setup-permissions.webp" alt="Drie machtigingen, elk met precies één taak" loading="lazy" width="900" height="960">
-          <figcaption>Drie machtigingen, elk met precies één taak</figcaption>
-        </figure>
+    </section>
+
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparant, veilig</h2>
+      <p class="lede">Vertrouwen is hier geen bewering: je kunt de code zelf lezen. De broncode van de Plainsay Mac-client is openbaar onder de MIT-licentie. Elke al onder MIT uitgebrachte versie blijft vrij om te forken, aan te passen en zelf te bouwen; componenten en modellen van derden hebben eigen licenties.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">WAT OPEN IS</span>
+          <p>De broncode van de Plainsay Mac-client omvat de integraties voor transcriptie en Polishing, de HUD, Instellingen en de Setup-assistent. Componenten en modellen van derden behouden hun eigen licenties. De Mac-client verstuurt geen analytics of telemetrie. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">WAT NIET</span>
+          <p>De backend van het betaalde Cloud-abonnement beheert de abonnementsstatus via Stripe, bewaart referenties van dienstverleners en registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst. De broncode van de Plainsay Mac-client is open; de optionele Cloud-dienst is dat niet.</p>
+        </div>
       </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — bekijk de broncode van de Mac-client</p>
     </section>
 
     <section id="how">
@@ -324,7 +323,7 @@
           <p>Kunnen we de standup morgen naar 10:30 verzetten? Ik heb &#x27;s ochtends een tandartsafspraak.</p>
         </div>
       </div>
-      <p class="compare-note">De opschoonstap verwijdert stopwoorden en valse starts, corrigeert de interpunctie en behoudt je eigen woorden — het is geen herschrijving. De provider is verwisselbaar (Gemini, OpenRouter, OpenAI, Claude, of een eigen endpoint), kan volledig worden uitgeschakeld, en elke fout valt terug op het ruwe transcript in plaats van de dictatie te laten mislukken.</p>
+      <p class="compare-note">De opschoonstap verwijdert stopwoorden en valse starts en corrigeert de interpunctie. Polishing krijgt de instructie om bewoording, betekenis, toon en taal te behouden; controleer belangrijke tekst. De provider is verwisselbaar (Gemini, OpenRouter, OpenAI, Claude, of een eigen endpoint), kan volledig worden uitgeschakeld, en elke fout valt terug op het ruwe transcript in plaats van de dictatie te laten mislukken.</p>
     </section>
 
     <section id="why">
@@ -336,13 +335,13 @@
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <h2 class="kicker" style="margin:0;">Betrouwbaarheid</h2>
-          <p class="headline">Een dictatie raakt nooit stilletjes kwijt.</p>
+          <p class="headline">Duidelijke herstelpaden nadat een opname is voltooid.</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">Bewerken mislukt — geen sleutel, geen netwerk, een timeout</span><p class="then">Valt automatisch terug op het ruwe transcript, met een melding in de HUD.</p></div>
+          <div class="failure"><span class="when">Een ingestelde Polishing-provider valt uit</span><p class="then">Valt automatisch terug op het ruwe transcript, met een melding in de HUD.</p></div>
           <div class="failure"><span class="when">Er was niets geselecteerd om in te plakken</span><p class="then">Tekst blijft op het klembord, met een HUD-melding om ⌘V te drukken.</p></div>
-          <div class="failure"><span class="when">Crash of geforceerd afsluiten tijdens het opnemen</span><p class="then">Audio wordt vóór transcriptie op schijf gezet, en hersteld bij de volgende start.</p></div>
-          <div class="failure"><span class="when">Plakken mislukt om een andere reden</span><p class="then">De dictatie staat al in de lokale geschiedenis — daar geschreven voordat invoegen zelfs maar werd geprobeerd.</p></div>
+          <div class="failure"><span class="when">De app sluit nadat de opname is voltooid</span><p class="then">Plainsay probeert de voltooide audio vóór transcriptie klaar te zetten. Als dat lukt, kan het bij de volgende start opnieuw proberen.</p></div>
+          <div class="failure"><span class="when">Plakken mislukt om een andere reden</span><p class="then">Plainsay voegt het voltooide transcript aan de lokale geschiedenis toe voordat invoegen wordt geprobeerd.</p></div>
         </div>
       </div>
     </section>
@@ -356,14 +355,14 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Drie manieren om het te gebruiken</h2>
-      <p class="lede">Plainsay Cloud is de makkelijkste manier om te beginnen — geen model om te downloaden, niets in te stellen. Liever alles op je Mac? Lokaal is gratis en volledig functioneel, met één extra installatiestap.</p>
+      <p class="lede">Plainsay Cloud vereist geen download van een transcriptiemodel en geen configuratie van een API-sleutel. Liever alles op je Mac? De lokale modus biedt gratis volledige dicteerfunctionaliteit op het apparaat, zonder minuten- of woordquotum en zonder account; gehoste transcriptie en Polishing blijven optioneel.</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Begin in ongeveer twee minuten met dicteren.</p>
-      <p class="sub">De Setup-assistent leidt je bij de eerste keer overal doorheen.</p>
+      <p class="headline">Begin met dicteren via de begeleide configuratie.</p>
+      <p class="sub">De duur hangt af van de download van het gekozen transcriptiemodel; Cloud slaat dat model over.</p>
       <div style="margin-top:6px;">
         <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Downloaden voor macOS</a>
       </div>
@@ -434,12 +433,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "MIT-licentie, hele client openbaar — elke regel van de pipeline, de HUD, de instellingen. Een blijvende toezegging, geen huidige toestand. Lees precies wat er met je stem gebeurt." },
-    { icon: "lock.shield.fill", title: "Standaard transparant", body: "Whisper of NVIDIA Parakeet draaien lokaal via Core ML. Opgenomen audio hoeft de Mac nooit te verlaten — geen aan te vinken optie, maar de standaard. Geen verborgen telemetrie, geen stiekem naar huis bellen." },
-    { icon: "clock.arrow.circlepath", title: "Veilig: nooit stilletjes verloren", body: "Elke dictatie wordt in de lokale geschiedenis opgeslagen nog voordat invoegen wordt geprobeerd. Fouten zijn herstelbare toestanden, geen verdwenen tekst." },
-    { icon: "gearshape.2", title: "Geen vendor lock-in", body: "Vijf manieren om te transcriberen, vijf om te bewerken — kies elke combinatie, inclusief je eigen API-sleutel en endpoint. Niets is vastgekoppeld aan één AI-leverancier." },
-    { icon: "waveform.badge.mic", title: "Stemfiltering", body: "Registreer je stem één keer; andere sprekers in de ruimte worden lokaal weggefilterd, nog voordat de transcriptie zelfs maar begint." },
-    { icon: "checkmark.circle.fill", title: "Eerlijke prijzen", body: "Het gehoste abonnement kost ongeveer $3/maand. Het lokale abonnement is gratis, volledig functioneel en heeft geen account nodig — hetzelfde product, geen afgeslankte versie." }
+    { icon: "text.quote", title: "Open source", body: "De broncode van de Plainsay Mac-client is openbaar onder de MIT-licentie. Elke al onder MIT uitgebrachte versie blijft vrij om te forken en aan te passen; componenten en modellen van derden hebben eigen licenties." },
+    { icon: "lock.shield.fill", title: "Standaard transparant", body: "De Mac-client verstuurt geen analytics of telemetrie. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst." },
+    { icon: "clock.arrow.circlepath", title: "Herstelbare terugvalopties", body: "Als Polishing mislukt, gebruikt Plainsay het ruwe transcript. Is er geen veilig plakdoel, dan blijft de tekst op het klembord; Plainsay voegt het voltooide transcript vóór het invoegen aan de lokale geschiedenis toe." },
+    { icon: "gearshape.2", title: "Geen vendor lock-in", body: "Meerdere lokale en gehoste engines en providers voor transcriptie en Polishing worden ondersteund, inclusief je eigen API-sleutel en OpenAI-compatibel endpoint." },
+    { icon: "waveform.badge.mic", title: "Stemfiltering", body: "Stemregistratie probeert lokaal te filteren, zonder resultaatgarantie. Als filtering niet beschikbaar is of mislukt, gaat de dictatie ongefilterd verder; Cloud- of BYOK-transcriptie kan dan ongefilterde audio ontvangen." },
+    { icon: "checkmark.circle.fill", title: "Eerlijke prijzen", body: "Het gehoste abonnement kost 12 PLN per maand (ongeveer US$ 3). De lokale modus biedt volledige dicteerfunctionaliteit op het apparaat, zonder minuten- of woordquotum en zonder account. Gehoste transcriptie en Polishing zijn optioneel." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -457,14 +456,14 @@
     {
       id: "local", eyebrow: "LOKALE SPRAAK", title: "Op deze Mac", price: "Gratis",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper of Parakeet, lokaal", "Niets verlaat de Mac", "Geen account, geen abonnement"],
-      caveats: ["Eenmalige modeldownload, 475–632 MB", "Gebruikt geheugen zolang Plainsay draait"]
+      features: ["Whisper of Parakeet, lokaal", "Lokale transcriptie houdt opgenomen audio op deze Mac", "Geen account, geen abonnement"],
+      caveats: ["Aanbevolen meertalige modellen: 475–632 MB; modellen alleen voor Engels vanaf 150 MB", "Gebruikt geheugen zolang Plainsay draait"]
     },
     {
-      id: "cloud", eyebrow: "SNELSTE START", title: "Plainsay Cloud", price: "≈ $3 / maand",
+      id: "cloud", eyebrow: "GEEN DOWNLOAD VAN TRANSCRIPTIEMODEL", title: "Plainsay Cloud", price: "12 PLN / maand (ongeveer US$ 3)",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["Geen modeldownload, geen sleutels", "Transcriptie en bewerken inbegrepen"],
-      caveats: ["Audio wordt naar Plainsay Cloud gestuurd om te transcriberen"]
+      features: ["Geen download van een transcriptiemodel, geen API-sleutels", "Transcriptie en bewerken inbegrepen"],
+      caveats: ["Audio wordt naar Plainsay Cloud gestuurd om te transcriberen", "900 transcriptieminuten in elk voortschrijdend venster van 30 dagen; de lokale modus wordt niet gemeten"]
     },
     {
       id: "byok", eyebrow: "EIGEN PROVIDER", title: "Gebruik je eigen sleutel", price: "Providertarieven",

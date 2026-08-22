@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Mac向けオンデバイス音声入力</title>
-<meta name="description" content="PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、モデルのダウンロードなしで月額約3ドルです。">
+<meta name="description" content="PlainsayはMac向けの無料音声入力アプリで、MITライセンスのオープンソースです。ローカルモードではWhisperまたはParakeetがMac上だけで文字起こしを行うため、音声を外部へ送らず、アカウントもサブスクリプションも不要です。macOS 14以降に対応し、話した内容をテキストとして入力できます。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay — Mac向けオンデバイス音声入力">
+<meta property="og:description" content="PlainsayはMac向けの無料音声入力アプリで、MITライセンスのオープンソースです。ローカルモードではWhisperまたはParakeetがMac上だけで文字起こしを行うため、音声を外部へ送らず、アカウントもサブスクリプションも不要です。macOS 14以降に対応し、話した内容をテキストとして入力できます。">
+<meta property="og:url" content="https://plainsay.app/ja/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/ja/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -21,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、モデルのダウンロードなしで月額約3ドルです。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、文字起こしモデルのダウンロードなしで月額12 PLN（約3米ドル）です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -93,7 +102,11 @@
   nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
   nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
   nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 480px) { nav.top .links { gap: 14px; } }
+  @media (max-width: 620px) {
+    nav.top .links { gap: 12px; }
+    nav.top .links a:first-child { display: none; }
+    .lang-switch { max-width: 82px; }
+  }
 
   .lang-switch {
     -webkit-appearance: none; appearance: none;
@@ -262,7 +275,7 @@
 
     <header class="hero">
       <h1>キーを押して話し、離す。</h1>
-      <p class="sub">きれいなテキストが、今使っているアプリにそのまま入力されます。文字起こしはMac上だけで完結でき、録音した音声が外に出る必要はありません。</p>
+      <p class="sub">多くのMacアプリでカーソル位置にテキストが入ります。安全に挿入できない場合はクリップボードに残ります。ローカル文字起こしでは、音声認識と録音音声がMac上に留まります。</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>オープンソース</span>
         <span class="trust-badge"><span class="dot"></span>透明性</span>
@@ -274,42 +287,28 @@
       </div>
     </header>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">オープンソース、透明、安全</h2>
-      <p class="lede">ここでの信頼は主張ではなく、実際に読みに行けるものです。クライアント全体がMITライセンスで公開されています——パイプライン、HUD、設定、すべてです。「オープンコア」でも「今はオープンで後で閉じる」でもありません。フォークも、改変も、期限なくセルフホストするのも自由です。</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">公開されているもの</span>
-          <p>口述筆記クライアントのすべて——文字起こし、編集、HUD、設定、セットアップアシスタント。オンデバイスで動作し、Plainsayはあなたが依頼していないネットワーク通信を一切行いません：アナリティクスなし、テレメトリーなし、こっそりした通信もなし。</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">公開されていないもの</span>
-          <p>有料のCloudプラン向けの課金バックエンドです——支払い情報とプロバイダーの認証情報を保持するため、まさにそれが理由で分離され非公開になっています。あなたが実際に使う口述筆記の体験自体は、完全にオープンです。</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——すべての行を読む</p>
-    </section>
-
     <section id="screenshots">
       <h2 class="kicker" style="margin-bottom: 28px;">実際の画面</h2>
       <figure class="hud-figure">
         <img src="../assets/screenshots/hud-listening.svg" alt="HUD — いま入力しているまさにその場所に" loading="lazy" width="420" height="140">
         <figcaption>HUD — いま入力しているまさにその場所に</figcaption>
       </figure>
-      <div class="screens">
-        <figure>
-          <img src="../assets/screenshots/setup-speech.webp" alt="Plainsay Cloudを選ぶか、完全にローカルのままにするか" loading="lazy" width="896" height="960">
-          <figcaption>Plainsay Cloudを選ぶか、完全にローカルのままにするか</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/settings-general.webp" alt="13のインターフェース言語、切り替えは即座に反映" loading="lazy" width="960" height="910">
-          <figcaption>13のインターフェース言語、切り替えは即座に反映</figcaption>
-        </figure>
-        <figure>
-          <img src="../assets/screenshots/setup-permissions.webp" alt="3つの権限、それぞれ役割はひとつだけ" loading="lazy" width="900" height="960">
-          <figcaption>3つの権限、それぞれ役割はひとつだけ</figcaption>
-        </figure>
+    </section>
+
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">オープンソース、透明、安全</h2>
+      <p class="lede">ここでの信頼は主張ではなく、実際にコードを読めることです。Plainsay MacクライアントのソースはMITライセンスで公開されています。すでにMITで公開された各バージョンは自由にフォーク、変更、ビルドできます。サードパーティ製コンポーネントとモデルには個別のライセンスがあります。</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">公開されているもの</span>
+          <p>Plainsay Macクライアントのソースには、文字起こしとPolishingの統合、HUD、設定、セットアップアシスタントが含まれます。サードパーティ製コンポーネントとモデルには個別のライセンスがあります。Macクライアントはアクセス解析やテレメトリーを送信しません。署名付きアップデートの確認はデフォルトでapi.plainsay.appへ接続し、設定で無効にできます。オプションのCloudは、有料サービスの運営に必要なアカウント、購読、使用量のメタデータを記録します。</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">公開されていないもの</span>
+          <p>有料CloudプランのバックエンドはStripe経由で購読状態を管理し、サービス提供者の認証情報を保持し、有料サービスに必要なアカウント、購読、使用量のメタデータを記録します。Plainsay Macクライアントのソースは公開されていますが、オプションのCloudサービスは公開されていません。</p>
+        </div>
       </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> ——Macクライアントのソースを見る</p>
     </section>
 
     <section id="how">
@@ -324,7 +323,7 @@
           <p>明日のスタンドアップを10時半に動かせますか？朝、歯医者の予約があります。</p>
         </div>
       </div>
-      <p class="compare-note">クリーンアップ処理はフィラーや言い直しを取り除き、句読点を整え、あなた自身の言葉遣いはそのまま残します——書き直しではありません。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、完全にオフにすることもでき、失敗した場合は口述筆記自体を失敗させるのではなく、生の文字起こしにフォールバックします。</p>
+      <p class="compare-note">クリーンアップ処理はフィラーや言い直しを取り除き、句読点を整えます。Polishingには、言葉遣い、意味、トーン、言語を保つよう指示しています。重要な文章は確認してください。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、完全にオフにすることもでき、失敗した場合は口述筆記自体を失敗させるのではなく、生の文字起こしにフォールバックします。</p>
     </section>
 
     <section id="why">
@@ -336,13 +335,13 @@
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <h2 class="kicker" style="margin:0;">信頼性</h2>
-          <p class="headline">口述筆記が静かに消えることはありません。</p>
+          <p class="headline">録音完了後に明確な復旧手段があります。</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">編集に失敗——キーなし、ネットワークなし、タイムアウト</span><p class="then">自動的に生の文字起こしにフォールバックし、HUDに通知が表示されます。</p></div>
+          <div class="failure"><span class="when">設定済みのPolishingプロバイダーで処理に失敗</span><p class="then">自動的に生の文字起こしにフォールバックし、HUDに通知が表示されます。</p></div>
           <div class="failure"><span class="when">貼り付け先にフォーカスされたものがなかった</span><p class="then">テキストはクリップボードに残り、⌘Vを押すよう促すHUD表示が出ます。</p></div>
-          <div class="failure"><span class="when">録音中にクラッシュまたは強制終了</span><p class="then">音声は文字起こし前にディスクへ一時保存され、次回起動時に復元されます。</p></div>
-          <div class="failure"><span class="when">それ以外の理由で貼り付けが失敗</span><p class="then">口述筆記は挿入が試みられる前に、すでにローカル履歴へ書き込まれています。</p></div>
+          <div class="failure"><span class="when">録音完了後にアプリが終了</span><p class="then">Plainsayは文字起こし前に完成した音声の一時保存を試みます。保存に成功した場合は、次回起動時に再試行できます。</p></div>
+          <div class="failure"><span class="when">それ以外の理由で貼り付けが失敗</span><p class="then">Plainsayは挿入を試みる前に、完了した文字起こしをローカル履歴へ追加します。</p></div>
         </div>
       </div>
     </section>
@@ -356,14 +355,14 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">3つの使い方</h2>
-      <p class="lede">Plainsay Cloudなら最も簡単に始められます——モデルのダウンロードも設定も不要です。すべてMac上で完結させたい方には、ローカル版が無料でフル機能、設定の手間が一つ増えるだけです。</p>
+      <p class="lede">Plainsay Cloudは文字起こしモデルのダウンロードもAPIキーの設定も不要です。すべてMac上で完結させたい方は、ローカルモードを無料、分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section class="final">
       <img src="../assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">約2分で口述筆記を始められます。</p>
-      <p class="sub">初回起動時、セットアップアシスタントがすべて案内します。</p>
+      <p class="headline">ガイド付きセットアップで口述筆記を始められます。</p>
+      <p class="sub">所要時間は選択した文字起こしモデルのダウンロードによって変わります。Cloudならそのモデルは不要です。</p>
       <div style="margin-top:6px;">
         <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">macOS版をダウンロード</a>
       </div>
@@ -434,12 +433,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "オープンソース", body: "MITライセンスで、クライアント全体が公開されています——パイプライン、HUD、設定、すべての1行まで。今だけの状態ではなく、恒久的な約束です。あなたの声に何が起きているか、正確に読むことができます。" },
-    { icon: "lock.shield.fill", title: "デフォルトで透明", body: "WhisperまたはNVIDIA ParakeetがCore ML経由でローカルに動作します。録音した音声がMacの外に出る必要は一切ありません——チェックボックスではなく、これがデフォルトの動作です。隠れたテレメトリーも、こっそりした通信もありません。" },
-    { icon: "clock.arrow.circlepath", title: "安全：静かに消えることはない", body: "すべての口述筆記は、挿入が試みられる前にローカル履歴へ保存されます。失敗は復旧可能な状態であり、消えてしまったテキストではありません。" },
-    { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしは5通り、編集は5通り——独自のAPIキーとエンドポイントを含め、好きな組み合わせを選べます。特定のAIベンダーに固定されている箇所はありません。" },
-    { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "自分の声を一度登録すれば、部屋にいる他の話者は文字起こしが始まる前にローカルでフィルタリングされます。" },
-    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額およそ3ドルです。ローカル版は無料で、機能はフルで、アカウントも不要——制限された廉価版ではなく、同じ製品です。" }
+    { icon: "text.quote", title: "オープンソース", body: "Plainsay MacクライアントのソースはMITライセンスで公開されています。すでにMITで公開された各バージョンは自由にフォークして変更できます。サードパーティ製コンポーネントとモデルには個別のライセンスがあります。" },
+    { icon: "lock.shield.fill", title: "デフォルトで透明", body: "Macクライアントはアクセス解析やテレメトリーを送信しません。署名付きアップデートの確認はデフォルトでapi.plainsay.appへ接続し、設定で無効にできます。オプションのCloudは、有料サービスに必要なアカウント、購読、使用量のメタデータを記録します。" },
+    { icon: "clock.arrow.circlepath", title: "復旧できるフォールバック", body: "Polishingに失敗すると、Plainsayは生の文字起こしを使います。安全な貼り付け先がなければテキストはクリップボードに残り、Plainsayは挿入前に完了した文字起こしをローカル履歴へ追加します。" },
+    { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしとPolishingでは、複数のローカルおよびホスト型エンジンやプロバイダーに対応しています。独自のAPIキーやOpenAI互換エンドポイントも利用できます。" },
+    { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "声の登録はベストエフォートのローカルフィルターです。利用できない場合や失敗した場合、口述筆記はフィルターなしで続行し、CloudまたはBYOK文字起こしに未処理の音声が送られることがあります。" },
+    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLN（約3米ドル）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -457,14 +456,14 @@
     {
       id: "local", eyebrow: "ローカル音声認識", title: "このMac上で", price: "無料",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["WhisperまたはParakeet、オンデバイス", "何もMacの外に出ない", "アカウント不要、サブスクリプション不要"],
-      caveats: ["モデルのダウンロードは一度だけ、475〜632MB", "Plainsayの実行中はメモリを使用し続けます"]
+      features: ["WhisperまたはParakeet、オンデバイス", "ローカル文字起こしでは録音音声がこのMacに留まる", "アカウント不要、サブスクリプション不要"],
+      caveats: ["推奨多言語モデルは475〜632MB、英語専用モデルは150MBから", "Plainsayの実行中はメモリを使用し続けます"]
     },
     {
-      id: "cloud", eyebrow: "最速セットアップ", title: "Plainsay Cloud", price: "月額 約3ドル",
+      id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN（約3米ドル）",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["モデルのダウンロード不要、キー不要", "文字起こしと編集込み"],
-      caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます"]
+      features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み"],
+      caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます", "文字起こしは任意の連続30日間で900分まで。ローカルモードは計測されません"]
     },
     {
       id: "byok", eyebrow: "自前のプロバイダー", title: "自分のキーを使う", price: "プロバイダーの料金",

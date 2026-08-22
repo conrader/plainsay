@@ -3,7 +3,8 @@
 > Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode,
 > Whisper or Parakeet transcribes entirely on your Mac — no account or
 > subscription. Optional Plainsay Cloud sends recorded audio for hosted
-> transcription and Polishing without a model download for about $3/month.
+> transcription and Polishing without a transcription-model download for 12
+> PLN/month (about US$3), with 900 transcription minutes per rolling 30 days.
 
 Plainsay is a from-scratch Swift/SwiftUI menu-bar app: global hotkey capture,
 a choice of local Core ML transcription (WhisperKit or NVIDIA Parakeet TDT
@@ -13,6 +14,9 @@ The client is fully open source; a separate, deliberately opt-in Plainsay
 Cloud tier exists for people who don't want to manage a local model or an API
 key.
 
+A single dictation can run for up to 10 minutes. Plainsay stops recording and
+processes the captured audio at that boundary.
+
 ## Docs
 
 - [README](https://github.com/conrader/plainsay/blob/main/README.md): install, first launch, architecture, how it works
@@ -21,7 +25,7 @@ key.
 - [Homepage](https://plainsay.app/): overview, pricing, screenshots
 - [Why on-device](https://plainsay.app/why-on-device/): exactly what runs locally vs. optionally in the cloud, stated precisely
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
-- [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with one command
+- [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands
 - [Compare Mac dictation apps](https://plainsay.app/compare/): all the main options side by side — Plainsay, Wispr Flow, superwhisper, VoiceInk, Apple Dictation — including which cases we recommend a competitor for
 - [vs Wispr Flow](https://plainsay.app/vs/wispr-flow/): a sourced, factual comparison against the closed-source, cloud-only incumbent
 - [vs VoiceInk](https://plainsay.app/vs/voiceink/): a sourced comparison against another genuinely on-device, open-source competitor

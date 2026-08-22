@@ -24,7 +24,16 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Local-first voice dictation for macOS</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a model download for about $3/month.">
+<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. Local mode runs Whisper or Parakeet entirely on your Mac, with no account or subscription required.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plainsay">
+<meta property="og:title" content="Plainsay — Local-first voice dictation for macOS">
+<meta property="og:description" content="Hold a key, speak, release. A 12 MB native Mac app with Whisper and Parakeet, a free Local mode, and reproducible benchmarks.">
+<meta property="og:url" content="https://plainsay.app/">
+<meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="canonical" href="https://plainsay.app/">
 <link rel="alternate" hreflang="en" href="https://plainsay.app/">
@@ -41,7 +50,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a model download for about $3/month.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "softwareVersion": "latest", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "3", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"], "author": {"@type": "Organization", "name": "Plainsay", "url": "https://plainsay.app/"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a transcription-model download for 12 PLN/month (about US$3).", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -113,7 +122,11 @@
   nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
   nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
   nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 480px) { nav.top .links { gap: 14px; } }
+  @media (max-width: 620px) {
+    nav.top .links { gap: 12px; }
+    nav.top .links a:first-child { display: none; }
+    .lang-switch { max-width: 82px; }
+  }
 
   .lang-switch {
     -webkit-appearance: none; appearance: none;
@@ -282,7 +295,7 @@
 
     <header class="hero">
       <h1>Hold a key, speak, release.</h1>
-      <p class="sub">Clean written text lands in whatever app you&#x27;re using. Transcription can run entirely on your Mac — recorded audio never has to leave it.</p>
+      <p class="sub">Text lands at the cursor in many Mac apps; if safe insertion is unavailable, it stays on the clipboard. With Local transcription, speech recognition and recorded audio stay on your Mac.</p>
       <div class="trust-row">
         <span class="trust-badge"><span class="dot"></span>Open source</span>
         <span class="trust-badge"><span class="dot"></span>Transparent</span>
@@ -294,42 +307,28 @@
       </div>
     </header>
 
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
-      <p class="lede">Trust isn&#x27;t a claim here — it&#x27;s something you can go read. The whole client is MIT licensed and public: the pipeline, the HUD, the settings, all of it. Not open core, and not “open now, closed later” — free to fork, modify, and self-host indefinitely.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
-          <p>The entire dictation client — transcription, editing, the HUD, Settings, the Setup Assistant. In Local mode, speech recognition and recorded audio stay on your Mac. There is no hidden analytics or telemetry.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
-          <p>The billing backend for the paid Cloud tier — it holds payment and provider credentials, which is exactly why it stays separate and private. The dictation experience you actually use is fully open.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — read every line</p>
-    </section>
-
     <section id="screenshots">
-      <h2 class="kicker" style="margin-bottom: 28px;">See it in action</h2>
+      <h2 class="kicker" style="margin-bottom: 28px;">Inside Plainsay</h2>
       <figure class="hud-figure">
         <img src="assets/screenshots/hud-listening.svg" alt="The HUD — right where you&#x27;re already typing" loading="lazy" width="420" height="140">
         <figcaption>The HUD — right where you&#x27;re already typing</figcaption>
       </figure>
-      <div class="screens">
-        <figure>
-          <img src="assets/screenshots/setup-speech.webp" alt="Choose Local speech or optional Plainsay Cloud" loading="lazy" width="896" height="960">
-          <figcaption>Choose Local speech or optional Plainsay Cloud</figcaption>
-        </figure>
-        <figure>
-          <img src="assets/screenshots/settings-general.webp" alt="13 interface languages, applied instantly" loading="lazy" width="960" height="910">
-          <figcaption>13 interface languages, applied instantly</figcaption>
-        </figure>
-        <figure>
-          <img src="assets/screenshots/setup-permissions.webp" alt="Three permissions, each with one narrow job" loading="lazy" width="900" height="960">
-          <figcaption>Three permissions, each with one narrow job</figcaption>
-        </figure>
+    </section>
+
+    <section id="open-source">
+      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
+      <p class="lede">Trust isn&#x27;t a claim here — it&#x27;s something you can read. The Plainsay Mac client source is public under MIT. Every version already released under MIT remains free to fork, modify, and build yourself; third-party components and models have their own licenses.</p>
+      <div class="compare" style="margin-top: 28px;">
+        <div class="col">
+          <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
+          <p>The Plainsay Mac client source includes its transcription and Polishing integrations, HUD, Settings, and Setup Assistant. Third-party components and models retain their own licenses. The Mac client sends no analytics or telemetry. Signed-update checks contact api.plainsay.app by default and can be disabled in Settings. Optional Cloud records the account, subscription, and usage metadata needed to operate the paid service.</p>
+        </div>
+        <div class="col">
+          <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
+          <p>The backend for the paid Cloud tier — it manages subscription state through Stripe, holds service-provider credentials, and records the account, subscription, and usage metadata needed for the paid service. The Plainsay Mac client source is open; the optional Cloud service is not.</p>
+        </div>
       </div>
+      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — browse the Mac client source</p>
     </section>
 
     <section id="how">
@@ -344,7 +343,7 @@
           <p>Can we move the standup to 10:30 tomorrow? I have a dentist appointment in the morning.</p>
         </div>
       </div>
-      <p class="compare-note">The cleanup pass removes fillers and false starts, fixes punctuation, and keeps your actual wording — it is not a rewrite. Provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
+      <p class="compare-note">The cleanup pass removes fillers and false starts and fixes punctuation. Polishing is instructed to preserve wording, meaning, tone, and language; review important text. The provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
     </section>
 
     <section id="why">
@@ -356,13 +355,13 @@
       <div class="reliability">
         <div style="display:flex; flex-direction:column; gap:10px;">
           <h2 class="kicker" style="margin:0;">Reliability</h2>
-          <p class="headline">A dictation is never silently lost.</p>
+          <p class="headline">Clear recovery paths after a recording finishes.</p>
         </div>
         <div class="failures">
-          <div class="failure"><span class="when">Editing fails — no key, no network, a timeout</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
+          <div class="failure"><span class="when">A configured Polishing provider fails</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
           <div class="failure"><span class="when">Nothing was focused to paste into</span><p class="then">Text stays on the clipboard, with a HUD prompt to press ⌘V.</p></div>
-          <div class="failure"><span class="when">Crash or force-quit mid-recording</span><p class="then">Audio is staged to disk before transcription, and recovered on next launch.</p></div>
-          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">The dictation is already in local history — written there before insertion was attempted.</p></div>
+          <div class="failure"><span class="when">The app closes after recording finishes</span><p class="then">Plainsay attempts to stage the finished audio before transcription. If staging succeeds, it can retry on the next launch.</p></div>
+          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">Plainsay adds the completed transcript to local history before attempting insertion.</p></div>
         </div>
       </div>
     </section>
@@ -376,14 +375,14 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time model download. Plainsay Cloud is the fastest setup — about $3/month, with no model download or key to configure.</p>
+      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs 12 PLN/month (about US$3).</p>
       <div class="plans" id="plans"></div>
     </section>
 
     <section class="final">
       <img src="assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Start dictating in about two minutes.</p>
-      <p class="sub">The Setup Assistant walks you through everything on first run.</p>
+      <p class="headline">Start dictating with guided setup.</p>
+      <p class="sub">The time depends on your chosen transcription-model download; Cloud skips that model.</p>
       <div style="margin-top:6px;">
         <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
       </div>
@@ -455,12 +454,12 @@
   // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
   // -----------------------------------------------------------------
   var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "MIT licensed, whole client public — every line of the pipeline, the HUD, the settings. A permanent commitment, not a current state. Read exactly what happens to your voice." },
-    { icon: "lock.shield.fill", title: "Transparent by default", body: "Whisper or NVIDIA Parakeet run locally through Core ML. Recorded audio never has to leave the Mac — not a checkbox, the default. No hidden telemetry, no phoning home." },
-    { icon: "clock.arrow.circlepath", title: "Safe: never silently lost", body: "Every dictation is saved to local history before insertion is even attempted. Failures are recoverable states, not vanished text." },
-    { icon: "gearshape.2", title: "No vendor lock-in", body: "Five ways to transcribe, five ways to edit — pick any combination, including your own API key and endpoint. Nothing is hard-coded to one AI vendor." },
-    { icon: "waveform.badge.mic", title: "Voice filtering", body: "Enroll your voice once; other speakers in the room are filtered out locally, before transcription even runs." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is about $3/month. The local tier is free, fully capable, and needs no account — the same product, not a crippled one." }
+    { icon: "text.quote", title: "Open source", body: "The Plainsay Mac client source is public under MIT. Every version already released under MIT remains free to fork and modify; third-party components and models have their own licenses." },
+    { icon: "lock.shield.fill", title: "Transparent by default", body: "The Mac client sends no analytics or telemetry. Signed-update checks contact api.plainsay.app by default and can be disabled in Settings. Optional Cloud records the account, subscription, and usage metadata needed to operate the paid service." },
+    { icon: "clock.arrow.circlepath", title: "Recoverable fallbacks", body: "If Polishing fails, Plainsay uses the raw transcript. If there is no safe paste target, text stays on the clipboard; Plainsay adds the completed transcript to local history before insertion." },
+    { icon: "gearshape.2", title: "No vendor lock-in", body: "Multiple local and hosted transcription and Polishing providers are supported, including your own API key and OpenAI-compatible endpoint." },
+    { icon: "waveform.badge.mic", title: "Voice filtering", body: "Voice enrollment is a best-effort local filter. If filtering is unavailable or fails, dictation continues unfiltered; Cloud or BYOK transcription may then receive unfiltered audio." },
+    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is 12 PLN/month (about US$3). Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -478,14 +477,14 @@
     {
       id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper or Parakeet, on-device", "Recorded audio stays on this Mac", "No account, no subscription"],
-      caveats: ["One-time model download, 475–632 MB", "Cloud Polishing can send transcript text unless it is off or local", "Keeps using memory while Plainsay is running"]
+      features: ["Whisper or Parakeet, on-device", "Local transcription keeps recorded audio on this Mac", "No account, no subscription"],
+      caveats: ["Recommended multilingual models: 475–632 MB; English-only from 150 MB", "Cloud Polishing can send transcript text unless it is off or local", "Keeps using memory while Plainsay is running"]
     },
     {
-      id: "cloud", eyebrow: "FASTEST SETUP", title: "Plainsay Cloud", price: "≈ $3 / month",
+      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "12 PLN / month (about US$3)",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["No model download, no keys", "Transcription and Polishing included"],
-      caveats: ["Audio is sent to Plainsay Cloud to be transcribed"]
+      features: ["No transcription-model download, no API keys", "Transcription and Polishing included"],
+      caveats: ["Audio is sent to Plainsay Cloud to be transcribed", "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"]
     },
     {
       id: "byok", eyebrow: "YOUR PROVIDER", title: "Bring your own key", price: "Provider rates",
