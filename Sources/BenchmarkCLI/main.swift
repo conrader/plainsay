@@ -155,6 +155,10 @@ struct BenchmarkCLI {
         let whisper = WhisperKitEngine(model: .largeV3Turbo, spokenLanguages: ["en"])
         do {
             try await whisper.prepare()
+            if let warmup = utterances.compactMap({ samplesByID[$0.id] }).first {
+                print("  warm-up (not timed)")
+                _ = try await whisper.transcribe(samples: warmup, prompt: nil)
+            }
             var r = EngineResult()
             for u in utterances {
                 guard let samples = samplesByID[u.id] else { continue }
@@ -170,7 +174,7 @@ struct BenchmarkCLI {
             }
             results["whisper-large-v3-turbo"] = r
         } catch {
-            print("  ! whisper prepare failed: \(error)")
+            print("  ! whisper setup or warm-up failed: \(error)")
         }
         await whisper.shutdown()
 
@@ -179,6 +183,10 @@ struct BenchmarkCLI {
         let parakeet = ParakeetEngine(language: "en")
         do {
             try await parakeet.prepare()
+            if let warmup = utterances.compactMap({ samplesByID[$0.id] }).first {
+                print("  warm-up (not timed)")
+                _ = try await parakeet.transcribe(samples: warmup, prompt: nil)
+            }
             var r = EngineResult()
             for u in utterances {
                 guard let samples = samplesByID[u.id] else { continue }
@@ -194,7 +202,7 @@ struct BenchmarkCLI {
             }
             results["parakeet-tdt-0.6b-v3"] = r
         } catch {
-            print("  ! parakeet prepare failed: \(error)")
+            print("  ! parakeet setup or warm-up failed: \(error)")
         }
         await parakeet.shutdown()
 
