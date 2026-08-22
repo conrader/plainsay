@@ -13,6 +13,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# release.sh runs these same gates in its preflight, so a release that would
+# be refused here fails before anything is built, signed or published —
+# rather than after the update feed is already live, which would leave the
+# site describing a version that no longer matches the app being shipped.
+CHECK_ONLY=0
+[ "${1:-}" = "--check-only" ] && CHECK_ONLY=1
+
 # This publishes the *working tree*, not origin/main, with --delete. A stale
 # or dirty checkout therefore silently reverts the live site and removes any
 # page added since — which very nearly happened from a checkout 28 commits
@@ -78,6 +85,11 @@ validate_legal_page() {
 
 validate_legal_page docs/privacy/index.html
 validate_legal_page docs/terms/index.html
+
+if [ "$CHECK_ONLY" = "1" ]; then
+  echo "==> docs/ is publishable from this checkout"
+  exit 0
+fi
 
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
