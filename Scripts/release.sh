@@ -20,15 +20,29 @@ NOTES="${2:-}"
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-updates
 FEED_URL="https://api.plainsay.app"
+# Keep the app bundle and DMG on the same Developer ID identity. bundle.sh has
+# the same fallback, but variables assigned in a child script do not propagate
+# back to this release process; without defining it here, `set -u` aborts when
+# the finished DMG is signed.
+export SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Konrad Sierzputowski (FQ5759XB2L)}"
 
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-	echo "version must be plain semver, for example 0.2.23" >&2
+	echo "version must be plain semver, for example 0.2.24" >&2
 	exit 1
 }
 
 SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 [ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
+[ "$SIGN_IDENTITY" != "-" ] || {
+	echo "release DMGs require a Developer ID identity, not ad-hoc signing" >&2
+	exit 1
+}
+AVAILABLE_IDENTITIES=$(security find-identity -v -p codesigning)
+grep -Fq "$SIGN_IDENTITY" <<<"$AVAILABLE_IDENTITIES" || {
+	echo "Developer ID identity not available: $SIGN_IDENTITY" >&2
+	exit 1
+}
 validate_legal_page() {
 	local page="$1"
 	[ -s "$page" ] || {
