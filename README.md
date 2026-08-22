@@ -119,10 +119,10 @@ transcript text. Stripe receives the account email and handles checkout and
 payment details; Apple handles Apple sign-in, and the configured email-delivery
 service receives the address and sign-in message.
 
-Normal API access logs still contain request metadata such as network address,
-method, path, status, and time. The current client puts language and vocabulary
-metadata in a header that the application logger redacts; the default proxy log
-does not include request headers.
+API proxy access logging is disabled. Minimal application event logs contain
+only the method, matched route template, status, and elapsed time; they exclude
+network addresses, headers, query strings, and request bodies. Website and
+signed-update delivery can still produce ordinary web-server access records.
 
 Local mode does not mean the app never uses the network: the selected model
 must be downloaded once, and the default update check contacts

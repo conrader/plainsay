@@ -140,7 +140,7 @@
     <section>
       <h2 class="big">What is stored</h2>
       <p>Plainsay Cloud keeps the records needed to run an account and subscription: an email address and/or Apple account identifier, session records, Stripe customer and subscription identifiers and status, and per-operation usage metadata such as timestamp, type, audio duration, estimated cost, and Polishing token counts. Its application database deliberately stores neither recorded audio nor transcript text. Stripe receives the account email and handles checkout and payment details; Apple handles Apple sign-in, and the configured email-delivery service receives the address and sign-in message.</p>
-      <p>Normal API access logs still include request metadata such as network address, method, path, status, and time. The current client puts language and vocabulary metadata in a header that the application logger redacts; the default proxy log does not include request headers.</p>
+      <p>API proxy access logging is disabled. Minimal application event logs contain only the method, matched route template, status, and elapsed time; they exclude network addresses, headers, query strings, and request bodies. Website and signed-update delivery can still produce ordinary web-server access records.</p>
       <p>On the Mac, Plainsay keeps up to 100 raw and final transcript records for recovery and History until you clear them or they age out. Audio is staged in an owner-only local folder during processing and then removed; if processing is interrupted, that recording can remain for recovery on the next launch. These files are excluded from backups.</p>
     </section>
 
