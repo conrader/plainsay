@@ -114,15 +114,49 @@ struct TermDictionaryTests {
         #expect(dictionary.applyCorrections(to: "hi there") == "hi there")
     }
 
-    @Test("A short invented term is corrected even two edits away")
-    func correctionsFixShortTermTwoEditsAway() {
-        // Regression: "revised"/"advised" are exactly what an ASR mishears
-        // an unfamiliar 5-letter word like "Vised" as, and both sit two
-        // edits away — a distance-1 budget missed this in practice.
+    @Test("A short term never swallows the ordinary words around it")
+    func correctionsLeaveRealWordsAlone() {
+        // The reverse of what this used to assert. "Vised" sits two edits
+        // from both "revised" and "advised", and a two-edit budget on a
+        // five-letter term rewrote those real words every time they were
+        // spoken — silently, and with no way for the speaker to tell the
+        // dictionary had done it. Biasing the decoder and giving the editing
+        // model the term are the paths that can use context to tell the
+        // difference; blind string distance cannot.
         let dictionary = TermDictionary(terms: ["Vised"])
 
-        #expect(dictionary.applyCorrections(to: "I opened revised and typed a command") == "I opened Vised and typed a command")
-        #expect(dictionary.applyCorrections(to: "I opened advised and typed a command") == "I opened Vised and typed a command")
+        #expect(dictionary.applyCorrections(to: "I opened revised and typed a command") == "I opened revised and typed a command")
+        #expect(dictionary.applyCorrections(to: "I opened advised and typed a command") == "I opened advised and typed a command")
+        // The term itself is still normalised to the dictionary's spelling.
+        #expect(dictionary.applyCorrections(to: "I opened vised today") == "I opened Vised today")
+    }
+
+    @Test("An exact match wins over a longer term that merely qualifies")
+    func correctionsPreferTheClosestMatch() {
+        // Scoring every candidate rather than taking the first acceptable
+        // one: "Plainsay" is spelled correctly here, so a longer term that
+        // happens to clear the threshold must not claim it.
+        let dictionary = TermDictionary(terms: ["Plainsay Cloud", "Plainsay"])
+
+        #expect(dictionary.applyCorrections(to: "I use Plainsay daily") == "I use Plainsay daily")
+    }
+
+    @Test("The more specific term still wins when the speaker said all of it")
+    func correctionsPreferTheLongerTermOnATie() {
+        let dictionary = TermDictionary(terms: ["Plainsay", "Plainsay Cloud"])
+
+        #expect(
+            dictionary.applyCorrections(to: "I subscribed to plain say cloud yesterday")
+                == "I subscribed to Plainsay Cloud yesterday"
+        )
+    }
+
+    @Test("A long term still tolerates a genuine mishearing")
+    func correctionsStillFixLongerTerms() {
+        let dictionary = TermDictionary(terms: ["OpenRouter", "WhisperKit"])
+
+        #expect(dictionary.applyCorrections(to: "I used OpenRouterr today") == "I used OpenRouter today")
+        #expect(dictionary.applyCorrections(to: "I used WisperKit today") == "I used WhisperKit today")
     }
 }
 
