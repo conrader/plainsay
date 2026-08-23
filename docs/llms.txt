@@ -31,6 +31,7 @@ processes the captured audio at that boundary.
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
 - [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands
 - [Compare Mac dictation apps](https://plainsay.app/compare/): all the main options side by side — Plainsay, Wispr Flow, superwhisper, VoiceInk, Apple Dictation — including which cases we recommend a competitor for
+- [Who makes Plainsay](https://plainsay.app/about/): the registered company behind the app, how to reach us, and what we publish so the privacy claims can be checked
 - [vs Wispr Flow](https://plainsay.app/vs/wispr-flow/): a sourced, factual comparison against the closed-source, cloud-only incumbent
 - [vs VoiceInk](https://plainsay.app/vs/voiceink/): a sourced comparison against another genuinely on-device, open-source competitor
 - [vs superwhisper](https://plainsay.app/vs/superwhisper/): a sourced comparison against a closed-source competitor with a free tier

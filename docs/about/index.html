@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How Plainsay actually works</title>
-<meta name="description" content="The ASR engines, the cleanup pass, and text insertion — with the real numbers and the actual tradeoffs, not a marketing gloss.">
+<title>Who makes Plainsay</title>
+<meta name="description" content="Plainsay is built and operated by DMT Sp. z o.o. in Baranowo, Poland. Company registration, contact details, and what we publish so you can check our claims rather than trust them.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Plainsay">
-<meta property="og:title" content="How Plainsay actually works">
-<meta property="og:description" content="The ASR engines, Polishing, and reliable text insertion — with real numbers and explicit trade-offs.">
-<meta property="og:url" content="https://plainsay.app/how-it-works/">
+<meta property="og:title" content="Who makes Plainsay">
+<meta property="og:description" content="The company behind Plainsay, how to reach us, and the things we publish so our claims can be checked.">
+<meta property="og:url" content="https://plainsay.app/about/">
 <meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-<link rel="canonical" href="https://plainsay.app/how-it-works/">
+<link rel="canonical" href="https://plainsay.app/about/">
 <style>
   :root{
     --ink:#14161a; --bone:#f2efe9; --slate:#7a8194; --signal:#6fd3c7; --ember:#e8896b;
@@ -53,7 +53,6 @@
   section{border-top:1px solid var(--hairline);padding:40px 0 44px}
   section:first-of-type{border-top:none}
   h2.big{margin:0 0 12px;font-size:23px;font-weight:650;letter-spacing:-0.4px}
-  h3.sub{margin:28px 0 8px;font-size:16px;font-weight:650;color:var(--bone)}
   p{font-size:16px;line-height:1.7;color:var(--bone)}
   p.dim{color:var(--label-secondary)}
   .kicker{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--slate)}
@@ -70,10 +69,6 @@
   ul.plain{padding-left:22px;margin:12px 0}
   ul.plain li{margin:10px 0;font-size:16px;line-height:1.65}
   ul.plain li b{color:var(--signal)}
-  code{font-family:var(--font-mono);font-size:0.9em;background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:5px}
-  pre{font-family:var(--font-mono);font-size:13px;line-height:1.6;background:rgba(255,255,255,0.04);border:1px solid var(--hairline);border-radius:var(--radius-card);padding:16px 18px;overflow-x:auto;margin:16px 0;color:var(--label-secondary)}
-  pre b{color:var(--signal);font-weight:600}
-  .mono-src{font-family:var(--font-mono);font-size:11.5px;color:var(--slate)}
   .final{display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding:44px 0 56px}
   .final .headline{margin:0;font-size:22px;font-weight:600;letter-spacing:-0.4px}
   .final .req{font-size:12px;color:var(--slate)}
@@ -85,6 +80,10 @@
   footer .links a:hover{color:var(--bone)}
   footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
   @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
+
+  .card{border:1px solid var(--hairline);border-radius:var(--radius-card);padding:18px 20px;margin:16px 0;background:rgba(255,255,255,.025)}
+  .card strong{color:var(--signal)}
+  address{font-style:normal;line-height:1.75}
 </style>
 </head>
 <body>
@@ -103,50 +102,58 @@
   <div class="wrap">
 
     <header class="hero">
-      <div class="eyebrow">How it works</div>
-      <h1>The engineering, not the pitch.</h1>
-      <p class="sub">Local mode has two on-device ASR engines; optional Plainsay Cloud and bring-your-own-provider modes handle speech remotely. A best-effort cleanup pass never gets to lose a dictation to a bad network call. Here are the real numbers and actual tradeoffs.</p>
+      <div class="eyebrow">About</div>
+      <h1>Who makes Plainsay.</h1>
+      <p class="sub">Dictation software sees everything you say, so it is fair to ask who is on the other end of it. Plainsay is built and operated by a registered Polish company, and the client is open source so the privacy claims on this site can be checked rather than believed.</p>
     </header>
 
     <section>
-      <h2 class="big">Local mode: two fully on-device engines</h2>
-      <p>Local mode ships two speech engines through Core ML, and you pick which one runs. Recorded audio stays on your Mac in this mode:</p>
+      <h2 class="big">The company</h2>
+      <p class="dim">The Plainsay website, the official app distribution, and Plainsay Cloud are operated by:</p>
+      <div class="card">
+        <address>
+          <strong>DMT Sp. z o.o.</strong><br>
+          ul. Budowlanych 1A<br>
+          62-081 Baranowo, Poland<br>
+          <br>
+          KRS 0000836521 &middot; REGON 385877414<br>
+          NIP 7812007881 &middot; EU VAT PL7812007881<br>
+          Share capital: PLN 25,000<br>
+          Registry court: District Court Poznań–Nowe Miasto i Wilda in Poznań, VIII Commercial Division of the National Court Register
+        </address>
+      </div>
+      <p>These are the same details recorded in the Polish commercial register, where they can be looked up independently. They also appear in the <a href="/terms/">Terms</a> and in the footer of every page on this site.</p>
+    </section>
+
+    <section>
+      <h2 class="big">Contact</h2>
       <ul class="plain">
-        <li><b>Whisper</b>, via <a href="https://github.com/argmaxinc/WhisperKit">WhisperKit</a> — OpenAI's model family, broad language coverage, running as a Core ML model on the Neural Engine.</li>
-        <li><b>NVIDIA Parakeet TDT 0.6B v3</b>, via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a> — faster and, in our disclosed 50-clip English benchmark, <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">measurably more accurate</a>; the model also supports Polish.</li>
+        <li><b>Email.</b> <a href="mailto:hi@plainsay.app">hi@plainsay.app</a> — support, billing, press, security reports, and anything else. A person reads it.</li>
+        <li><b>Bugs and feature requests.</b> <a href="https://github.com/conrader/plainsay/issues">GitHub Issues</a>, in public, where you can see what was reported and what was done about it.</li>
+        <li><b>Security.</b> Please email rather than opening a public issue, so a fix can ship before the details are public. See <a href="https://github.com/conrader/plainsay/blob/main/SECURITY.md">SECURITY.md</a>.</li>
       </ul>
-      <p>The Parakeet integration has a couple of specific choices worth stating plainly:</p>
+    </section>
+
+    <section>
+      <h2 class="big">What we publish so you can check us</h2>
+      <p class="dim">Every privacy claim on this site is the kind that is easy to make and hard to verify. These are the things we put in the open so you do not have to take our word for any of it:</p>
       <ul class="plain">
-        <li>The encoder loads at <b>int8 precision</b> (<code>AsrModels.downloadAndLoad(version: .v3, encoderPrecision: .int8, …)</code>) to reduce model size and inference cost. This benchmark does not compare int8 with fp16, so it makes no claim about the accuracy difference between them.</li>
-        <li><b>Mel-context carry-over is disabled</b> (<code>ASRConfig(melChunkContext: false)</code>) for multilingual v3 recordings. FluidAudio's pinned <a href="https://github.com/FluidInference/FluidAudio/blob/v0.15.6/Documentation/ASR/LongTranscription.md#current-paths">v0.15.6 long-transcription notes</a> document this path as protection against wrong-language drift at chunk boundaries.</li>
-        <li><b>Decoder state is fresh for every single utterance</b> — a new <code>TdtDecoderState</code> per <code>transcribe()</code> call, deliberately never reused across dictations, so nothing you said in one dictation can leak linguistic context into the next.</li>
+        <li><b>The Mac client is MIT licensed.</b> The <a href="https://github.com/conrader/plainsay">full source</a> is on GitHub. If Local mode uploaded your audio, it would be visible in that code, and anyone could say so publicly.</li>
+        <li><b>Releases are signed and notarized.</b> Every build is signed with an Apple Developer ID and notarized by Apple, and <a href="https://github.com/conrader/plainsay/releases">published with its checksums</a>.</li>
+        <li><b>The benchmarks are reproducible.</b> The <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">method and the raw result data</a> are in the repository, so the speed and accuracy numbers can be re-run rather than trusted.</li>
+        <li><b>The comparisons name their sources.</b> Our <a href="/compare/">comparison page</a> cites where each competitor claim comes from, and says plainly when a rival is the better choice.</li>
+        <li><b>The data flows are written down.</b> <a href="/why-on-device/">Why on-device</a> states exactly what leaves your Mac in each mode, including the cases where Local mode still touches the network.</li>
       </ul>
-      <p>Which model to default to isn't hardcoded, either. <code>OnDeviceModel.recommended(for:)</code> takes the languages you actually speak (set once in the Setup Assistant) and checks them against FluidAudio's own <code>Language.allCases</code> — Parakeet's real, current language coverage, not a table we maintain by hand and let go stale. Speak a language outside that list and the recommendation falls back to Whisper automatically.</p>
+      <div class="callout">
+        <div class="t">The honest line</div>
+        Open source is evidence, not proof. It shows what the code does; it cannot show you which binary we built. That is why releases are notarized and checksummed, and why you can build from source yourself if it matters to you.
+      </div>
     </section>
 
     <section>
-      <h2 class="big">Polishing: best-effort, with a raw-text fallback</h2>
-      <p>Raw ASR output is grammatically honest but reads like speech: filler words, false starts, no punctuation. The optional Polishing pass turns that into written text via an LLM call. It can use Plainsay Cloud, your own key, a compatible local endpoint, or be switched off.</p>
-      <p>The design constraint that actually matters: <b>a failed Polishing call falls back to the raw transcript.</b> If Polishing is off or lacks a configured credential, the raw transcript is inserted without a network call. A configured provider has a bounded timeout; network, timeout, and HTTP failures fall back to raw text with a HUD notice. <code>TextCleaning</code> is a protocol with one method — the whole pipeline doesn't know or care whether the concrete implementation is Gemini, OpenAI-compatible, Anthropic, or a no-op passthrough when Polishing is disabled.</p>
+      <h2 class="big">Legal</h2>
+      <p><a href="/privacy/">Privacy Policy</a> &nbsp;&middot;&nbsp; <a href="/terms/">Terms of Service</a></p>
     </section>
-
-    <section>
-      <h2 class="big">Getting text into someone else's app</h2>
-      <p>Each recording is bounded at <b>10 minutes</b>. When it reaches that boundary, Plainsay stops capture automatically, keeps the full bounded recording, shows a notice, and continues through transcription and insertion.</p>
-      <p>Text lands via the pasteboard and a synthetic <code>⌘V</code>, not Apple's Accessibility text-insertion API. This works across many native apps, Electron apps, web views, and terminals. If Plainsay cannot identify a safe destination, the text remains on the clipboard so it can be pasted manually.</p>
-      <p>The cost is briefly borrowing the real clipboard: Plainsay snapshots the existing contents before the write and attempts to restore them after insertion. If it cannot identify a safe destination, it leaves the transcript on the clipboard for manual paste.</p>
-    </section>
-
-    <section>
-      <h2 class="kicker">Read the rest</h2>
-      <p><a href="/why-on-device/">Why on-device</a> — the privacy case, stated precisely. <a href="https://github.com/conrader/plainsay/blob/main/BENCHMARK.md">Benchmark</a> — WER and latency for both engines, reproducible with the documented build-and-run commands. <a href="https://github.com/conrader/plainsay">Plainsay client source</a> — MIT licensed; third-party licenses are listed in <a href="https://github.com/conrader/plainsay/blob/main/THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
-    </section>
-
-    <div class="final">
-      <p class="headline">Read the code, or just use it.</p>
-      <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-      <span class="req">Free · MIT licensed · macOS 14+, Apple silicon</span>
-    </div>
 
   </div>
 
@@ -157,6 +164,7 @@
     <div class="links">
       <a href="/">Home</a>
       <a href="/why-on-device/">Why on-device</a>
+      <a href="/how-it-works/">How it works</a>
       <a href="/about/">About</a>
       <a href="/privacy/">Privacy</a>
       <a href="/terms/">Terms</a>
