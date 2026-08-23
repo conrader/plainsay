@@ -333,8 +333,51 @@ gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -Fqx false || 
 	exit 1
 }
 
+# The tap is the install path the README, the website, and every list
+# submission tell people to use — and nothing here ever updated it, so it sat
+# on whatever release last touched it by hand. A stale cask is not a broken
+# one: the old asset still exists and its checksum still matches, so brew
+# succeeds and quietly installs an old build. That is worse than failing,
+# because the first run someone gets is the version whose bugs this release
+# fixed. Last in the script for the same reason the site deploy is late — the
+# cask points at a GitHub asset that has to exist and be public first.
+echo "==> Updating the Homebrew tap"
+TAP_DIR=$(mktemp -d)
+trap 'rm -rf "$TAP_DIR"' EXIT
+git clone --quiet --depth 1 "https://github.com/conrader/homebrew-plainsay.git" "$TAP_DIR"
+CASK="$TAP_DIR/Casks/plainsay.rb"
+[ -f "$CASK" ] || { echo "tap has no Casks/plainsay.rb — cannot update the install path" >&2; exit 1; }
+/usr/bin/sed -i '' \
+	-e "s|^  version \".*\"|  version \"$VERSION\"|" \
+	-e "s|^  sha256 \".*\"|  sha256 \"$LOCAL_DMG_SHA\"|" \
+	"$CASK"
+# Checked rather than assumed: a sed that matches nothing exits 0, which would
+# push an unchanged cask and report success.
+grep -Fq "version \"$VERSION\"" "$CASK" || { echo "tap version was not rewritten" >&2; exit 1; }
+grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" "$CASK" || { echo "tap sha256 was not rewritten" >&2; exit 1; }
+if [ -n "$(git -C "$TAP_DIR" status --porcelain)" ]; then
+	git -C "$TAP_DIR" commit --quiet -am "Plainsay $VERSION"
+	git -C "$TAP_DIR" push --quiet origin HEAD:main
+fi
+rm -rf "$TAP_DIR"
+trap - EXIT
+
+# Read back from GitHub rather than trusting the push: this is the command
+# new users are told to run, and nothing else in this script would notice it
+# pointing at the wrong build.
+PUBLISHED_CASK=$(curl -fsSL "https://raw.githubusercontent.com/conrader/homebrew-plainsay/main/Casks/plainsay.rb")
+grep -Fq "version \"$VERSION\"" <<<"$PUBLISHED_CASK" || {
+	echo "published cask does not install $VERSION" >&2
+	exit 1
+}
+grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" <<<"$PUBLISHED_CASK" || {
+	echo "published cask checksum does not match the shipped DMG" >&2
+	exit 1
+}
+
 echo
 echo "Published $VERSION"
 echo "  feed:     $FEED_URL/appcast.xml"
 echo "  package:  $FEED_URL/releases/Plainsay-$VERSION.zip"
 echo "  download: $(gh repo view --json url --jq .url)/releases/latest"
+echo "  brew:     brew install --cask conrader/plainsay/plainsay"
