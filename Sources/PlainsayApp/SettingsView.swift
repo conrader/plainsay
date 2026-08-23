@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import PlainsayCore
 
@@ -10,7 +11,7 @@ struct SettingsView: View {
     let permissionStatus: PermissionStatus
     let updates: UpdateController
 
-    private enum Tab: Hashable { case speech, general, history, permissions }
+    private enum Tab: Hashable { case speech, general, history, permissions, about }
     @State private var selection: Tab = .speech
 
     var body: some View {
@@ -34,6 +35,10 @@ struct SettingsView: View {
             PermissionsSettings(permissionStatus: permissionStatus)
                 .tabItem { Label("Permissions", systemImage: "lock.shield") }
                 .tag(Tab.permissions)
+
+            AboutSettings(updates: updates)
+                .tabItem { Label("About", systemImage: "info.circle") }
+                .tag(Tab.about)
         }
         // Below roughly 600pt macOS collapses tabs into an overflow menu in
         // the corner, which turns every settings change into a two-click
@@ -565,6 +570,126 @@ private struct SpeechSettings: View {
     }
 }
 
+
+
+// MARK: - About
+
+/// Who made this, which build you are running, and how to get at the logs.
+///
+/// The last one is the reason this tab earns its place rather than being a
+/// courtesy page. Every stage of the dictation pipeline records what it did
+/// precisely so a dictation that came out wrong can be explained afterwards,
+/// and `Log.showCommand` has always carried a comment saying it is surfaced
+/// in the UI so nobody has to know the incantation — while being referenced
+/// nowhere at all. Diagnostics no one can reach are not diagnostics.
+private struct AboutSettings: View {
+    @Bindable var updates: UpdateController
+    @State private var copiedCommand = false
+
+    private static let website = URL(string: "https://plainsay.app")!
+    private static let aboutPage = URL(string: "https://plainsay.app/about/")!
+    private static let privacyPage = URL(string: "https://plainsay.app/privacy/")!
+    private static let termsPage = URL(string: "https://plainsay.app/terms/")!
+    private static let repository = URL(string: "https://github.com/conrader/plainsay")!
+    private static let issues = URL(string: "https://github.com/conrader/plainsay/issues")!
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(alignment: .center, spacing: 16) {
+                    Image(nsImage: NSApplication.shared.applicationIconImage)
+                        .resizable()
+                        .frame(width: 64, height: 64)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Plainsay")
+                            .font(.title2)
+                        Text(
+                            Localization.appFormat(
+                                "settings.about.version", fallback: "Version %@", updates.currentVersion
+                            )
+                        )
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        Text("Dictation that never leaves this Mac.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section {
+                HStack {
+                    Text(Log.showCommand)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .lineLimit(2)
+                        .truncationMode(.middle)
+                    Spacer()
+                    Button(
+                        copiedCommand
+                            ? Localization.appString("settings.about.copied", fallback: "Copied")
+                            : Localization.appString("settings.about.copy", fallback: "Copy")
+                    ) {
+                        copyDiagnosticsCommand()
+                    }
+                }
+            } header: {
+                Text("Diagnostics")
+            } footer: {
+                Text(
+                    """
+                    Every dictation records what the microphone captured, what the model heard, \
+                    and whether the paste landed. Run this in Terminal to see it — it is the \
+                    fastest way to explain a dictation that came out wrong.
+                    """
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            }
+
+            Section("Plainsay on the web") {
+                Link("Website", destination: Self.website)
+                Link("Who makes Plainsay", destination: Self.aboutPage)
+                Link("Source code on GitHub", destination: Self.repository)
+                Link("Report an issue", destination: Self.issues)
+            }
+
+            Section {
+                Link("Privacy Policy", destination: Self.privacyPage)
+                Link("Terms of Service", destination: Self.termsPage)
+            } header: {
+                Text("Legal")
+            } footer: {
+                Text(
+                    """
+                    Made by DMT Sp. z o.o., Poland. Plainsay is open source under the MIT licence; \
+                    the on-device speech models carry their own licences, listed on the Speech tab.
+                    """
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func copyDiagnosticsCommand() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(Log.showCommand, forType: .string)
+        copiedCommand = true
+        // Long enough to read, short enough that the button is ready again
+        // by the time anyone tries a second time.
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            copiedCommand = false
+        }
+    }
+}
 
 // MARK: - Permissions
 

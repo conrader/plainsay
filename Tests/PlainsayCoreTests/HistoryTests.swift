@@ -167,3 +167,20 @@ struct TranscriptHistoryTests {
         #expect(history.mostRecent?.outcome == .insertionUnverifiedAcknowledged)
     }
 }
+
+@Suite("Diagnostics command")
+struct DiagnosticsCommandTests {
+    /// The About tab copies this string for the user to paste into Terminal.
+    /// If it ever stops naming the subsystem the loggers actually write to,
+    /// it silently returns nothing and the diagnostics look like an app that
+    /// records nothing at all.
+    @Test("The copied command queries the subsystem the app logs to")
+    func commandMatchesTheSubsystem() {
+        #expect(Log.subsystem == "com.plainsay.dictation")
+        #expect(Log.showCommand.contains("subsystem == \"\(Log.subsystem)\""))
+        #expect(Log.showCommand.hasPrefix("log show"))
+        // Without --info the pipeline's own records are filtered out, which
+        // is precisely what someone runs this to read.
+        #expect(Log.showCommand.contains("--info"))
+    }
+}
