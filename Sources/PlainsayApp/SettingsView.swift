@@ -757,6 +757,14 @@ struct PermissionRow: View {
                 Text(permission.reason)
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !isGranted, let afterGranting = permission.afterGranting {
+                    Label(afterGranting, systemImage: "arrow.clockwise")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
+                }
             }
             Spacer()
             if isGranted {
@@ -764,7 +772,14 @@ struct PermissionRow: View {
                     .foregroundStyle(.green)
                     .labelStyle(.titleAndIcon)
             } else {
-                Button("Grant") {
+                // macOS asks once and never again. Once it has, this button
+                // can only open System Settings, and calling it "Grant" makes
+                // a button that visibly does nothing look broken.
+                Button(
+                    permission.canStillPrompt
+                        ? Localization.appString("permission.action.grant", fallback: "Grant")
+                        : Localization.appString("permission.action.openSettings", fallback: "Open Settings…")
+                ) {
                     Task {
                         await permission.request()
                         onChange()
