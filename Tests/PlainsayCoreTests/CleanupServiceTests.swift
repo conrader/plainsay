@@ -208,3 +208,58 @@ struct CleanupServiceTests {
         #expect(result == "um hello")
     }
 }
+
+@Suite("Truncated cleanup responses")
+struct TruncatedCleanupTests {
+    /// Every provider answers 200 and hands back the partial text, so the
+    /// finish reason is the only thing separating a fragment from finished
+    /// writing. Returning the fragment would replace a complete dictation
+    /// with an incomplete one.
+    @Test("Gemini reports hitting maxOutputTokens")
+    func geminiTruncation() throws {
+        let cut = Data(#"{"candidates":[{"finishReason":"MAX_TOKENS","content":{"parts":[{"text":"half a sen"}]}}]}"#.utf8)
+        let done = Data(#"{"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"a whole sentence."}]}}]}"#.utf8)
+
+        #expect(GeminiCleanupService.wasTruncated(cut))
+        #expect(!GeminiCleanupService.wasTruncated(done))
+    }
+
+    @Test("Anthropic reports stopping at max_tokens")
+    func anthropicTruncation() throws {
+        let cut = Data(#"{"stop_reason":"max_tokens","content":[{"type":"text","text":"half a sen"}]}"#.utf8)
+        let done = Data(#"{"stop_reason":"end_turn","content":[{"type":"text","text":"a whole sentence."}]}"#.utf8)
+
+        #expect(AnthropicCleanupService.wasTruncated(cut))
+        #expect(!AnthropicCleanupService.wasTruncated(done))
+    }
+
+    @Test("OpenAI-compatible reports finish_reason length")
+    func openAITruncation() throws {
+        let cut = Data(#"{"choices":[{"finish_reason":"length","message":{"content":"half a sen"}}]}"#.utf8)
+        let done = Data(#"{"choices":[{"finish_reason":"stop","message":{"content":"a whole sentence."}}]}"#.utf8)
+
+        #expect(OpenAICompatibleCleanupService.wasTruncated(cut))
+        #expect(!OpenAICompatibleCleanupService.wasTruncated(done))
+    }
+
+    /// A response without the field at all must not be read as truncated —
+    /// that would throw away good editing for every provider that omits it.
+    @Test("A missing finish reason is not treated as truncation")
+    func missingReasonIsNotTruncation() {
+        let bare = Data(#"{"choices":[{"message":{"content":"a whole sentence."}}]}"#.utf8)
+
+        #expect(!OpenAICompatibleCleanupService.wasTruncated(bare))
+        #expect(!AnthropicCleanupService.wasTruncated(Data(#"{"content":[]}"#.utf8)))
+        #expect(!GeminiCleanupService.wasTruncated(Data(#"{"candidates":[]}"#.utf8)))
+    }
+
+    /// The instruction the whole fix rests on: polishing must not repair a
+    /// cut-off recording into something that reads as complete.
+    @Test("The prompt forbids inventing an ending")
+    func promptForbidsFabricatedEndings() {
+        let instruction = CleanupPrompt.systemInstruction(dictionaryHint: nil).lowercased()
+
+        #expect(instruction.contains("stops mid-sentence"))
+        #expect(instruction.contains("never invent an ending"))
+    }
+}

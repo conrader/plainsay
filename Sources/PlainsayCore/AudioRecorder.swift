@@ -146,17 +146,28 @@ public final class AudioRecorder: AudioRecording {
 
     /// Throws away the engine so the next recording binds to the current device.
     private func handleConfigurationChange() {
-        Log.audio.info("audio configuration changed — rebuilding engine")
         guard !isRecording else {
-            // Mid-recording: keep what we have rather than losing the audio.
-            // The next recording gets the fresh engine.
+            // Not merely "the next recording needs a fresh engine". The engine
+            // stops its own graph on a configuration change and drops the
+            // installed tap with it, so from this instant the sink stops
+            // growing: every word spoken after it is gone, and the recording
+            // ends wherever the device changed rather than where the speaker
+            // stopped. Keeping quiet about that produces a transcript that
+            // ends mid-sentence with nothing anywhere saying why.
+            Log.audio.error("audio configuration changed mid-recording — capture has stopped; audio after this point is lost")
+            captureWasInterrupted = true
             needsEngineRebuild = true
             return
         }
+        Log.audio.info("audio configuration changed — rebuilding engine")
         rebuildEngine()
     }
 
     private var needsEngineRebuild = false
+
+    /// True when capture was cut short by the audio hardware changing under
+    /// the recording rather than by the speaker stopping it.
+    public private(set) var captureWasInterrupted = false
 
     private func rebuildEngine() {
         engine.inputNode.removeTap(onBus: 0)
@@ -213,6 +224,7 @@ public final class AudioRecorder: AudioRecording {
 
         if needsEngineRebuild { rebuildEngine() }
 
+        captureWasInterrupted = false
         sink.reset()
 
         let input = engine.inputNode
@@ -265,6 +277,12 @@ public final class AudioRecorder: AudioRecording {
     @discardableResult
     public func stop() -> [Float] {
         guard isRecording else { return [] }
+        // Read before `startedAt` is discarded: this is the only place both
+        // how long the speaker held the key and how much audio actually
+        // arrived are known at once, and their difference is the one number
+        // that separates "the recording ended where I stopped talking" from
+        // "capture died early and the transcript lost the rest".
+        let heldFor = elapsed
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         processor = nil
@@ -272,6 +290,7 @@ public final class AudioRecorder: AudioRecording {
         startedAt = nil
 
         let samples = sink.drain()
+        let shortfall = Self.captureShortfall(heldFor: heldFor, capturedSamples: samples.count)
 
         // Peak amplitude is the one number that separates "the model heard
         // nothing" from "the microphone captured nothing". Without it, an empty
@@ -281,15 +300,48 @@ public final class AudioRecorder: AudioRecording {
         Log.audio.info("""
             captured \(samples.count, privacy: .public) samples \
             (\(Double(samples.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s), \
+            held=\(heldFor, format: .fixed(precision: 2), privacy: .public)s, \
+            shortfall=\(shortfall, format: .fixed(precision: 2), privacy: .public)s, \
             peak=\(peak, format: .fixed(precision: 4), privacy: .public), \
             device=\(self.currentInputDeviceName, privacy: .public)
             """)
         if peak < 0.001 {
             Log.audio.error("microphone captured silence — input device may have changed since launch")
         }
+        if captureWasInterrupted {
+            Log.audio.error("""
+                recording ended by an audio configuration change, not by the speaker — \
+                \(shortfall, format: .fixed(precision: 2), privacy: .public)s of speech was never captured
+                """)
+        } else if shortfall > Self.captureShortfallTolerance {
+            // A transcript that stops mid-sentence is otherwise unattributable:
+            // the recognizer and the editing pass both look innocent because
+            // the audio they were handed really did end there.
+            Log.audio.error("""
+                capture fell \(shortfall, format: .fixed(precision: 2), privacy: .public)s short of the \
+                \(heldFor, format: .fixed(precision: 2), privacy: .public)s held — \
+                speech from the end of this recording is missing
+                """)
+        }
 
         return samples
     }
+
+    /// Audio the speaker produced that never reached the sink.
+    ///
+    /// Capture always ends on a tap-buffer boundary, so a small shortfall is
+    /// normal and expected — one 4096-frame buffer is ~85ms. Anything beyond
+    /// the tolerance means samples stopped arriving before the speaker
+    /// stopped speaking, which is the difference between a transcript that
+    /// merely clips a syllable and one that loses a clause.
+    nonisolated static func captureShortfall(heldFor: TimeInterval, capturedSamples: Int) -> TimeInterval {
+        max(0, heldFor - Double(capturedSamples) / whisperSampleRate)
+    }
+
+    /// One tap buffer at 48kHz plus room for the hardware's own input
+    /// latency. Below this, the loss is a fraction of a word and inherent to
+    /// stopping on a buffer boundary.
+    nonisolated static let captureShortfallTolerance: TimeInterval = 0.5
 
     /// Name of the current default input, for the log line above.
     private var currentInputDeviceName: String {

@@ -62,8 +62,20 @@ public struct AnthropicCleanupService: TextCleaning {
             throw CleanupError.http(status: http.statusCode, body: String(data: data, encoding: .utf8) ?? "")
         }
 
+        if Self.wasTruncated(data) { throw CleanupError.truncated }
+
         guard let text = Self.extractText(from: data) else { throw CleanupError.emptyResponse }
         return text
+    }
+
+    /// True when the model stopped at `max_tokens` rather than finishing. The
+    /// response is a 200 carrying a fragment, so nothing else distinguishes it.
+    static func wasTruncated(_ data: Data) -> Bool {
+        guard
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let reason = root["stop_reason"] as? String
+        else { return false }
+        return reason == "max_tokens"
     }
 
     /// Pulls the concatenated text blocks out of a Messages API response.

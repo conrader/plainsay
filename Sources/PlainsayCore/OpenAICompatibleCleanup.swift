@@ -82,8 +82,22 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
             )
         }
 
+        if Self.wasTruncated(data) { throw CleanupError.truncated }
+
         guard let text = Self.extractText(from: data) else { throw CleanupError.emptyResponse }
         return text
+    }
+
+    /// True when the choice ended because it ran out of budget. Every endpoint
+    /// in this dialect reports that as `finish_reason: "length"`, and every one
+    /// of them still answers 200 with the partial text.
+    static func wasTruncated(_ data: Data) -> Bool {
+        guard
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = root["choices"] as? [[String: Any]],
+            let reason = choices.first?["finish_reason"] as? String
+        else { return false }
+        return reason == "length"
     }
 
     static func extractText(from data: Data) -> String? {

@@ -197,3 +197,41 @@ struct PasteboardSnapshotTests {
         ))
     }
 }
+
+@Suite("Capture shortfall")
+struct CaptureShortfallTests {
+    /// Ending on a tap-buffer boundary always loses a sliver. That is normal
+    /// and must not be reported as speech going missing.
+    @Test("One tap buffer of loss stays inside the tolerance")
+    func bufferBoundaryLossIsNotAShortfall() {
+        // 4096 frames at 48kHz is ~85ms.
+        let captured = Int((10.0 - 0.085) * whisperSampleRate)
+        let shortfall = AudioRecorder.captureShortfall(heldFor: 10.0, capturedSamples: captured)
+
+        #expect(shortfall < AudioRecorder.captureShortfallTolerance)
+    }
+
+    @Test("Capture dying mid-recording is reported as seconds of lost speech")
+    func lostSecondsAreMeasured() {
+        // Held the key for 40s, but samples stopped arriving at 30s.
+        let shortfall = AudioRecorder.captureShortfall(
+            heldFor: 40.0,
+            capturedSamples: Int(30.0 * whisperSampleRate)
+        )
+
+        #expect(abs(shortfall - 10.0) < 0.001)
+        #expect(shortfall > AudioRecorder.captureShortfallTolerance)
+    }
+
+    /// The scheduler can hand back a captured count marginally longer than the
+    /// measured hold; that is not negative speech.
+    @Test("More audio than wall clock reports no shortfall")
+    func neverNegative() {
+        let shortfall = AudioRecorder.captureShortfall(
+            heldFor: 5.0,
+            capturedSamples: Int(5.2 * whisperSampleRate)
+        )
+
+        #expect(shortfall == 0)
+    }
+}
