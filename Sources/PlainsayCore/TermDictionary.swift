@@ -102,10 +102,15 @@ public struct TermDictionary: Codable, Sendable, Equatable {
         var index = 0
 
         while index < tokens.count {
-            var matchedTerm: String?
-            var matchedSize = 1
+            // Every candidate and window width is scored, then the best one
+            // wins. Taking the first acceptable match instead — which is what
+            // this did — meant the longest term that merely cleared the
+            // threshold beat a shorter one that matched exactly, so an exact
+            // spelling in the transcript could be rewritten into a different
+            // term the speaker never said.
+            var best: Match?
 
-            candidateLoop: for candidate in candidates {
+            for candidate in candidates {
                 let sizes = Set([candidate.wordCount - 1, candidate.wordCount, candidate.wordCount + 1])
                     .filter { $0 > 0 }
                     .sorted()
@@ -117,13 +122,15 @@ public struct TermDictionary: Codable, Sendable, Equatable {
                     guard !windowKey.isEmpty else { continue }
 
                     let distance = windowKey == candidate.key ? 0 : Self.levenshteinDistance(windowKey, candidate.key)
-                    if distance <= Self.maxAllowedDistance(forKeyLength: candidate.key.count) {
-                        matchedTerm = candidate.term
-                        matchedSize = size
-                        break candidateLoop
-                    }
+                    guard distance <= Self.maxAllowedDistance(forKeyLength: candidate.key.count) else { continue }
+
+                    let match = Match(term: candidate.term, size: size, distance: distance, keyLength: candidate.key.count)
+                    if best.map({ match.beats($0) }) ?? true { best = match }
                 }
             }
+
+            let matchedTerm = best?.term
+            let matchedSize = best?.size ?? 1
 
             if let matchedTerm {
                 result += matchedTerm
@@ -137,6 +144,22 @@ public struct TermDictionary: Codable, Sendable, Equatable {
         }
 
         return result
+    }
+
+    /// A term matched against one window of the transcript.
+    private struct Match {
+        let term: String
+        let size: Int
+        let distance: Int
+        let keyLength: Int
+
+        /// Fewer edits always wins. Between equally close matches the longer
+        /// term is the more specific one — "Plainsay Cloud" over "Plainsay"
+        /// when the speaker said both words.
+        func beats(_ other: Match) -> Bool {
+            if distance != other.distance { return distance < other.distance }
+            return keyLength > other.keyLength
+        }
     }
 
     private struct Candidate {
@@ -191,21 +214,27 @@ public struct TermDictionary: Codable, Sendable, Equatable {
         )
     }
 
-    /// A term this short matching half the words in a sentence would do more
-    /// harm than good, so short terms only ever match when the fold is
-    /// already exact; longer, more distinctive terms tolerate a growing
-    /// number of substitutions.
+    /// Roughly one edit per six characters, so the budget stays a small
+    /// fraction of the term however long it is.
+    ///
+    /// This used to allow two edits from four characters up, which is half of
+    /// a four-letter word and a third of a six-letter one — wide enough that
+    /// ordinary vocabulary fell inside it. A five-letter term like "Vised"
+    /// sits exactly two edits from both "revised" and "advised", so adding it
+    /// silently rewrote those real words every time they were spoken, and the
+    /// speaker had no way to tell the dictionary had done it.
+    ///
+    /// Repairing a badly-misheard short term is not this function's job.
+    /// `asrPrompt` biases the decoder toward the spelling before the mistake
+    /// happens, and `cleanupHint` gives the editing model the term with
+    /// enough surrounding context to judge whether it was meant — both of
+    /// which can tell "advised" from a mangled product name. Blind string
+    /// distance cannot, so here it stays conservative.
     private static func maxAllowedDistance(forKeyLength length: Int) -> Int {
         switch length {
-        case 0...3: 0
-        // A short invented/technical term ("Vised") is exactly the kind of
-        // word ASR mangles hardest, and a distance-1 budget mostly missed
-        // it: common mishearings like "revised" or "advised" sit two edits
-        // away, not one. Terms this short only exist in the dictionary
-        // because someone deliberately added them, so the same
-        // accept-more-editing-for-deliberate-terms tradeoff the longer
-        // brackets already make applies here too.
-        case 4...9: 2
+        case 0...5: 0
+        case 6...11: 1
+        case 12...17: 2
         default: 3
         }
     }

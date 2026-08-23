@@ -23,6 +23,11 @@ public final class PlainsaySettings {
     public var hotkeyMode: HotkeyMode { didSet { persist(hotkeyMode, .hotkeyMode) } }
     public var model: OnDeviceModel { didSet { persist(model, .model) } }
     public var dictionary: TermDictionary { didSet { persist(dictionary, .dictionary) } }
+    /// Proposed terms the user turned down, so the same suggestion is not
+    /// offered again every time they open Settings.
+    public var dismissedTermProposals: [String] {
+        didSet { defaults.set(dismissedTermProposals, forKey: Key.dismissedTermProposals.rawValue) }
+    }
     public var cleanupEnabled: Bool { didSet { defaults.set(cleanupEnabled, forKey: Key.cleanupEnabled.rawValue) } }
     public var cleanupProvider: CleanupProvider { didSet { persist(cleanupProvider, .cleanupProvider) } }
     /// Empty means "use the provider's default".
@@ -198,6 +203,7 @@ public final class PlainsaySettings {
         case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented
         case cleanupProvider, cleanupModel, cleanupBaseURL
+        case dismissedTermProposals
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
     }
@@ -224,6 +230,7 @@ public final class PlainsaySettings {
         // applies when no dictionary was ever saved; an existing user's
         // dictionary, even an empty one, is never overwritten.
         dictionary = decode(.dictionary, TermDictionary(terms: ["Plainsay"]))
+        dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
