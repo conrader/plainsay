@@ -181,6 +181,11 @@ public final class DictationCoordinator {
 
     /// Starts listening and loads the speech model. Safe to call repeatedly.
     public func start(requestMicrophonePermission: Bool = true) async {
+        // Retention must run before any operation that can suspend indefinitely.
+        // In particular, a model that never finishes preparing must not prevent
+        // old raw recordings from being bounded on disk.
+        pendingAudio.prune()
+
         // Ask for the microphone here, at launch, while nothing is happening.
         // The System Settings Microphone pane has no "+" button, so the system
         // prompt is the *only* way this grant can ever be given — and if we
@@ -276,6 +281,14 @@ public final class DictationCoordinator {
     public func settingsChanged() {
         hotkeys.binding = settings.binding
         machine.mode = settings.hotkeyMode
+    }
+
+    /// Clears the transcript history *and* any raw staged audio. "Clear
+    /// history" in the UI should erase both — the recovery `.f32` files hold the
+    /// same dictations as audio, and leaving them behind would defeat the point.
+    public func clearAllStoredDictations() {
+        history.clear()
+        pendingAudio.purgeAll()
     }
 
     /// Clears menu-level recovery notices after the user has dealt with them.

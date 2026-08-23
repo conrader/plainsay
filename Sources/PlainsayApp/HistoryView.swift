@@ -8,6 +8,10 @@ import PlainsayCore
 /// attempted, so it is always retrievable even when the paste vanished.
 struct HistoryView: View {
     let history: TranscriptHistory
+    /// Clearing history must also erase the raw staged audio, which the
+    /// coordinator owns — hence the callback rather than calling `history.clear()`
+    /// directly.
+    let onClearAll: () -> Void
     @State private var query = ""
     @State private var copiedID: UUID?
 
@@ -44,22 +48,22 @@ struct HistoryView: View {
                     }
                 }
                 .searchable(text: $query, prompt: "Search dictations")
-
-                HStack {
-                    Text(
-                        Localization.appFormat(
-                            "history.savedCount", fallback: "%d saved on this Mac", history.records.count
-                        )
-                    )
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Clear history", role: .destructive) {
-                        history.clear()
-                    }
-                }
-                .padding(12)
             }
+
+            HStack {
+                Text(
+                    Localization.appFormat(
+                        "history.savedCount", fallback: "%d saved on this Mac", history.records.count
+                    )
+                )
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                Spacer()
+                Button("Clear history", role: .destructive) {
+                    onClearAll()
+                }
+            }
+            .padding(12)
         }
     }
 }
