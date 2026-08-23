@@ -46,6 +46,16 @@ public final class PlainsaySettings {
     /// predates the setup assistant. Closing the assistant must not silently
     /// turn into "completed" on the next launch just because permissions were
     /// granted before it was closed.
+    /// Which setup step is open, so the assistant can come back to it.
+    ///
+    /// Granting Accessibility or Input Monitoring makes macOS quit Plainsay —
+    /// that is how those grants take effect. Setup therefore gets interrupted
+    /// precisely when the user does the thing setup asked them to do, and
+    /// restarting it from the first screen makes it look as though the grant
+    /// undid their progress. Zero means "start at the beginning".
+    public var onboardingStep: Int {
+        didSet { defaults.set(onboardingStep, forKey: Key.onboardingStep.rawValue) }
+    }
     public var onboardingWasPresented: Bool {
         didSet { defaults.set(onboardingWasPresented, forKey: Key.onboardingWasPresented.rawValue) }
     }
@@ -201,7 +211,7 @@ public final class PlainsaySettings {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
         case livePreviewEnabled
         case voiceFilterEnabled, voiceEmbedding
-        case onboardingVersion, onboardingWasPresented
+        case onboardingVersion, onboardingWasPresented, onboardingStep
         case cleanupProvider, cleanupModel, cleanupBaseURL
         case dismissedTermProposals
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
@@ -235,6 +245,7 @@ public final class PlainsaySettings {
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
         onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
+        onboardingStep = defaults.integer(forKey: Key.onboardingStep.rawValue)
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false
         voiceFilterEnabled = defaults.object(forKey: Key.voiceFilterEnabled.rawValue) as? Bool ?? false

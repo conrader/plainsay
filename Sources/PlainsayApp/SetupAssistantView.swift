@@ -8,7 +8,7 @@ struct SetupAssistantView: View {
     let onSpeechConfirmed: @MainActor (Bool) -> Void
     let onFinish: @MainActor () -> Void
 
-    @State private var step: Step = .speech
+    @State private var step: Step
     // Lives here, not in SpeechSetupStep: `continueRequirement` below reads
     // settings.apiKey(for:), a Keychain read SwiftUI's observation can't see.
     // A child's local @State can't invalidate this parent's body, so the
@@ -37,6 +37,9 @@ struct SetupAssistantView: View {
         // A first-run choice stays a draft until Continue. A fresh settings
         // store defaults to Local, while reopening the assistant reflects
         // whatever source the user is already using.
+        // Resumes where an interrupted run left off. Cleared on Done, so
+        // deliberately reopening the assistant later still starts at the top.
+        _step = State(initialValue: Step(rawValue: settings.onboardingStep) ?? .speech)
         _speechSource = State(initialValue: settings.transcriptionSource)
         _speechModel = State(
             initialValue: settings.needsOnboarding
@@ -138,6 +141,9 @@ struct SetupAssistantView: View {
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
         .onChange(of: step) { _, newStep in
+            // Written before the guard below returns: this has to record every
+            // step, not just the one that triggers the model recommendation.
+            settings.onboardingStep = newStep.rawValue
             // Refine (spoken languages) now comes before Configure, so by the
             // time someone reaches it, the recommendation reflects languages
             // they just chose — but only for a still-fresh setup, and only if
@@ -225,7 +231,10 @@ struct SetupAssistantView: View {
             Spacer()
 
             if step == .ready {
-                Button("Done", action: onFinish)
+                Button("Done") {
+                    settings.onboardingStep = 0
+                    onFinish()
+                }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .keyboardShortcut(.defaultAction)
@@ -1193,7 +1202,10 @@ private struct PermissionsSetupStep: View {
                 title: Localization.appString("wizard.permissions.title", fallback: "Allow the essentials"),
                 detail: Localization.appString(
                     "wizard.permissions.detail",
-                    fallback: "Each permission has one narrow job. Choose Grant when you are ready; you can continue even if you finish these later."
+                    fallback: """
+                    Each permission has one narrow job, described below it. Choose Grant when you \
+                    are ready; you can continue even if you finish these later.
+                    """
                 )
             )
 
@@ -1214,7 +1226,11 @@ private struct PermissionsSetupStep: View {
             .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 18))
 
             Label(
-                "After changing Accessibility or Input Monitoring, quit and reopen Plainsay so macOS applies the grant.",
+                """
+                Accessibility and Input Monitoring only take effect in a fresh process, so macOS \
+                offers to quit Plainsay when you flip either switch. Let it — setup reopens on \
+                this step with your progress intact.
+                """,
                 systemImage: "arrow.clockwise.circle"
             )
             .font(.callout)

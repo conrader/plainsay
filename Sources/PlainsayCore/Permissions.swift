@@ -35,7 +35,28 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
         case .inputMonitoring:
             Localization.coreString(
                 "permission.reason.inputMonitoring",
-                fallback: "To notice the hotkey while another app is focused."
+                fallback: """
+                To notice your hotkey while you are working in another app. Plainsay watches for \
+                that one key combination and nothing else — it never records what you type, and \
+                keystrokes are not part of a transcript.
+                """
+            )
+        }
+    }
+
+    /// What macOS does after the switch is flipped, where that is surprising.
+    ///
+    /// Accessibility and Input Monitoring do not take effect in a running
+    /// process: macOS quits Plainsay so the new grant applies. Without saying
+    /// so, the app vanishing mid-setup reads as a crash caused by granting.
+    public var afterGranting: String? {
+        switch self {
+        case .microphone:
+            nil
+        case .accessibility, .inputMonitoring:
+            Localization.coreString(
+                "permission.afterGranting.relaunch",
+                fallback: "macOS quits Plainsay when you flip this switch. It reopens where you left off."
             )
         }
     }
@@ -61,6 +82,30 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
         }
     }
 
+    /// Whether macOS still has a prompt left to show for this permission.
+    ///
+    /// TCC will only ever ask once. After that the switch exists in System
+    /// Settings and nothing the app calls will raise a dialog again, so the
+    /// honest move is to stop pretending and open the pane instead.
+    @MainActor
+    public var canStillPrompt: Bool {
+        switch self {
+        case .microphone:
+            AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined
+        case .inputMonitoring:
+            IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeUnknown
+        case .accessibility:
+            // No tri-state API exists for Accessibility — `AXIsProcessTrusted`
+            // cannot tell "never asked" from "asked and refused". Recording
+            // that we have asked is the only way to avoid either opening
+            // System Settings over a live prompt or offering a button that
+            // does nothing at all.
+            !UserDefaults.standard.bool(forKey: Self.accessibilityPromptedKey)
+        }
+    }
+
+    private static let accessibilityPromptedKey = "com.plainsay.didPromptForAccessibility"
+
     /// Triggers the system prompt where one exists. Accessibility and Input
     /// Monitoring can only be granted in System Settings, so those open the pane.
     @MainActor
@@ -82,17 +127,51 @@ public enum Permission: String, CaseIterable, Sendable, Identifiable {
             NSApp.setActivationPolicy(policy)
             if !granted { openSettings() }
         case .inputMonitoring:
-            // Shows the prompt the first time; afterwards it is a no-op and the
-            // user has to go to System Settings.
-            _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-            if !isGranted { openSettings() }
+            // Opening System Settings here used to be unconditional, and it
+            // fired on the line after the request — before anyone could have
+            // answered. The prompt is raised asynchronously, so `isGranted`
+            // was necessarily still false, and the settings window arrived on
+            // top of the dialog it was meant to be the fallback for. The
+            // prompt was there; it was just buried a fraction of a second
+            // after appearing.
+            guard canStillPrompt else {
+                openSettings()
+                return
+            }
+            // Also what registers Plainsay in the Input Monitoring list, so
+            // the switch exists to flip even if this dialog is dismissed.
+            withPromptActivation {
+                _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            }
         case .accessibility:
-            // `kAXTrustedCheckOptionPrompt` is a global var and so not
-            // concurrency-safe to reference; its value is this literal.
-            let options = ["AXTrustedCheckOptionPrompt": true]
-            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-            if !isGranted { openSettings() }
+            guard canStillPrompt else {
+                openSettings()
+                return
+            }
+            UserDefaults.standard.set(true, forKey: Self.accessibilityPromptedKey)
+            withPromptActivation {
+                // `kAXTrustedCheckOptionPrompt` is a global var and so not
+                // concurrency-safe to reference; its value is this literal.
+                let options = ["AXTrustedCheckOptionPrompt": true]
+                _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+            }
         }
+    }
+
+    /// Runs `body` with Plainsay as the active regular app.
+    ///
+    /// TCC attaches its dialog to the active application. Plainsay lives in
+    /// the menu bar as an accessory, which often is not it — so the prompt
+    /// opens behind whatever the user was looking at, or does not appear to
+    /// open at all. The microphone path has always done this; the other two
+    /// needed it just as much.
+    @MainActor
+    private func withPromptActivation(_ body: () -> Void) {
+        let policy = NSApp.activationPolicy()
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        body()
+        NSApp.setActivationPolicy(policy)
     }
 
     @MainActor

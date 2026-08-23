@@ -183,3 +183,30 @@ struct OnboardingSettingsTests {
         UserDefaults(suiteName: "plainsay.onboarding.\(UUID().uuidString)")!
     }
 }
+
+@Suite("Setup resumes after a permission relaunch")
+@MainActor
+struct OnboardingStepTests {
+    private func freshSettings() -> PlainsaySettings {
+        let suite = "plainsay.tests.step.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        return PlainsaySettings(defaults: defaults)
+    }
+
+    /// Granting Accessibility or Input Monitoring makes macOS quit the app.
+    /// Setup is interrupted precisely when the user does what setup asked, so
+    /// the step has to outlive the process.
+    @Test("A step survives being written and read back")
+    func stepPersists() {
+        let settings = freshSettings()
+        #expect(settings.onboardingStep == 0)
+
+        settings.onboardingStep = 5
+        #expect(settings.onboardingStep == 5)
+    }
+
+    @Test("A fresh install starts at the beginning")
+    func freshInstallStartsAtZero() {
+        #expect(freshSettings().onboardingStep == 0)
+    }
+}
