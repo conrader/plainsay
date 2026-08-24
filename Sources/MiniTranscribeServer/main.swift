@@ -18,6 +18,51 @@ import PlainsayCore
 /// comparable and swappable in a benchmark or in api.plainsay.app's upstream
 /// config later.
 
+/// Every local IPv4 address on an interface that is up.
+func localIPv4Addresses() -> [String] {
+    var addresses: [String] = []
+    var head: UnsafeMutablePointer<ifaddrs>?
+    guard getifaddrs(&head) == 0, let first = head else { return [] }
+    defer { freeifaddrs(head) }
+
+    for pointer in sequence(first: first, next: { $0.pointee.ifa_next }) {
+        let flags = Int32(pointer.pointee.ifa_flags)
+        guard flags & IFF_UP != 0,
+              let address = pointer.pointee.ifa_addr,
+              address.pointee.sa_family == UInt8(AF_INET)
+        else { continue }
+
+        var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        let ok = getnameinfo(
+            address, socklen_t(address.pointee.sa_len),
+            &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST
+        )
+        if ok == 0 { addresses.append(String(cString: host)) }
+    }
+    return addresses
+}
+
+/// Tailscale hands out addresses from the CGNAT range 100.64.0.0/10.
+func isTailnetAddress(_ ip: String) -> Bool {
+    let octets = ip.split(separator: ".").compactMap { Int($0) }
+    guard octets.count == 4 else { return false }
+    return octets[0] == 100 && (64...127).contains(octets[1])
+}
+
+/// Where to accept connections.
+///
+/// Previously the listener took a bare port, which binds every interface —
+/// including whatever network the machine happens to be on. The only caller
+/// is api.plainsay.app reaching this box across the tailnet, so that is the
+/// one address worth exposing. Falls back to loopback rather than to
+/// everything: if the tailnet is down, the safe failure is unreachable, not
+/// reachable from the coffee shop.
+func bindAddress(explicit: String?) -> String {
+    if let explicit { return explicit }
+    if let tailnet = localIPv4Addresses().first(where: isTailnetAddress) { return tailnet }
+    return "127.0.0.1"
+}
+
 let port: NWEndpoint.Port = {
     let args = CommandLine.arguments
     if let idx = args.firstIndex(of: "--port"), idx + 1 < args.count, let p = UInt16(args[idx + 1]) {
@@ -42,12 +87,48 @@ try FileManager.default.setAttributes(
     ofItemAtPath: audioTempDirectory.path
 )
 
+let explicitBind: String? = {
+    let args = CommandLine.arguments
+    if let idx = args.firstIndex(of: "--bind"), idx + 1 < args.count { return args[idx + 1] }
+    return ProcessInfo.processInfo.environment["MINI_TRANSCRIBE_BIND"]
+}()
+let host = bindAddress(explicit: explicitBind)
+
+/// Shared secret proving the caller is api.plainsay.app rather than anything
+/// else that can route to this address.
+///
+/// Checked before the model loads, not at the first request: a Core ML load
+/// takes long enough that a misconfigured start would otherwise look healthy
+/// for a minute before refusing every request.
+let requiredToken: String = {
+    let token = ProcessInfo.processInfo.environment["MINI_TRANSCRIBE_TOKEN"] ?? ""
+    guard !token.isEmpty else {
+        FileHandle.standardError.write(Data("""
+            MINI_TRANSCRIBE_TOKEN is not set — refusing to start.
+
+            This process transcribes subscriber audio for api.plainsay.app. Running it
+            without a shared secret means anything that can reach this address can submit
+            audio to it. Set the same value here and in the proxy's MINI_TRANSCRIBE_TOKEN.
+
+            """.utf8))
+        exit(78)  // EX_CONFIG
+    }
+    return token
+}()
+
 print("Loading Parakeet TDT 0.6B v3 (this compiles the CoreML model on first run)...")
 let parakeet = ParakeetEngine(language: nil)
 try await parakeet.prepare()
-print("Parakeet ready. Listening on port \(port).")
+if host == "127.0.0.1", explicitBind == nil {
+    print("No tailnet address found — listening on loopback only. The proxy will not reach this.")
+}
+print("Parakeet ready. Listening on \(host):\(port).")
 
-let listener = try NWListener(using: .tcp, on: port)
+// requiredLocalEndpoint rather than a bare port: a bare port binds every
+// interface on the machine.
+let parameters = NWParameters.tcp
+parameters.requiredLocalEndpoint = .hostPort(host: NWEndpoint.Host(host), port: port)
+let listener = try NWListener(using: parameters)
 listener.newConnectionHandler = { connection in
     connection.start(queue: .global())
     Task { await handle(connection) }
@@ -71,6 +152,10 @@ func handle(_ connection: NWConnection) async {
         await respond(connection, status: 200, json: #"{"ok":true}"#)
 
     case ("POST", "/transcribe"):
+        guard isAuthorized(request) else {
+            await respond(connection, status: 401, json: #"{"error":"unauthorized"}"#)
+            return
+        }
         do {
             let response = try await transcribe(request: request)
             await respond(connection, status: 200, json: response)
@@ -86,6 +171,23 @@ func handle(_ connection: NWConnection) async {
     default:
         await respond(connection, status: 404, json: #"{"error":"not found"}"#)
     }
+}
+
+/// Constant-time comparison of the bearer token.
+///
+/// A plain `==` on strings returns as soon as two bytes differ, which leaks
+/// how much of a guess was right to anyone who can time the response.
+func isAuthorized(_ request: ParsedRequest) -> Bool {
+    let header = request.headers["authorization"] ?? ""
+    let prefix = "bearer "
+    guard header.lowercased().hasPrefix(prefix) else { return false }
+    let presented = Array(header.dropFirst(prefix.count).utf8)
+    let expected = Array(requiredToken.utf8)
+    guard presented.count == expected.count else { return false }
+
+    var difference: UInt8 = 0
+    for (a, b) in zip(presented, expected) { difference |= a ^ b }
+    return difference == 0
 }
 
 struct HTTPError: Error {
