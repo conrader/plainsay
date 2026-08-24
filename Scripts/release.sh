@@ -365,7 +365,14 @@ trap - EXIT
 # Read back from GitHub rather than trusting the push: this is the command
 # new users are told to run, and nothing else in this script would notice it
 # pointing at the wrong build.
-PUBLISHED_CASK=$(curl -fsSL "https://raw.githubusercontent.com/conrader/homebrew-plainsay/main/Casks/plainsay.rb")
+#
+# Through the API, not raw.githubusercontent.com. Raw serves through a CDN
+# with `cache-control: max-age=300`, so reading it immediately after pushing
+# returns the *previous* cask for up to five minutes — which would fail this
+# check, and with it the whole script, after the release had already shipped
+# correctly. The contents API reflects the commit straight away.
+PUBLISHED_CASK=$(gh api -H "Accept: application/vnd.github.raw" \
+	"repos/conrader/homebrew-plainsay/contents/Casks/plainsay.rb")
 grep -Fq "version \"$VERSION\"" <<<"$PUBLISHED_CASK" || {
 	echo "published cask does not install $VERSION" >&2
 	exit 1
