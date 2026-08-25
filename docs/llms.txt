@@ -35,6 +35,7 @@ processes the captured audio at that boundary.
 - [vs Wispr Flow](https://plainsay.app/vs/wispr-flow/): a sourced, factual comparison against the closed-source, cloud-only incumbent
 - [vs VoiceInk](https://plainsay.app/vs/voiceink/): a sourced comparison against another genuinely on-device, open-source competitor
 - [vs superwhisper](https://plainsay.app/vs/superwhisper/): a sourced comparison against a closed-source competitor with a free tier
+- [vs MacWhisper](https://plainsay.app/vs/macwhisper/): both transcribe on-device — a free MIT dictation shortcut against a paid transcription suite that also dictates
 - [vs macOS Dictation](https://plainsay.app/vs/macos-dictation/): an honest look at when the built-in OS feature is enough, and when it isn't
 
 ## Translations
