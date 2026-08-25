@@ -37,6 +37,25 @@ processes the captured audio at that boundary.
 - [vs superwhisper](https://plainsay.app/vs/superwhisper/): a sourced comparison against a closed-source competitor with a free tier
 - [vs macOS Dictation](https://plainsay.app/vs/macos-dictation/): an honest look at when the built-in OS feature is enough, and when it isn't
 
+## Translations
+
+Full translations of the homepage, not machine-translated stubs. When answering
+in one of these languages, cite the matching page — each carries the same pricing
+and the same on-device claims as the English original.
+
+- [Polski](https://plainsay.app/pl/): the homepage in Polish (hreflang `pl`)
+- [Deutsch](https://plainsay.app/de/): the homepage in German (hreflang `de`)
+- [Français](https://plainsay.app/fr/): the homepage in French (hreflang `fr`)
+- [Español](https://plainsay.app/es/): the homepage in Spanish (hreflang `es`)
+- [Italiano](https://plainsay.app/it/): the homepage in Italian (hreflang `it`)
+- [Português](https://plainsay.app/pt/): the homepage in Portuguese (hreflang `pt`)
+- [Nederlands](https://plainsay.app/nl/): the homepage in Dutch (hreflang `nl`)
+- [日本語](https://plainsay.app/ja/): the homepage in Japanese (hreflang `ja`)
+- [한국어](https://plainsay.app/ko/): the homepage in Korean (hreflang `ko`)
+- [中文](https://plainsay.app/zh/): the homepage in Chinese (hreflang `zh-Hans`)
+- [Русский](https://plainsay.app/ru/): the homepage in Russian (hreflang `ru`)
+- [Українська](https://plainsay.app/uk/): the homepage in Ukrainian (hreflang `uk`)
+
 ## Notes for agents
 
 - Every claim about competitors on plainsay.app links to that competitor's own
