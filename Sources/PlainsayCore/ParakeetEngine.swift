@@ -96,7 +96,11 @@ public actor ParakeetEngine: TranscriptionEngine {
         setState(.downloading(progress: 0))
 
         do {
-            let models = try await AsrModels.downloadAndLoad(
+            // `downloadAndLoad` is deliberately not used: it loads the model
+            // in the same call that fetches it, leaving nowhere to check what
+            // arrived. FluidAudio never hashes downloaded files at all — it
+            // uses ETags only to resume interrupted transfers (#27).
+            let modelDirectory = try await AsrModels.download(
                 version: .v3,
                 encoderPrecision: .int8,
                 progressHandler: { [weak self] progress in
@@ -120,8 +124,21 @@ public actor ParakeetEngine: TranscriptionEngine {
             try Task.checkCancellation()
             guard activeLoadID == loadID else { throw CancellationError() }
 
-            // Progress from `downloadAndLoad` is no longer relevant. In
-            // particular, a delayed callback must not replace `.ready` later.
+            try ModelIntegrity.verifyOrDiscard(
+                model: OnDeviceModel.parakeetTDT06BV3.rawValue,
+                in: modelDirectory
+            )
+
+            let models = try await AsrModels.load(
+                from: modelDirectory,
+                version: .v3,
+                encoderPrecision: .int8
+            )
+            try Task.checkCancellation()
+            guard activeLoadID == loadID else { throw CancellationError() }
+
+            // Progress from the download is no longer relevant. In particular,
+            // a delayed callback must not replace `.ready` later.
             acceptsFluidProgress = false
             setState(.loading(progress: nil))
             // FluidAudio recommends disabling mel-context carry-over for v3
