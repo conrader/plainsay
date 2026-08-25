@@ -89,6 +89,24 @@ It is the simplest way to help more Mac users find the project.
   release scripts are MIT-licensed and auditable; the committed LibriSpeech
   clips are CC BY 4.0. Plainsay Cloud is a separate optional hosted service.
 
+## How it compares
+
+Side-by-side pages for the alternatives, written to be useful rather than
+flattering — each one ends with the cases where the other app is the better buy.
+
+**[All the main Mac dictation apps compared](https://plainsay.app/compare/)** —
+price, what stays on your Mac, what needs an account.
+
+[vs Wispr Flow](https://plainsay.app/vs/wispr-flow/) ·
+[vs superwhisper](https://plainsay.app/vs/superwhisper/) ·
+[vs VoiceInk](https://plainsay.app/vs/voiceink/) ·
+[vs MacWhisper](https://plainsay.app/vs/macwhisper/) ·
+[vs Apple Dictation](https://plainsay.app/vs/macos-dictation/)
+
+One worth stating here: Plainsay dictates, and that is all it does. It has no
+file import, so if you have recordings to transcribe rather than words to speak,
+[MacWhisper](https://plainsay.app/vs/macwhisper/) is the tool for that job.
+
 ## What leaves your Mac?
 
 | Configuration | Recorded audio | Transcript text | Account | Cost |
