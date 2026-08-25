@@ -81,6 +81,12 @@ public actor WhisperKitEngine: TranscriptionEngine {
 
             isDownloading = false
             setState(.loading(progress: nil))
+
+            // Between the download and the load, because after the load is too
+            // late: `WhisperKit(config)` compiles and runs this code. WhisperKit
+            // itself never hashes a file it just fetched (#27).
+            try ModelIntegrity.verifyOrDiscard(model: modelID, in: modelFolder)
+
             let config = WhisperKitConfig(
                 model: modelID,
                 modelFolder: modelFolder.path,
