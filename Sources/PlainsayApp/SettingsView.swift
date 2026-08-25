@@ -28,7 +28,12 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "keyboard") }
                 .tag(Tab.general)
 
-            HistoryView(history: coordinator.history, onClearAll: { coordinator.clearAllStoredDictations() })
+            HistoryView(
+                history: coordinator.history,
+                settings: settings,
+                onClearAll: { coordinator.clearAllStoredDictations() },
+                onPolicyChange: { coordinator.applyHistoryPolicy() }
+            )
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)
 
