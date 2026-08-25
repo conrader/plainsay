@@ -8,12 +8,21 @@ import PlainsayCore
 /// attempted, so it is always retrievable even when the paste vanished.
 struct HistoryView: View {
     let history: TranscriptHistory
+    @Bindable var settings: PlainsaySettings
     /// Clearing history must also erase the raw staged audio, which the
     /// coordinator owns — hence the callback rather than calling `history.clear()`
     /// directly.
     let onClearAll: () -> Void
+    /// Pushes a changed switch or window into the store. Turning history off
+    /// deletes what is already saved, so this is not a cosmetic refresh.
+    let onPolicyChange: () -> Void
     @State private var query = ""
     @State private var copiedID: UUID?
+
+    /// Offered windows, in days. No "forever": the point of the control is
+    /// that transcripts stop accumulating, and an unbounded option would be
+    /// the one most people leave selected.
+    private static let retentionChoices = [7, 30, 90, 365]
 
     private var filtered: [TranscriptRecord] {
         let all = history.records.filter { !$0.text.isEmpty }
@@ -23,7 +32,20 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if history.records.isEmpty {
+            controls
+
+            if !settings.historyEnabled {
+                ContentUnavailableView(
+                    "History is off",
+                    systemImage: "clock.badge.xmark",
+                    description: Text(
+                        Localization.appString(
+                            "history.disabledDescription",
+                            fallback: "Dictations are not being saved, and anything previously saved has been deleted. Plainsay can no longer recover a dictation whose paste silently failed — you would have to say it again."
+                        )
+                    )
+                )
+            } else if history.records.isEmpty {
                 ContentUnavailableView(
                     "No dictations yet",
                     systemImage: "text.quote",
@@ -50,21 +72,67 @@ struct HistoryView: View {
                 .searchable(text: $query, prompt: "Search dictations")
             }
 
-            HStack {
-                Text(
-                    Localization.appFormat(
-                        "history.savedCount", fallback: "%d saved on this Mac", history.records.count
+            if settings.historyEnabled {
+                HStack {
+                    Text(
+                        Localization.appFormat(
+                            "history.savedCount", fallback: "%d saved on this Mac", history.records.count
+                        )
                     )
-                )
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                Spacer()
-                Button("Clear history", role: .destructive) {
-                    onClearAll()
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Clear history", role: .destructive) {
+                        onClearAll()
+                    }
                 }
+                .padding(12)
             }
-            .padding(12)
         }
+    }
+
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $settings.historyEnabled) {
+                Text("Save dictations on this Mac")
+            }
+            .onChange(of: settings.historyEnabled) { _, _ in onPolicyChange() }
+
+            if settings.historyEnabled {
+                Picker(selection: $settings.historyRetentionDays) {
+                    ForEach(Self.retentionChoices, id: \.self) { days in
+                        Text(label(forDays: days)).tag(days)
+                    }
+                } label: {
+                    Text("Delete after")
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                .onChange(of: settings.historyRetentionDays) { _, _ in onPolicyChange() }
+            }
+
+            Text(
+                settings.historyEnabled
+                    ? Localization.appString(
+                        "history.explainerOn",
+                        fallback: "Transcripts are stored on this Mac only, readable by your account alone, and excluded from Time Machine. They are kept so a dictation whose paste silently failed is not lost."
+                    )
+                    : Localization.appString(
+                        "history.explainerOff",
+                        fallback: "Turning this on starts saving new dictations. It does not bring back anything already deleted."
+                    )
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+    }
+
+    private func label(forDays days: Int) -> String {
+        days == 365
+            ? Localization.appString("history.retention.year", fallback: "1 year")
+            : Localization.appFormat("history.retention.days", fallback: "%d days", days)
     }
 }
 

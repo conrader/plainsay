@@ -175,6 +175,18 @@ public final class DictationCoordinator {
         hotkeys.onCancel = { [weak self] in
             self?.requestCancellationFromHotkey() ?? false
         }
+
+        // The default `history` argument is built before settings can be
+        // consulted, so it starts enabled with the default window. Reconcile
+        // it here — otherwise a user who turned history off would have it
+        // silently recording again after every launch.
+        applyHistoryPolicy()
+    }
+
+    /// Pushes the stored history preferences into `history`. Call after
+    /// changing either of them in Settings.
+    public func applyHistoryPolicy() {
+        history.applyPolicy(isEnabled: settings.historyEnabled, maxAge: settings.historyMaxAge)
     }
 
     // MARK: - Lifecycle

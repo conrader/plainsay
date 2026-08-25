@@ -39,6 +39,25 @@ public final class PlainsaySettings {
     public var asrModel: String { didSet { defaults.set(asrModel, forKey: Key.asrModel.rawValue) } }
     public var asrBaseURL: String { didSet { defaults.set(asrBaseURL, forKey: Key.asrBaseURL.rawValue) } }
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
+    /// Whether dictations are written to disk at all.
+    ///
+    /// On by default, and that default is deliberate: pasting into another app
+    /// is the one step Plainsay cannot verify, so history is what stands
+    /// between a silently failed paste and having to say it all again. This
+    /// switch is for people whose threat model outweighs that, not a hint that
+    /// the default is wrong.
+    public var historyEnabled: Bool { didSet { defaults.set(historyEnabled, forKey: Key.historyEnabled.rawValue) } }
+    /// Age ceiling for stored dictations, in days. Zero means keep them until
+    /// the count cap pushes them out.
+    public var historyRetentionDays: Int {
+        didSet { defaults.set(historyRetentionDays, forKey: Key.historyRetentionDays.rawValue) }
+    }
+
+    /// `historyRetentionDays` as the interval `TranscriptHistory` wants, with
+    /// zero mapped to "no age limit" so the two representations cannot drift.
+    public var historyMaxAge: TimeInterval? {
+        historyRetentionDays > 0 ? TimeInterval(historyRetentionDays) * 24 * 60 * 60 : nil
+    }
     public var onboardingVersion: Int {
         didSet { defaults.set(onboardingVersion, forKey: Key.onboardingVersion.rawValue) }
     }
@@ -210,6 +229,7 @@ public final class PlainsaySettings {
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
         case livePreviewEnabled
+        case historyEnabled, historyRetentionDays
         case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented, onboardingStep
         case cleanupProvider, cleanupModel, cleanupBaseURL
@@ -243,6 +263,13 @@ public final class PlainsaySettings {
         dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
+        historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
+        // 30 days by default rather than "for ever": a transcript older than
+        // that has outlived the recovery it exists for. Existing installs get
+        // the same window — `integer(forKey:)` returns 0 for an absent key,
+        // which would silently mean "keep everything" for exactly the users
+        // who already have the most stored.
+        historyRetentionDays = defaults.object(forKey: Key.historyRetentionDays.rawValue) as? Int ?? 30
         onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
         onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
         onboardingStep = defaults.integer(forKey: Key.onboardingStep.rawValue)

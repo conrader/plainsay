@@ -48,8 +48,42 @@ public final class TranscriptHistory {
     private let limit: Int
     private let fileURL: URL
 
-    public init(limit: Int = 100, directory: URL? = nil) {
+    /// Default age ceiling. A transcript older than this has outlived the
+    /// recovery it exists for: nobody re-pastes last month's dictation.
+    public static let defaultMaxAge: TimeInterval = 30 * 24 * 60 * 60
+
+    /// Discard records older than this, alongside the `limit` count cap.
+    ///
+    /// `PendingAudioStore` already bounds staged audio by age *and* count, and
+    /// history follows that shape rather than inventing a second one. Count
+    /// alone is not a retention policy: on a machine used a few times a week,
+    /// 100 records is a year of everything that was said.
+    ///
+    /// Nil means no age limit.
+    public var maxAge: TimeInterval? {
+        didSet {
+            guard maxAge != oldValue else { return }
+            if pruneExpired() { save() }
+        }
+    }
+
+    /// Whether dictations are written to disk at all.
+    ///
+    /// Turning this off is not just "stop appending". Everything already
+    /// stored is deleted, because a switch that silently leaves the last 100
+    /// dictations on disk tells the user they have cleared something they
+    /// have not — which is worse than not offering the switch.
+    public private(set) var isEnabled: Bool
+
+    public init(
+        limit: Int = 100,
+        maxAge: TimeInterval? = TranscriptHistory.defaultMaxAge,
+        isEnabled: Bool = true,
+        directory: URL? = nil
+    ) {
         self.limit = limit
+        self.maxAge = maxAge
+        self.isEnabled = isEnabled
 
         let base = directory ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -57,7 +91,52 @@ public final class TranscriptHistory {
 
         PrivateFiles.makePrivateDirectory(at: base)
         fileURL = base.appendingPathComponent("history.json")
+
+        guard isEnabled else {
+            // A build that starts with history off must not leave a file
+            // written by an earlier run where it was on.
+            purgeFromDisk()
+            return
+        }
         load()
+        // An age limit that only applied to new writes would leave everything
+        // recorded before the window existed sitting there for ever.
+        if pruneExpired() { save() }
+    }
+
+    /// Applies both retention controls at once, from settings.
+    ///
+    /// Order matters: the age window is set first so that turning history
+    /// *on* does not briefly expose records the window should already have
+    /// dropped.
+    public func applyPolicy(isEnabled: Bool, maxAge: TimeInterval?) {
+        self.maxAge = maxAge
+        setEnabled(isEnabled)
+    }
+
+    /// Turns recording on, or off *and deletes what is already stored*.
+    public func setEnabled(_ enabled: Bool) {
+        guard enabled != isEnabled else { return }
+        isEnabled = enabled
+        guard !enabled else { return }
+        records = []
+        purgeFromDisk()
+    }
+
+    /// Removes records past `maxAge`. Returns whether anything went, so
+    /// callers only pay for a write when there is something to write.
+    @discardableResult
+    private func pruneExpired() -> Bool {
+        guard let maxAge else { return false }
+        let cutoff = Date().addingTimeInterval(-maxAge)
+        let surviving = records.filter { $0.date >= cutoff }
+        guard surviving.count != records.count else { return false }
+        records = surviving
+        return true
+    }
+
+    private func purgeFromDisk() {
+        try? FileManager.default.removeItem(at: fileURL)
     }
 
     public var mostRecent: TranscriptRecord? { records.first }
@@ -66,7 +145,9 @@ public final class TranscriptHistory {
     }
 
     public func add(_ record: TranscriptRecord) {
+        guard isEnabled else { return }
         records.insert(record, at: 0)
+        pruneExpired()
         if records.count > limit {
             records.removeLast(records.count - limit)
         }
@@ -111,7 +192,9 @@ public final class TranscriptHistory {
 
     public func clear() {
         records = []
-        save()
+        // Not `save()`: writing an empty array leaves a file on disk that
+        // still says "history lives here". Clearing should remove it.
+        purgeFromDisk()
     }
 
     /// Puts a past dictation back on the clipboard so it can be pasted by hand.
