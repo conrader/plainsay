@@ -12,6 +12,12 @@ public actor ParakeetEngine: TranscriptionEngine {
 
     private var manager: AsrManager?
     private let language: String?
+    /// Every language the speaker listed, not just the primary. The hint
+    /// below can only carry one, but judging whether a transcript came out
+    /// in a language they never speak needs the whole set — otherwise a
+    /// Polish word from someone whose list starts with English reads as
+    /// foreign when it is exactly what they said.
+    private let spokenLanguages: [String]
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
     private var activeTranscriptions = 0
@@ -22,9 +28,11 @@ public actor ParakeetEngine: TranscriptionEngine {
 
     public init(
         language: String? = nil,
+        spokenLanguages: [String] = [],
         onStateChange: @escaping @Sendable (LoadState) -> Void = { _ in }
     ) {
         self.language = language
+        self.spokenLanguages = spokenLanguages.isEmpty ? [language].compactMap { $0 } : spokenLanguages
         self.onStateChange = onStateChange
     }
 
@@ -199,6 +207,21 @@ public actor ParakeetEngine: TranscriptionEngine {
             // Plainsay's cleanup stage, which repairs uncommon spellings.
             _ = prompt
             let transcript = normalizeTranscript(result.text)
+
+            // Parakeet cannot be forced to a language and reports no detected
+            // one, so unlike Whisper there is no retry to make here. Logging it
+            // is what turns "it sometimes comes out Czech" from an anecdote
+            // into something that can be counted — and the language hint is no
+            // help: FluidAudio's filter partitions by Unicode script only, so
+            // for two Latin-script languages it rules out nothing.
+            if LanguageEvidence.isOutsideSpokenLanguages(transcript, spokenLanguages: spokenLanguages) {
+                let evidence = LanguageEvidence.languages(in: transcript).sorted().joined(separator: ",")
+                let spoken = spokenLanguages.joined(separator: ",")
+                Log.model.error(
+                    "transcript shows letters exclusive to \(evidence, privacy: .public), outside spoken languages \(spoken, privacy: .public)"
+                )
+            }
+
             await finishTranscription()
             return transcript
         } catch {

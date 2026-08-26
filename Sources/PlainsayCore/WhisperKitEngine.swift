@@ -142,7 +142,8 @@ public actor WhisperKitEngine: TranscriptionEngine {
             result = try await run(samples: samples, prompt: prompt, relaxed: true, forceLanguage: nil)
         }
 
-        if !result.text.isEmpty, let forced = languageToForce(detected: result.language) {
+        if !result.text.isEmpty,
+           let forced = languageToForce(detected: result.language, text: result.text) {
             // Whisper auto-detection occasionally lands on a language the
             // user never speaks (a few misheard syllables read as Russian,
             // say). Retrying forced to a language they actually use is worth
@@ -156,13 +157,21 @@ public actor WhisperKitEngine: TranscriptionEngine {
         return result.text
     }
 
-    /// The language to force-retry with, or nil if `detected` is already
-    /// acceptable (list is empty, or the language is already on it).
-    private func languageToForce(detected: String) -> String? {
+    /// The language to force-retry with, or nil if the result is acceptable.
+    ///
+    /// Two independent signals, because they fail in different ways. Whisper's
+    /// own `detected` language catches a clip read wholesale as Russian. But it
+    /// can also report the right language and still write the wrong one — a
+    /// Polish word coming back as Czech, both of them Latin-script Slavic — and
+    /// then the only evidence is in the text itself.
+    private func languageToForce(detected: String, text: String) -> String? {
         guard let primary = spokenLanguages.first else { return nil }
         let allowed = Set(spokenLanguages.map(SupportedLanguage.primaryCode))
-        guard !allowed.contains(SupportedLanguage.primaryCode(detected)) else { return nil }
-        return primary
+        if !allowed.contains(SupportedLanguage.primaryCode(detected)) { return primary }
+        if LanguageEvidence.isOutsideSpokenLanguages(text, spokenLanguages: spokenLanguages) {
+            return primary
+        }
+        return nil
     }
 
     /// True when the audio is loud enough that a human would hear speech.
