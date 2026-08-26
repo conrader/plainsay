@@ -46,6 +46,14 @@ public final class PlainsaySettings {
     /// between a silently failed paste and having to say it all again. This
     /// switch is for people whose threat model outweighs that, not a hint that
     /// the default is wrong.
+    /// Lay dictation out as an email when it is being written into one.
+    ///
+    /// A paid feature, and gated on the subscription rather than on which
+    /// engine runs — cleanup can happen on-device, so gating by engine would
+    /// hand it to every local user for free. Off by default: a mode that
+    /// reformats text the speaker did not want reformatted is worse than no
+    /// mode, so it is opted into rather than discovered by surprise.
+    public var emailModeEnabled: Bool { didSet { defaults.set(emailModeEnabled, forKey: Key.emailModeEnabled.rawValue) } }
     public var historyEnabled: Bool { didSet { defaults.set(historyEnabled, forKey: Key.historyEnabled.rawValue) } }
     /// Age ceiling for stored dictations, in days. Zero means keep them until
     /// the count cap pushes them out.
@@ -230,6 +238,7 @@ public final class PlainsaySettings {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
         case livePreviewEnabled
         case historyEnabled, historyRetentionDays
+        case emailModeEnabled
         case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented, onboardingStep
         case cleanupProvider, cleanupModel, cleanupBaseURL
@@ -264,6 +273,7 @@ public final class PlainsaySettings {
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
+        emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
         // 30 days by default rather than "for ever": a transcript older than
         // that has outlived the recovery it exists for. Existing installs get
         // the same window — `integer(forKey:)` returns 0 for an absent key,

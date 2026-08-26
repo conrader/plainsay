@@ -26,7 +26,7 @@ public struct AnthropicCleanupService: TextCleaning {
         self.session = session
     }
 
-    public func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
@@ -42,7 +42,7 @@ public struct AnthropicCleanupService: TextCleaning {
             "model": model,
             "max_tokens": max(1024, trimmed.count / 2),
             "temperature": 0,
-            "system": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint()),
+            "system": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style),
             "messages": [
                 ["role": "user", "content": CleanupPrompt.userMessage(trimmed)]
             ],

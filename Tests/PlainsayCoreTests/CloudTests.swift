@@ -274,7 +274,7 @@ struct CloudCleanupServiceTests {
         MockURLProtocol.reset(host: cloudCleanupHost)
 
         let result = try await makeService()
-            .clean("um i'll uh be there tuesday", dictionary: TermDictionary(terms: ["Plainsay"]))
+            .clean("um i'll uh be there tuesday", dictionary: TermDictionary(terms: ["Plainsay"]), style: .plain)
 
         #expect(result == "I'll be there Tuesday.")
 
@@ -296,14 +296,14 @@ struct CloudCleanupServiceTests {
         MockURLProtocol.respond(host: cloudCleanupHost, status: 402, json: #"{"error":"No active subscription"}"#)
 
         await #expect(throws: CleanupError.self) {
-            try await self.makeService().clean("hello", dictionary: TermDictionary())
+            try await self.makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
     @Test("Empty transcripts never reach the network")
     func emptyTranscriptSkipsUpload() async throws {
         MockURLProtocol.reset(host: cloudCleanupHost)
-        let text = try await makeService().clean("   ", dictionary: TermDictionary())
+        let text = try await makeService().clean("   ", dictionary: TermDictionary(), style: .plain)
         #expect(text.isEmpty)
         #expect(MockURLProtocol.lastRequest(for: cloudCleanupHost) == nil)
     }

@@ -3,7 +3,15 @@ import Foundation
 public protocol TextCleaning: Sendable {
     /// Rewrite a raw ASR transcript as clean written text.
     /// Throws on any failure; callers fall back to the raw transcript.
-    func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String
+    func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String
+}
+
+public extension TextCleaning {
+    /// Most callers want prose. Only the dictation pipeline, which knows what
+    /// is being written into, passes a style.
+    func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+        try await clean(transcript, dictionary: dictionary, style: .plain)
+    }
 }
 
 public enum CleanupError: LocalizedError, Equatable {
@@ -70,11 +78,11 @@ public struct GeminiCleanupService: TextCleaning {
     // and it routinely contains things that read like instructions ("send this
     // to Bob", "actually make it a bullet list"). The failure mode this guards
     // against is the model *acting on* the transcript instead of rewriting it.
-    static func systemInstruction(dictionaryHint: String?) -> String {
-        CleanupPrompt.systemInstruction(dictionaryHint: dictionaryHint)
+    static func systemInstruction(dictionaryHint: String?, style: DictationStyle) -> String {
+        CleanupPrompt.systemInstruction(dictionaryHint: dictionaryHint, style: style)
     }
 
-    public func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
@@ -89,7 +97,7 @@ public struct GeminiCleanupService: TextCleaning {
 
         let body: [String: Any] = [
             "systemInstruction": [
-                "parts": [["text": Self.systemInstruction(dictionaryHint: dictionary.cleanupHint())]]
+                "parts": [["text": Self.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style)]]
             ],
             "contents": [[
                 "role": "user",
@@ -163,7 +171,7 @@ public struct GeminiCleanupService: TextCleaning {
 /// Passthrough used when cleanup is disabled or no key is set.
 public struct NoCleanup: TextCleaning {
     public init() {}
-    public func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         transcript
     }
 }

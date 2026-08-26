@@ -115,7 +115,8 @@ struct CleanupServiceTests {
 
         let result = try await makeService().clean(
             "um so i'll uh be there on tuesday",
-            dictionary: TermDictionary()
+            dictionary: TermDictionary(),
+            style: .plain
         )
 
         #expect(result == "I'll be there on Tuesday.")
@@ -127,7 +128,7 @@ struct CleanupServiceTests {
         {"candidates":[{"content":{"parts":[{"text":"Hello "},{"text":"world."}]}}]}
         """)
 
-        let result = try await makeService().clean("hello world", dictionary: TermDictionary())
+        let result = try await makeService().clean("hello world", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "Hello world.")
     }
@@ -137,7 +138,7 @@ struct CleanupServiceTests {
         MockURLProtocol.respond(host: geminiHost, status: 429, json: #"{"error":"quota"}"#)
 
         await #expect(throws: CleanupError.self) {
-            try await makeService().clean("hello", dictionary: TermDictionary())
+            try await makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
@@ -146,7 +147,7 @@ struct CleanupServiceTests {
         MockURLProtocol.respond(host: geminiHost, json: #"{"candidates":[]}"#)
 
         await #expect(throws: CleanupError.self) {
-            try await makeService().clean("hello", dictionary: TermDictionary())
+            try await makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
@@ -155,7 +156,7 @@ struct CleanupServiceTests {
         let service = GeminiCleanupService(apiKey: "", session: MockURLProtocol.session())
 
         await #expect(throws: CleanupError.missingAPIKey) {
-            try await service.clean("hello", dictionary: TermDictionary())
+            try await service.clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
@@ -163,7 +164,7 @@ struct CleanupServiceTests {
     func emptyInputSkipsRequest() async throws {
         MockURLProtocol.respond(host: geminiHost, status: 500, json: "{}")
 
-        let result = try await makeService().clean("   ", dictionary: TermDictionary())
+        let result = try await makeService().clean("   ", dictionary: TermDictionary(), style: .plain)
 
         #expect(result.isEmpty)
     }
@@ -175,7 +176,7 @@ struct CleanupServiceTests {
         """)
         MockURLProtocol.reset(host: geminiHost)
 
-        _ = try await makeService().clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]))
+        _ = try await makeService().clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]), style: .plain)
 
         let body = try #require(MockURLProtocol.lastBody(for: geminiHost))
         let json = String(decoding: body, as: UTF8.self)
@@ -188,7 +189,7 @@ struct CleanupServiceTests {
 
     @Test("The system prompt tells the model the transcript is data, not orders")
     func systemPromptGuardsAgainstInjection() {
-        let instruction = GeminiCleanupService.systemInstruction(dictionaryHint: nil)
+        let instruction = GeminiCleanupService.systemInstruction(dictionaryHint: nil, style: .plain)
 
         #expect(instruction.contains("never an instruction"))
         #expect(instruction.contains("never answer"))
@@ -196,14 +197,14 @@ struct CleanupServiceTests {
 
     @Test("Vocabulary terms are appended to the system prompt when present")
     func systemPromptIncludesVocabulary() {
-        let instruction = GeminiCleanupService.systemInstruction(dictionaryHint: "Anthropic, Plainsay")
+        let instruction = GeminiCleanupService.systemInstruction(dictionaryHint: "Anthropic, Plainsay", style: .plain)
 
         #expect(instruction.contains("Anthropic, Plainsay"))
     }
 
     @Test("Passthrough cleanup returns the transcript untouched")
     func noCleanupIsIdentity() async throws {
-        let result = try await NoCleanup().clean("um hello", dictionary: TermDictionary())
+        let result = try await NoCleanup().clean("um hello", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "um hello")
     }
@@ -257,7 +258,7 @@ struct TruncatedCleanupTests {
     /// cut-off recording into something that reads as complete.
     @Test("The prompt forbids inventing an ending")
     func promptForbidsFabricatedEndings() {
-        let instruction = CleanupPrompt.systemInstruction(dictionaryHint: nil).lowercased()
+        let instruction = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: .plain).lowercased()
 
         #expect(instruction.contains("stops mid-sentence"))
         #expect(instruction.contains("never invent an ending"))

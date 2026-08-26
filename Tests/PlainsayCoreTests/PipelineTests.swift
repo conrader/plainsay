@@ -224,9 +224,11 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
     var output = "The thing is, it works."
     var error: Error?
     private(set) var received: String?
+    private(set) var receivedStyle: DictationStyle?
 
-    func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         received = transcript
+        receivedStyle = style
         if let error { throw error }
         return output
     }
@@ -1361,5 +1363,40 @@ struct PipelineTests {
 
     private func drainModelStateCallbacks() async {
         for _ in 0..<10 { await Task.yield() }
+    }
+}
+
+/// Email mode's gate (#31).
+///
+/// `MailTargetTests` proves the detector recognises a mail composer. These
+/// prove the feature stays *off* unless it is genuinely switched on and
+/// entitled — the half that would cost real users if it were wrong, because it
+/// would silently reshape text nobody asked to have reshaped.
+@Suite("Email mode gating")
+@MainActor
+struct EmailModeGatingTests {
+    @Test("Ordinary dictation asks for plain prose")
+    func defaultsToPlain() async throws {
+        let harness = Harness()
+        await harness.ready()
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.cleaner.receivedStyle == .plain)
+    }
+
+    @Test("With email mode on but no subscription, dictation stays plain")
+    func premiumGateHolds() async throws {
+        // Gated on the entitlement, not on which engine runs: cleanup can
+        // happen entirely on-device, so a gate keyed off the transcription
+        // source would hand the paid feature to every local user for free.
+        let harness = Harness()
+        harness.settings.emailModeEnabled = true
+        await harness.ready()
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.coordinator.cloud.account?.isActive != true)
+        #expect(harness.cleaner.receivedStyle == .plain)
     }
 }

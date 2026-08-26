@@ -63,6 +63,25 @@ private struct GeneralSettings: View {
     let coordinator: DictationCoordinator
     @Bindable var updates: UpdateController
 
+    /// Says plainly what the switch does *and* whether it can currently do it.
+    /// A paid feature that silently does nothing for someone without a
+    /// subscription reads as a bug, and they would be right to think so.
+    private var emailModeFooter: String {
+        let explanation = Localization.appString(
+            "settings.emailMode.explanation",
+            fallback: """
+                When you dictate into a mail app, or a webmail compose window, Plainsay lays the                 result out as an email: the greeting on its own line, paragraphs in the body, and                 the sign-off separated from it. It never adds a greeting or a sign-off you did not                 say. Everywhere else, dictation is unchanged.
+                """
+        )
+        guard coordinator.cloud.account?.isActive == true else {
+            return explanation + " " + Localization.appString(
+                "settings.emailMode.needsSubscription",
+                fallback: "This is part of Plainsay Cloud — without an active subscription the switch has no effect."
+            )
+        }
+        return explanation
+    }
+
     var body: some View {
         Form {
             Section {
@@ -73,6 +92,14 @@ private struct GeneralSettings: View {
                 }
             } footer: {
                 Text("Changes the language Plainsay's own menus and windows use — separate from the languages you speak, set under Speech. Applies right away; a window already open may need to be closed and reopened.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Format dictation as an email", isOn: $settings.emailModeEnabled)
+            } footer: {
+                Text(emailModeFooter)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
