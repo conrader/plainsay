@@ -28,6 +28,7 @@ processes the captured audio at that boundary.
 - [Privacy Policy](https://plainsay.app/privacy/): how the website, Mac client, optional providers, and Plainsay Cloud handle data
 - [Terms of Service](https://plainsay.app/terms/): terms for the website, free Local client, and optional Plainsay Cloud service
 - [Why on-device](https://plainsay.app/why-on-device/): exactly what runs locally vs. optionally in the cloud, stated precisely
+- [Nobody was checking the speech models](https://plainsay.app/verifying-models/): why a signed app that downloads an unverified Core ML model is a supply-chain gap, what WhisperKit and FluidAudio actually guarantee, and the pinned-digest fix in v0.2.27
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
 - [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands
 - [Compare Mac dictation apps](https://plainsay.app/compare/): all the main options side by side — Plainsay, Wispr Flow, superwhisper, VoiceInk, MacWhisper, Apple Dictation — including which cases we recommend a competitor for
