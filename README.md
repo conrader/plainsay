@@ -89,6 +89,18 @@ It is the simplest way to help more Mac users find the project.
   release scripts are MIT-licensed and auditable; the committed LibriSpeech
   clips are CC BY 4.0. Plainsay Cloud is a separate optional hosted service.
 
+## Verifying the models
+
+Plainsay is signed and notarised, then downloads a Core ML speech model at first
+run and executes it. Neither WhisperKit nor FluidAudio verifies a file it has
+just fetched, so until v0.2.27 nothing did. Expected digests for every
+downloadable model now ship inside the signed bundle and are checked before the
+model is loaded.
+
+[Nobody was checking the speech models](https://plainsay.app/verifying-models/)
+— what the libraries actually guarantee, why verifying against a hash from the
+same server proves nothing, and what the fix does and does not buy.
+
 ## How it compares
 
 Side-by-side pages for the alternatives, written to be useful rather than
