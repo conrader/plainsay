@@ -314,7 +314,7 @@ private struct SpeechSettings: View {
             } header: {
                 Text("Languages you speak")
             } footer: {
-                Text("Add the languages you actually use so the model stops guessing among ones you don't — for example, a stray sound read as Russian. Leave empty for full auto-detect.")
+                Text("Add the languages you actually use so the model stops guessing among ones you don't — for example, a stray sound read as Russian. The first one is your main language: it is the one models that can only be told a single language are set to, and the one Plainsay falls back to when a transcript comes out in a language you don't speak. Leave empty for full auto-detect.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

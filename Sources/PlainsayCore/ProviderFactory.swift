@@ -114,6 +114,7 @@ public enum ProviderFactory {
         case .parakeetTDT06BV3:
             ParakeetEngine(
                 language: settings.primaryLanguage,
+                spokenLanguages: settings.spokenLanguages,
                 onStateChange: onState
             )
         default:
