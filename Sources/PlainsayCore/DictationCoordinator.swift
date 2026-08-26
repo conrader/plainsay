@@ -264,7 +264,10 @@ public final class DictationCoordinator {
                 continue
             }
 
-            let cleaned = (try? await makeCleaner(settings).clean(raw, dictionary: settings.dictionary)) ?? raw
+            // Recovered audio has no target app — the window it was aimed at is
+            // long gone — so there is nothing to detect email shape from.
+            let cleaned = (try? await makeCleaner(settings)
+                .clean(raw, dictionary: settings.dictionary, style: .plain)) ?? raw
             history.add(TranscriptRecord(
                 text: cleaned, rawText: raw, outcome: .recovered,
                 durationSeconds: duration, targetApp: nil
@@ -301,6 +304,34 @@ public final class DictationCoordinator {
     public func clearAllStoredDictations() {
         history.clear()
         pendingAudio.purgeAll()
+    }
+
+    /// Whether this dictation should be laid out as an email.
+    ///
+    /// Three things must all be true, and they are checked in this order
+    /// because each is cheaper than the next: the user has the mode on, their
+    /// subscription entitles them to it, and the target actually looks like a
+    /// mail composer. Reading another app's window title over Accessibility is
+    /// the expensive step and only happens once the first two pass.
+    func resolvedDictationStyle() -> DictationStyle {
+        guard settings.emailModeEnabled else { return .plain }
+
+        // Email mode is a paid feature. The gate is the entitlement rather
+        // than which engine runs: cleanup can happen on-device, so keying this
+        // off the transcription source would hand it to every local user free.
+        guard cloud.account?.isActive == true else { return .plain }
+
+        guard let targetApp else { return .plain }
+        let bundleIdentifier = targetApp.bundleIdentifier
+
+        // Native clients are decided on bundle id alone; only a browser needs
+        // the title, so only a browser pays for the Accessibility round-trip.
+        if MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: nil) {
+            return .email
+        }
+        let title = FocusedWindow.title(of: targetApp)
+        return MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: title)
+            ? .email : .plain
     }
 
     /// Clears menu-level recovery notices after the user has dealt with them.
@@ -868,11 +899,12 @@ public final class DictationCoordinator {
         if !stoppedAtRecordingLimit { phase = .cleaning }
         let dictionary = settings.dictionary
         let cleaner = makeCleaner(settings)
+        let style = resolvedDictationStyle()
 
         var finalText = transcript
         var usedRaw = false
         do {
-            finalText = try await cleaner.clean(transcript, dictionary: dictionary)
+            finalText = try await cleaner.clean(transcript, dictionary: dictionary, style: style)
         } catch {
             // Cleanup is best-effort: a failure must never cost the dictation.
             Log.cleanup.error("cleanup failed, using raw transcript: \(error.localizedDescription, privacy: .public)")

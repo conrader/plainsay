@@ -34,7 +34,7 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
         self.session = session
     }
 
-    public func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
@@ -60,7 +60,7 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
             // output is a small fraction of it.
             "max_tokens": max(1024, trimmed.count),
             "messages": [
-                ["role": "system", "content": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint())],
+                ["role": "system", "content": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style)],
                 ["role": "user", "content": CleanupPrompt.userMessage(trimmed)],
             ],
         ]

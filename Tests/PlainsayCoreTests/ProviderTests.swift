@@ -86,7 +86,7 @@ struct OpenAICompatibleCleanupTests {
         {"choices":[{"message":{"role":"assistant","content":"I'll be there Tuesday."}}]}
         """)
 
-        let result = try await makeService().clean("um i'll uh be there tuesday", dictionary: TermDictionary())
+        let result = try await makeService().clean("um i'll uh be there tuesday", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "I'll be there Tuesday.")
     }
@@ -97,7 +97,7 @@ struct OpenAICompatibleCleanupTests {
         {"choices":[{"message":{"content":[{"type":"text","text":"Hello "},{"type":"text","text":"world."}]}}]}
         """)
 
-        let result = try await makeService().clean("hello world", dictionary: TermDictionary())
+        let result = try await makeService().clean("hello world", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "Hello world.")
     }
@@ -108,7 +108,7 @@ struct OpenAICompatibleCleanupTests {
         MockURLProtocol.reset(host: compatHost)
 
         _ = try await makeService(model: "anthropic/claude-haiku-4.5")
-            .clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]))
+            .clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]), style: .plain)
 
         // Parsed rather than string-matched: JSONSerialization escapes the
         // slash in a model name as \/, so a substring check on the raw body
@@ -138,7 +138,7 @@ struct OpenAICompatibleCleanupTests {
         MockURLProtocol.respond(host: compatHost, json: #"{"choices":[{"message":{"content":"ok"}}]}"#)
         MockURLProtocol.reset(host: compatHost)
 
-        _ = try await makeService().clean("hello there", dictionary: TermDictionary())
+        _ = try await makeService().clean("hello there", dictionary: TermDictionary(), style: .plain)
 
         let body = try #require(MockURLProtocol.lastBody(for: compatHost))
         let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
@@ -153,14 +153,14 @@ struct OpenAICompatibleCleanupTests {
         MockURLProtocol.respond(host: compatHost, status: 402, json: #"{"error":"insufficient credits"}"#)
 
         await #expect(throws: CleanupError.self) {
-            try await makeService().clean("hello", dictionary: TermDictionary())
+            try await makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
     @Test("A missing model fails before any request")
     func missingModelThrows() async {
         await #expect(throws: CleanupError.missingModel) {
-            try await makeService(model: "").clean("hello", dictionary: TermDictionary())
+            try await makeService(model: "").clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
@@ -169,8 +169,8 @@ struct OpenAICompatibleCleanupTests {
         // Divergent wording would silently change how your writing comes out
         // when you switch provider, and be near-impossible to attribute.
         #expect(
-            GeminiCleanupService.systemInstruction(dictionaryHint: "Plainsay")
-                == CleanupPrompt.systemInstruction(dictionaryHint: "Plainsay")
+            GeminiCleanupService.systemInstruction(dictionaryHint: "Plainsay", style: .plain)
+                == CleanupPrompt.systemInstruction(dictionaryHint: "Plainsay", style: .plain)
         )
     }
 }
@@ -225,7 +225,7 @@ struct AnthropicCleanupTests {
         {"content":[{"type":"text","text":"I'll be there Tuesday."}]}
         """)
 
-        let result = try await makeService().clean("um i'll uh be there tuesday", dictionary: TermDictionary())
+        let result = try await makeService().clean("um i'll uh be there tuesday", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "I'll be there Tuesday.")
     }
@@ -236,7 +236,7 @@ struct AnthropicCleanupTests {
         {"content":[{"type":"text","text":"Hello "},{"type":"text","text":"world."}]}
         """)
 
-        let result = try await makeService().clean("hello world", dictionary: TermDictionary())
+        let result = try await makeService().clean("hello world", dictionary: TermDictionary(), style: .plain)
 
         #expect(result == "Hello world.")
     }
@@ -247,7 +247,7 @@ struct AnthropicCleanupTests {
         MockURLProtocol.reset(host: anthropicHost)
 
         _ = try await makeService(model: "claude-haiku-4-5")
-            .clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]))
+            .clean("hello there", dictionary: TermDictionary(terms: ["Plainsay"]), style: .plain)
 
         let request = try #require(MockURLProtocol.lastRequest(for: anthropicHost))
         #expect(request.value(forHTTPHeaderField: "x-api-key") == "test-key")
@@ -270,7 +270,7 @@ struct AnthropicCleanupTests {
         MockURLProtocol.respond(host: anthropicHost, status: 401, json: #"{"error":"invalid key"}"#)
 
         await #expect(throws: CleanupError.self) {
-            try await makeService().clean("hello", dictionary: TermDictionary())
+            try await makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
         }
     }
 
@@ -279,7 +279,7 @@ struct AnthropicCleanupTests {
         MockURLProtocol.respond(host: anthropicHost, json: #"{"content":[{"type":"text","text":"ok"}]}"#)
         MockURLProtocol.reset(host: anthropicHost)
 
-        _ = try await makeService(model: "").clean("hello", dictionary: TermDictionary())
+        _ = try await makeService(model: "").clean("hello", dictionary: TermDictionary(), style: .plain)
 
         let body = try #require(MockURLProtocol.lastBody(for: anthropicHost))
         let root = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])

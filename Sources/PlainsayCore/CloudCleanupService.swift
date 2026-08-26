@@ -25,7 +25,7 @@ public struct CloudCleanupService: TextCleaning {
         self.session = session
     }
 
-    public func clean(_ transcript: String, dictionary: TermDictionary) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
         guard let url = URL(string: "\(baseURL)/v1/cleanup") else {
