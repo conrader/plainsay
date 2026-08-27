@@ -40,10 +40,14 @@ public final class DictationCoordinator {
 
     /// Anything shorter than this was a mis-tap, not a dictation.
     static let minimumDuration: TimeInterval = 0.3
-    /// How often the live preview re-transcribes the growing recording.
+    /// Shortest gap between live-preview passes, and the delay before the
+    /// first one.
+    ///
     /// A `var`, not `let`, so tests can shrink it rather than waiting out a
-    /// real 1.5s cadence.
-    static var previewInterval: Duration = .milliseconds(1500)
+    /// real cadence.
+    static var previewInterval: Duration = .milliseconds(400)
+    /// Longest gap the preview will back off to.
+    static var previewMaximumInterval: Duration = .milliseconds(2000)
 
     public private(set) var phase: Phase = .idle
     /// 0...1, drives the HUD level meter.
@@ -808,6 +812,14 @@ public final class DictationCoordinator {
         }
 
         let duration = Double(samples.count) / whisperSampleRate
+        if AudioRecorder.endedMidSpeech(samples) {
+            // Logged rather than shown: it is normal to trail off into the
+            // last word, and a warning on every dictation would train people
+            // to ignore the one that matters.
+            Log.pipeline.info(
+                "recording ended while speech was still audible after \(duration, format: .fixed(precision: 2), privacy: .public)s — the hotkey was released mid-sentence"
+            )
+        }
         guard duration >= Self.minimumDuration else {
             // A stray tap. Say nothing, do nothing — but leave a trace, because
             // "I definitely spoke and nothing happened" and "the key barely
@@ -1029,8 +1041,17 @@ public final class DictationCoordinator {
         guard settings.livePreviewEnabled, settings.transcriptionSource == .onDevice else { return }
         previewTask?.cancel()
         previewTask = Task { @MainActor [weak self] in
+            // Paced by what the last pass actually cost, not by a fixed gap.
+            //
+            // Each pass re-transcribes the whole recording so far, so its cost
+            // grows with the recording: a fixed interval is either too slow at
+            // the start, when the clip is short and the speaker is watching
+            // most closely, or a treadmill later, when passes take longer than
+            // the gap between them. Waiting as long as the last pass took
+            // keeps the preview at roughly half duty whatever the length.
+            var interval = Self.previewInterval
             while !Task.isCancelled {
-                try? await Task.sleep(for: Self.previewInterval)
+                try? await Task.sleep(for: interval)
                 guard !Task.isCancelled, let self,
                       self.phase == .recording, self.recorder.isRecording,
                       let engine = self.engine
@@ -1044,13 +1065,26 @@ public final class DictationCoordinator {
                 // backend is inside non-cancellable model work. Retain engine
                 // ownership for the pass itself so a model reload cannot shut
                 // it down and start another Core ML load underneath it.
+                let started = ContinuousClock.now
                 self.beginEngineWork()
                 let text = (try? await engine.transcribe(samples: samples, prompt: prompt)) ?? ""
                 self.finishEngineWork()
+                interval = Self.nextPreviewInterval(afterPassLasting: started.duration(to: .now))
+
                 guard !Task.isCancelled, self.phase == .recording, !text.isEmpty else { continue }
                 self.livePreviewText = text
             }
         }
+    }
+
+    /// The gap before the next preview pass, given how long the last one took.
+    ///
+    /// Clamped at both ends: never faster than `previewInterval`, so a cheap
+    /// pass on a two-second clip does not spin the engine continuously, and
+    /// never slower than `previewMaximumInterval`, so a long recording still
+    /// updates often enough to be worth showing.
+    static func nextPreviewInterval(afterPassLasting duration: Duration) -> Duration {
+        min(max(duration, previewInterval), previewMaximumInterval)
     }
 
     private func stopLivePreview() {

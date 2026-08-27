@@ -343,6 +343,30 @@ public final class AudioRecorder: AudioRecording {
     /// stopping on a buffer boundary.
     nonisolated static let captureShortfallTolerance: TimeInterval = 0.5
 
+    /// How much audio at the end is inspected for "still talking".
+    nonisolated static let tailWindow: TimeInterval = 0.35
+
+    /// Whether the recording stops while speech is still going.
+    ///
+    /// A dictation that ends mid-sentence has two very different causes that
+    /// look identical afterwards: the speaker let go early, or the hotkey
+    /// released on its own. Both leave a recording whose final moments are
+    /// loud, whereas someone who finished their sentence leaves a tail of near
+    /// silence — the pause before letting go.
+    ///
+    /// This does not decide which cause it was. It turns "it cut off again"
+    /// into something with a measurement attached, which is the part that was
+    /// missing.
+    nonisolated static func endedMidSpeech(
+        _ samples: [Float], threshold: Float = 0.02
+    ) -> Bool {
+        let window = Int(tailWindow * whisperSampleRate)
+        guard samples.count > window else { return false }
+        var peak: Float = 0
+        for sample in samples.suffix(window) where abs(sample) > peak { peak = abs(sample) }
+        return peak > threshold
+    }
+
     /// Name of the current default input, for the log line above.
     private var currentInputDeviceName: String {
         AVCaptureDevice.default(for: .audio)?.localizedName ?? "unknown"

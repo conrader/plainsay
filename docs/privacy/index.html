@@ -98,7 +98,7 @@
       <ul>
         <li><strong class="accent">Local transcription:</strong> recorded audio and transcript text stay on your Mac when Polishing is off or uses a local endpoint. No Plainsay account is needed.</li>
         <li><strong class="accent">Plainsay Cloud speech:</strong> the app sends recorded audio and limited request metadata to DMT. DMT processes it on an operated node when available or forwards it to deAPI as a fallback.</li>
-        <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the provider selected for Polishing. Plainsay Cloud routes them through OpenRouter to the configured model.</li>
+        <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the selected provider. Style-aware BYOK providers also receive any enabled translation-target or email-layout instruction. The v0.2.29 Plainsay Cloud cleanup request does not include those style instructions.</li>
         <li><strong class="accent">No advertising analytics:</strong> the Mac client has no analytics or telemetry SDK, and the website has no advertising or analytics cookies.</li>
         <li><strong class="accent">Content database:</strong> Plainsay Cloud does not store recorded audio or transcript text in its application database. It does store account, subscription, session, and usage metadata.</li>
       </ul>
@@ -108,10 +108,10 @@
       <h2>3. What happens in each mode</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Configuration</th><th>Recorded audio</th><th>Transcript or vocabulary</th><th>DMT account</th></tr></thead>
+          <thead><tr><th>Configuration</th><th>Recorded audio</th><th>Transcript, vocabulary, or styling instructions</th><th>DMT account</th></tr></thead>
           <tbody>
             <tr><td>Local speech; Polishing off or local</td><td>Remains on the Mac</td><td>Remains on the Mac</td><td>Not required</td></tr>
-            <tr><td>Local speech; hosted Polishing</td><td>Remains on the Mac</td><td>Sent directly to the selected provider, or to Plainsay Cloud if selected</td><td>Only for Plainsay Cloud Polishing</td></tr>
+            <tr><td>Local speech; hosted Polishing</td><td>Remains on the Mac</td><td>Transcript and vocabulary terms go to the selected provider. In v0.2.29, enabled styling instructions go to BYOK providers but not to Plainsay Cloud.</td><td>Only for Plainsay Cloud Polishing</td></tr>
             <tr><td>Plainsay Cloud speech</td><td>Sent to DMT and possibly deAPI</td><td>Vocabulary and language hint accompany the request; the resulting transcript returns to the app</td><td>Required</td></tr>
             <tr><td>Your own speech API</td><td>Sent directly to the provider you configure</td><td>Language and optional vocabulary hint may be sent directly too</td><td>Not required by DMT</td></tr>
           </tbody>
@@ -125,11 +125,12 @@
       <p>The following data is controlled through the app and is not uploaded to DMT merely because it exists:</p>
       <ul>
         <li>when History is enabled, up to 100 records containing raw and final text, time, duration, insertion outcome, and the destination app’s bundle identifier; the default retention is 30 days, selectable as 7, 30, 90, or 365 days, and turning History off deletes saved records and stops future saves;</li>
-        <li>up to 20 interrupted recordings in a private recovery folder, each retained for no more than 7 days unless it is processed or removed sooner; the Clear History action also purges these pending recordings;</li>
+        <li>interrupted recordings in a private recovery folder; on each app launch, Plainsay removes files older than 7 days and keeps no more than the newest 20, while successful recovery or the Clear History action removes them sooner;</li>
         <li>settings, languages, vocabulary, provider choices, and an optional 256-dimensional speaker embedding derived from the voice-enrolment sample;</li>
         <li>provider API keys and the Plainsay Cloud session token in macOS Keychain; and</li>
         <li>a temporary in-memory copy of clipboard contents while Plainsay attempts to paste and restore them.</li>
       </ul>
+      <p>Input Monitoring is used to notice the configured dictation shortcut, the global translation toggle, and Escape while recording. Plainsay does not store typed text or include keystrokes in a transcript.</p>
       <p>History and pending-audio files use owner-only permissions and are excluded from normal backups by the app. The voice enrolment recording is converted locally to an embedding; the recording itself is not retained by Plainsay after enrolment. Deleting the app alone may not remove Application Support, model, preference, or Keychain data.</p>
     </section>
 
@@ -142,7 +143,7 @@
       <h3>Speech and Polishing content</h3>
       <p>For Cloud speech, DMT receives AAC audio, clip duration, an optional language hint, and optional vocabulary terms. An available DMT-operated transcription node processes the audio first; otherwise it is sent to deAPI. On the DMT node, an upload is placed in an owner-only temporary directory for decoding, removed at the end of the request, and orphaned upload files are cleared when that service starts. Audio is not written to the Cloud application database.</p>
       <p>Account information comes from you, or from Apple when you choose Apple sign-in. Subscription status and transaction identifiers come from Stripe. Request and usage metadata is generated when you use the service.</p>
-      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. Auto-translate and automatic email layout run in this same Polishing request and do not create a separate audio route. The service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
+      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms, then forwards them through OpenRouter to the configured Google Gemini endpoint. In v0.2.29, the Cloud cleanup request does not include the Auto-translate target or email-layout instruction. If you select your own hosted Polishing provider, the transcript, vocabulary terms, and enabled style instructions go directly to that provider; with a compatible local endpoint, they remain on the Mac. These styles do not create a separate audio route. The Cloud service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
     </section>
 
     <section id="purposes">
@@ -188,7 +189,7 @@
       <h2>8. Retention</h2>
       <ul>
         <li><strong>Local History:</strong> when enabled, up to 100 records are kept for the selected 7-, 30-, 90-, or 365-day window; 30 days is the default. Disabling History deletes saved records immediately and prevents new ones from being stored.</li>
-        <li><strong>Pending local audio:</strong> interrupted recordings are kept for at most 7 days and capped at 20 files. Successful recovery or the Clear History action removes them sooner.</li>
+        <li><strong>Pending local audio:</strong> on each app launch, recordings older than 7 days are removed and only the newest 20 are kept. Successful recovery or the Clear History action removes them sooner.</li>
         <li><strong>Email sign-in codes:</strong> valid for 15 minutes; expired records are removed by an hourly cleanup, ordinarily within about 75 minutes of creation.</li>
         <li><strong>Cloud sessions:</strong> the service revokes the current session on sign-out and expires a token after 90 days without use.</li>
         <li><strong>Account, subscription, and usage metadata:</strong> kept while the Cloud account exists. After a verified deletion request, data not subject to an exception is removed within 30 days.</li>

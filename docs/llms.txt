@@ -3,14 +3,15 @@
 > Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode,
 > Whisper or Parakeet transcribes entirely on your Mac — no account or
 > subscription. Optional Plainsay Cloud sends recorded audio for hosted
-> transcription and Polishing without a transcription-model download for 12
-> PLN gross/month (VAT included; about US$3), with 900 transcription minutes per rolling 30 days.
+> transcription and transcript text for hosted Polishing, without a
+> transcription-model download, for 12 PLN gross/month (VAT included; about
+> US$3), with 900 transcription minutes per rolling 30 days.
 
 Plainsay is a from-scratch Swift/SwiftUI menu-bar app: global hotkey capture,
 a choice of local Core ML transcription (WhisperKit or NVIDIA Parakeet TDT
 0.6B v3 via FluidAudio), hosted transcription, an optional Polishing pass that
 turns spoken language into written language, an out-of-list language guard,
-Cloud Auto-translate and automatic email layout, and paste-based text insertion.
+Cloud-gated Auto-translate and automatic email layout, and paste-based text insertion.
 The client is fully open source; a separate, deliberately opt-in Plainsay
 Cloud tier exists for people who don't want to manage a local model or an API
 key.
@@ -22,16 +23,31 @@ processes the captured audio at that boundary.
 
 History is enabled by default and keeps up to 100 local transcript records for
 30 days. The user can select 7, 30, 90, or 365 days, clear it, or turn it off;
-turning it off deletes saved transcripts. Interrupted local audio is capped at
-20 files and 7 days, and Clear History purges it too.
+turning it off deletes saved transcripts. On each app launch, interrupted
+recordings older than 7 days are removed and only the newest 20 are kept; Clear
+History purges them too.
 
-With spoken languages configured, Whisper retries an evidently out-of-list
-result in the first listed language. Parakeet cannot force a retry and records
-narrow, high-confidence mismatches in diagnostics instead. An active Plainsay
-Cloud subscription unlocks Auto-translate and automatic email layout for any
-speech source, but both run in the Polishing stage and therefore require
-Polishing to be enabled and configured. Auto-translate is off by default; its
-last target can be toggled globally with Control–Option–Command–T.
+The first configured spoken language is the main language sent to providers and
+models that accept only one language hint. Whisper also retries an evidently
+out-of-list result in that main language. Parakeet cannot force a retry and
+records narrow, high-confidence mismatches in diagnostics instead. An active
+Plainsay Cloud subscription unlocks Auto-translate and automatic email layout
+for new dictations from any speech source. In v0.2.29, both styles require a
+BYOK or compatible local Polishing provider: the built-in Plainsay Cloud cleanup
+request sends only the transcript and vocabulary terms, so it performs ordinary
+cleanup instead. Auto-translate is off by default, offers the configured spoken
+languages plus English, and its last target can be toggled globally with
+Control–Option–Command–T. Email mode is also off by default. Recovered audio is
+polished as plain text.
+
+Settings can propose recurring names and product terms from saved dictations;
+the user must Add or Dismiss each suggestion. Applied vocabulary corrections
+run locally with conservative matching and choose the closest candidate. With
+Input Monitoring, Plainsay acts only on the dictation shortcut, the translation
+toggle, and Escape while recording; typed text is not stored or included in
+transcripts.
+Settings > About includes a copyable diagnostics command, and audio diagnostics
+compare active recording time with the samples actually captured.
 
 ## Docs
 

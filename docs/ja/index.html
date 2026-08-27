@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行い、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声を送信してホスト型の文字起こしと文章整形を行い、文字起こしモデルのダウンロードなしで月額12 PLNまたは年額120 PLN（VAT込み）です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud（月額、VAT込み）"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud（年額、VAT込み）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行うため、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声をホスト型の文字起こしに、文字起こしテキストをホスト型のPolishingに送信します。文字起こしモデルのダウンロードは不要で、料金はVAT込みで月額12 PLNまたは年額120 PLNです。Cloudのサブスクリプションでは自動翻訳とメールレイアウトも利用できますが、v0.2.29では、これらのスタイルにBYOKまたは互換性のあるローカルPolishingが必要です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud（月額、VAT込み）"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud（年額、VAT込み）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -334,7 +334,7 @@
           <p>明日のスタンドアップを10時半に動かせますか？朝、歯医者の予約があります。</p>
         </div>
       </div>
-      <p class="compare-note">デフォルトでは、Polishingは言葉遣い、意味、トーン、言語を保ちます。重要な文章は確認してください。自動翻訳をオンにすると、代わりにすべての口述筆記をPlainsayメニューで選択した対象言語で出力します。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、Polishing自体を完全にオフにすることもでき、失敗した場合は生の文字起こしにフォールバックします。</p>
+      <p class="compare-note">クリーンアップ処理はフィラーや言い直しを取り除き、句読点を整えます。デフォルトでは、Polishingは言葉遣い、意味、トーン、言語を保ちます。重要な文章は確認してください。自動翻訳をオンにし、スタイル指示に対応するBYOKまたは互換性のあるローカルPolishingプロバイダーを選択すると、Polishingは代わりに、その後に新しく行う口述筆記をすべてPlainsayメニューで選択した対象言語で出力します。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、Polishing自体を完全にオフにすることもでき、失敗した場合は生の文字起こしにフォールバックします。</p>
     </section>
 
     <section id="why">
@@ -360,7 +360,7 @@
     <section id="available-now">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">現在利用可能</h2>
-        <p class="dim">口述筆記で使う言語は、よく使うものから順に並べてください。Whisperが明らかにリスト外の言語で文字起こしした場合は、リスト先頭の言語で再試行します。Parakeetはその不一致を診断ログに記録します。Cloudの購読者は、Plainsayメニューから自動翻訳を利用でき、Control–Option–Command–Tでも切り替えられます。また、対応するメールアプリやWebメールの作成画面では、メールのレイアウトが自動的に整えられます。翻訳とメールレイアウトを利用するには、Polishingが有効かつ設定済みである必要があります。</p>
+        <p class="dim">主に話す言語を1つ選び、そのほかに使う言語を追加してください。言語指定を1つしか受け付けないプロバイダーやモデルには、主言語が渡されます。Whisperが明らかにリスト外の言語で結果を返した場合は主言語で再試行しますが、Parakeetは再試行を強制できないため、不一致を診断ログに記録します。Cloudのサブスクリプションが有効で、Polishingが有効かつ設定済みの場合は、Plainsayメニューで話す言語または英語から自動翻訳の対象を選べます。Control–Option–Command–Tを使えば、どこからでも最後に選んだ対象言語への自動翻訳をオン／オフできます。メールモードはデフォルトでオフです。対応するメールアプリや認識されたWebメールの作成画面では、挨拶、本文の段落、結びの言葉を自動的に整えられます。これらのスタイルは現在、スタイル指示に対応するBYOKおよび互換性のあるローカルPolishingプロバイダーで利用できます。内蔵のPlainsay Cloud Polishing経路には、翻訳またはメールレイアウトの指示がまだ渡されません。</p>
       </div>
     </section>
 
@@ -451,7 +451,7 @@
     { icon: "lock.shield.fill", title: "デフォルトで透明", body: "Macクライアントはアクセス解析やテレメトリーを送信しません。署名付きアップデートの確認はデフォルトでapi.plainsay.appへ接続し、設定で無効にできます。オプションのCloudは、有料サービスに必要なアカウント、購読、使用量のメタデータを記録します。" },
     { icon: "clock.arrow.circlepath", title: "復旧できるフォールバック", body: "Polishingに失敗すると、Plainsayは生の文字起こしを使います。安全な貼り付け先がなければテキストはクリップボードに残ります。履歴が有効な場合、Plainsayは挿入前に完了した文字起こしをローカル履歴へ追加します。" },
     { icon: "clock.arrow.circlepath", title: "自分で管理できる履歴", body: "履歴にはデフォルトで最大100件の口述筆記が30日間保存されます。保存期間は7日、30日、90日、365日から選べ、履歴を消去したり、オフにしたりできます。オフにすると、保存済みの文字起こしが削除されます。" },
-    { icon: "text.quote", title: "語彙の提案", body: "設定では、保存された口述筆記に繰り返し現れる名前や製品用語が提案されます。「追加」を選ばない限り何も追加されず、どの提案も却下できます。" },
+    { icon: "text.quote", title: "語彙の提案", body: "設定では、保存された口述筆記に繰り返し現れる名前や製品用語が提案されます。「追加」を選ばない限り何も追加されず、どの提案も却下できます。修正を適用する際は慎重に照合し、最も近い候補を選びます。" },
     { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしとPolishingでは、複数のローカルおよびホスト型エンジンやプロバイダーに対応しています。独自のAPIキーやOpenAI互換エンドポイントも利用できます。" },
     { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "声の登録はベストエフォートのローカルフィルターです。利用できない場合や失敗した場合、口述筆記はフィルターなしで続行し、CloudまたはBYOK文字起こしに未処理の音声が送られることがあります。" },
     { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLNまたは年額120 PLN（VAT込み）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
@@ -473,12 +473,12 @@
       id: "local", eyebrow: "ローカル音声認識", title: "このMac上で", price: "無料",
       icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
       features: ["WhisperまたはParakeet、オンデバイス", "ローカル文字起こしでは録音音声がこのMacに留まる", "アカウント不要、サブスクリプション不要"],
-      caveats: ["推奨多言語モデルは475〜632MB、英語専用モデルは150MBから", "Plainsayの実行中はメモリを使用し続けます"]
+      caveats: ["推奨多言語モデルは475〜632MB、英語専用モデルは150MBから", "Polishingをオフにするか互換性のあるローカルエンドポイントを使用しない限り、ホスト型のPolishingでは文字起こしテキストが送信されることがあります", "Plainsayの実行中はメモリを使用し続けます"]
     },
     {
       id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN<br><small>年額120 PLN · VAT込み</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み", "Polishing有効時の自動翻訳とメールの自動レイアウト"],
+      features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み", "Cloud購読で自動翻訳とメールレイアウトを利用可能。現在はBYOKまたは互換性のあるローカルPolishingが必要"],
       caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます", "文字起こしは任意の連続30日間で900分まで。ローカルモードは計測されません"]
     },
     {
