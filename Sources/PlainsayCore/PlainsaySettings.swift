@@ -54,6 +54,30 @@ public final class PlainsaySettings {
     /// reformats text the speaker did not want reformatted is worse than no
     /// mode, so it is opted into rather than discovered by surprise.
     public var emailModeEnabled: Bool { didSet { defaults.set(emailModeEnabled, forKey: Key.emailModeEnabled.rawValue) } }
+    /// Language code every dictation is translated into, or nil for none.
+    ///
+    /// Nil is off, and off is the default: silently translating what someone
+    /// said is the most surprising thing this app could do, so it only happens
+    /// once they have picked a target on purpose.
+    ///
+    /// Paid, gated on the Cloud entitlement — translation happens in the
+    /// cleanup stage, which can run on-device, so gating by engine would give
+    /// it away.
+    public var translationTargetLanguage: String? {
+        didSet {
+            defaults.set(translationTargetLanguage, forKey: Key.translationTargetLanguage.rawValue)
+            // Remembered so the toggle has somewhere to go back to. Switching
+            // translation off and on again should not silently change which
+            // language it was going to.
+            if let translationTargetLanguage {
+                lastTranslationTarget = translationTargetLanguage
+            }
+        }
+    }
+    /// The last target actually used, so toggling back on restores it.
+    public var lastTranslationTarget: String {
+        didSet { defaults.set(lastTranslationTarget, forKey: Key.lastTranslationTarget.rawValue) }
+    }
     public var historyEnabled: Bool { didSet { defaults.set(historyEnabled, forKey: Key.historyEnabled.rawValue) } }
     /// Age ceiling for stored dictations, in days. Zero means keep them until
     /// the count cap pushes them out.
@@ -238,7 +262,7 @@ public final class PlainsaySettings {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
         case livePreviewEnabled
         case historyEnabled, historyRetentionDays
-        case emailModeEnabled
+        case emailModeEnabled, translationTargetLanguage, lastTranslationTarget
         case voiceFilterEnabled, voiceEmbedding
         case onboardingVersion, onboardingWasPresented, onboardingStep
         case cleanupProvider, cleanupModel, cleanupBaseURL
@@ -274,6 +298,10 @@ public final class PlainsaySettings {
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
+        translationTargetLanguage = defaults.string(forKey: Key.translationTargetLanguage.rawValue)
+        // English by default: the common target, and often not something
+        // people list among the languages they speak.
+        lastTranslationTarget = defaults.string(forKey: Key.lastTranslationTarget.rawValue) ?? "en"
         // 30 days by default rather than "for ever": a transcript older than
         // that has outlived the recovery it exists for. Existing installs get
         // the same window — `integer(forKey:)` returns 0 for an absent key,

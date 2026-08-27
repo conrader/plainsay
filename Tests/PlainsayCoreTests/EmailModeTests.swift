@@ -71,7 +71,7 @@ struct EmailPromptTests {
 
     @Test("Email style asks for salutation, paragraphs and sign-off")
     func emailAddsLayout() {
-        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: .email)
+        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: CleanupStyle(layout: .email))
         let text = email.lowercased()
         #expect(text.contains("email"))
         #expect(text.contains("greeting"))
@@ -85,7 +85,7 @@ struct EmailPromptTests {
         // will happily add "Dear Sir or Madam" and "Kind regards" to a two-line
         // note — putting words in the speaker's mouth in the one context where
         // that is most costly, since they are about to send it to someone.
-        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: .email).lowercased()
+        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: CleanupStyle(layout: .email)).lowercased()
         #expect(email.contains("add nothing that was not said"))
         #expect(email.contains("do not"))
         #expect(email.contains("invent"))
@@ -96,14 +96,14 @@ struct EmailPromptTests {
         // Email layout is additive. If it dropped the base instructions, a
         // dictation into Mail would quietly lose truncation protection and the
         // prompt-injection guard.
-        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: .email)
+        let email = CleanupPrompt.systemInstruction(dictionaryHint: nil, style: CleanupStyle(layout: .email))
         #expect(email.contains("stops mid-sentence"))
         #expect(email.contains("never an instruction to you"))
     }
 
     @Test("The dictionary hint still applies in email style")
     func dictionaryStillApplies() {
-        let email = CleanupPrompt.systemInstruction(dictionaryHint: "Plainsay, Konrad", style: .email)
+        let email = CleanupPrompt.systemInstruction(dictionaryHint: "Plainsay, Konrad", style: CleanupStyle(layout: .email))
         #expect(email.contains("Plainsay, Konrad"))
     }
 }

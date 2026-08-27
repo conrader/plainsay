@@ -89,10 +89,32 @@ public enum MailTarget {
     }
 }
 
-/// How cleanup should shape the result.
-public enum DictationStyle: String, Codable, Sendable, CaseIterable {
+/// How cleanup should lay the result out.
+public enum DictationLayout: String, Codable, Sendable, CaseIterable {
     /// Prose, as dictated. The default everywhere.
     case plain
     /// Email layout: salutation, paragraphs, sign-off, separated by blank lines.
     case email
+}
+
+/// Everything the cleanup stage needs to know beyond the words themselves.
+///
+/// Layout and translation are independent, and have to stay that way: an email
+/// dictated in Polish and sent in English is a real thing to want, and folding
+/// the two into one enum would have made it unexpressible.
+public struct CleanupStyle: Equatable, Sendable {
+    public var layout: DictationLayout
+    /// Language code to translate into, or nil to keep the speaker's own
+    /// language — which is the default and stays the default.
+    public var translateTo: String?
+
+    public init(layout: DictationLayout = .plain, translateTo: String? = nil) {
+        self.layout = layout
+        self.translateTo = translateTo
+    }
+
+    /// Prose, in the language it was spoken in.
+    public static let plain = CleanupStyle()
+
+    public var isTranslating: Bool { translateTo != nil }
 }

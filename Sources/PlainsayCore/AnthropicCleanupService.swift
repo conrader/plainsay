@@ -26,7 +26,7 @@ public struct AnthropicCleanupService: TextCleaning {
         self.session = session
     }
 
-    public func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
+    public func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }

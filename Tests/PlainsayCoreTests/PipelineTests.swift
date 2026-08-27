@@ -224,9 +224,9 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
     var output = "The thing is, it works."
     var error: Error?
     private(set) var received: String?
-    private(set) var receivedStyle: DictationStyle?
+    private(set) var receivedStyle: CleanupStyle?
 
-    func clean(_ transcript: String, dictionary: TermDictionary, style: DictationStyle) async throws -> String {
+    func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
         received = transcript
         receivedStyle = style
         if let error { throw error }

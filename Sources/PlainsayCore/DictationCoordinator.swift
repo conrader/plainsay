@@ -175,6 +175,9 @@ public final class DictationCoordinator {
         hotkeys.onCancel = { [weak self] in
             self?.requestCancellationFromHotkey() ?? false
         }
+        hotkeys.onTranslationToggle = { [weak self] in
+            self?.toggleTranslation()
+        }
 
         // The default `history` argument is built before settings can be
         // consulted, so it starts enabled with the default window. Reconcile
@@ -306,32 +309,50 @@ public final class DictationCoordinator {
         pendingAudio.purgeAll()
     }
 
+    /// What cleanup should do with this dictation, beyond cleaning it.
+    ///
+    /// Layout and translation are resolved independently — an email dictated
+    /// in Polish and sent in English is one dictation, not two features
+    /// fighting over a single setting.
+    ///
+    /// Both are paid, and both are gated on the entitlement rather than on
+    /// which engine runs: cleanup can happen on-device, so keying either off
+    /// the transcription source would hand it to every local user for free.
+    func resolvedDictationStyle() -> CleanupStyle {
+        guard cloud.account?.isActive == true else { return .plain }
+        return CleanupStyle(layout: resolvedLayout(), translateTo: settings.translationTargetLanguage)
+    }
+
     /// Whether this dictation should be laid out as an email.
     ///
-    /// Three things must all be true, and they are checked in this order
-    /// because each is cheaper than the next: the user has the mode on, their
-    /// subscription entitles them to it, and the target actually looks like a
-    /// mail composer. Reading another app's window title over Accessibility is
-    /// the expensive step and only happens once the first two pass.
-    func resolvedDictationStyle() -> DictationStyle {
-        guard settings.emailModeEnabled else { return .plain }
-
-        // Email mode is a paid feature. The gate is the entitlement rather
-        // than which engine runs: cleanup can happen on-device, so keying this
-        // off the transcription source would hand it to every local user free.
-        guard cloud.account?.isActive == true else { return .plain }
-
-        guard let targetApp else { return .plain }
+    /// Checked cheapest-first: the switch, then the target app's identity, and
+    /// only then its window title — reading another app's title over
+    /// Accessibility is the expensive step, and a browser is the only case
+    /// that needs it.
+    private func resolvedLayout() -> DictationLayout {
+        guard settings.emailModeEnabled, let targetApp else { return .plain }
         let bundleIdentifier = targetApp.bundleIdentifier
 
-        // Native clients are decided on bundle id alone; only a browser needs
-        // the title, so only a browser pays for the Accessibility round-trip.
         if MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: nil) {
             return .email
         }
         let title = FocusedWindow.title(of: targetApp)
         return MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: title)
             ? .email : .plain
+    }
+
+    /// Turns translation on (to the last target used) or off.
+    ///
+    /// Gated like the feature itself: without the entitlement the chord does
+    /// nothing rather than setting a preference that would never take effect
+    /// and would look, from Settings, as though it should.
+    public func toggleTranslation() {
+        guard cloud.account?.isActive == true else {
+            Log.cleanup.info("translation shortcut ignored — no active subscription")
+            return
+        }
+        settings.translationTargetLanguage =
+            settings.translationTargetLanguage == nil ? settings.lastTranslationTarget : nil
     }
 
     /// Clears menu-level recovery notices after the user has dealt with them.
