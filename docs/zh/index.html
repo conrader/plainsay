@@ -334,7 +334,7 @@
           <p>我们能把明天的站会挪到 10:30 吗？我早上有个牙医预约。</p>
         </div>
       </div>
-      <p class="compare-note">清理步骤会去掉口头禅和重新起头的话，并修正标点。Polishing 会收到保留措辞、含义、语气和语言的指示；重要文字请复核。供应商可以更换（Gemini、OpenRouter、OpenAI、Claude 或自定义端点），也可以完全关闭；处理失败时会回退到原始转录文本，而不会让整次听写失败。</p>
+      <p class="compare-note">默认情况下，Polishing 会保留措辞、含义、语气和语言；重要文字请复核。开启自动翻译后，它会改为用 Plainsay 菜单中选定的目标语言输出每段听写。供应商可以更换（Gemini、OpenRouter、OpenAI、Claude 或自定义端点），Polishing 也可以完全关闭；任何处理失败都会回退到原始转录文本。</p>
     </section>
 
     <section id="why">
@@ -352,15 +352,15 @@
           <div class="failure"><span class="when">已配置的 Polishing 供应商处理失败</span><p class="then">自动回退到原始转录文本，并在 HUD 中提示。</p></div>
           <div class="failure"><span class="when">没有可粘贴的焦点位置</span><p class="then">文字会保留在剪贴板中，HUD 会提示按 ⌘V。</p></div>
           <div class="failure"><span class="when">录音完成后应用关闭</span><p class="then">Plainsay 会尝试在转录前暂存完成的音频。暂存成功后，可在下次启动时重试。</p></div>
-          <div class="failure"><span class="when">粘贴因其他原因失败</span><p class="then">Plainsay 会在尝试插入前将完成的转录加入本地历史记录。</p></div>
+          <div class="failure"><span class="when">粘贴因其他原因失败</span><p class="then">启用历史记录后，Plainsay 会在尝试插入前将完成的转录加入本地历史记录。</p></div>
         </div>
       </div>
     </section>
 
-    <section id="coming">
+    <section id="available-now">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">即将推出</h2>
-        <p class="dim">此外：语言自动检测方面的持续工作，以及随着本地模型不断进步而调整的默认模型。</p>
+        <h2 class="kicker" style="margin:0 0 10px;">现已可用</h2>
+        <p class="dim">请按使用频率从高到低列出你用于听写的语言。若 Whisper 的转录明显使用了列表之外的语言，它会改用列表中的首选语言重试；Parakeet 则会将这一不匹配情况记入诊断日志。Cloud 订阅用户可以在 Plainsay 菜单中使用自动翻译，也可以按 Control–Option–Command–T 开关此功能；在受支持的邮件应用和网页邮箱撰写窗口中，还会自动编排邮件格式。翻译和邮件排版都要求 Polishing 已启用并完成配置。</p>
       </div>
     </section>
 
@@ -444,12 +444,14 @@
   }
 
   // -----------------------------------------------------------------
-  // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
+  // Why Plainsay — feature and trust reasons
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "开源", body: "Plainsay Mac 客户端源码以 MIT 许可公开。每个已按 MIT 发布的版本都可以自由复刻和修改；第三方组件和模型各有自己的许可证。" },
     { icon: "lock.shield.fill", title: "默认透明", body: "Mac 客户端不会发送分析或遥测数据。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。" },
-    { icon: "clock.arrow.circlepath", title: "可恢复的备用路径", body: "Polishing 失败时，Plainsay 会使用原始转录文本。没有安全的粘贴目标时，文字会留在剪贴板中；Plainsay 会在插入前将完成的转录加入本地历史记录。" },
+    { icon: "clock.arrow.circlepath", title: "可恢复的备用路径", body: "Polishing 失败时，Plainsay 会使用原始转录文本。没有安全的粘贴目标时，文字会留在剪贴板中。启用历史记录后，Plainsay 会在插入前将完成的转录加入本地历史记录。" },
+    { icon: "clock.arrow.circlepath", title: "由你掌控的历史记录", body: "历史记录默认最多保留 100 段听写，保留期限为 30 天。你可以将期限设为 7、30、90 或 365 天，也可以清除或关闭历史记录；关闭后会删除已保存的转录文本。" },
+    { icon: "text.quote", title: "词汇建议", body: "在“设置”中，Plainsay 会根据已保存的听写，推荐反复出现的人名和产品术语。除非你选择“添加”，否则不会加入任何内容；每条建议都可以忽略。" },
     { icon: "gearshape.2", title: "不绑定单一供应商", body: "转录和 Polishing 支持多种本地及托管引擎和供应商，包括你自己的 API 密钥和 OpenAI 兼容端点。" },
     { icon: "waveform.badge.mic", title: "人声过滤", body: "声音注册是一项尽力而为的本地过滤。如果过滤不可用或失败，听写会在不过滤的情况下继续；Cloud 或 BYOK 转录随后可能收到未过滤的音频。" },
     { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐每月 12 PLN 或每年 120 PLN（含增值税）。本地模式提供完整的设备端听写，不设分钟数或字数配额，也无需账号；托管转录和 Polishing 均为可选项。" }
@@ -476,7 +478,7 @@
     {
       id: "cloud", eyebrow: "无需下载转录模型", title: "Plainsay Cloud", price: "每月 12 PLN<br><small>每年 120 PLN · 含增值税</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["无需下载转录模型或 API 密钥", "包含转录与编辑"],
+      features: ["无需下载转录模型或 API 密钥", "包含转录与编辑", "启用 Polishing 后可使用自动翻译和自动邮件排版"],
       caveats: ["音频会被发送到 Plainsay Cloud 进行转录", "任意连续 30 天内可转录 900 分钟；本地模式不计量"]
     },
     {

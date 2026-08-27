@@ -334,7 +334,7 @@
           <p>明日のスタンドアップを10時半に動かせますか？朝、歯医者の予約があります。</p>
         </div>
       </div>
-      <p class="compare-note">クリーンアップ処理はフィラーや言い直しを取り除き、句読点を整えます。Polishingには、言葉遣い、意味、トーン、言語を保つよう指示しています。重要な文章は確認してください。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、完全にオフにすることもでき、失敗した場合は口述筆記自体を失敗させるのではなく、生の文字起こしにフォールバックします。</p>
+      <p class="compare-note">デフォルトでは、Polishingは言葉遣い、意味、トーン、言語を保ちます。重要な文章は確認してください。自動翻訳をオンにすると、代わりにすべての口述筆記をPlainsayメニューで選択した対象言語で出力します。プロバイダーは切り替え可能で（Gemini、OpenRouter、OpenAI、Claude、または独自エンドポイント）、Polishing自体を完全にオフにすることもでき、失敗した場合は生の文字起こしにフォールバックします。</p>
     </section>
 
     <section id="why">
@@ -352,15 +352,15 @@
           <div class="failure"><span class="when">設定済みのPolishingプロバイダーで処理に失敗</span><p class="then">自動的に生の文字起こしにフォールバックし、HUDに通知が表示されます。</p></div>
           <div class="failure"><span class="when">貼り付け先にフォーカスされたものがなかった</span><p class="then">テキストはクリップボードに残り、⌘Vを押すよう促すHUD表示が出ます。</p></div>
           <div class="failure"><span class="when">録音完了後にアプリが終了</span><p class="then">Plainsayは文字起こし前に完成した音声の一時保存を試みます。保存に成功した場合は、次回起動時に再試行できます。</p></div>
-          <div class="failure"><span class="when">それ以外の理由で貼り付けが失敗</span><p class="then">Plainsayは挿入を試みる前に、完了した文字起こしをローカル履歴へ追加します。</p></div>
+          <div class="failure"><span class="when">それ以外の理由で貼り付けが失敗</span><p class="then">履歴が有効な場合、Plainsayは挿入を試みる前に、完了した文字起こしをローカル履歴へ追加します。</p></div>
         </div>
       </div>
     </section>
 
-    <section id="coming">
+    <section id="available-now">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">今後の予定</h2>
-        <p class="dim">また、言語の自動検出への継続的な取り組みと、ローカルモデルの向上に伴うデフォルトモデルの変更も予定しています。</p>
+        <h2 class="kicker" style="margin:0 0 10px;">現在利用可能</h2>
+        <p class="dim">口述筆記で使う言語は、よく使うものから順に並べてください。Whisperが明らかにリスト外の言語で文字起こしした場合は、リスト先頭の言語で再試行します。Parakeetはその不一致を診断ログに記録します。Cloudの購読者は、Plainsayメニューから自動翻訳を利用でき、Control–Option–Command–Tでも切り替えられます。また、対応するメールアプリやWebメールの作成画面では、メールのレイアウトが自動的に整えられます。翻訳とメールレイアウトを利用するには、Polishingが有効かつ設定済みである必要があります。</p>
       </div>
     </section>
 
@@ -444,12 +444,14 @@
   }
 
   // -----------------------------------------------------------------
-  // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
+  // Why Plainsay — feature and trust reasons
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "オープンソース", body: "Plainsay MacクライアントのソースはMITライセンスで公開されています。すでにMITで公開された各バージョンは自由にフォークして変更できます。サードパーティ製コンポーネントとモデルには個別のライセンスがあります。" },
     { icon: "lock.shield.fill", title: "デフォルトで透明", body: "Macクライアントはアクセス解析やテレメトリーを送信しません。署名付きアップデートの確認はデフォルトでapi.plainsay.appへ接続し、設定で無効にできます。オプションのCloudは、有料サービスに必要なアカウント、購読、使用量のメタデータを記録します。" },
-    { icon: "clock.arrow.circlepath", title: "復旧できるフォールバック", body: "Polishingに失敗すると、Plainsayは生の文字起こしを使います。安全な貼り付け先がなければテキストはクリップボードに残り、Plainsayは挿入前に完了した文字起こしをローカル履歴へ追加します。" },
+    { icon: "clock.arrow.circlepath", title: "復旧できるフォールバック", body: "Polishingに失敗すると、Plainsayは生の文字起こしを使います。安全な貼り付け先がなければテキストはクリップボードに残ります。履歴が有効な場合、Plainsayは挿入前に完了した文字起こしをローカル履歴へ追加します。" },
+    { icon: "clock.arrow.circlepath", title: "自分で管理できる履歴", body: "履歴にはデフォルトで最大100件の口述筆記が30日間保存されます。保存期間は7日、30日、90日、365日から選べ、履歴を消去したり、オフにしたりできます。オフにすると、保存済みの文字起こしが削除されます。" },
+    { icon: "text.quote", title: "語彙の提案", body: "設定では、保存された口述筆記に繰り返し現れる名前や製品用語が提案されます。「追加」を選ばない限り何も追加されず、どの提案も却下できます。" },
     { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしとPolishingでは、複数のローカルおよびホスト型エンジンやプロバイダーに対応しています。独自のAPIキーやOpenAI互換エンドポイントも利用できます。" },
     { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "声の登録はベストエフォートのローカルフィルターです。利用できない場合や失敗した場合、口述筆記はフィルターなしで続行し、CloudまたはBYOK文字起こしに未処理の音声が送られることがあります。" },
     { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLNまたは年額120 PLN（VAT込み）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
@@ -476,7 +478,7 @@
     {
       id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN<br><small>年額120 PLN · VAT込み</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み"],
+      features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み", "Polishing有効時の自動翻訳とメールの自動レイアウト"],
       caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます", "文字起こしは任意の連続30日間で900分まで。ローカルモードは計測されません"]
     },
     {
