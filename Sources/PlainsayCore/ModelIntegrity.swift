@@ -76,6 +76,16 @@ public enum ModelIntegrity {
         return try? JSONDecoder().decode(Manifest.self, from: data)
     }()
 
+    /// How many files are pinned for `model`. Zero means none are.
+    ///
+    /// Separate from `verify` on purpose: verification answers "is what is on
+    /// disk what we expect", which is unanswerable when nothing was downloaded.
+    /// This answers "did anyone record what to expect", which is a fact about
+    /// the shipped manifest and is the thing worth failing a build over.
+    static func pinnedFileCount(for model: String) -> Int {
+        manifest?.models[model]?.files.count ?? 0
+    }
+
     /// Verifies `directory` against the pins recorded for `model`.
     ///
     /// Pinned files must be present and match. Files with no pin are reported
@@ -91,19 +101,33 @@ public enum ModelIntegrity {
         }
 
         var problems: [String] = []
+        var absent = 0
+        var checked = 0
         for (relativePath, pin) in pins.sorted(by: { $0.key < $1.key }) {
             let file = directory.appending(path: relativePath)
             guard FileManager.default.fileExists(atPath: file.path) else {
-                problems.append("missing: \(relativePath)")
+                // Not a failure. A library that downloads a subset of a
+                // repository, or lays it out differently from the repository
+                // tree, leaves pinned paths with nothing behind them — and
+                // that is a mistake in *our* manifest, not evidence about the
+                // bytes that did arrive. Treating it as tampering is what
+                // turned a wrong pin into an app that deleted its own model
+                // and re-downloaded it on every launch, for ever.
+                //
+                // Nothing is lost by being lenient here: a model missing a
+                // file it needs fails to load anyway, on its own terms and
+                // with its own error.
+                absent += 1
                 continue
             }
             guard let actual = digest(of: file, using: pin.algorithm) else {
                 problems.append("unreadable: \(relativePath)")
                 continue
             }
+            checked += 1
             if actual != pin.digest {
-                // The digests themselves are not secret, but there is no
-                // reason to write model file hashes into the system log.
+                // The one thing this exists to catch: a file that is present
+                // and is not what we pinned.
                 problems.append("changed: \(relativePath)")
             }
         }
@@ -112,8 +136,21 @@ public enum ModelIntegrity {
             logger.error("\(model, privacy: .public) failed verification: \(problems.count) problem(s)")
             return .failed(model: model, problems: problems)
         }
-        logger.info("\(model, privacy: .public) verified — \(pins.count) files")
-        return .verified(fileCount: pins.count)
+
+        if absent > 0 {
+            logger.error(
+                "\(model, privacy: .public): \(absent) pinned file(s) not on disk — the manifest does not describe this layout; verified the \(checked) that are"
+            )
+        }
+        guard checked > 0 else {
+            // Every pinned path was empty. Nothing was actually verified, and
+            // saying "verified" here would be a lie told in the one place
+            // where the whole point is not lying about coverage.
+            logger.error("\(model, privacy: .public): no pinned file was found on disk — nothing was verified")
+            return .unpinned(model: model)
+        }
+        logger.info("\(model, privacy: .public) verified — \(checked) files")
+        return .verified(fileCount: checked)
     }
 
     /// Verifies, and removes the model on failure.

@@ -132,9 +132,16 @@ public actor ParakeetEngine: TranscriptionEngine {
             try Task.checkCancellation()
             guard activeLoadID == loadID else { throw CancellationError() }
 
+            // `AsrModels.download` does not return the directory it wrote to.
+            // It writes into a *sibling* of the path it hands back — the repo
+            // folder beside it — so verifying the returned URL checks an empty
+            // directory and finds nothing. That mistake shipped: it made every
+            // Parakeet load fail, and because a failure also deletes, the app
+            // re-downloaded the model on every launch, for ever.
+            let contentDirectory = Self.resolveModelDirectory(from: modelDirectory)
             try ModelIntegrity.verifyOrDiscard(
                 model: OnDeviceModel.parakeetTDT06BV3.rawValue,
-                in: modelDirectory
+                in: contentDirectory
             )
 
             let models = try await AsrModels.load(
@@ -258,6 +265,31 @@ public actor ParakeetEngine: TranscriptionEngine {
     }
 
     /// FluidAudio's hint filters writing scripts rather than choosing a model.
+    /// The directory that actually holds the model files.
+    ///
+    /// Located by looking for the vocabulary, which every Parakeet layout has:
+    /// first where the download said, then among its siblings. Searching for a
+    /// known file rather than reconstructing FluidAudio's private path scheme
+    /// means a future change to that scheme degrades to "not found" — which is
+    /// now merely unverified — instead of silently checking somewhere empty.
+    static func resolveModelDirectory(from downloaded: URL) -> URL {
+        let vocabulary = "parakeet_vocab.json"
+        let manager = FileManager.default
+
+        if manager.fileExists(atPath: downloaded.appending(path: vocabulary).path) {
+            return downloaded
+        }
+        let parent = downloaded.deletingLastPathComponent()
+        let siblings = (try? manager.contentsOfDirectory(
+            at: parent, includingPropertiesForKeys: [.isDirectoryKey]
+        )) ?? []
+        for sibling in siblings
+        where manager.fileExists(atPath: sibling.appending(path: vocabulary).path) {
+            return sibling
+        }
+        return downloaded
+    }
+
     /// Nil keeps automatic multilingual decoding, which is the right default
     /// for Polish/English code-switching.
     private static func languageHint(from code: String?) -> Language? {

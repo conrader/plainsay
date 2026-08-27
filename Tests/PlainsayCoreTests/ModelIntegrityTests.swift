@@ -64,11 +64,9 @@ struct ModelIntegrityTests {
         // `OnDeviceModel` without running Scripts/pin-model-digests.py would
         // otherwise ship a model that silently loads unverified — the exact
         // hole this closes, reopened by omission.
-        let dir = makeDirectory()
         for model in OnDeviceModel.allCases {
-            let result = ModelIntegrity.verify(model: model.rawValue, in: dir)
             #expect(
-                result != .unpinned(model: model.rawValue),
+                ModelIntegrity.pinnedFileCount(for: model.rawValue) > 0,
                 "\(model.rawValue) has no pinned digests — run Scripts/pin-model-digests.py"
             )
         }
@@ -162,5 +160,86 @@ struct RealModelIntegrityTests {
         }
         #expect(result.isAcceptable)
         #expect(result != .unpinned(model: name))
+    }
+}
+
+/// Regression tests for the failure that shipped in 0.2.27: every Parakeet
+/// load failed verification, and because failure also deletes, the app
+/// re-downloaded the model on every launch, for ever.
+@Suite("Integrity must not brick the app")
+struct IntegrityResilienceTests {
+    private func makeDirectory() -> URL {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-resilience-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    @Test("A pinned file that was never downloaded is not treated as tampering")
+    func absentPinsAreNotFailures() {
+        // FluidAudio fetches a subset of its repository — the int8 encoder, not
+        // the int4 one — so 65 of the 88 pinned paths have nothing behind them
+        // on a perfectly good install. Calling that a failure is what bricked
+        // the app: the model was deleted and re-fetched on every launch.
+        let dir = makeDirectory()
+        let result = ModelIntegrity.verify(model: OnDeviceModel.parakeetTDT06BV3.rawValue, in: dir)
+        #expect(result.isAcceptable)
+    }
+
+    @Test("An empty directory is reported as unverified, never as verified")
+    func nothingFoundIsNotSuccess() {
+        // The lenient path must not quietly turn "we checked nothing" into
+        // "verified" — that would be a lie in the one place whose entire
+        // purpose is not lying about coverage.
+        let dir = makeDirectory()
+        let result = ModelIntegrity.verify(model: OnDeviceModel.baseEN.rawValue, in: dir)
+        #expect(result == .unpinned(model: OnDeviceModel.baseEN.rawValue))
+    }
+
+    @Test("A file that is present and altered is still fatal")
+    func presentButChangedStillFails() throws {
+        // Leniency about absence must not weaken the actual guarantee.
+        let dir = makeDirectory()
+        let name = "parakeet_vocab.json"
+        try Data("tampered".utf8).write(to: dir.appending(path: name))
+
+        let result = ModelIntegrity.verify(model: OnDeviceModel.parakeetTDT06BV3.rawValue, in: dir)
+        #expect(!result.isAcceptable)
+        guard case let .failed(_, problems) = result else {
+            Issue.record("expected failure, got \(result)")
+            return
+        }
+        #expect(problems.contains { $0.contains(name) })
+    }
+
+    @Test("The model directory is found even when the download reports a sibling")
+    func resolvesSiblingDirectory() throws {
+        // `AsrModels.download` returns a path next to the one it wrote to.
+        let root = makeDirectory()
+        let reported = root.appending(path: "reported")
+        let actual = root.appending(path: "parakeet-tdt-0.6b-v3")
+        try FileManager.default.createDirectory(at: reported, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: actual, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: actual.appending(path: "parakeet_vocab.json"))
+
+        // Resolved on both sides: macOS hands back /private/var for /var,
+        // and a raw string compare would fail on the prefix alone.
+        #expect(
+            ParakeetEngine.resolveModelDirectory(from: reported).resolvingSymlinksInPath().path
+                == actual.resolvingSymlinksInPath().path
+        )
+    }
+
+    @Test("A directory that already holds the model is used as-is")
+    func prefersTheReportedDirectory() throws {
+        let root = makeDirectory()
+        let reported = root.appending(path: "here")
+        try FileManager.default.createDirectory(at: reported, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: reported.appending(path: "parakeet_vocab.json"))
+
+        #expect(
+            ParakeetEngine.resolveModelDirectory(from: reported).resolvingSymlinksInPath().path
+                == reported.resolvingSymlinksInPath().path
+        )
     }
 }
