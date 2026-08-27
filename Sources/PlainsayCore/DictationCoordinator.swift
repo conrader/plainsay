@@ -140,6 +140,7 @@ public final class DictationCoordinator {
     /// applied — see `applyVoiceFilterIfNeeded`.
     public private(set) var voiceFilterState: SpeechModelLoadState = .idle
     private var resetTask: Task<Void, Never>?
+    private var tailTask: Task<Void, Never>?
     private var targetApp: NSRunningApplication?
 
     public init(
@@ -720,6 +721,10 @@ public final class DictationCoordinator {
     private func completeStagedCancellation() {
         guard cancellationPending else { return }
         cancellationPending = false
+        // A cancel can land while we are still listening for the tail of a
+        // word. Without this the grace task would outlive the cancellation and
+        // hand the abandoned audio to the pipeline.
+        tailTask?.cancel()
         recorder.cancel()
         finishEngineWork()
         scheduleReset(after: .milliseconds(900))
@@ -729,13 +734,14 @@ public final class DictationCoordinator {
     private func handle(_ edge: HotkeyEdge) {
         switch machine.handle(edge) {
         case .start: beginRecording()
-        case .stop: endRecording()
+        case .stop: endRecordingAfterTail()
         case .none: break
         }
     }
 
     private func beginRecording() {
         resetTask?.cancel()
+        tailTask?.cancel()
 
         // One dictation at a time. In particular, do not start recording while
         // the previous sentence is still transcribing or being cleaned.
@@ -796,6 +802,50 @@ public final class DictationCoordinator {
         startLivePreview()
     }
 
+    /// Longest we keep listening past the key, and how often we look.
+    ///
+    /// Speech is released before the key more often than after it: you let go
+    /// as you finish the last word, and the final syllable lands after the
+    /// key is already up. Half a second is enough for a clipped word without
+    /// being long enough to record the next thing you say to someone else.
+    static var maximumTailGrace: Duration = .milliseconds(600)
+    static var tailPollInterval: Duration = .milliseconds(50)
+
+    /// Stops recording, but keeps listening while a word is still being said.
+    ///
+    /// Only when it has to. Waiting a fixed grace period on every dictation
+    /// would charge everybody half a second of latency, every time, to fix
+    /// something that happens occasionally — and latency between letting go
+    /// and seeing text is the thing this app is judged on. So the tail is
+    /// entered only when the audio is *still loud* at the moment the key comes
+    /// up, and it ends as soon as the speaker stops. Finish your sentence
+    /// before letting go, which is the normal case, and nothing changes.
+    private func endRecordingAfterTail() {
+        guard phase == .recording, recorder.isRecording,
+              AudioRecorder.endedMidSpeech(recorder.peek())
+        else {
+            endRecording()
+            return
+        }
+
+        Log.pipeline.info("key released mid-word — listening for the rest")
+        tailTask?.cancel()
+        tailTask = Task { @MainActor [weak self] in
+            let deadline = ContinuousClock.now + Self.maximumTailGrace
+            while ContinuousClock.now < deadline {
+                try? await Task.sleep(for: Self.tailPollInterval)
+                guard !Task.isCancelled, let self,
+                      self.phase == .recording, self.recorder.isRecording
+                else { return }
+                // Stop the moment they stop, rather than serving out the whole
+                // grace period and pasting the silence with it.
+                if !AudioRecorder.endedMidSpeech(self.recorder.peek()) { break }
+            }
+            guard !Task.isCancelled, let self, self.phase == .recording else { return }
+            self.endRecording()
+        }
+    }
+
     private func endRecording(reachedMaximumDuration: Bool = false) {
         stopMetering()
         stopLivePreview()
@@ -844,6 +894,7 @@ public final class DictationCoordinator {
               recorder.hasReachedMaximumDuration
         else { return false }
 
+        tailTask?.cancel()
         endRecording(reachedMaximumDuration: true)
         return true
     }
