@@ -37,10 +37,11 @@ Plainsay is free and MIT-licensed. With **Local transcription** and Polishing
 off or running on your Mac, dictation audio is not uploaded, no account or
 subscription is needed, and recognition works offline after the model download.
 Automatic checks for signed updates are enabled by default and can be disabled
-in Settings. Optional
-Plainsay Cloud provides hosted transcription and Polishing for 12 PLN gross/month
-(VAT included; about US$3); that mode sends recorded audio to the service and includes up to
-900 transcription minutes in any rolling 30-day window.
+in Settings. Optional Plainsay Cloud provides hosted transcription and Polishing
+for 12 PLN gross/month (VAT included; about US$3); Cloud speech sends recorded
+audio to the service and includes up to 900 transcription minutes in any rolling
+30-day window. An active subscription also unlocks Auto-translate and automatic
+email layout for any transcription source when Polishing is enabled and configured.
 
 > **Requirements:** macOS 14 or newer and an Apple-silicon Mac. The app is
 > signed and notarized. Recommended multilingual models are separate one-time
@@ -93,9 +94,11 @@ It is the simplest way to help more Mac users find the project.
 
 Plainsay is signed and notarised, then downloads a Core ML speech model at first
 run and executes it. Neither WhisperKit nor FluidAudio verifies a file it has
-just fetched, so until v0.2.27 nothing did. Expected digests for every
-downloadable model now ship inside the signed bundle and are checked before the
-model is loaded.
+just fetched, so until v0.2.27 nothing did. Expected digests for every supported
+model now ship inside the signed bundle. Before loading, Plainsay hashes the
+pinned files that were actually downloaded and refuses any present file whose
+contents differ. Repository paths absent because a library downloads only a
+subset are reported, not treated as tampering.
 
 [Nobody was checking the speech models](https://plainsay.app/verifying-models/)
 — what the libraries actually guarantee, why verifying against a hash from the
@@ -161,11 +164,13 @@ signed-update delivery can still produce ordinary web-server access records.
 Local mode does not mean the app never uses the network: the selected model
 must be downloaded once, and the default update check contacts
 `api.plainsay.app` (it can be switched off). The Mac client sends no analytics
-or telemetry. On disk, Plainsay keeps up to 100 raw and final transcript records
-for recovery and History until they are cleared or age out. Audio is staged in
-an owner-only local folder while a dictation is processed and removed after a
-successful or completed attempt; an interrupted recording can remain there for
-recovery on the next launch. These files are excluded from backups.
+or telemetry. By default, History keeps up to 100 raw and final transcript
+records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear the
+records, or stop saving them; turning History off deletes saved transcripts.
+Audio is staged in an owner-only local folder while a dictation is processed
+and removed after a successful or completed attempt. Interrupted recordings
+are retained for recovery for at most 7 days, with a 20-file ceiling; clearing
+History purges them too. These files are excluded from backups.
 
 API keys and the Plainsay Cloud session token are stored in macOS Keychain.
 Local mode is the default choice on a new installation; cloud use requires an
@@ -174,9 +179,11 @@ explicit choice.
 ## First dictation
 
 1. Choose **On this Mac** for Local mode, then pick the recommended model for
-   your languages.
+   your languages. List the languages you use most often first; the first is
+   the fallback language when a retry is needed.
 2. Grant Microphone, Accessibility, and Input Monitoring permissions. macOS
-   may ask you to reopen the app after a new permission is granted.
+   may quit Plainsay after a new grant takes effect; reopen it and Setup resumes
+   at the same step.
 3. Hold **Right Command**, speak, and release. Tap it once instead if you prefer
    toggle mode; tap again to stop.
 
@@ -186,20 +193,44 @@ recording automatically, shows a notice, and processes the captured audio.
 The shortcut, languages, vocabulary, model, and hold/toggle behavior can all be
 changed later in Settings.
 
+### Languages, translation, and email layout
+
+- **Wrong-language guard.** With spoken languages configured, Whisper retries
+  an evidently out-of-list result in the first language on your list. Parakeet
+  cannot force that retry, so it records narrow, high-confidence mismatches in
+  diagnostics instead of claiming to have fixed them.
+- **Auto-translate (Plainsay Cloud).** Choose a target from the menu-bar menu,
+  then every dictation is translated until you switch it off. Press
+  **Control–Option–Command–T** (`⌃⌥⌘T`) anywhere to toggle the last target.
+  Translation is off by default and requires Polishing to be enabled and
+  configured.
+- **Email mode (Plainsay Cloud).** Enable **Format dictation as an email** in
+  Settings › General. In supported mail apps and recognized webmail compose
+  windows, Plainsay separates a spoken greeting, body paragraphs, and sign-off
+  without adding words you did not say. It also requires Polishing.
+- **Vocabulary suggestions.** Settings can propose recurring names and product
+  terms from saved dictations. Nothing is added unless you choose **Add**, and
+  you can dismiss a suggestion instead.
+
 ## How it works
 
 ```text
 key down ──► remember frontmost app → show HUD → record 16 kHz mono audio
 key up ────► transcribe locally, in Plainsay Cloud, or through your API
-             optional Polishing (bounded timeout → raw-transcript fallback)
+             optional Polishing, translation, and email layout
+             (bounded timeout or truncated reply → raw-transcript fallback)
              snapshot clipboard → paste text → attempt clipboard restore
 ```
 
 The local engines run as Core ML models accelerated on Apple silicon.
 Polishing asks the selected model to turn spoken language into written language
-while preserving wording, meaning, tone, and language; review important text.
-It can use Plainsay Cloud, your provider, a compatible local endpoint, or
-remain off.
+while preserving wording, meaning, and tone; by default it also preserves the
+language. With Auto-translate enabled, it renders the result in the selected
+target language instead. Review important text. Polishing can use Plainsay
+Cloud, your provider, a compatible local endpoint, or remain off. It is also
+instructed not to invent an ending for a transcript cut off mid-sentence; if a
+provider reports that its own reply hit an output limit, Plainsay keeps the raw
+transcript instead of inserting partial edited text.
 
 Read [How it works](https://plainsay.app/how-it-works/) for the pipeline and
 [Why on-device](https://plainsay.app/why-on-device/) for the privacy trade-offs.
@@ -220,12 +251,16 @@ methodology, limitations, raw results, and one-command harness are in
 
 ## Screenshots
 
-<table>
-<tr>
-<td width="50%"><a href="Screenshots/settings-speech.png"><img src="Screenshots/settings-speech.png" alt="Speech settings with local Parakeet ready"></a><br><sub>Local speech, languages, and Polishing</sub></td>
-<td width="50%"><a href="Screenshots/settings-general.png"><img src="Screenshots/settings-general.png" alt="General settings with shortcut options"></a><br><sub>Interface language and shortcut behavior</sub></td>
-</tr>
-</table>
+<p align="center">
+  <a href="Screenshots/hud-listening.svg"><img src="Screenshots/hud-listening.svg" alt="Plainsay listening HUD beside the current text cursor" width="520"></a><br>
+  <sub>The listening HUD stays beside the text cursor while a dictation is active.</sub>
+</p>
+
+## Troubleshooting
+
+Settings › About shows the installed version and has a one-click
+**Copy Diagnostics Command** action. Run the copied command in Terminal when a
+dictation, permission, model, or provider problem needs a detailed report.
 
 ## Build and contribute
 

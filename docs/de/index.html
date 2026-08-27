@@ -334,7 +334,7 @@
           <p>Können wir das Standup morgen auf 10:30 Uhr verschieben? Ich habe morgen früh einen Zahnarzttermin.</p>
         </div>
       </div>
-      <p class="compare-note">Der Bereinigungsschritt entfernt Füllwörter und Fehlstarts und korrigiert die Zeichensetzung. Polishing wird angewiesen, Wortlaut, Bedeutung, Ton und Sprache zu bewahren; prüfe wichtige Texte. Der Anbieter ist austauschbar (Gemini, OpenRouter, OpenAI, Claude oder ein eigener Endpunkt), lässt sich komplett abschalten, und jeder Fehler fällt auf das Rohtranskript zurück, statt das Diktat scheitern zu lassen.</p>
+      <p class="compare-note">Standardmäßig bewahrt Polishing Wortlaut, Bedeutung, Ton und Sprache; prüfe wichtige Texte. Ist Auto-translate aktiviert, gibt Polishing stattdessen jedes Diktat in der Zielsprache aus, die du im Plainsay-Menü ausgewählt hast. Der Anbieter ist austauschbar (Gemini, OpenRouter, OpenAI, Claude oder ein eigener Endpunkt), Polishing lässt sich komplett abschalten, und bei jedem Fehler fällt Plainsay auf das Rohtranskript zurück.</p>
     </section>
 
     <section id="why">
@@ -352,15 +352,15 @@
           <div class="failure"><span class="when">Ein konfigurierter Anbieter für Polishing fällt aus</span><p class="then">Automatischer Rückfall auf das Rohtranskript, mit HUD-Hinweis.</p></div>
           <div class="failure"><span class="when">Nichts war fokussiert, um einzufügen</span><p class="then">Text bleibt in der Zwischenablage, mit HUD-Hinweis, ⌘V zu drücken.</p></div>
           <div class="failure"><span class="when">Die App wird nach Abschluss der Aufnahme beendet</span><p class="then">Plainsay versucht, die fertige Aufnahme vor der Transkription zwischenzuspeichern. Gelingt das, kann Plainsay sie beim nächsten Start erneut verarbeiten.</p></div>
-          <div class="failure"><span class="when">Einfügen schlägt aus einem anderen Grund fehl</span><p class="then">Plainsay fügt das fertige Transkript vor dem Einfügeversuch zum lokalen Verlauf hinzu.</p></div>
+          <div class="failure"><span class="when">Einfügen schlägt aus einem anderen Grund fehl</span><p class="then">Wenn der Verlauf aktiviert ist, fügt Plainsay das fertige Transkript vor dem Einfügeversuch zum lokalen Verlauf hinzu.</p></div>
         </div>
       </div>
     </section>
 
-    <section id="coming">
+    <section id="available-now">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Demnächst</h2>
-        <p class="dim">Außerdem: laufende Arbeit an automatischer Spracherkennung und Änderungen am Standardmodell, sobald lokale Modelle besser werden.</p>
+        <h2 class="kicker" style="margin:0 0 10px;">Jetzt verfügbar</h2>
+        <p class="dim">Gib die Sprachen an, die du sprichst, beginnend mit der meistgenutzten. Liegt ein Transkript offensichtlich in einer Sprache vor, die nicht auf der Liste steht, wiederholt Whisper die Transkription in deiner Hauptsprache; Parakeet protokolliert die Abweichung. Cloud-Abonnenten können Auto-translate über das Plainsay-Menü nutzen oder Control–Option–Command–T drücken. Die automatische E-Mail-Formatierung funktioniert in den Verfassenfenstern von Mail-Apps und Webmail-Diensten. Für Übersetzungen und die E-Mail-Formatierung muss Polishing aktiviert und konfiguriert sein.</p>
       </div>
     </section>
 
@@ -444,12 +444,14 @@
   }
 
   // -----------------------------------------------------------------
-  // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
+  // Why Plainsay — feature and trust reasons
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open Source", body: "Der Quellcode des Plainsay-Mac-Clients ist unter MIT öffentlich. Jede bereits unter MIT veröffentlichte Version bleibt frei forkbar und veränderbar; Komponenten und Modelle Dritter haben eigene Lizenzen." },
     { icon: "lock.shield.fill", title: "Standardmäßig transparent", body: "Der Mac-Client sendet keine Analyse- oder Telemetriedaten. Prüfungen auf signierte Updates kontaktieren standardmäßig api.plainsay.app und lassen sich in den Einstellungen deaktivieren. Die optionale Cloud zeichnet die für den kostenpflichtigen Dienst nötigen Konto-, Abonnement- und Nutzungsmetadaten auf." },
-    { icon: "clock.arrow.circlepath", title: "Wiederherstellbare Rückfälle", body: "Schlägt Polishing fehl, verwendet Plainsay das Rohtranskript. Gibt es kein sicheres Einfügeziel, bleibt der Text in der Zwischenablage; Plainsay fügt das fertige Transkript vor dem Einfügen zum lokalen Verlauf hinzu." },
+    { icon: "clock.arrow.circlepath", title: "Wiederherstellbare Rückfälle", body: "Schlägt Polishing fehl, verwendet Plainsay das Rohtranskript. Gibt es kein sicheres Einfügeziel, bleibt der Text in der Zwischenablage; ist der Verlauf aktiviert, fügt Plainsay das fertige Transkript vor dem Einfügen zum lokalen Verlauf hinzu." },
+    { icon: "clock.arrow.circlepath", title: "Verlauf unter deiner Kontrolle", body: "Der Verlauf speichert standardmäßig bis zu 100 Diktate für 30 Tage. Du kannst 7, 30, 90 oder 365 Tage wählen, den Verlauf leeren oder ihn ausschalten; beim Ausschalten werden gespeicherte Transkripte gelöscht." },
+    { icon: "text.quote", title: "Wortschatzvorschläge", body: "Die Einstellungen schlagen wiederkehrende Namen und Produktbegriffe aus gespeicherten Diktaten vor. Nichts wird hinzugefügt, solange du nicht „Hinzufügen“ wählst; jeden Vorschlag kannst du verwerfen." },
     { icon: "gearshape.2", title: "Kein Vendor-Lock-in", body: "Mehrere lokale und gehostete Anbieter für Transkription und Polishing werden unterstützt, darunter dein eigener API-Schlüssel und ein OpenAI-kompatibler Endpunkt." },
     { icon: "waveform.badge.mic", title: "Stimmfilterung", body: "Die Stimmregistrierung versucht lokal zu filtern, ohne Erfolgsgarantie. Ist die Filterung nicht verfügbar oder schlägt sie fehl, läuft das Diktat ungefiltert weiter; Cloud- oder BYOK-Transkription kann dann ungefiltertes Audio erhalten." },
     { icon: "checkmark.circle.fill", title: "Ehrliche Preise", body: "Der gehostete Tarif kostet 12 PLN brutto im Monat oder 120 PLN brutto im Jahr, jeweils inklusive MwSt. Der lokale Modus bietet vollständiges Diktieren auf dem Gerät — ohne Minuten- oder Wortkontingent und ohne Konto. Gehostete Transkription und Polishing sind optional." }
@@ -476,7 +478,7 @@
     {
       id: "cloud", eyebrow: "KEIN DOWNLOAD EINES TRANSKRIPTIONSMODELLS", title: "Plainsay Cloud", price: "12 PLN brutto/Monat<br><small>120 PLN brutto/Jahr · inkl. MwSt.</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["Kein Download eines Transkriptionsmodells, keine API-Schlüssel", "Transkription und Bearbeitung inklusive"],
+      features: ["Kein Download eines Transkriptionsmodells, keine API-Schlüssel", "Transkription und Bearbeitung inklusive", "Auto-translate und automatische E-Mail-Formatierung bei aktiviertem Polishing"],
       caveats: ["Audio wird zur Transkription an Plainsay Cloud gesendet", "900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum; lokaler Modus ohne Zähler"]
     },
     {

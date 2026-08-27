@@ -81,7 +81,7 @@
   footer .imprint{flex:0 0 100%;margin-top:4px;color:var(--slate);font-size:10.5px;line-height:1.55;overflow-wrap:anywhere}
   @media(max-width:620px){footer .spacer{display:none}footer .links{width:100%;justify-content:flex-start;gap:12px 18px}footer .imprint{margin-top:0;font-size:10px;line-height:1.6}}
 </style>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Nobody was checking the speech models", "description": "Plainsay downloaded a Core ML speech model at first run and executed it with no integrity check. Neither WhisperKit nor FluidAudio verifies a file it just fetched. Here is the gap and how we closed it.", "url": "https://plainsay.app/verifying-models/", "inLanguage": "en", "datePublished": "2026-08-26", "dateModified": "2026-08-26", "isPartOf": {"@type": "WebSite", "name": "Plainsay", "url": "https://plainsay.app/"}, "publisher": {"@type": "Organization", "name": "DMT Sp. z o.o.", "legalName": "DMT Sp. z o.o.", "url": "https://plainsay.app/about/", "email": "hi@plainsay.app", "vatID": "PL7812007881", "taxID": "7812007881", "identifier": [{"@type": "PropertyValue", "name": "KRS", "value": "0000836521"}, {"@type": "PropertyValue", "name": "REGON", "value": "385877414"}], "address": {"@type": "PostalAddress", "streetAddress": "ul. Budowlanych 1A", "postalCode": "62-081", "addressLocality": "Baranowo", "addressCountry": "PL"}, "sameAs": ["https://github.com/conrader/plainsay"]}, "about": [{"@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT"}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Nobody was checking the speech models", "description": "Plainsay downloaded a Core ML speech model at first run and executed it with no integrity check. Neither WhisperKit nor FluidAudio verifies a file it just fetched. Here is the gap, the initial mistake, and the corrected check.", "url": "https://plainsay.app/verifying-models/", "inLanguage": "en", "datePublished": "2026-08-26", "dateModified": "2026-08-27", "isPartOf": {"@type": "WebSite", "name": "Plainsay", "url": "https://plainsay.app/"}, "publisher": {"@type": "Organization", "name": "DMT Sp. z o.o.", "legalName": "DMT Sp. z o.o.", "url": "https://plainsay.app/about/", "email": "hi@plainsay.app", "vatID": "PL7812007881", "taxID": "7812007881", "identifier": [{"@type": "PropertyValue", "name": "KRS", "value": "0000836521"}, {"@type": "PropertyValue", "name": "REGON", "value": "385877414"}], "address": {"@type": "PostalAddress", "streetAddress": "ul. Budowlanych 1A", "postalCode": "62-081", "addressLocality": "Baranowo", "addressCountry": "PL"}, "sameAs": ["https://github.com/conrader/plainsay"]}, "about": [{"@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT"}]}</script>
 </head>
 <body>
 <div class="page">
@@ -141,8 +141,15 @@
       <h2 class="big">Two decisions that are easy to get wrong</h2>
       <ul class="plain">
         <li><b>A rejected model is deleted.</b> Both libraries treat “the files are already here” as a reason to skip downloading. A rejected model left on disk would be reused and rejected again on every launch, for ever, with no way out short of finding the cache by hand. Removing it means the next attempt simply re-downloads.</li>
-        <li><b>Unexpected extra files are reported, never fatal.</b> Both libraries write sidecars next to the weights and Core ML leaves artifacts of its own. A file that is not in the manifest is not loaded by name and so never executes — whereas failing on one would let a harmless packaging change break transcription for everybody. A pinned file that is <strong>missing or changed</strong> is always fatal.</li>
+        <li><b>Unexpected extra files are reported, never fatal.</b> Both libraries write sidecars next to the weights and Core ML leaves artifacts of its own. A file that is not in the manifest is not loaded by name and so never executes — whereas failing on one would let a harmless packaging change break transcription for everybody.</li>
+        <li><b>A present pinned file that changed is fatal; a missing path is not.</b> FluidAudio downloads only a subset of its repository and arranges that subset differently. Missing pinned paths are reported as a manifest/layout gap, while every pinned file that is present is still hashed. If none of the pinned files can be found, Plainsay says the model is unverified rather than pretending the check succeeded.</li>
       </ul>
+    </section>
+
+    <section>
+      <h2 class="big">The first release got Parakeet wrong</h2>
+      <p>Version 0.2.27 verified the directory FluidAudio returned, but the model files were actually in a sibling directory. It also treated every pinned repository path that FluidAudio had never downloaded as tampering. The result was the exact failure the tests were meant to prevent: Parakeet was rejected, deleted, downloaded again, and rejected again on the next launch.</p>
+      <p>Version 0.2.28 resolves the directory that actually contains the model and matches the check to FluidAudio's real subset. Its current int8 download contains 23 of the 88 pinned repository files; those 23 are verified, the other 65 are reported as absent, and any downloaded file whose contents differ is still refused. This page originally described the stricter rule as deliberate. It was wrong, and the correction belongs in the same account as the fix.</p>
     </section>
 
     <section>
@@ -150,6 +157,7 @@
       <p>Synthetic tests prove the digest functions but not the pins. Wrong pins would pass every one of them while every real user hit a hard failure on first run — looking for all the world like an app that simply cannot download its own model. That is the worst place to be wrong, so it was checked end to end:</p>
       <ul class="plain">
         <li>A genuine <b>147 MB</b> download of the smallest model, from the pinned commit, verifies clean across 19 files and both digest types.</li>
+        <li>A genuine Parakeet download is inspected using FluidAudio's own download path: the model directory is resolved, all 23 files in the downloaded subset match their pins, and the 65 repository paths FluidAudio did not fetch remain nonfatal.</li>
         <li>Flipping <b>a single bit</b> inside a 41 MB weights file is caught and named: <code>changed: AudioEncoder.mlmodelc/weights/weight.bin</code>.</li>
         <li>The git blob digest is asserted against <code>git hash-object</code> itself rather than a constant — that framing is easy to get subtly wrong, and it fails in the direction that looks like stale pins rather than a broken implementation.</li>
         <li>A test fails if a model is ever added without pins, so the hole cannot reopen by omission.</li>
@@ -158,7 +166,7 @@
 
     <section>
       <h2 class="big">What is still open</h2>
-      <p>The pin is only as good as the moment it was taken. If an upstream model is republished, the check fails closed and a human has to look at what changed and re-pin deliberately. We did <em>not</em> wire that check into CI: it would then fail on every unrelated change, and the correct response to a changed pin is someone reading the diff — which is exactly what a permanently red build trains people to stop doing.</p>
+      <p>The pin is only as good as the moment it was taken. If a downloaded pinned file is republished with different contents, the check fails closed and a human has to look at what changed and re-pin deliberately. A moved or no-longer-downloaded path is reported but is not itself treated as tampering. We did <em>not</em> wire the upstream check into CI: it would then fail on every unrelated change, and the correct response to a changed pin is someone reading the diff — which is exactly what a permanently red build trains people to stop doing.</p>
       <p>We would rather say that plainly than imply the problem is now permanently solved.</p>
     </section>
 

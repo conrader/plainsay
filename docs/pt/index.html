@@ -334,7 +334,7 @@
           <p>Podemos mudar a reunião diária para 10h30 amanhã? Tenho uma consulta no dentista de manhã.</p>
         </div>
       </div>
-      <p class="compare-note">A etapa de limpeza remove pausas e recomeços e corrige a pontuação. O Polishing recebe instruções para preservar palavras, significado, tom e idioma; revise textos importantes. O provedor é intercambiável (Gemini, OpenRouter, OpenAI, Claude ou um endpoint personalizado), pode ser desligado por completo, e qualquer falha volta para a transcrição bruta em vez de interromper o ditado.</p>
+      <p class="compare-note">Por padrão, o Polishing preserva a redação, o significado, o tom e o idioma; revise textos importantes. Com o Auto-translate ativado, o Polishing passa a gerar cada ditado no idioma de destino selecionado no menu do Plainsay. O provedor é intercambiável (Gemini, OpenRouter, OpenAI, Claude ou um endpoint personalizado), pode ser desligado por completo e, em caso de falha, a transcrição bruta é usada.</p>
     </section>
 
     <section id="why">
@@ -352,15 +352,15 @@
           <div class="failure"><span class="when">Um provedor de Polishing configurado falha</span><p class="then">Volta automaticamente para a transcrição bruta, com um aviso no HUD.</p></div>
           <div class="failure"><span class="when">Nada estava em foco para colar</span><p class="then">O texto fica na área de transferência, com um aviso do HUD para pressionar ⌘V.</p></div>
           <div class="failure"><span class="when">O app fecha depois que a gravação termina</span><p class="then">O Plainsay tenta preparar o áudio concluído antes da transcrição. Se conseguir armazená-lo, poderá tentar novamente na próxima abertura.</p></div>
-          <div class="failure"><span class="when">A colagem falha por qualquer outro motivo</span><p class="then">O Plainsay adiciona a transcrição concluída ao histórico local antes de tentar inseri-la.</p></div>
+          <div class="failure"><span class="when">A colagem falha por qualquer outro motivo</span><p class="then">Quando o histórico está ativado, o Plainsay adiciona a transcrição concluída ao histórico local antes de tentar inseri-la.</p></div>
         </div>
       </div>
     </section>
 
-    <section id="coming">
+    <section id="available-now">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Em breve</h2>
-        <p class="dim">Também: trabalho contínuo em detecção automática de idioma, e mudanças no modelo padrão à medida que os modelos locais melhoram.</p>
+        <h2 class="kicker" style="margin:0 0 10px;">Disponível agora</h2>
+        <p class="dim">Liste os idiomas que você fala, começando pelo que mais usa. Se o Whisper produzir claramente uma transcrição em um idioma que não está na lista, ele tenta novamente no seu idioma principal; o Parakeet registra a divergência nos diagnósticos. Assinantes do Cloud podem escolher um idioma de destino com o Auto-translate no menu do Plainsay e usar Control–Option–Command–T para ativar ou desativar o último idioma selecionado. A formatação automática de e-mails funciona nas janelas de composição de apps de e-mail compatíveis e de serviços de webmail reconhecidos. Tanto a tradução quanto a formatação de e-mails exigem que o Polishing esteja ativado e configurado.</p>
       </div>
     </section>
 
@@ -444,12 +444,14 @@
   }
 
   // -----------------------------------------------------------------
-  // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
+  // Why Plainsay — feature and trust reasons
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Código aberto", body: "O código-fonte do cliente Plainsay para Mac é público sob a licença MIT. Cada versão já publicada sob MIT continua livre para fazer fork e modificar; componentes e modelos de terceiros têm licenças próprias." },
     { icon: "lock.shield.fill", title: "Transparente por padrão", body: "O cliente Mac não envia analytics nem telemetria. A verificação de atualizações assinadas contata api.plainsay.app por padrão e pode ser desativada nas Configurações. O Cloud opcional registra metadados de conta, assinatura e uso necessários para operar o serviço pago." },
-    { icon: "clock.arrow.circlepath", title: "Alternativas recuperáveis", body: "Se o Polishing falhar, o Plainsay usa a transcrição bruta. Se não houver um destino seguro para colar, o texto fica na área de transferência; o Plainsay adiciona a transcrição concluída ao histórico local antes da inserção." },
+    { icon: "clock.arrow.circlepath", title: "Alternativas recuperáveis", body: "Se o Polishing falhar, o Plainsay usa a transcrição bruta. Se não houver um destino seguro para colar, o texto fica na área de transferência; quando o histórico está ativado, o Plainsay adiciona a transcrição concluída ao histórico antes da inserção." },
+    { icon: "clock.arrow.circlepath", title: "Histórico sob seu controle", body: "Por padrão, o histórico mantém até 100 ditados por 30 dias. Escolha 7, 30, 90 ou 365 dias, limpe ou desative o histórico; desativá-lo exclui as transcrições salvas." },
+    { icon: "text.quote", title: "Sugestões de vocabulário", body: "As Configurações sugerem nomes e termos de produtos recorrentes com base nos ditados salvos. Nada é adicionado a menos que você escolha Adicionar, e cada sugestão pode ser descartada." },
     { icon: "gearshape.2", title: "Sem dependência de fornecedor", body: "Há suporte a vários mecanismos e provedores locais ou hospedados de transcrição e Polishing, incluindo sua própria chave de API e um endpoint compatível com OpenAI." },
     { icon: "waveform.badge.mic", title: "Filtragem de voz", body: "O cadastro de voz tenta filtrar localmente, sem garantia de resultado. Se não estiver disponível ou falhar, o ditado continua sem filtro; a transcrição Cloud ou BYOK pode então receber áudio não filtrado." },
     { icon: "checkmark.circle.fill", title: "Preço de verdade", body: "O plano alojado custa 12 PLN brutos por mês ou 120 PLN brutos por ano, IVA incluído. O modo local oferece ditado completo no dispositivo, sem cotas de minutos ou palavras e sem conta. A transcrição alojada e o Polishing são opcionais." }
@@ -476,7 +478,7 @@
     {
       id: "cloud", eyebrow: "SEM DOWNLOAD DE MODELO DE TRANSCRIÇÃO", title: "Plainsay Cloud", price: "12 PLN brutos/mês<br><small>120 PLN brutos/ano · IVA incluído</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["Sem download de modelo de transcrição nem chaves de API", "Transcrição e edição incluídas"],
+      features: ["Sem download de modelo de transcrição nem chaves de API", "Transcrição e edição incluídas", "Auto-translate e formatação automática de e-mails quando o Polishing está ativado"],
       caveats: ["O áudio é enviado ao Plainsay Cloud para ser transcrito", "900 minutos de transcrição em qualquer janela móvel de 30 dias; o modo Local não é contabilizado"]
     },
     {

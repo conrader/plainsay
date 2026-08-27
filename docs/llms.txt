@@ -9,7 +9,8 @@
 Plainsay is a from-scratch Swift/SwiftUI menu-bar app: global hotkey capture,
 a choice of local Core ML transcription (WhisperKit or NVIDIA Parakeet TDT
 0.6B v3 via FluidAudio), hosted transcription, an optional Polishing pass that
-turns spoken language into written language, and paste-based text insertion.
+turns spoken language into written language, an out-of-list language guard,
+Cloud Auto-translate and automatic email layout, and paste-based text insertion.
 The client is fully open source; a separate, deliberately opt-in Plainsay
 Cloud tier exists for people who don't want to manage a local model or an API
 key.
@@ -18,6 +19,19 @@ Plainsay and Plainsay Cloud are operated by DMT Sp. z o.o. in Poland.
 
 A single dictation can run for up to 10 minutes. Plainsay stops recording and
 processes the captured audio at that boundary.
+
+History is enabled by default and keeps up to 100 local transcript records for
+30 days. The user can select 7, 30, 90, or 365 days, clear it, or turn it off;
+turning it off deletes saved transcripts. Interrupted local audio is capped at
+20 files and 7 days, and Clear History purges it too.
+
+With spoken languages configured, Whisper retries an evidently out-of-list
+result in the first listed language. Parakeet cannot force a retry and records
+narrow, high-confidence mismatches in diagnostics instead. An active Plainsay
+Cloud subscription unlocks Auto-translate and automatic email layout for any
+speech source, but both run in the Polishing stage and therefore require
+Polishing to be enabled and configured. Auto-translate is off by default; its
+last target can be toggled globally with Control–Option–Command–T.
 
 ## Docs
 
@@ -28,7 +42,7 @@ processes the captured audio at that boundary.
 - [Privacy Policy](https://plainsay.app/privacy/): how the website, Mac client, optional providers, and Plainsay Cloud handle data
 - [Terms of Service](https://plainsay.app/terms/): terms for the website, free Local client, and optional Plainsay Cloud service
 - [Why on-device](https://plainsay.app/why-on-device/): exactly what runs locally vs. optionally in the cloud, stated precisely
-- [Nobody was checking the speech models](https://plainsay.app/verifying-models/): why a signed app that downloads an unverified Core ML model is a supply-chain gap, what WhisperKit and FluidAudio actually guarantee, and the pinned-digest fix in v0.2.27
+- [Nobody was checking the speech models](https://plainsay.app/verifying-models/): why a signed app that downloads an unverified Core ML model is a supply-chain gap, what WhisperKit and FluidAudio actually guarantee, the pinned-digest fix in v0.2.27, and the corrected missing-file rule after the Parakeet regression in v0.2.28
 - [How it works](https://plainsay.app/how-it-works/): the ASR engine internals (WhisperKit, FluidAudio/Parakeet) and the cleanup design, with real numbers
 - [Benchmark](https://github.com/conrader/plainsay/blob/main/BENCHMARK.md): WER and latency for both on-device engines on a public dataset, reproducible with documented build-and-run commands
 - [Compare Mac dictation apps](https://plainsay.app/compare/): all the main options side by side — Plainsay, Wispr Flow, superwhisper, VoiceInk, MacWhisper, Apple Dictation — including which cases we recommend a competitor for
