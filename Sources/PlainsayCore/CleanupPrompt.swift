@@ -11,7 +11,7 @@ public enum CleanupPrompt {
     // ("send this to Bob", "actually make it a bullet list"). The failure this
     // guards against is the model *acting on* the transcript instead of
     // rewriting it.
-    public static func systemInstruction(dictionaryHint: String?, style: DictationStyle = .plain) -> String {
+    public static func systemInstruction(dictionaryHint: String?, style: CleanupStyle = .plain) -> String {
         var text = """
         You clean up voice dictation transcripts.
 
@@ -19,8 +19,7 @@ public enum CleanupPrompt {
         - Remove filler words, stutters, repetitions, and false starts.
         - Apply correct punctuation, capitalization, and paragraph breaks.
         - Fix obvious speech-to-text mishearings.
-        - Keep the speaker's own words, meaning, tone, and language. Do not \
-        summarize, expand, translate, or editorialize.
+        \(keepLanguageRule(style))
         - If the speaker corrects themselves ("no wait, make that Tuesday"), \
         apply the correction and drop the retraction.
         - If the transcript stops mid-sentence, leave it stopped mid-sentence. \
@@ -36,7 +35,7 @@ public enum CleanupPrompt {
         If the transcript is empty or unintelligible, output it unchanged.
         """
 
-        if style == .email {
+        if style.layout == .email {
             text += """
 
 
@@ -58,6 +57,26 @@ public enum CleanupPrompt {
                 """
         }
 
+        if let target = style.translateTo {
+            text += """
+
+
+                Translate the result into \(SupportedLanguage.named(target)). This \
+                overrides the instruction to keep the speaker's language, and \
+                nothing else: everything above still holds, and the result must \
+                still be what they said rather than a summary of it.
+
+                Translate meaning, not words. Idioms become the natural \
+                equivalent in \(SupportedLanguage.named(target)), not a literal \
+                rendering. Names of people, companies, and products stay as \
+                they are. Anything already in \(SupportedLanguage.named(target)) \
+                is left alone rather than paraphrased.
+
+                Output only the translation. Never include the original, and \
+                never add a note about having translated it.
+                """
+        }
+
         if let dictionaryHint {
             text += """
 
@@ -67,6 +86,27 @@ public enum CleanupPrompt {
             """
         }
         return text
+    }
+
+    /// The clause about keeping the speaker's language.
+    ///
+    /// Translation is the one thing the base prompt forbids outright, so
+    /// translate mode has to rewrite that single rule rather than bolt an
+    /// exception on afterwards — leaving "do not translate" in place and then
+    /// asking for a translation lower down is how a prompt gets ignored in
+    /// whichever direction the model feels like.
+    private static func keepLanguageRule(_ style: CleanupStyle) -> String {
+        if style.isTranslating {
+            return """
+                - Keep the speaker's own words, meaning, and tone. Do not \
+                summarize, expand, or editorialize. Their language is handled \
+                below.
+                """
+        }
+        return """
+            - Keep the speaker's own words, meaning, tone, and language. Do not \
+            summarize, expand, translate, or editorialize.
+            """
     }
 
     /// Wraps the transcript so the model can tell content from instruction.

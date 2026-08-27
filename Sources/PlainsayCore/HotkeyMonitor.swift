@@ -35,6 +35,12 @@ public final class HotkeyMonitor {
 
     /// Called on the main actor for every press and release of the bound key.
     public var onEdge: ((HotkeyEdge) -> Void)?
+    /// The chord that toggles translation, or nil to watch for none.
+    public var translationHotkey: TranslationHotkey? = .controlOptionCommandT
+    /// Called on key-down of `translationHotkey`. The event is consumed, so
+    /// nothing is typed into whatever is in front.
+    public var onTranslationToggle: (() -> Void)?
+
     /// Called once when Escape is pressed. Returning `true` means an active
     /// dictation was cancelled and the complete Escape press should be kept
     /// away from the frontmost app. Returning `false` leaves Escape alone.
@@ -149,6 +155,16 @@ public final class HotkeyMonitor {
             default:
                 return false
             }
+        }
+
+        // Checked before the dictation binding, and only on key-down: a chord
+        // is a discrete command, not something with a meaningful press
+        // duration. Consumed, so the "t" never reaches the foreground app.
+        if type == .keyDown, !isAutorepeat,
+           let translationHotkey, keyCode == translationHotkey.keyCode,
+           translationHotkey.matches(flags: flags) {
+            onTranslationToggle?()
+            return true
         }
 
         guard keyCode == binding.keyCode else { return false }
