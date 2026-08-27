@@ -24,11 +24,11 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plainsay — Local-first voice dictation for macOS</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. Local mode runs Whisper or Parakeet entirely on your Mac, with no account or subscription required.">
+<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. Run Whisper or Parakeet locally, or add Cloud Auto-translate, email layout, and hosted Polishing.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Plainsay">
 <meta property="og:title" content="Plainsay — Local-first voice dictation for macOS">
-<meta property="og:description" content="Hold a key, speak, release. A 12 MB native Mac app with Whisper and Parakeet, a free Local mode, and reproducible benchmarks.">
+<meta property="og:description" content="Hold a key, speak, release. A 12 MB native Mac app with a free Local mode plus optional Auto-translate, email layout, and Cloud Polishing.">
 <meta property="og:url" content="https://plainsay.app/">
 <meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
 <meta property="og:image:width" content="1280">
@@ -50,7 +50,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud sends recorded audio for hosted transcription and Polishing without a transcription-model download for 12 PLN gross/month or 120 PLN gross/year, VAT included.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud adds hosted transcription and Polishing, Auto-translate, and automatic email layout for 12 PLN gross/month or 120 PLN gross/year, VAT included.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -354,7 +354,7 @@
           <p>Can we move the standup to 10:30 tomorrow? I have a dentist appointment in the morning.</p>
         </div>
       </div>
-      <p class="compare-note">The cleanup pass removes fillers and false starts and fixes punctuation. Polishing is instructed to preserve wording, meaning, tone, and language; review important text. The provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
+      <p class="compare-note">The cleanup pass removes fillers and false starts and fixes punctuation. By default, Polishing preserves wording, meaning, tone, and language; review important text. With Auto-translate on, it instead renders every dictation in the target language selected from the Plainsay menu. The provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
     </section>
 
     <section id="why">
@@ -372,15 +372,15 @@
           <div class="failure"><span class="when">A configured Polishing provider fails</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
           <div class="failure"><span class="when">Nothing was focused to paste into</span><p class="then">Text stays on the clipboard, with a HUD prompt to press ⌘V.</p></div>
           <div class="failure"><span class="when">The app closes after recording finishes</span><p class="then">Plainsay attempts to stage the finished audio before transcription. If staging succeeds, it can retry on the next launch.</p></div>
-          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">Plainsay adds the completed transcript to local history before attempting insertion.</p></div>
+          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">When History is enabled, Plainsay adds the completed transcript to local history before attempting insertion.</p></div>
         </div>
       </div>
     </section>
 
-    <section id="coming">
+    <section id="available-now">
       <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Coming</h2>
-        <p class="dim">Continued work on language auto-detection, and default-model changes as local models improve.</p>
+        <h2 class="kicker" style="margin:0 0 10px;">Available now</h2>
+        <p class="dim">List spoken languages in order of use and Whisper retries an evidently out-of-list result in the first one; Parakeet logs the mismatch because it cannot force a retry. With an active Cloud subscription and Polishing enabled and configured, choose an Auto-translate target from the Plainsay menu or toggle it anywhere with Control–Option–Command–T. Email mode can also lay out greetings, body paragraphs, and sign-offs automatically in supported mail apps and recognized webmail compose windows.</p>
       </div>
     </section>
 
@@ -466,12 +466,14 @@
   }
 
   // -----------------------------------------------------------------
-  // Why Plainsay — six reasons (mirrors the .dc.html Component's renderVals())
+  // Why Plainsay — feature and trust reasons
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open source", body: "The Plainsay Mac client source is public under MIT. Every version already released under MIT remains free to fork and modify; third-party components and models have their own licenses." },
     { icon: "lock.shield.fill", title: "Transparent by default", body: "The Mac client sends no analytics or telemetry. Signed-update checks contact api.plainsay.app by default and can be disabled in Settings. Optional Cloud records the account, subscription, and usage metadata needed to operate the paid service." },
-    { icon: "clock.arrow.circlepath", title: "Recoverable fallbacks", body: "If Polishing fails, Plainsay uses the raw transcript. If there is no safe paste target, text stays on the clipboard; Plainsay adds the completed transcript to local history before insertion." },
+    { icon: "clock.arrow.circlepath", title: "Recoverable fallbacks", body: "If Polishing fails, Plainsay uses the raw transcript. If there is no safe paste target, text stays on the clipboard; when History is enabled, Plainsay adds the completed transcript before insertion." },
+    { icon: "clock.arrow.circlepath", title: "History you control", body: "History keeps up to 100 dictations for 30 days by default. Choose 7, 30, 90, or 365 days, clear it, or turn it off; turning it off deletes saved transcripts." },
+    { icon: "text.quote", title: "Vocabulary suggestions", body: "Settings proposes recurring names and product terms from saved dictations. Nothing is added unless you choose Add, and every suggestion can be dismissed." },
     { icon: "gearshape.2", title: "No vendor lock-in", body: "Multiple local and hosted transcription and Polishing providers are supported, including your own API key and OpenAI-compatible endpoint." },
     { icon: "waveform.badge.mic", title: "Voice filtering", body: "Voice enrollment is a best-effort local filter. If filtering is unavailable or fails, dictation continues unfiltered; Cloud or BYOK transcription may then receive unfiltered audio." },
     { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is 12 PLN gross/month or 120 PLN gross/year, VAT included. Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
@@ -498,7 +500,7 @@
     {
       id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "12 PLN gross/month<br><small>120 PLN gross/year · VAT included</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["No transcription-model download, no API keys", "Transcription and Polishing included"],
+      features: ["No transcription-model download, no API keys", "Transcription and Polishing included", "Auto-translate and automatic email layout when Polishing is enabled"],
       caveats: ["Audio is sent to Plainsay Cloud to be transcribed", "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"]
     },
     {

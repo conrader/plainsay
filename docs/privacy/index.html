@@ -72,7 +72,7 @@
       <div class="eyebrow">Legal · Privacy</div>
       <h1>Privacy, mode by mode.</h1>
       <p class="sub">Local dictation and Plainsay Cloud do not have the same data flow. This policy keeps those boundaries explicit and describes the website, account, billing, support, and update paths too.</p>
-      <div class="updated">Effective 22 August 2026</div>
+      <div class="updated">Effective 27 August 2026</div>
     </header>
 
     <section id="controller">
@@ -124,8 +124,8 @@
       <h2>4. Data kept on your Mac</h2>
       <p>The following data is controlled through the app and is not uploaded to DMT merely because it exists:</p>
       <ul>
-        <li>up to 100 history records containing raw and final text, time, duration, insertion outcome, and the destination app’s bundle identifier; old records are overwritten and History can be cleared;</li>
-        <li>an interrupted recording in a private recovery folder until it is successfully processed or you remove it;</li>
+        <li>when History is enabled, up to 100 records containing raw and final text, time, duration, insertion outcome, and the destination app’s bundle identifier; the default retention is 30 days, selectable as 7, 30, 90, or 365 days, and turning History off deletes saved records and stops future saves;</li>
+        <li>up to 20 interrupted recordings in a private recovery folder, each retained for no more than 7 days unless it is processed or removed sooner; the Clear History action also purges these pending recordings;</li>
         <li>settings, languages, vocabulary, provider choices, and an optional 256-dimensional speaker embedding derived from the voice-enrolment sample;</li>
         <li>provider API keys and the Plainsay Cloud session token in macOS Keychain; and</li>
         <li>a temporary in-memory copy of clipboard contents while Plainsay attempts to paste and restore them.</li>
@@ -142,7 +142,7 @@
       <h3>Speech and Polishing content</h3>
       <p>For Cloud speech, DMT receives AAC audio, clip duration, an optional language hint, and optional vocabulary terms. An available DMT-operated transcription node processes the audio first; otherwise it is sent to deAPI. On the DMT node, an upload is placed in an owner-only temporary directory for decoding, removed at the end of the request, and orphaned upload files are cleared when that service starts. Audio is not written to the Cloud application database.</p>
       <p>Account information comes from you, or from Apple when you choose Apple sign-in. Subscription status and transaction identifiers come from Stripe. Request and usage metadata is generated when you use the service.</p>
-      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. The service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
+      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms and forwards them through OpenRouter to the configured Google Gemini endpoint. Auto-translate and automatic email layout run in this same Polishing request and do not create a separate audio route. The service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
     </section>
 
     <section id="purposes">
@@ -187,6 +187,8 @@
     <section id="retention">
       <h2>8. Retention</h2>
       <ul>
+        <li><strong>Local History:</strong> when enabled, up to 100 records are kept for the selected 7-, 30-, 90-, or 365-day window; 30 days is the default. Disabling History deletes saved records immediately and prevents new ones from being stored.</li>
+        <li><strong>Pending local audio:</strong> interrupted recordings are kept for at most 7 days and capped at 20 files. Successful recovery or the Clear History action removes them sooner.</li>
         <li><strong>Email sign-in codes:</strong> valid for 15 minutes; expired records are removed by an hourly cleanup, ordinarily within about 75 minutes of creation.</li>
         <li><strong>Cloud sessions:</strong> the service revokes the current session on sign-out and expires a token after 90 days without use.</li>
         <li><strong>Account, subscription, and usage metadata:</strong> kept while the Cloud account exists. After a verified deletion request, data not subject to an exception is removed within 30 days.</li>
