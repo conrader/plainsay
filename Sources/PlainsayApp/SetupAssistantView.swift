@@ -780,7 +780,7 @@ private struct LanguageSetupStep: View {
 
             SpokenLanguagesField(languages: $settings.spokenLanguages)
 
-            Text("Leave empty to auto-detect across every language the model knows. Adding the ones you actually use stops a stray sound from being misheard as a language you don't speak.")
+            Text("Leave empty to auto-detect across every language the model knows. Adding the ones you actually use stops a stray sound from being misheard as a language you don't speak. Put your main language first — it is the one Plainsay falls back to when a transcript comes out in a language you don't speak, and the one it gives to models that can only be told a single language.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

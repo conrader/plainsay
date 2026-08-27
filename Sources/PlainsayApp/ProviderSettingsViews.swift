@@ -81,11 +81,35 @@ struct SpokenLanguagesField: View {
                     HStack {
                         Text(SupportedLanguage.named(code))
                         if code == languages.first {
-                            Text("primary")
+                            Text("main language")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
+                        // Which language is first decides what single-language
+                        // engines are set to, and what a wrong-language
+                        // transcript falls back to. The list said "primary"
+                        // and then offered no way to change it: the only route
+                        // was removing every language above the one you wanted
+                        // and adding them back afterwards, which is a puzzle
+                        // rather than a control.
+                        if code != languages.first {
+                            Button {
+                                languages.removeAll { $0 == code }
+                                languages.insert(code, at: 0)
+                            } label: {
+                                Text("Make main")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel(
+                                Localization.appFormat(
+                                    "spokenLanguages.makePrimary",
+                                    fallback: "Make %@ the main language",
+                                    SupportedLanguage.named(code)
+                                )
+                            )
+                        }
                         Button {
                             languages.removeAll { $0 == code }
                         } label: {
