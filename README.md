@@ -41,7 +41,9 @@ in Settings. Optional Plainsay Cloud provides hosted transcription and Polishing
 for 12 PLN gross/month (VAT included; about US$3); Cloud speech sends recorded
 audio to the service and includes up to 900 transcription minutes in any rolling
 30-day window. An active subscription also unlocks Auto-translate and automatic
-email layout for any transcription source when Polishing is enabled and configured.
+email layout for new dictations from any transcription source. In v0.2.29,
+those styles require a BYOK or compatible local Polishing provider; the built-in
+Plainsay Cloud Polishing request does not yet carry their instructions.
 
 > **Requirements:** macOS 14 or newer and an Apple-silicon Mac. The app is
 > signed and notarized. Recommended multilingual models are separate one-time
@@ -135,14 +137,17 @@ The hosted routes are explicit:
 
 - **Your own provider:** audio, a language hint, and optional vocabulary prompt
   go directly to the speech endpoint you configure (Groq, deAPI, OpenAI, or a
-  compatible custom service). Hosted Polishing sends transcript text and
-  vocabulary terms directly to Google Gemini, Anthropic, OpenRouter, OpenAI,
-  or the compatible endpoint you configure.
+  compatible custom service). Hosted Polishing sends transcript text,
+  vocabulary terms, and any enabled translation-target or email-layout
+  instructions directly to Google Gemini, Anthropic, OpenRouter, OpenAI, or the
+  compatible endpoint you configure.
 - **Plainsay Cloud:** encoded audio, clip duration, language, and an optional
   vocabulary prompt go to `api.plainsay.app`. Speech may be processed on a
   Plainsay-operated transcription node or forwarded to deAPI. If Cloud
   Polishing is enabled, transcript text and vocabulary terms are sent from
-  Plainsay Cloud to OpenRouter, using its configured Gemini model.
+  Plainsay Cloud to OpenRouter, using its configured Gemini model. The v0.2.29
+  Cloud cleanup request does not send the Auto-translate target or email-layout
+  instruction.
 - **Optional Voice Filter:** filtering runs on the Mac, but it is best-effort.
   If the filter is unavailable or fails, a hosted speech mode receives the
   unfiltered recording.
@@ -169,8 +174,9 @@ records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear th
 records, or stop saving them; turning History off deletes saved transcripts.
 Audio is staged in an owner-only local folder while a dictation is processed
 and removed after a successful or completed attempt. Interrupted recordings
-are retained for recovery for at most 7 days, with a 20-file ceiling; clearing
-History purges them too. These files are excluded from backups.
+can remain for recovery. On each launch, Plainsay removes ones older than 7
+days and keeps no more than the newest 20; clearing History purges them too.
+These files are excluded from backups.
 
 API keys and the Plainsay Cloud session token are stored in macOS Keychain.
 Local mode is the default choice on a new installation; cloud use requires an
@@ -179,11 +185,17 @@ explicit choice.
 ## First dictation
 
 1. Choose **On this Mac** for Local mode, then pick the recommended model for
-   your languages. List the languages you use most often first; the first is
-   the fallback language when a retry is needed.
-2. Grant Microphone, Accessibility, and Input Monitoring permissions. macOS
-   may quit Plainsay after a new grant takes effect; reopen it and Setup resumes
-   at the same step.
+   your languages. Choose a main language, then add any others you use. The
+   main language is sent to providers and models that accept only one language
+   hint, and is Whisper's fallback when a retry is needed.
+2. Grant Microphone, Accessibility, and Input Monitoring permissions. Input
+   Monitoring lets Plainsay notice the configured dictation shortcut, the
+   `⌃⌥⌘T` translation toggle, and Escape while recording; it never records what
+   you type or includes keystrokes in a transcript. On the first request,
+   Plainsay brings the system prompt to the front. If you request the permission
+   again after macOS no longer has a prompt to show, Plainsay opens the correct
+   System Settings pane. macOS may quit Plainsay after a new grant takes effect;
+   reopen it and Setup resumes at the same step.
 3. Hold **Right Command**, speak, and release. Tap it once instead if you prefer
    toggle mode; tap again to stop.
 
@@ -196,21 +208,31 @@ changed later in Settings.
 ### Languages, translation, and email layout
 
 - **Wrong-language guard.** With spoken languages configured, Whisper retries
-  an evidently out-of-list result in the first language on your list. Parakeet
-  cannot force that retry, so it records narrow, high-confidence mismatches in
-  diagnostics instead of claiming to have fixed them.
-- **Auto-translate (Plainsay Cloud).** Choose a target from the menu-bar menu,
-  then every dictation is translated until you switch it off. Press
+  an evidently out-of-list result in your main language. Parakeet cannot force
+  that retry, so it records narrow, high-confidence mismatches in diagnostics
+  instead of claiming to have fixed them.
+- **Auto-translate (Cloud entitlement).** Choose a target from your configured
+  spoken languages or English in the menu-bar menu. With a style-aware BYOK or
+  compatible local Polishing provider selected, each new dictation is
+  translated until you switch it off. Press
   **Control–Option–Command–T** (`⌃⌥⌘T`) anywhere to toggle the last target.
   Translation is off by default and requires Polishing to be enabled and
   configured.
-- **Email mode (Plainsay Cloud).** Enable **Format dictation as an email** in
-  Settings › General. In supported mail apps and recognized webmail compose
-  windows, Plainsay separates a spoken greeting, body paragraphs, and sign-off
-  without adding words you did not say. It also requires Polishing.
+- **Email mode (Cloud entitlement).** This is off by default. Enable **Format
+  dictation as an email** in Settings › General. In supported mail apps and
+  recognized webmail compose windows, Plainsay separates a spoken greeting,
+  body paragraphs, and sign-off without adding words you did not say. It also
+  requires Polishing.
+- **Current provider limitation.** In v0.2.29, the style prompt is honored by
+  BYOK providers and compatible local endpoints. The built-in Plainsay Cloud
+  Polishing route still performs ordinary cleanup because its client request
+  omits the translation and email-layout instructions. Audio recovered after a
+  relaunch is also polished as plain text.
 - **Vocabulary suggestions.** Settings can propose recurring names and product
   terms from saved dictations. Nothing is added unless you choose **Add**, and
-  you can dismiss a suggestion instead.
+  you can dismiss a suggestion instead. Applied vocabulary corrections use
+  conservative edit thresholds, score every candidate, and choose the closest
+  match rather than the first acceptable one.
 
 ## How it works
 
@@ -225,9 +247,11 @@ key up ────► transcribe locally, in Plainsay Cloud, or through your AP
 The local engines run as Core ML models accelerated on Apple silicon.
 Polishing asks the selected model to turn spoken language into written language
 while preserving wording, meaning, and tone; by default it also preserves the
-language. With Auto-translate enabled, it renders the result in the selected
-target language instead. Review important text. Polishing can use Plainsay
-Cloud, your provider, a compatible local endpoint, or remain off. It is also
+language. With Auto-translate enabled and a style-aware BYOK or compatible local
+provider selected, it renders each new result in the target language instead.
+Review important text. Polishing can use Plainsay Cloud, your provider, a
+compatible local endpoint, or remain off; the current Cloud request performs
+ordinary cleanup without the translation or email-layout style. It is also
 instructed not to invent an ending for a transcript cut off mid-sentence; if a
 provider reports that its own reply hit an output limit, Plainsay keeps the raw
 transcript instead of inserting partial edited text.
@@ -260,7 +284,9 @@ methodology, limitations, raw results, and one-command harness are in
 
 Settings › About shows the installed version and has a one-click
 **Copy Diagnostics Command** action. Run the copied command in Terminal when a
-dictation, permission, model, or provider problem needs a detailed report.
+dictation, permission, model, or provider problem needs a detailed report. Its
+audio diagnostics compare how long recording was active with how much audio was
+actually captured, making an early microphone cut-off visible.
 
 ## Build and contribute
 
