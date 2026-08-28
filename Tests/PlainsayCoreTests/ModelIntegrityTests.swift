@@ -243,3 +243,45 @@ struct IntegrityResilienceTests {
         )
     }
 }
+
+/// The digests must travel inside the binary.
+///
+/// They used to be a bundled resource read through `Bundle.module`, which
+/// resolved on the machine that built the app and called `fatalError` on every
+/// other one — the app crashed on model load for every user, and looked
+/// perfectly healthy to the only person who could not reproduce it.
+@Suite("Digests are compiled in")
+struct CompiledDigestTests {
+    @Test("The digests decode without touching a bundle")
+    func decodesFromTheBinary() throws {
+        let data = try #require(ModelDigests.json.data(using: .utf8))
+        let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let models = try #require(root["models"] as? [String: Any])
+        #expect(!models.isEmpty)
+    }
+
+    @Test("Every downloadable model is present in the compiled digests")
+    func coversEveryModel() throws {
+        let data = try #require(ModelDigests.json.data(using: .utf8))
+        let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let models = try #require(root["models"] as? [String: Any])
+        for model in OnDeviceModel.allCases {
+            #expect(models[model.rawValue] != nil, "\(model.rawValue) missing from ModelDigests")
+        }
+    }
+
+    @Test("Verification works with no app bundle at all")
+    func worksOutsideAnAppBundle() {
+        // The test runner is not an app bundle, which is the point: this is
+        // the environment the shipped app effectively had, and the old code
+        // trapped in it.
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("plainsay-nobundle-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        for model in OnDeviceModel.allCases {
+            #expect(ModelIntegrity.pinnedFileCount(for: model.rawValue) > 0)
+            _ = ModelIntegrity.verify(model: model.rawValue, in: dir)
+        }
+    }
+}
