@@ -34,9 +34,21 @@ final class FakeRecorder: AudioRecording {
         cancelCount += 1
     }
 
+    /// Speech that ends in the pause before the key comes up — the normal
+    /// case. A flat tone here would put every test through the mid-word grace
+    /// period, which is exactly the cost that path exists to avoid charging.
+    /// Tests covering an interrupted release set `endsMidWord`.
+    var endsMidWord = false
+
     func peek() -> [Float] {
         guard isRecording else { return [] }
-        return [Float](repeating: 0.1, count: Int(duration * whisperSampleRate))
+        let total = Int(duration * whisperSampleRate)
+        var samples = [Float](repeating: 0.1, count: total)
+        if !endsMidWord {
+            let tail = min(total, Int(AudioRecorder.tailWindow * whisperSampleRate) + 1)
+            for index in (total - tail)..<total { samples[index] = 0.0005 }
+        }
+        return samples
     }
 }
 
@@ -1398,5 +1410,40 @@ struct EmailModeGatingTests {
 
         #expect(harness.coordinator.cloud.account?.isActive != true)
         #expect(harness.cleaner.receivedStyle == .plain)
+    }
+}
+
+/// The grace period that keeps listening past the key (#tail).
+@Suite("Mid-word release")
+@MainActor
+struct MidWordReleaseTests {
+    @Test("A sentence finished before the key is processed immediately")
+    func finishedSentenceIsNotDelayed() async throws {
+        // The common case, and the one that must stay instant. If this starts
+        // waiting, everybody pays latency on every dictation for something
+        // that happens occasionally.
+        let harness = Harness()
+        await harness.ready()
+
+        harness.dictate()
+        try await Task.sleep(for: .milliseconds(120))
+
+        #expect(harness.coordinator.phase != .recording)
+    }
+
+    @Test("A key released mid-word keeps recording, then finishes on its own")
+    func midWordReleaseWaitsThenCompletes() async throws {
+        let harness = Harness()
+        harness.recorder.endsMidWord = true
+        await harness.ready()
+
+        harness.dictate()
+        // Still capturing: the speaker had not stopped when the key came up.
+        try await Task.sleep(for: .milliseconds(120))
+        #expect(harness.coordinator.phase == .recording)
+
+        // And it does not wait for ever — the grace period is bounded.
+        try await harness.settle(timeout: .seconds(3))
+        #expect(!harness.inserter.inserted.isEmpty)
     }
 }

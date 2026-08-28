@@ -40,10 +40,14 @@ public final class DictationCoordinator {
 
     /// Anything shorter than this was a mis-tap, not a dictation.
     static let minimumDuration: TimeInterval = 0.3
-    /// How often the live preview re-transcribes the growing recording.
+    /// Shortest gap between live-preview passes, and the delay before the
+    /// first one.
+    ///
     /// A `var`, not `let`, so tests can shrink it rather than waiting out a
-    /// real 1.5s cadence.
-    static var previewInterval: Duration = .milliseconds(1500)
+    /// real cadence.
+    static var previewInterval: Duration = .milliseconds(400)
+    /// Longest gap the preview will back off to.
+    static var previewMaximumInterval: Duration = .milliseconds(2000)
 
     public private(set) var phase: Phase = .idle
     /// 0...1, drives the HUD level meter.
@@ -136,6 +140,7 @@ public final class DictationCoordinator {
     /// applied — see `applyVoiceFilterIfNeeded`.
     public private(set) var voiceFilterState: SpeechModelLoadState = .idle
     private var resetTask: Task<Void, Never>?
+    private var tailTask: Task<Void, Never>?
     private var targetApp: NSRunningApplication?
 
     public init(
@@ -716,6 +721,10 @@ public final class DictationCoordinator {
     private func completeStagedCancellation() {
         guard cancellationPending else { return }
         cancellationPending = false
+        // A cancel can land while we are still listening for the tail of a
+        // word. Without this the grace task would outlive the cancellation and
+        // hand the abandoned audio to the pipeline.
+        tailTask?.cancel()
         recorder.cancel()
         finishEngineWork()
         scheduleReset(after: .milliseconds(900))
@@ -725,13 +734,14 @@ public final class DictationCoordinator {
     private func handle(_ edge: HotkeyEdge) {
         switch machine.handle(edge) {
         case .start: beginRecording()
-        case .stop: endRecording()
+        case .stop: endRecordingAfterTail()
         case .none: break
         }
     }
 
     private func beginRecording() {
         resetTask?.cancel()
+        tailTask?.cancel()
 
         // One dictation at a time. In particular, do not start recording while
         // the previous sentence is still transcribing or being cleaned.
@@ -792,6 +802,50 @@ public final class DictationCoordinator {
         startLivePreview()
     }
 
+    /// Longest we keep listening past the key, and how often we look.
+    ///
+    /// Speech is released before the key more often than after it: you let go
+    /// as you finish the last word, and the final syllable lands after the
+    /// key is already up. Half a second is enough for a clipped word without
+    /// being long enough to record the next thing you say to someone else.
+    static var maximumTailGrace: Duration = .milliseconds(600)
+    static var tailPollInterval: Duration = .milliseconds(50)
+
+    /// Stops recording, but keeps listening while a word is still being said.
+    ///
+    /// Only when it has to. Waiting a fixed grace period on every dictation
+    /// would charge everybody half a second of latency, every time, to fix
+    /// something that happens occasionally — and latency between letting go
+    /// and seeing text is the thing this app is judged on. So the tail is
+    /// entered only when the audio is *still loud* at the moment the key comes
+    /// up, and it ends as soon as the speaker stops. Finish your sentence
+    /// before letting go, which is the normal case, and nothing changes.
+    private func endRecordingAfterTail() {
+        guard phase == .recording, recorder.isRecording,
+              AudioRecorder.endedMidSpeech(recorder.peek())
+        else {
+            endRecording()
+            return
+        }
+
+        Log.pipeline.info("key released mid-word — listening for the rest")
+        tailTask?.cancel()
+        tailTask = Task { @MainActor [weak self] in
+            let deadline = ContinuousClock.now + Self.maximumTailGrace
+            while ContinuousClock.now < deadline {
+                try? await Task.sleep(for: Self.tailPollInterval)
+                guard !Task.isCancelled, let self,
+                      self.phase == .recording, self.recorder.isRecording
+                else { return }
+                // Stop the moment they stop, rather than serving out the whole
+                // grace period and pasting the silence with it.
+                if !AudioRecorder.endedMidSpeech(self.recorder.peek()) { break }
+            }
+            guard !Task.isCancelled, let self, self.phase == .recording else { return }
+            self.endRecording()
+        }
+    }
+
     private func endRecording(reachedMaximumDuration: Bool = false) {
         stopMetering()
         stopLivePreview()
@@ -808,6 +862,14 @@ public final class DictationCoordinator {
         }
 
         let duration = Double(samples.count) / whisperSampleRate
+        if AudioRecorder.endedMidSpeech(samples) {
+            // Logged rather than shown: it is normal to trail off into the
+            // last word, and a warning on every dictation would train people
+            // to ignore the one that matters.
+            Log.pipeline.info(
+                "recording ended while speech was still audible after \(duration, format: .fixed(precision: 2), privacy: .public)s — the hotkey was released mid-sentence"
+            )
+        }
         guard duration >= Self.minimumDuration else {
             // A stray tap. Say nothing, do nothing — but leave a trace, because
             // "I definitely spoke and nothing happened" and "the key barely
@@ -832,6 +894,7 @@ public final class DictationCoordinator {
               recorder.hasReachedMaximumDuration
         else { return false }
 
+        tailTask?.cancel()
         endRecording(reachedMaximumDuration: true)
         return true
     }
@@ -1029,8 +1092,17 @@ public final class DictationCoordinator {
         guard settings.livePreviewEnabled, settings.transcriptionSource == .onDevice else { return }
         previewTask?.cancel()
         previewTask = Task { @MainActor [weak self] in
+            // Paced by what the last pass actually cost, not by a fixed gap.
+            //
+            // Each pass re-transcribes the whole recording so far, so its cost
+            // grows with the recording: a fixed interval is either too slow at
+            // the start, when the clip is short and the speaker is watching
+            // most closely, or a treadmill later, when passes take longer than
+            // the gap between them. Waiting as long as the last pass took
+            // keeps the preview at roughly half duty whatever the length.
+            var interval = Self.previewInterval
             while !Task.isCancelled {
-                try? await Task.sleep(for: Self.previewInterval)
+                try? await Task.sleep(for: interval)
                 guard !Task.isCancelled, let self,
                       self.phase == .recording, self.recorder.isRecording,
                       let engine = self.engine
@@ -1044,13 +1116,26 @@ public final class DictationCoordinator {
                 // backend is inside non-cancellable model work. Retain engine
                 // ownership for the pass itself so a model reload cannot shut
                 // it down and start another Core ML load underneath it.
+                let started = ContinuousClock.now
                 self.beginEngineWork()
                 let text = (try? await engine.transcribe(samples: samples, prompt: prompt)) ?? ""
                 self.finishEngineWork()
+                interval = Self.nextPreviewInterval(afterPassLasting: started.duration(to: .now))
+
                 guard !Task.isCancelled, self.phase == .recording, !text.isEmpty else { continue }
                 self.livePreviewText = text
             }
         }
+    }
+
+    /// The gap before the next preview pass, given how long the last one took.
+    ///
+    /// Clamped at both ends: never faster than `previewInterval`, so a cheap
+    /// pass on a two-second clip does not spin the engine continuously, and
+    /// never slower than `previewMaximumInterval`, so a long recording still
+    /// updates often enough to be worth showing.
+    static func nextPreviewInterval(afterPassLasting duration: Duration) -> Duration {
+        min(max(duration, previewInterval), previewMaximumInterval)
     }
 
     private func stopLivePreview() {
