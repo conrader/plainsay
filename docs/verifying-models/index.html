@@ -127,7 +127,16 @@
     <section>
       <h2 class="big">Why the obvious fix is not a fix</h2>
       <p>The tempting approach is to ask the server for the file's hash and check the download against it. That proves the transfer was not corrupted — which TLS already tells you. It proves nothing about whether the file is the one you meant to run, because the hash and the file come from the same place over the same connection.</p>
-      <p>So the expected digests for every model Plainsay can download are pinned in a manifest that ships <strong>inside the signed app bundle</strong>, and are recomputed locally after download and before the model is loaded. Someone who controls what the model host serves cannot also change what we expect it to be, because changing that means changing a notarised binary.</p>
+      <p>So the expected digests for every model Plainsay can download are <strong>compiled into the app’s own binary</strong>, and are recomputed locally after download and before the model is loaded. Someone who controls what the model host serves cannot also change what we expect it to be, because changing that means changing a notarised binary.</p>
+    </section>
+
+    <section>
+      <h2 class="big">This is where it bit us</h2>
+      <p>The sentence above used to read differently. The digests were shipped as a file inside the app bundle — except they never were. Our packaging script copies resources from an explicit list, and nobody added the new one, so the file the app looked for was in no release we ever published.</p>
+      <p>It should have failed loudly on the first build. It did not, because of how the lookup works: it also checks the build directory recorded when the app was compiled. On the machine we build on, that directory exists. The app found the file, verified models, wrote healthy logs, and behaved perfectly — on exactly one Mac in the world.</p>
+      <p>Everywhere else it crashed on startup, every time, from v0.2.28 to v0.2.30. Three releases. We did not find it. A user did, twice, with a stack trace precise enough to fix from — and we are naming that because it is the only reason this section exists.</p>
+      <p>The fix was not to repair the lookup but to delete it. The digests are now generated as source and compiled in: no file to find, no packaging step to forget. That is also a better answer to the original problem, since the expected hashes now sit inside the notarised executable rather than beside it. Fixed in <a href="https://github.com/conrader/plainsay/releases/latest">v0.2.31</a>; the three affected releases are marked on the releases page.</p>
+      <p>We are telling you this on the page that exists to argue we take supply-chain integrity seriously. A verification feature that stops the app from starting is not integrity, it is theatre with a crash in it. The lesson we actually took is the one written into the code now: a safeguard must never be able to take the app down with it.</p>
     </section>
 
     <section>
