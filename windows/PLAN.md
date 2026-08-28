@@ -37,14 +37,13 @@ don't pre-optimize for it.
 
 ## Concrete build shape
 
-- **Hotkey / push-to-talk**: `tauri-apps/global-hotkey` (RegisterHotKey-based,
-  source-confirmed `HotKeyState::{Pressed,Released}` — it does support
-  hold-to-talk, not just toggle). Fallback only: if the chosen key is already
-  claimed system-wide and `RegisterHotKey` can't grab it, fall back to a raw
-  low-level keyboard hook (`WH_KEYBOARD_LL` via `SetWindowsHookExW`), same as
-  Handy's `rdev` dependency uses. The hook callback must only post to a
-  channel and return immediately — Windows silently unhooks any callback that
-  blocks past a 1000ms watchdog, with no error signal to the app.
+- **Hotkey / push-to-talk**: native `WH_KEYBOARD_LL` hook for Right Ctrl.
+  `RegisterHotKey` cannot register a modifier-only key, and the original
+  `global-hotkey` scaffold therefore never started. The hook callback only
+  posts deduplicated press/release events to a bounded channel and returns
+  immediately — Windows silently unhooks callbacks that block past its
+  watchdog. If a configurable multi-key shortcut is added later, Tauri's
+  global-shortcut plugin can handle that separate path.
 - **Audio capture (WASAPI)**: `cpal` — the de facto Rust choice, used by
   every precedent found (Handy, opentypeless, SpeakoFlow, ContextFlow).
 - **Tray icon**: `tauri-apps/tray-icon`.
@@ -55,14 +54,15 @@ don't pre-optimize for it.
   - UAC-elevated target windows block synthetic input from a non-elevated
     process by design (UIPI) — there is no clean workaround, only detection
     and a clear failure message.
-  - Some apps swallow paste outright; needs the same kind of fallback
-    (clipboard-only, tell the user) the Mac client already has for "no
-    focused element."
+  - Some apps swallow paste outright. The Windows client deliberately leaves
+    every transcript on the clipboard, so a manual `Ctrl+V` remains available
+    even when `SendInput` cannot prove the target consumed its events.
   - Terminal-aware newline handling — an inserted raw newline can trigger
     command execution in a shell. Flatten/escape before paste there.
-- **Cloud upload**: plain HTTPS POST to `api.plainsay.app/v1/transcribe` /
-  `/v1/cleanup` from the Rust process — same API the Mac client already
-  speaks, no new backend work.
+- **Cloud upload**: Media Foundation AAC in an M4A container, sent by plain
+  HTTPS POST to `api.plainsay.app/v1/transcribe`, followed by `/v1/cleanup`
+  from the Rust process. Private metadata lives in the redacted
+  `X-Plainsay-Metadata` header, matching the current Mac contract.
 - **On-device (phase 2)**: `sherpa-onnx`'s official Rust binding for
   Parakeet (first choice — smaller model footprint), `whisper-rs`
   (whisper.cpp) as the alternate/fallback engine. CPU-only is viable for
