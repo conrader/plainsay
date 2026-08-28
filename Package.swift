@@ -24,14 +24,7 @@ let package = Package(
                 .product(name: "WhisperKit", package: "WhisperKit"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
             ],
-            resources: [
-                .process("Resources/CoreLocalizable.xcstrings"),
-                // Pinned digests for every downloadable speech model. Shipping
-                // these inside the signed bundle is the whole point: an
-                // attacker who controls what the model host serves cannot also
-                // change what we expect it to be.
-                .process("Resources/model-digests.json"),
-            ]
+            resources: [.process("Resources/CoreLocalizable.xcstrings")]
         ),
         .executableTarget(
             name: "PlainsayApp",

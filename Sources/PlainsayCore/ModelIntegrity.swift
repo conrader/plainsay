@@ -62,18 +62,27 @@ public enum ModelIntegrity {
         let models: [String: Model]
     }
 
+    /// Compiled in, not loaded from the bundle.
+    ///
+    /// This used to read a resource through `Bundle.module`, and that shipped
+    /// broken. The accessor SwiftPM generates checks a build-directory path
+    /// baked in at compile time, so it resolved on the machine that built the
+    /// app and called `fatalError` on every other one — the app crashed on
+    /// model load for every user except the one who could not see it.
+    /// `Localization.swift` had already avoided `Bundle.module` for exactly
+    /// this reason, and said so in a comment.
+    ///
+    /// Compiling the digests in also strengthens what they are for: the
+    /// expected hashes now live inside the signed, notarised executable
+    /// rather than in a file beside it.
     private static let manifest: Manifest? = {
-        guard let url = Bundle.module.url(forResource: "model-digests", withExtension: "json"),
-              let data = try? Data(contentsOf: url)
+        guard let data = ModelDigests.json.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode(Manifest.self, from: data)
         else {
-            // Not fatal on its own — `verify` reports `.unpinned`, which the
-            // caller logs. A missing resource is a build problem, and failing
-            // every model load over it would turn a packaging slip into an app
-            // that cannot transcribe at all.
-            logger.error("model-digests.json is missing from the bundle — downloads cannot be verified")
+            logger.error("compiled-in model digests could not be decoded — downloads cannot be verified")
             return nil
         }
-        return try? JSONDecoder().decode(Manifest.self, from: data)
+        return decoded
     }()
 
     /// How many files are pinned for `model`. Zero means none are.
