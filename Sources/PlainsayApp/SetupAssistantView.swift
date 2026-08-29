@@ -366,7 +366,7 @@ private struct SpeechSetupStep: View {
                     ),
                     title: Localization.appString("wizard.plan.cloud.title", fallback: "Plainsay Cloud"),
                     price: Localization.appString(
-                        "wizard.plan.cloud.price", fallback: "12 PLN / month (about US$3)"
+                        "wizard.plan.cloud.price", fallback: "US$4 / month"
                     ),
                     features: [
                         Localization.appString(
@@ -1390,7 +1390,7 @@ private struct ReadySetupStep: View {
         case .cloud:
             Localization.appString(
                 "wizard.ready.speechConfig.detail.cloud",
-                fallback: "12 PLN/month (about US$3) · transcription and Polishing included · no transcription-model download"
+                fallback: "US$4/month · transcription and Polishing included · no transcription-model download"
             )
         }
     }

@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行うため、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声をホスト型の文字起こしに、文字起こしテキストをホスト型のPolishingに送信します。文字起こしモデルのダウンロードは不要で、料金はVAT込みで月額12 PLNまたは年額120 PLNです。Cloudのサブスクリプションでは自動翻訳とメールレイアウトも利用できますが、v0.2.29では、これらのスタイルにBYOKまたは互換性のあるローカルPolishingが必要です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud（月額、VAT込み）"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud（年額、VAT込み）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "PlainsayはMac向けの無料・MITライセンスの音声入力アプリです。ローカルモードでは、WhisperまたはParakeetがMac上だけで文字起こしを行うため、アカウントもサブスクリプションも不要です。オプションのPlainsay Cloudは、録音音声をホスト型の文字起こしに、文字起こしテキストをホスト型のPolishingに送信します。文字起こしモデルのダウンロードは不要で、料金はVAT込みで月額4米ドルまたは年額40米ドルです。Cloudのサブスクリプションでは自動翻訳とメールレイアウトも利用できますが、v0.2.29では、これらのスタイルにBYOKまたは互換性のあるローカルPolishingが必要です。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud（月額、VAT込み）"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud（年額、VAT込み）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -454,7 +454,7 @@
     { icon: "text.quote", title: "語彙の提案", body: "設定では、保存された口述筆記に繰り返し現れる名前や製品用語が提案されます。「追加」を選ばない限り何も追加されず、どの提案も却下できます。修正を適用する際は慎重に照合し、最も近い候補を選びます。" },
     { icon: "gearshape.2", title: "ベンダーロックインなし", body: "文字起こしとPolishingでは、複数のローカルおよびホスト型エンジンやプロバイダーに対応しています。独自のAPIキーやOpenAI互換エンドポイントも利用できます。" },
     { icon: "waveform.badge.mic", title: "声のフィルタリング", body: "声の登録はベストエフォートのローカルフィルターです。利用できない場合や失敗した場合、口述筆記はフィルターなしで続行し、CloudまたはBYOK文字起こしに未処理の音声が送られることがあります。" },
-    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額12 PLNまたは年額120 PLN（VAT込み）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
+    { icon: "checkmark.circle.fill", title: "正直な料金", body: "ホスト版は月額4米ドルまたは年額40米ドル（VAT込み）です。ローカルモードでは、オンデバイス音声入力を分数・単語数の利用枠なし、アカウント不要で利用できます。ホスト型の文字起こしとPolishingはオプションです。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -476,7 +476,7 @@
       caveats: ["推奨多言語モデルは475〜632MB、英語専用モデルは150MBから", "Polishingをオフにするか互換性のあるローカルエンドポイントを使用しない限り、ホスト型のPolishingでは文字起こしテキストが送信されることがあります", "Plainsayの実行中はメモリを使用し続けます"]
     },
     {
-      id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額12 PLN<br><small>年額120 PLN · VAT込み</small>",
+      id: "cloud", eyebrow: "文字起こしモデルのダウンロード不要", title: "Plainsay Cloud", price: "月額4米ドル<br><small>年額40米ドル · VAT込み</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["文字起こしモデルのダウンロード不要、APIキー不要", "文字起こしと編集込み", "Cloud購読で自動翻訳とメールレイアウトを利用可能。現在はBYOKまたは互換性のあるローカルPolishingが必要"],
       caveats: ["音声は文字起こしのためにPlainsay Cloudへ送信されます", "文字起こしは任意の連続30日間で900分まで。ローカルモードは計測されません"]

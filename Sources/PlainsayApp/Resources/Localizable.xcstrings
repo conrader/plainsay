@@ -83,84 +83,84 @@
         }
       }
     },
-    "About $30/year": {
+    "US$40/year": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Etwa 30 $/Jahr"
+            "value": "40 USD/Jahr"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About $30/year"
+            "value": "US$40/year"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unos 30 $ al año"
+            "value": "40 USD al año"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Environ 30 $/an"
+            "value": "40 USD/an"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Circa 30 $ all'anno"
+            "value": "40 USD all’anno"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "年間約30ドル"
+            "value": "年額40米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "연간 약 30달러"
+            "value": "연간 40달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ongeveer $30/jaar"
+            "value": "40 USD/jaar"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Około 30 USD rocznie"
+            "value": "40 USD rocznie"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cerca de 30 $ por ano"
+            "value": "40 USD por ano"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Около 30 $ в год"
+            "value": "40 USD в год"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приблизно 30 $ на рік"
+            "value": "40 USD на рік"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "约 30 美元/年"
+            "value": "40 美元/年"
           }
         }
       }
@@ -6643,84 +6643,84 @@
         }
       }
     },
-    "Subscribe — about $3/month": {
+    "Subscribe — US$4/month": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abonnieren — etwa 3 $/Monat"
+            "value": "Abonnieren — 4 USD/Monat"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscribe — about $3/month"
+            "value": "Subscribe — US$4/month"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suscribirse — unos 3 $/mes"
+            "value": "Suscribirse — 4 USD/mes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "S'abonner — environ 3 $/mois"
+            "value": "S’abonner — 4 USD/mois"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abbonati — circa 3 $/mese"
+            "value": "Abbonati — 4 USD/mese"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "登録する — 月額約3ドル"
+            "value": "登録する — 月額4米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "구독하기 — 월 약 3달러"
+            "value": "구독하기 — 월 4달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abonneren — ongeveer $3/maand"
+            "value": "Abonneren — 4 USD/maand"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subskrybuj — około 3 USD/miesiąc"
+            "value": "Subskrybuj — 4 USD/miesiąc"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscrever — cerca de 3 $/mês"
+            "value": "Subscrever — 4 USD/mês"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Оформить подписку — около 3 $/месяц"
+            "value": "Оформить подписку — 4 USD/месяц"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Оформити підписку — приблизно 3 $/місяць"
+            "value": "Оформити підписку — 4 USD/місяць"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "订阅——约 3 美元/月"
+            "value": "订阅——4 美元/月"
           }
         }
       }
@@ -9600,79 +9600,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/Jahr"
+            "value": "40 USD/Jahr"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN gross/year (VAT included)"
+            "value": "US$40 gross/year (VAT included)"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/año"
+            "value": "40 USD/año"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/an"
+            "value": "40 USD/an"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/anno"
+            "value": "40 USD/anno"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "年額120 PLN"
+            "value": "年額40米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "연 120 PLN"
+            "value": "연 40달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/jaar"
+            "value": "40 USD/jaar"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN brutto/rok (VAT w cenie)"
+            "value": "40 USD brutto/rok (VAT w cenie)"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/ano"
+            "value": "40 USD/ano"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/год"
+            "value": "40 USD/год"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/рік"
+            "value": "40 USD/рік"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "120 PLN/年"
+            "value": "40 美元/年"
           }
         }
       }
@@ -9682,79 +9682,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abonnieren — 12 PLN/Monat (etwa 3 US-Dollar)"
+            "value": "Abonnieren — 4 USD/Monat"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscribe — 12 PLN gross/month (VAT included)"
+            "value": "Subscribe — US$4 gross/month (VAT included)"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suscribirse — 12 PLN/mes (unos 3 USD)"
+            "value": "Suscribirse — 4 USD/mes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "S’abonner — 12 PLN/mois (environ 3 USD)"
+            "value": "S’abonner — 4 USD/mois"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abbonati — 12 PLN/mese (circa 3 USD)"
+            "value": "Abbonati — 4 USD/mese"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "登録 — 月額12 PLN（約3米ドル）"
+            "value": "登録 — 月額4米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "구독 — 월 12 PLN(약 3 USD)"
+            "value": "구독 — 월 4달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abonneren — 12 PLN/maand (ongeveer US$ 3)"
+            "value": "Abonneren — 4 USD/maand"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subskrybuj — 12 PLN brutto/miesiąc (VAT w cenie)"
+            "value": "Subskrybuj — 4 USD brutto/miesiąc (VAT w cenie)"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscrever — 12 PLN/mês (cerca de 3 USD)"
+            "value": "Subscrever — 4 USD/mês"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подписаться — 12 PLN/месяц (около 3 долларов США)"
+            "value": "Подписаться — 4 USD/месяц"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Підписатися — 12 PLN/місяць (близько 3 доларів США)"
+            "value": "Підписатися — 4 USD/місяць"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "订阅 — 12 PLN/月（约 3 美元）"
+            "value": "订阅 — 4 美元/月"
           }
         }
       }
@@ -16406,79 +16406,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — am einfachsten, ohne Limits, 3 $/Monat"
+            "value": "%@ — am einfachsten, ohne Limits, 4 USD/Monat"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — easiest, no limits, $3/mo"
+            "value": "%@ — easiest, no limits, US$4/mo"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — lo más fácil, sin límites, 3 USD/mes"
+            "value": "%@ — lo más fácil, sin límites, 4 USD/mes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — le plus simple, sans limites, 3 $US/mois"
+            "value": "%@ — le plus simple, sans limites, 4 USD/mois"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — la soluzione più semplice, senza limiti, 3 USD/mese"
+            "value": "%@ — la soluzione più semplice, senza limiti, 4 USD/mese"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — 最も簡単・制限なし・月額3ドル"
+            "value": "%@ — 最も簡単・制限なし・月額4米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — 가장 간편함, 제한 없음, 월 3달러"
+            "value": "%@ — 가장 간편함, 제한 없음, 월 4달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — het eenvoudigst, zonder limieten, $ 3/mnd."
+            "value": "%@ — het eenvoudigst, zonder limieten, 4 USD/mnd."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — najprościej, bez limitów, 3 USD/mies."
+            "value": "%@ — najprościej, bez limitów, 4 USD/mies."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — o mais simples, sem limites, 3 USD/mês"
+            "value": "%@ — o mais simples, sem limites, 4 USD/mês"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — проще всего, без ограничений, 3 $/мес."
+            "value": "%@ — проще всего, без ограничений, 4 USD/мес."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — найпростіше, без обмежень, 3 $/міс."
+            "value": "%@ — найпростіше, без обмежень, 4 USD/міс."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — 最简单、无限制、每月 3 美元"
+            "value": "%@ — 最简单、无限制、每月 4 美元"
           }
         }
       }
@@ -16980,79 +16980,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/Monat (etwa 3 US-Dollar): Transkription und Polishing sind enthalten, ohne Download eines Transkriptionsmodells oder Schlüsselverwaltung. Enthält bis zu 900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum. Audio wird in die Plainsay Cloud hochgeladen."
+            "value": "4 USD/Monat: Transkription und Polishing sind enthalten, ohne Download eines Transkriptionsmodells oder Schlüsselverwaltung. Enthält bis zu 900 Transkriptionsminuten in jedem rollierenden 30-Tage-Zeitraum. Audio wird in die Plainsay Cloud hochgeladen."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/month (about US$3): transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
+            "value": "US$4/month: transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mes (unos 3 USD): incluye transcripción y Polishing, sin descargar un modelo de transcripción ni gestionar claves. Incluye hasta 900 minutos de transcripción en cualquier periodo móvil de 30 días. El audio se sube a Plainsay Cloud."
+            "value": "4 USD/mes: incluye transcripción y Polishing, sin descargar un modelo de transcripción ni gestionar claves. Incluye hasta 900 minutos de transcripción en cualquier periodo móvil de 30 días. El audio se sube a Plainsay Cloud."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mois (environ 3 USD) : transcription et Polishing inclus, sans téléchargement de modèle de transcription ni gestion de clés. Comprend jusqu’à 900 minutes de transcription sur toute période glissante de 30 jours. L’audio est envoyé à Plainsay Cloud."
+            "value": "4 USD/mois : transcription et Polishing inclus, sans téléchargement de modèle de transcription ni gestion de clés. Comprend jusqu’à 900 minutes de transcription sur toute période glissante de 30 jours. L’audio est envoyé à Plainsay Cloud."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mese (circa 3 USD): trascrizione e Polishing inclusi, senza scaricare un modello di trascrizione né gestire chiavi. Include fino a 900 minuti di trascrizione in qualsiasi periodo mobile di 30 giorni. L’audio viene caricato su Plainsay Cloud."
+            "value": "4 USD/mese: trascrizione e Polishing inclusi, senza scaricare un modello di trascrizione né gestire chiavi. Include fino a 900 minuti di trascrizione in qualsiasi periodo mobile di 30 giorni. L’audio viene caricato su Plainsay Cloud."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額12 PLN（約3米ドル）：文字起こしとPolishingが含まれ、文字起こしモデルのダウンロードやキー管理は不要です。任意の連続する30日間で最大900分の文字起こしを利用できます。音声はPlainsay Cloudへアップロードされます。"
+            "value": "月額4米ドル：文字起こしとPolishingが含まれ、文字起こしモデルのダウンロードやキー管理は不要です。任意の連続する30日間で最大900分の文字起こしを利用できます。音声はPlainsay Cloudへアップロードされます。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 12 PLN(약 3 USD): 필사와 Polishing이 포함되며, 필사 모델을 다운로드하거나 키를 관리할 필요가 없습니다. 연속 30일 기준 최대 900분의 필사가 포함됩니다. 오디오는 Plainsay Cloud로 업로드됩니다."
+            "value": "월 4달러: 필사와 Polishing이 포함되며, 필사 모델을 다운로드하거나 키를 관리할 필요가 없습니다. 연속 30일 기준 최대 900분의 필사가 포함됩니다. 오디오는 Plainsay Cloud로 업로드됩니다."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/maand (ongeveer US$ 3): transcriptie en Polishing zijn inbegrepen, zonder download van een transcriptiemodel of sleutelbeheer. Inclusief maximaal 900 transcriptieminuten in elke voortschrijdende periode van 30 dagen. Audio wordt naar Plainsay Cloud geüpload."
+            "value": "4 USD/maand: transcriptie en Polishing zijn inbegrepen, zonder download van een transcriptiemodel of sleutelbeheer. Inclusief maximaal 900 transcriptieminuten in elke voortschrijdende periode van 30 dagen. Audio wordt naar Plainsay Cloud geüpload."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/miesiąc (około 3 USD): transkrypcja i Polishing są wliczone, bez pobierania modelu transkrypcji ani zarządzania kluczami. Pakiet obejmuje do 900 minut transkrypcji w dowolnym kroczącym okresie 30 dni. Audio jest przesyłane do Plainsay Cloud."
+            "value": "4 USD/miesiąc: transkrypcja i Polishing są wliczone, bez pobierania modelu transkrypcji ani zarządzania kluczami. Pakiet obejmuje do 900 minut transkrypcji w dowolnym kroczącym okresie 30 dni. Audio jest przesyłane do Plainsay Cloud."
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mês (cerca de 3 USD): transcrição e Polishing incluídos, sem transferir um modelo de transcrição nem gerir chaves. Inclui até 900 minutos de transcrição em qualquer período móvel de 30 dias. O áudio é enviado para o Plainsay Cloud."
+            "value": "4 USD/mês: transcrição e Polishing incluídos, sem transferir um modelo de transcrição nem gerir chaves. Inclui até 900 minutos de transcrição em qualquer período móvel de 30 dias. O áudio é enviado para o Plainsay Cloud."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/месяц (около 3 долларов США): расшифровка и Polishing включены, без загрузки модели расшифровки и настройки ключей. Включает до 900 минут расшифровки за любой скользящий 30-дневный период. Аудио загружается в Plainsay Cloud."
+            "value": "4 USD/месяц: расшифровка и Polishing включены, без загрузки модели расшифровки и настройки ключей. Включает до 900 минут расшифровки за любой скользящий 30-дневный период. Аудио загружается в Plainsay Cloud."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/місяць (близько 3 доларів США): розшифрування і Polishing включені, без завантаження моделі розшифрування та налаштування ключів. Включає до 900 хвилин розшифрування за будь-який ковзний 30-денний період. Аудіо завантажується в Plainsay Cloud."
+            "value": "4 USD/місяць: розшифрування і Polishing включені, без завантаження моделі розшифрування та налаштування ключів. Включає до 900 хвилин розшифрування за будь-який ковзний 30-денний період. Аудіо завантажується в Plainsay Cloud."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/月（约 3 美元）：包含转录与 Polishing，无需下载转录模型或管理密钥。任意滚动 30 天内最多可转录 900 分钟。音频会上传到 Plainsay Cloud。"
+            "value": "4 美元/月：包含转录与 Polishing，无需下载转录模型或管理密钥。任意滚动 30 天内最多可转录 900 分钟。音频会上传到 Plainsay Cloud。"
           }
         }
       }
@@ -20998,79 +20998,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / Monat (etwa 3 US-Dollar)"
+            "value": "4 USD / Monat"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / month (about US$3)"
+            "value": "US$4 / month"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / mes (unos 3 USD)"
+            "value": "4 USD / mes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / mois (environ 3 USD)"
+            "value": "4 USD / mois"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / mese (circa 3 USD)"
+            "value": "4 USD / mese"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額12 PLN（約3米ドル）"
+            "value": "月額4米ドル"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 12 PLN(약 3 USD)"
+            "value": "월 4달러"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / maand (ongeveer US$ 3)"
+            "value": "4 USD / maand"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / miesiąc (około 3 USD)"
+            "value": "4 USD / miesiąc"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / mês (cerca de 3 USD)"
+            "value": "4 USD / mês"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / месяц (около 3 долларов США)"
+            "value": "4 USD / месяц"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / місяць (близько 3 доларів США)"
+            "value": "4 USD / місяць"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN / 月（约 3 美元）"
+            "value": "4 美元/月"
           }
         }
       }
@@ -22392,79 +22392,79 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/Monat (etwa 3 US-Dollar) · Transkription und Polishing enthalten · kein Download eines Transkriptionsmodells"
+            "value": "4 USD/Monat · Transkription und Polishing enthalten · kein Download eines Transkriptionsmodells"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/month (about US$3) · transcription and Polishing included · no transcription-model download"
+            "value": "US$4/month · transcription and Polishing included · no transcription-model download"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mes (unos 3 USD) · transcripción y Polishing incluidos · sin descargar un modelo de transcripción"
+            "value": "4 USD/mes · transcripción y Polishing incluidos · sin descargar un modelo de transcripción"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mois (environ 3 USD) · transcription et Polishing inclus · aucun téléchargement de modèle de transcription"
+            "value": "4 USD/mois · transcription et Polishing inclus · aucun téléchargement de modèle de transcription"
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mese (circa 3 USD) · trascrizione e Polishing inclusi · nessun download del modello di trascrizione"
+            "value": "4 USD/mese · trascrizione e Polishing inclusi · nessun download del modello di trascrizione"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月額12 PLN（約3米ドル）· 文字起こしとPolishing込み · 文字起こしモデルのダウンロード不要"
+            "value": "月額4米ドル · 文字起こしとPolishing込み · 文字起こしモデルのダウンロード不要"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월 12 PLN(약 3 USD) · 필사와 Polishing 포함 · 필사 모델 다운로드 없음"
+            "value": "월 4달러 · 필사와 Polishing 포함 · 필사 모델 다운로드 없음"
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/maand (ongeveer US$ 3) · transcriptie en Polishing inbegrepen · geen download van een transcriptiemodel"
+            "value": "4 USD/maand · transcriptie en Polishing inbegrepen · geen download van een transcriptiemodel"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/miesiąc (około 3 USD) · transkrypcja i Polishing wliczone · bez pobierania modelu transkrypcji"
+            "value": "4 USD/miesiąc · transkrypcja i Polishing wliczone · bez pobierania modelu transkrypcji"
           }
         },
         "pt": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/mês (cerca de 3 USD) · transcrição e Polishing incluídos · sem transferência do modelo de transcrição"
+            "value": "4 USD/mês · transcrição e Polishing incluídos · sem transferência do modelo de transcrição"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/месяц (около 3 долларов США) · расшифровка и Polishing включены · без загрузки модели расшифровки"
+            "value": "4 USD/месяц · расшифровка и Polishing включены · без загрузки модели расшифровки"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/місяць (близько 3 доларів США) · розшифрування і Polishing включені · без завантаження моделі розшифрування"
+            "value": "4 USD/місяць · розшифрування і Polishing включені · без завантаження моделі розшифрування"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "12 PLN/月（约 3 美元）· 包含转录与 Polishing · 无需下载转录模型"
+            "value": "4 美元/月 · 包含转录与 Polishing · 无需下载转录模型"
           }
         }
       }

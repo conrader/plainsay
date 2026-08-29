@@ -50,7 +50,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud adds hosted transcription and Polishing for 12 PLN gross/month or 120 PLN gross/year, VAT included, and unlocks Auto-translate and automatic email layout; in v0.2.29 those styles require BYOK or compatible local Polishing.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud adds hosted transcription and Polishing for US$4 gross/month or US$40 gross/year, VAT included, and unlocks Auto-translate and automatic email layout; in v0.2.29 those styles require BYOK or compatible local Polishing.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -386,7 +386,7 @@
 
     <section id="pricing">
       <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs 12 PLN gross/month or 120 PLN gross/year, VAT included.</p>
+      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs US$4 gross/month or US$40 gross/year, VAT included.</p>
       <div class="plans" id="plans"></div>
     </section>
 
@@ -476,7 +476,7 @@
     { icon: "text.quote", title: "Vocabulary suggestions", body: "Settings proposes recurring names and product terms from saved dictations. Nothing is added unless you choose Add, and every suggestion can be dismissed. Applied corrections use conservative matching and choose the closest candidate." },
     { icon: "gearshape.2", title: "No vendor lock-in", body: "Multiple local and hosted transcription and Polishing providers are supported, including your own API key and OpenAI-compatible endpoint." },
     { icon: "waveform.badge.mic", title: "Voice filtering", body: "Voice enrollment is a best-effort local filter. If filtering is unavailable or fails, dictation continues unfiltered; Cloud or BYOK transcription may then receive unfiltered audio." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is 12 PLN gross/month or 120 PLN gross/year, VAT included. Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
+    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is US$4 gross/month or US$40 gross/year, VAT included. Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -498,7 +498,7 @@
       caveats: ["Recommended multilingual models: 475–632 MB; English-only from 150 MB", "Hosted Polishing can send transcript text unless it is off or uses a compatible local endpoint", "Keeps using memory while Plainsay is running"]
     },
     {
-      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "12 PLN gross/month<br><small>120 PLN gross/year · VAT included</small>",
+      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "US$4 gross/month<br><small>US$40 gross/year · VAT included</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["No transcription-model download, no API keys", "Transcription and Polishing included", "Cloud entitlement for Auto-translate and email layout; currently requires BYOK or compatible local Polishing"],
       caveats: ["Audio is sent to Plainsay Cloud to be transcribed", "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"]

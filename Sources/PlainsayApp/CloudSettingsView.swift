@@ -142,12 +142,12 @@ struct CloudSettingsView: View {
                     Button(
                         Localization.appString(
                             "cloud.subscribeMonthly",
-                            fallback: "Subscribe — 12 PLN gross/month (VAT included)"
+                            fallback: "Subscribe — US$4 gross/month (VAT included)"
                         )
                     ) { Task { await subscribe(annual: false) } }
                         .buttonStyle(.borderedProminent)
                     Button(
-                        Localization.appString("cloud.subscribeAnnual", fallback: "120 PLN gross/year (VAT included)")
+                        Localization.appString("cloud.subscribeAnnual", fallback: "US$40 gross/year (VAT included)")
                     ) { Task { await subscribe(annual: true) } }
                 }
                 Spacer()

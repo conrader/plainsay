@@ -533,7 +533,7 @@ private struct SpeechSettings: View {
         case .cloud:
             Localization.appString(
                 "settings.sourceExplanation.cloud",
-                fallback: "12 PLN/month (about US$3): transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
+                fallback: "US$4/month: transcription and Polishing are included, with no transcription-model download or keys to manage. Includes up to 900 transcription minutes in any rolling 30-day window. Audio is uploaded to Plainsay Cloud."
             )
         }
     }

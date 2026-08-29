@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频用于托管转录，并发送转录文本用于托管 Polishing；无需下载转录模型，价格为每月 12 PLN 或每年 120 PLN（含增值税）。Cloud 订阅还会解锁自动翻译和邮件排版；在 v0.2.29 中，这些样式需要配合 BYOK 或兼容的本地 Polishing 使用。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "PLN", "name": "Local (on-device)"}, {"@type": "Offer", "price": "12", "priceCurrency": "PLN", "name": "Plainsay Cloud（月付，含增值税）"}, {"@type": "Offer", "price": "120", "priceCurrency": "PLN", "name": "Plainsay Cloud（年付，含增值税）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频用于托管转录，并发送转录文本用于托管 Polishing；无需下载转录模型，价格为每月 4 美元或每年 40 美元（含增值税）。Cloud 订阅还会解锁自动翻译和邮件排版；在 v0.2.29 中，这些样式需要配合 BYOK 或兼容的本地 Polishing 使用。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud（月付，含增值税）"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud（年付，含增值税）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -454,7 +454,7 @@
     { icon: "text.quote", title: "词汇建议", body: "在“设置”中，Plainsay 会根据已保存的听写，推荐反复出现的人名和产品术语。除非你选择“添加”，否则不会加入任何内容；每条建议都可以忽略。应用修正时会采用保守匹配，并选择最接近的候选项。" },
     { icon: "gearshape.2", title: "不绑定单一供应商", body: "转录和 Polishing 支持多种本地及托管引擎和供应商，包括你自己的 API 密钥和 OpenAI 兼容端点。" },
     { icon: "waveform.badge.mic", title: "人声过滤", body: "声音注册是一项尽力而为的本地过滤。如果过滤不可用或失败，听写会在不过滤的情况下继续；Cloud 或 BYOK 转录随后可能收到未过滤的音频。" },
-    { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐每月 12 PLN 或每年 120 PLN（含增值税）。本地模式提供完整的设备端听写，不设分钟数或字数配额，也无需账号；托管转录和 Polishing 均为可选项。" }
+    { icon: "checkmark.circle.fill", title: "实打实的定价", body: "托管版套餐每月 4 美元或每年 40 美元（含增值税）。本地模式提供完整的设备端听写，不设分钟数或字数配额，也无需账号；托管转录和 Polishing 均为可选项。" }
   ];
   var reasonsEl = document.getElementById("reasons");
   REASONS.forEach(function (r) {
@@ -476,7 +476,7 @@
       caveats: ["推荐多语言模型为 475–632 MB；纯英文模型从 150 MB 起", "除非关闭 Polishing 或使用兼容的本地端点，否则托管式 Polishing 可能会发送转录文本", "Plainsay 运行期间会持续占用内存"]
     },
     {
-      id: "cloud", eyebrow: "无需下载转录模型", title: "Plainsay Cloud", price: "每月 12 PLN<br><small>每年 120 PLN · 含增值税</small>",
+      id: "cloud", eyebrow: "无需下载转录模型", title: "Plainsay Cloud", price: "每月 4 美元<br><small>每年 40 美元 · 含增值税</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
       features: ["无需下载转录模型或 API 密钥", "包含转录与编辑", "Cloud 权益包括自动翻译和邮件排版；目前需配合 BYOK 或兼容的本地 Polishing 使用"],
       caveats: ["音频会被发送到 Plainsay Cloud 进行转录", "任意连续 30 天内可转录 900 分钟；本地模式不计量"]
