@@ -120,3 +120,89 @@ struct ModelLoadStateTests {
         #expect(watchdog.recoveryAction == .retry)
     }
 }
+
+/// The voice-filter model is a second, independent download. It used to be
+/// presented with a bare indeterminate bar — no elapsed time, no percentage,
+/// no watchdog — which is indistinguishable from a hung app. These pin the
+/// shared timing policy that now measures both downloads.
+@Suite("Model load timing policy")
+struct ModelLoadTimingTests {
+    private let t0 = Date(timeIntervalSince1970: 1_000_000)
+
+    @Test("A load that starts gets phase markers, so elapsed time exists at all")
+    func startsTiming() {
+        let timing = SpeechModelLoadTiming.advanced(
+            current: nil,
+            from: .idle,
+            to: .downloading(progress: 0),
+            now: t0
+        )
+        #expect(timing?.phase == .downloading)
+        #expect(timing?.startedAt == t0)
+        #expect(timing?.lastDownloadProgressAt == t0)
+    }
+
+    @Test("A repeated fraction does not count as being alive")
+    func stalledDownloadKeepsItsLastForwardMarker() {
+        var timing = SpeechModelLoadTiming.advanced(
+            current: nil, from: .idle, to: .downloading(progress: 0.2), now: t0
+        )
+        // Same fraction reported again a minute later: not forward progress.
+        timing = SpeechModelLoadTiming.advanced(
+            current: timing,
+            from: .downloading(progress: 0.2),
+            to: .downloading(progress: 0.2),
+            now: t0.addingTimeInterval(60)
+        )
+        #expect(timing?.lastDownloadProgressAt == t0)
+
+        let watchdog = SpeechModelLoadWatchdog(
+            state: .downloading(progress: 0.2),
+            timing: timing,
+            now: t0.addingTimeInterval(120)
+        )
+        #expect(watchdog.attention == .downloadStalled)
+        #expect(watchdog.recoveryAction == .retry)
+        #expect(watchdog.percentage == 20)
+    }
+
+    @Test("Preparation restarts the clock once, not on every callback")
+    func preparingPhaseStartIsStable() {
+        var timing = SpeechModelLoadTiming.advanced(
+            current: nil, from: .idle, to: .downloading(progress: 0.9), now: t0
+        )
+        timing = SpeechModelLoadTiming.advanced(
+            current: timing,
+            from: .downloading(progress: 0.9),
+            to: .loading(progress: nil),
+            now: t0.addingTimeInterval(30)
+        )
+        #expect(timing?.phase == .preparing)
+        #expect(timing?.startedAt == t0.addingTimeInterval(30))
+
+        let unchanged = SpeechModelLoadTiming.advanced(
+            current: timing,
+            from: .loading(progress: nil),
+            to: .loading(progress: nil),
+            now: t0.addingTimeInterval(90)
+        )
+        #expect(unchanged?.startedAt == t0.addingTimeInterval(30))
+    }
+
+    @Test("A terminal state clears the timing, so no bar can outlive the load")
+    func terminalStatesClearTiming() {
+        let timing = SpeechModelLoadTiming.advanced(
+            current: nil, from: .idle, to: .loading(progress: nil), now: t0
+        )
+        for terminal in [SpeechModelLoadState.ready, .failed("nope"), .idle] {
+            #expect(
+                SpeechModelLoadTiming.advanced(
+                    current: timing,
+                    from: .loading(progress: nil),
+                    to: terminal,
+                    now: t0.addingTimeInterval(5)
+                ) == nil
+            )
+        }
+    }
+}

@@ -582,54 +582,18 @@ public final class DictationCoordinator {
         }
     }
 
-    /// Updates phase markers only when the engine's state really changes.
-    /// Repeated progress callbacks keep the phase start stable; only a download
-    /// fraction above the all-time high refreshes the liveness marker. Duplicate,
-    /// regressing callbacks are not evidence that a stalled transfer is alive.
+    /// Delegates to the shared timing policy so the transcription model and
+    /// the voice-filter model are measured by exactly the same rules.
     private func updateModelLoadTiming(
         from previousState: SpeechModelLoadState,
         to state: SpeechModelLoadState
     ) {
-        switch state {
-        case .idle, .ready, .failed:
-            modelLoadTiming = nil
-
-        case .downloading(let progress):
-            let now = modelLoadNow()
-            guard let timing = modelLoadTiming, timing.phase == .downloading else {
-                modelLoadTiming = SpeechModelLoadTiming(
-                    phase: .downloading,
-                    startedAt: now,
-                    lastDownloadProgressAt: now,
-                    highestDownloadProgress: SpeechModelLoadState.clampedProgress(progress)
-                )
-                return
-            }
-
-            let previousProgress: Double?
-            if case .downloading(let value) = previousState {
-                previousProgress = SpeechModelLoadState.clampedProgress(value)
-            } else {
-                previousProgress = nil
-            }
-            let currentProgress = SpeechModelLoadState.clampedProgress(progress)
-            let previousHigh = timing.highestDownloadProgress ?? previousProgress ?? 0
-            let madeForwardProgress = currentProgress > previousHigh
-            modelLoadTiming = SpeechModelLoadTiming(
-                phase: .downloading,
-                startedAt: timing.startedAt,
-                lastDownloadProgressAt: madeForwardProgress ? now : timing.lastDownloadProgressAt,
-                highestDownloadProgress: max(previousHigh, currentProgress)
-            )
-
-        case .loading:
-            guard modelLoadTiming?.phase != .preparing else { return }
-            modelLoadTiming = SpeechModelLoadTiming(
-                phase: .preparing,
-                startedAt: modelLoadNow(),
-                lastDownloadProgressAt: nil
-            )
-        }
+        modelLoadTiming = SpeechModelLoadTiming.advanced(
+            current: modelLoadTiming,
+            from: previousState,
+            to: state,
+            now: modelLoadNow()
+        )
     }
 
     /// Progress callbacks cross actors through an unstructured MainActor task.

@@ -10,6 +10,7 @@ struct SettingsView: View {
     let coordinator: DictationCoordinator
     let permissionStatus: PermissionStatus
     let updates: UpdateController
+    let voiceEnrollment: VoiceEnrollment
 
     private enum Tab: Hashable { case speech, general, history, permissions, about }
     @State private var selection: Tab = .speech
@@ -20,7 +21,11 @@ struct SettingsView: View {
         // permissions after returning from System Settings — drops you back on
         // the first tab, which is maddening precisely when you are mid-task.
         TabView(selection: $selection) {
-            SpeechSettings(settings: settings, coordinator: coordinator)
+            SpeechSettings(
+                settings: settings,
+                coordinator: coordinator,
+                voiceEnrollment: voiceEnrollment
+            )
                 .tabItem { Label("Speech", systemImage: "waveform") }
                 .tag(Tab.speech)
 
@@ -200,6 +205,7 @@ private struct GeneralSettings: View {
 private struct SpeechSettings: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
+    let voiceEnrollment: VoiceEnrollment
     @State private var newTerm = ""
     @State private var asrKeyRevision = 0
     @State private var editingKeyRevision = 0
@@ -320,7 +326,7 @@ private struct SpeechSettings: View {
             }
 
             Section {
-                VoiceEnrollmentView(settings: settings)
+                VoiceEnrollmentView(settings: settings, enrollment: voiceEnrollment)
             } header: {
                 Text("Voice recognition")
             }

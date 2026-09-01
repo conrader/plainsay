@@ -5,6 +5,7 @@ struct SetupAssistantView: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     let permissionStatus: PermissionStatus
+    let voiceEnrollment: VoiceEnrollment
     let onSpeechConfirmed: @MainActor (Bool) -> Void
     let onFinish: @MainActor () -> Void
 
@@ -25,12 +26,14 @@ struct SetupAssistantView: View {
         settings: PlainsaySettings,
         coordinator: DictationCoordinator,
         permissionStatus: PermissionStatus,
+        voiceEnrollment: VoiceEnrollment,
         onSpeechConfirmed: @escaping @MainActor (Bool) -> Void,
         onFinish: @escaping @MainActor () -> Void
     ) {
         self.settings = settings
         self.coordinator = coordinator
         self.permissionStatus = permissionStatus
+        self.voiceEnrollment = voiceEnrollment
         self.onSpeechConfirmed = onSpeechConfirmed
         self.onFinish = onFinish
 
@@ -112,7 +115,7 @@ struct SetupAssistantView: View {
                             asrKeyRevision: $asrKeyRevision
                         )
                     case .voice:
-                        VoiceSetupStep(settings: settings)
+                        VoiceSetupStep(settings: settings, voiceEnrollment: voiceEnrollment)
                     case .shortcut:
                         ShortcutSetupStep(settings: settings)
                     case .permissions:
@@ -915,6 +918,7 @@ private struct LanguageSetupStep: View {
 /// nobody should have to record a sample just to get through setup.
 private struct VoiceSetupStep: View {
     @Bindable var settings: PlainsaySettings
+    let voiceEnrollment: VoiceEnrollment
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -929,7 +933,7 @@ private struct VoiceSetupStep: View {
             )
 
             VStack(alignment: .leading, spacing: 12) {
-                VoiceEnrollmentView(settings: settings)
+                VoiceEnrollmentView(settings: settings, enrollment: voiceEnrollment)
             }
             .padding(18)
             .background(Color.secondary.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))

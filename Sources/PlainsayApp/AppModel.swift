@@ -11,6 +11,10 @@ final class AppModel {
     let settings = PlainsaySettings.shared
     let coordinator: DictationCoordinator
     let permissionStatus = PermissionStatus()
+    /// Owned here, not by the enrollment view, so that a voice-filter model
+    /// download survives the window that started it and stays visible in the
+    /// menu bar.
+    let voiceEnrollment = VoiceEnrollment()
     /// Owns Sparkle. Created once here so the scheduled check starts at launch
     /// rather than only when a menu happens to be drawn.
     let updates = UpdateController()
@@ -21,6 +25,7 @@ final class AppModel {
             settings: settings,
             coordinator: coordinator,
             permissionStatus: permissionStatus,
+            voiceEnrollment: voiceEnrollment,
             onSpeechConfirmed: { [weak self] selectionChanged in
                 self?.prepareSelectedSpeechModelFromSetup(selectionChanged: selectionChanged)
             }
@@ -38,7 +43,8 @@ final class AppModel {
             settings: settings,
             coordinator: coordinator,
             permissionStatus: permissionStatus,
-            updates: updates
+            updates: updates,
+            voiceEnrollment: voiceEnrollment
         )
     }
 

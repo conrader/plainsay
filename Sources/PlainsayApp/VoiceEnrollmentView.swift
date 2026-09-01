@@ -4,9 +4,14 @@ import PlainsayCore
 /// Lets someone teach Plainsay their own voice, then filter dictations down
 /// to it. Shared between Settings and the Setup Assistant — both just need a
 /// `PlainsaySettings` to write the enrolled embedding into.
+///
+/// The enrollment object is owned by `AppModel`, not by this view. A download
+/// started here has to remain observable after the window that started it goes
+/// away — including from the menu bar, which is where someone looks first when
+/// they are wondering whether the app is doing anything at all.
 struct VoiceEnrollmentView: View {
     @Bindable var settings: PlainsaySettings
-    @State private var enrollment = VoiceEnrollment()
+    let enrollment: VoiceEnrollment
     @State private var secondsRemaining = 0
     @State private var errorMessage: String?
     @State private var recordTask: Task<Void, Never>?
@@ -57,7 +62,12 @@ struct VoiceEnrollmentView: View {
             }
 
             if enrollment.loadState != .idle, enrollment.loadState != .ready {
-                ModelLoadStatusView(state: enrollment.loadState)
+                ModelLoadStatusView(
+                    state: enrollment.loadState,
+                    timing: enrollment.loadTiming,
+                    subject: .voice,
+                    onRetry: { record() }
+                )
             }
 
             if let errorMessage {

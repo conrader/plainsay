@@ -9,6 +9,7 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
     private let settings: PlainsaySettings
     private let coordinator: DictationCoordinator
     private let permissionStatus: PermissionStatus
+    private let voiceEnrollment: VoiceEnrollment
     private let onSpeechConfirmed: @MainActor (Bool) -> Void
     private var window: NSWindow?
 
@@ -16,11 +17,13 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
         settings: PlainsaySettings,
         coordinator: DictationCoordinator,
         permissionStatus: PermissionStatus,
+        voiceEnrollment: VoiceEnrollment,
         onSpeechConfirmed: @escaping @MainActor (Bool) -> Void
     ) {
         self.settings = settings
         self.coordinator = coordinator
         self.permissionStatus = permissionStatus
+        self.voiceEnrollment = voiceEnrollment
         self.onSpeechConfirmed = onSpeechConfirmed
     }
 
@@ -46,6 +49,7 @@ final class SetupAssistantWindowController: NSObject, NSWindowDelegate {
                     settings: settings,
                     coordinator: coordinator,
                     permissionStatus: permissionStatus,
+                    voiceEnrollment: voiceEnrollment,
                     onSpeechConfirmed: onSpeechConfirmed,
                     onFinish: { [weak self] in self?.finish() }
                 )
