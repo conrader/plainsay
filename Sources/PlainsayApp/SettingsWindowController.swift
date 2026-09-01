@@ -15,18 +15,21 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private let coordinator: DictationCoordinator
     private let permissionStatus: PermissionStatus
     private let updates: UpdateController
+    private let voiceEnrollment: VoiceEnrollment
     private var window: NSWindow?
 
     init(
         settings: PlainsaySettings,
         coordinator: DictationCoordinator,
         permissionStatus: PermissionStatus,
-        updates: UpdateController
+        updates: UpdateController,
+        voiceEnrollment: VoiceEnrollment
     ) {
         self.settings = settings
         self.coordinator = coordinator
         self.permissionStatus = permissionStatus
         self.updates = updates
+        self.voiceEnrollment = voiceEnrollment
     }
 
     func show() {
@@ -47,7 +50,8 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
                     settings: settings,
                     coordinator: coordinator,
                     permissionStatus: permissionStatus,
-                    updates: updates
+                    updates: updates,
+                    voiceEnrollment: voiceEnrollment
                 )
             )
             window.isReleasedWhenClosed = false

@@ -14,13 +14,15 @@ struct PlainsayApplication: App {
                 updates: model.updates,
                 coordinator: model.coordinator,
                 settings: model.settings,
-                permissionStatus: model.permissionStatus
+                permissionStatus: model.permissionStatus,
+                voiceEnrollment: model.voiceEnrollment
             )
         } label: {
             MenuBarIcon(
                 coordinator: model.coordinator,
                 settings: model.settings,
-                permissionStatus: model.permissionStatus
+                permissionStatus: model.permissionStatus,
+                voiceEnrollment: model.voiceEnrollment
             )
         }
     }
@@ -32,6 +34,7 @@ private struct MenuBarIcon: View {
     let coordinator: DictationCoordinator
     let settings: PlainsaySettings
     let permissionStatus: PermissionStatus
+    let voiceEnrollment: VoiceEnrollment
 
     var body: some View {
         // Do not put a periodically-updating TimelineView in a MenuBarExtra
@@ -74,7 +77,11 @@ private struct MenuBarIcon: View {
     private var unavailableSymbol: String {
         switch coordinator.modelState {
         case .downloading, .loading: "waveform.circle"
-        case .failed, .idle, .ready: "waveform.slash"
+        case .failed, .idle, .ready:
+            // A voice-filter download is work in progress too. Showing the
+            // struck-through "nothing is happening" glyph through it is what
+            // made the app look hung from the one place people check first.
+            voiceEnrollment.isPreparingModel ? "waveform.circle" : "waveform.slash"
         }
     }
 
@@ -147,6 +154,23 @@ private struct MenuBarIcon: View {
             timing: coordinator.modelLoadTiming,
             now: now
         )
+        if case .ready = coordinator.modelState, voiceEnrollment.isPreparingModel {
+            let voice = ModelLoadPresentation(
+                state: voiceEnrollment.loadState,
+                timing: voiceEnrollment.loadTiming,
+                now: now
+            )
+            return [
+                Localization.appString(
+                    "menu.a11y.preparingVoice", fallback: "Plainsay is preparing the voice recognition model"
+                ),
+                voice.accessibilityProgress,
+                voice.attentionMessage,
+            ]
+                .compactMap { $0 }
+                .joined(separator: ". ")
+        }
+
         return [base, presentation.accessibilityProgress, presentation.attentionMessage]
             .compactMap { $0 }
             .joined(separator: ". ")
@@ -158,6 +182,7 @@ struct MenuContent: View {
     let coordinator: DictationCoordinator
     let settings: PlainsaySettings
     let permissionStatus: PermissionStatus
+    let voiceEnrollment: VoiceEnrollment
 
     /// Languages offered as translation targets: the ones the speaker listed,
     /// plus English, which is the overwhelmingly common target and is often
@@ -379,6 +404,14 @@ struct MenuContent: View {
             break
         }
 
+        // The voice-filter model is a second, independent download, and it is
+        // the one someone has just triggered by recording a voice sample. It
+        // gets the same treatment: a named stage with a number, never a bare
+        // animation.
+        if voiceEnrollment.isPreparingModel {
+            return voiceStatusLine(at: now)
+        }
+
         if let message = coordinator.lastErrorMessage {
             return Localization.appFormat("menu.status.lastError", fallback: "Last issue — %@", message)
         }
@@ -399,6 +432,26 @@ struct MenuContent: View {
         }
 
         return modelStatusLine(at: now)
+    }
+
+    private func voiceStatusLine(at now: Date) -> String {
+        let presentation = ModelLoadPresentation(
+            state: voiceEnrollment.loadState,
+            timing: voiceEnrollment.loadTiming,
+            now: now
+        )
+        let stage = switch voiceEnrollment.loadState {
+        case .downloading:
+            Localization.appString(
+                "menu.status.voiceDownloading", fallback: "Downloading voice recognition model"
+            )
+        default:
+            Localization.appString(
+                "menu.status.voicePreparing", fallback: "Preparing voice recognition model"
+            )
+        }
+        guard let summary = presentation.progressSummary else { return stage }
+        return "\(stage) · \(summary)"
     }
 
     private func modelStatusLine(at now: Date) -> String {

@@ -105,19 +105,30 @@ struct ModelLoadPresentation {
 /// One presentation of model readiness used wherever someone can reasonably
 /// wonder whether dictation is available yet.
 struct ModelLoadStatusView: View {
+    /// Which model is being prepared. Two independent downloads can be in
+    /// flight, and "Downloading speech model" under the Voice recognition
+    /// section sends someone looking for a problem in the wrong place.
+    enum Subject {
+        case speech
+        case voice
+    }
+
     let state: SpeechModelLoadState
     let timing: SpeechModelLoadTiming?
+    let subject: Subject
     let onRetry: (() -> Void)?
     let onRestart: (() -> Void)?
 
     init(
         state: SpeechModelLoadState,
         timing: SpeechModelLoadTiming? = nil,
+        subject: Subject = .speech,
         onRetry: (() -> Void)? = nil,
         onRestart: (() -> Void)? = nil
     ) {
         self.state = state
         self.timing = timing
+        self.subject = subject
         self.onRetry = onRetry
         self.onRestart = onRestart
     }
@@ -184,9 +195,19 @@ struct ModelLoadStatusView: View {
             Label("Not ready", systemImage: "circle.dashed")
                 .foregroundStyle(.secondary)
         case .downloading:
-            Label("Downloading speech model", systemImage: "arrow.down.circle")
+            switch subject {
+            case .speech:
+                Label("Downloading speech model", systemImage: "arrow.down.circle")
+            case .voice:
+                Label("Downloading voice recognition model", systemImage: "arrow.down.circle")
+            }
         case .loading:
-            Label("Preparing model for this Mac", systemImage: "gearshape.2")
+            switch subject {
+            case .speech:
+                Label("Preparing model for this Mac", systemImage: "gearshape.2")
+            case .voice:
+                Label("Preparing voice recognition for this Mac", systemImage: "gearshape.2")
+            }
         case .ready:
             Label("Ready to dictate", systemImage: "checkmark.circle.fill")
                 .foregroundStyle(.green)

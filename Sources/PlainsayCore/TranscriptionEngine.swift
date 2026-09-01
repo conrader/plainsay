@@ -86,6 +86,61 @@ public struct SpeechModelLoadTiming: Sendable, Equatable {
         self.lastDownloadProgressAt = lastDownloadProgressAt
         self.highestDownloadProgress = highestDownloadProgress
     }
+
+    /// Advances the phase markers for one state change, and returns `nil` once
+    /// the load becomes terminal.
+    ///
+    /// Repeated progress callbacks keep the phase start stable; only a download
+    /// fraction above the all-time high refreshes the liveness marker, because
+    /// duplicate or regressing callbacks are not evidence that a stalled
+    /// transfer is alive. Kept here rather than in a loader so that every
+    /// model download in the app — transcription and voice filter alike —
+    /// measures itself the same way.
+    public static func advanced(
+        current: SpeechModelLoadTiming?,
+        from previousState: SpeechModelLoadState,
+        to state: SpeechModelLoadState,
+        now: Date
+    ) -> SpeechModelLoadTiming? {
+        switch state {
+        case .idle, .ready, .failed:
+            return nil
+
+        case .downloading(let progress):
+            guard let current, current.phase == .downloading else {
+                return SpeechModelLoadTiming(
+                    phase: .downloading,
+                    startedAt: now,
+                    lastDownloadProgressAt: now,
+                    highestDownloadProgress: SpeechModelLoadState.clampedProgress(progress)
+                )
+            }
+
+            let previousProgress: Double?
+            if case .downloading(let value) = previousState {
+                previousProgress = SpeechModelLoadState.clampedProgress(value)
+            } else {
+                previousProgress = nil
+            }
+            let currentProgress = SpeechModelLoadState.clampedProgress(progress)
+            let previousHigh = current.highestDownloadProgress ?? previousProgress ?? 0
+            let madeForwardProgress = currentProgress > previousHigh
+            return SpeechModelLoadTiming(
+                phase: .downloading,
+                startedAt: current.startedAt,
+                lastDownloadProgressAt: madeForwardProgress ? now : current.lastDownloadProgressAt,
+                highestDownloadProgress: max(previousHigh, currentProgress)
+            )
+
+        case .loading:
+            guard current?.phase != .preparing else { return current }
+            return SpeechModelLoadTiming(
+                phase: .preparing,
+                startedAt: now,
+                lastDownloadProgressAt: nil
+            )
+        }
+    }
 }
 
 /// Pure policy for presenting a live model load without inventing an ETA.

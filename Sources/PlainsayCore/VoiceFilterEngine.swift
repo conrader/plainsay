@@ -135,36 +135,88 @@ public final class VoiceEnrollment {
     private let filterEngine: VoiceFilterEngine
     public private(set) var isRecording = false
     public private(set) var loadState: SpeechModelLoadState = .idle
+    /// Phase markers for the voice-filter download, so the same watchdog that
+    /// covers the transcription model can say how long this one has been
+    /// going and whether it has stopped moving. Without it the only thing on
+    /// screen is an indeterminate bar, which cannot be told apart from a hang.
+    public private(set) var loadTiming: SpeechModelLoadTiming?
     private var pollTask: Task<Void, Never>?
+    private let now: @MainActor @Sendable () -> Date
 
     /// Shorter than this isn't enough audio to extract a reliable embedding.
     public static let minimumSampleDuration: TimeInterval = 2.0
 
-    public init(recorder: any AudioRecording = AudioRecorder()) {
+    /// True while the voice-filter model is downloading or being prepared, so
+    /// surfaces outside Settings — the menu bar above all — can say that
+    /// something is in flight instead of looking inert.
+    public var isPreparingModel: Bool {
+        switch loadState {
+        case .downloading, .loading: true
+        case .idle, .ready, .failed: false
+        }
+    }
+
+    public init(
+        recorder: any AudioRecording = AudioRecorder(),
+        now: @escaping @MainActor @Sendable () -> Date = { Date() }
+    ) {
         self.recorder = recorder
         self.filterEngine = VoiceFilterEngine()
+        self.now = now
     }
 
     public func prepare() async throws {
         startPolling()
-        defer { pollTask?.cancel() }
-        try await filterEngine.prepare()
-        loadState = await filterEngine.loadState
+        do {
+            try await filterEngine.prepare()
+        } catch {
+            // The engine records `.failed` before it throws, but the poll may
+            // not have read it yet. Publish the terminal state here, or the
+            // last non-terminal sample is what stays on screen: a progress bar
+            // that animates forever over a load that already gave up.
+            await syncLoadState()
+            throw error
+        }
+        await syncLoadState()
     }
 
     /// `VoiceFilterEngine` reports state through a callback closure, which
     /// would need to capture `self` before this object finishes
     /// initializing. Polling its actor-isolated state sidesteps that rather
     /// than fighting Swift's initialization checker over it.
+    ///
+    /// The poll deliberately outlives the `prepare()` call that started it and
+    /// stops only when the load is terminal. Cancelling the caller — closing
+    /// Settings, switching tabs — does not stop the actor's download, so
+    /// stopping the poll with it would freeze the last sampled fraction on
+    /// screen while the real work carried on invisibly.
     private func startPolling() {
         pollTask?.cancel()
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
-                self.loadState = await self.filterEngine.loadState
+                await self.syncLoadState()
+                switch self.loadState {
+                case .ready, .failed:
+                    return
+                case .idle, .downloading, .loading:
+                    break
+                }
                 try? await Task.sleep(for: .milliseconds(150))
             }
         }
+    }
+
+    private func syncLoadState() async {
+        let previous = loadState
+        let state = await filterEngine.loadState
+        loadState = state
+        loadTiming = SpeechModelLoadTiming.advanced(
+            current: loadTiming,
+            from: previous,
+            to: state,
+            now: now()
+        )
     }
 
     public func start() throws {
@@ -183,9 +235,12 @@ public final class VoiceEnrollment {
         return try await filterEngine.enroll(samples: samples)
     }
 
+    /// Stops the recording. It does not stop the model load: `prepare()` runs
+    /// on an actor that has no cancellation point, so claiming the load ended
+    /// would be a second untruth on top of the frozen bar this replaced. The
+    /// poll keeps running until the load is genuinely terminal.
     public func cancel() {
         isRecording = false
         recorder.cancel()
-        pollTask?.cancel()
     }
 }
