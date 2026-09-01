@@ -97,7 +97,12 @@ private struct GeneralSettings: View {
             }
 
             Section {
-                Toggle("Format dictation as an email", isOn: $settings.emailModeEnabled)
+                Toggle(
+                    Localization.appString(
+                        "settings.emailMode.toggle", fallback: "Format dictation as an email"
+                    ),
+                    isOn: $settings.emailModeEnabled
+                )
             } footer: {
                 Text(emailModeFooter)
                     .font(.callout)
@@ -625,6 +630,39 @@ private struct AboutSettings: View {
     private static let repository = URL(string: "https://github.com/conrader/plainsay")!
     private static let issues = URL(string: "https://github.com/conrader/plainsay/issues")!
 
+    /// A prefilled message to the address on the website.
+    ///
+    /// Built rather than hardcoded so the version and system in the body are
+    /// whatever is actually running, not whatever was true when this was
+    /// written.
+    private static var feedbackMailto: URL? {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let subject = Localization.appFormat(
+            "about.feedback.subject", fallback: "Plainsay feedback (%@)", version
+        )
+        let body = Localization.appFormat(
+            "about.feedback.body",
+            fallback: """
+                Tell us what happened, or what you would like Plainsay to do.
+
+                ---
+                Plainsay %@ (%@)
+                %@
+                """,
+            version, build, os
+        )
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "hi@plainsay.app"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body),
+        ]
+        return components.url
+    }
+
     var body: some View {
         Form {
             Section {
@@ -687,7 +725,20 @@ private struct AboutSettings: View {
                 Link("Website", destination: Self.website)
                 Link("Who makes Plainsay", destination: Self.aboutPage)
                 Link("Source code on GitHub", destination: Self.repository)
-                Link("Report an issue", destination: Self.issues)
+                Link("Report an issue on GitHub", destination: Self.issues)
+                // Reported by a user: "Report an issue" led only to GitHub,
+                // "do którego użytkownik może nie mieć uprawnień. Mało kto poza
+                // ludźmi z branży korzysta z GitHuba." Someone who cannot file
+                // an issue has no way to tell us anything, so the feedback we
+                // get is filtered down to people who already write software.
+                //
+                // The version and OS are prefilled because they are the two
+                // things every report needs and the two nobody thinks to
+                // include — and because asking a non-developer to go and find
+                // them is how a report turns into no report.
+                if let mail = Self.feedbackMailto {
+                    Link("Send feedback by email", destination: mail)
+                }
             }
 
             Section {
