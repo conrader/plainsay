@@ -8693,6 +8693,50 @@
         }
       }
     },
+    "about.feedback.body": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beschreibe, was passiert ist oder was Plainsay tun soll.\n\n---\nPlainsay %@ (%@)\n%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell us what happened, or what you would like Plainsay to do.\n\n---\nPlainsay %@ (%@)\n%@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Napisz, co się stało albo co Plainsay powinien robić inaczej.\n\n---\nPlainsay %@ (%@)\n%@"
+          }
+        }
+      }
+    },
+    "about.feedback.subject": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay-Feedback (%@)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay feedback (%@)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay — uwagi (%@)"
+          }
+        }
+      }
+    },
     "apiKey.save": {
       "localizations": {
         "de": {
@@ -20497,6 +20541,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "尚未配置——在保存密钥之前，Plainsay 会插入未经处理的原始转录文本。"
+          }
+        }
+      }
+    },
+    "settings.emailMode.toggle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diktat als E-Mail formatieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format dictation as an email"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dar formato de correo al dictado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre la dictée en forme d'e-mail"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Formatuj dyktowanie jako e-mail"
           }
         }
       }
