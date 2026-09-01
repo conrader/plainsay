@@ -4,10 +4,11 @@ Cloud-first push-to-talk dictation for Windows, speaking the same
 `api.plainsay.app` API the Mac client uses. See [`PLAN.md`](PLAN.md)
 for the stack decisions and why.
 
-Status: early scaffold — cloud-first pipeline (hotkey → record → transcribe →
-Polish → paste) and sign-in are wired up; on-device transcription, vocabulary,
-and a real hotkey picker are not yet built. Icons are still the Tauri
-template defaults, not Plainsay's.
+Status: private beta — the cloud-first pipeline (Right Ctrl hook → record →
+AAC/M4A → transcribe → Polish → paste) and email sign-in are wired up and
+covered by a real Windows build. On-device transcription, vocabulary, and a
+hotkey picker are not yet built. Installer and tray icons are generated from
+Plainsay's shared logo asset.
 
 ## Develop
 
@@ -29,13 +30,13 @@ push that touches this directory — see
 
 ## Layout
 
-- `src-tauri/src/audio.rs` — WASAPI capture (via `cpal`), resampling, WAV
-  encoding.
+- `src-tauri/src/audio.rs` — WASAPI capture (via `cpal`), resampling, and
+  Media Foundation AAC/M4A encoding.
 - `src-tauri/src/cloud.rs` — the Plainsay Cloud API client (auth, billing,
   transcribe, cleanup), mirroring `PlainsayCloud.swift` /
   `CloudTranscriptionEngine.swift` / `CloudCleanupService.swift` on the Mac
   side.
-- `src-tauri/src/hotkey.rs` — push-to-talk registration.
+- `src-tauri/src/hotkey.rs` — non-blocking Right Ctrl keyboard hook.
 - `src-tauri/src/insertion.rs` — clipboard + `SendInput` paste.
 - `src-tauri/src/lib.rs` — wires it all together: tray icon, the settings
   window, the HUD window, and the record→transcribe→clean→paste pipeline.

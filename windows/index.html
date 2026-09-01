@@ -10,8 +10,18 @@
   <main class="settings">
     <h1>Plainsay</h1>
     <p class="hint">Hold <kbd>Right Ctrl</kbd> anywhere to dictate. Release to insert.</p>
+    <p class="dictation-status" id="dictation-status" aria-live="polite"></p>
 
-    <section id="signed-out">
+    <section id="account-loading" aria-live="polite">
+      <p class="status">Loading your account…</p>
+    </section>
+
+    <section id="account-error" hidden>
+      <p class="status status-error" id="account-error-status" role="alert"></p>
+      <button class="standalone-button" id="retry-account" type="button">Try again</button>
+    </section>
+
+    <section id="signed-out" hidden>
       <div id="request-code-step">
         <input id="email" type="email" placeholder="you@example.com" />
         <button id="send-code">Send code</button>

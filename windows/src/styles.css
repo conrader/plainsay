@@ -37,6 +37,29 @@ h1 {
   margin: 0 0 20px;
 }
 
+.dictation-status {
+  min-height: 1.2em;
+  margin: -12px 0 18px;
+  color: #666;
+  font-size: 13px;
+}
+
+.dictation-status[data-phase="listening"],
+.dictation-status[data-phase="processing"] {
+  color: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dictation-status {
+    color: #aaa;
+  }
+
+  .dictation-status[data-phase="listening"],
+  .dictation-status[data-phase="processing"] {
+    color: #7db0ff;
+  }
+}
+
 kbd {
   font: inherit;
   background: rgba(128, 128, 128, 0.18);
@@ -70,6 +93,20 @@ button:hover {
   font-size: 13px;
   color: #888;
   min-height: 1.2em;
+}
+
+.status-error {
+  color: #b42318;
+}
+
+.standalone-button {
+  margin-left: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-error {
+    color: #ff9b8f;
+  }
 }
 
 #usage-row {

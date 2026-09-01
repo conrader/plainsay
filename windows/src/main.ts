@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 interface AccountView {
   email: string | null;
@@ -8,18 +10,29 @@ interface AccountView {
   limitSeconds: number | null;
 }
 
+interface DictationStatus {
+  phase: string;
+  message: string;
+  isError: boolean;
+}
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
+const accountLoadingSection = $("account-loading");
+const accountErrorSection = $("account-error");
 const signedOutSection = $("signed-out");
 const signedInSection = $("signed-in");
 const requestStep = $("request-code-step");
 const verifyStep = $("verify-code-step");
+const accountErrorStatus = $<HTMLParagraphElement>("account-error-status");
 const signedOutStatus = $<HTMLParagraphElement>("signed-out-status");
+const dictationStatus = $<HTMLParagraphElement>("dictation-status");
 
 const emailInput = $<HTMLInputElement>("email");
 const codeInput = $<HTMLInputElement>("code");
 const sendCodeButton = $<HTMLButtonElement>("send-code");
 const verifyCodeButton = $<HTMLButtonElement>("verify-code");
+const retryAccountButton = $<HTMLButtonElement>("retry-account");
 const signOutButton = $<HTMLButtonElement>("sign-out");
 const subscribeButton = $<HTMLButtonElement>("subscribe-monthly");
 
@@ -30,34 +43,88 @@ const usageBar = $<HTMLProgressElement>("usage-bar");
 const usageText = $("usage-text");
 
 let pendingEmail = "";
+let refreshGeneration = 0;
 
-async function refresh() {
-  const account = await invoke<AccountView | null>("account_status").catch(() => null);
-  if (!account) {
-    signedOutSection.hidden = false;
-    signedInSection.hidden = true;
-    return;
-  }
+const accountSections = [
+  accountLoadingSection,
+  accountErrorSection,
+  signedOutSection,
+  signedInSection,
+];
 
-  signedOutSection.hidden = true;
-  signedInSection.hidden = false;
-  accountEmail.textContent = account.email ?? "Signed in";
-  accountSubStatus.textContent = account.isActive
-    ? `Subscription: ${account.status}`
-    : "Not subscribed yet";
-  subscribeButton.hidden = account.isActive;
-
-  if (account.isActive && account.limitSeconds && account.limitSeconds > 0) {
-    usageRow.hidden = false;
-    usageBar.max = account.limitSeconds;
-    usageBar.value = account.usedSeconds ?? 0;
-    const usedMinutes = Math.round((account.usedSeconds ?? 0) / 60);
-    const limitMinutes = Math.round(account.limitSeconds / 60);
-    usageText.textContent = `${usedMinutes} of ${limitMinutes} minutes this month`;
-  } else {
-    usageRow.hidden = true;
+function showAccountSection(section: HTMLElement) {
+  for (const candidate of accountSections) {
+    candidate.hidden = candidate !== section;
   }
 }
+
+function showDictationStatus(status: DictationStatus) {
+  dictationStatus.textContent = status.message;
+  dictationStatus.classList.toggle("status-error", status.isError);
+  dictationStatus.dataset.phase = status.phase;
+}
+
+async function initializeDictationStatus() {
+  let receivedEvent = false;
+  try {
+    await listen<DictationStatus>("dictation-status", (event) => {
+      receivedEvent = true;
+      showDictationStatus(event.payload);
+    });
+    const current = await invoke<DictationStatus>("dictation_status");
+    if (!receivedEvent) showDictationStatus(current);
+  } catch (error) {
+    console.error("Failed to load dictation status", error);
+  }
+}
+
+async function refresh() {
+  const generation = ++refreshGeneration;
+  showAccountSection(accountLoadingSection);
+  retryAccountButton.disabled = true;
+
+  try {
+    const account = await invoke<AccountView | null>("account_status");
+    if (generation !== refreshGeneration) return;
+
+    if (!account) {
+      showAccountSection(signedOutSection);
+      return;
+    }
+
+    accountEmail.textContent = account.email ?? "Signed in";
+    accountSubStatus.textContent = account.isActive
+      ? `Subscription: ${account.status}`
+      : "Not subscribed yet";
+    subscribeButton.hidden = account.isActive;
+
+    if (account.isActive && account.limitSeconds && account.limitSeconds > 0) {
+      usageRow.hidden = false;
+      usageBar.max = account.limitSeconds;
+      usageBar.value = account.usedSeconds ?? 0;
+      const usedMinutes = Math.round((account.usedSeconds ?? 0) / 60);
+      const limitMinutes = Math.round(account.limitSeconds / 60);
+      usageText.textContent = `${usedMinutes} of ${limitMinutes} minutes this month`;
+    } else {
+      usageRow.hidden = true;
+    }
+
+    showAccountSection(signedInSection);
+  } catch (error) {
+    if (generation !== refreshGeneration) return;
+
+    console.error("Failed to load account status", error);
+    accountErrorStatus.textContent =
+      "We couldn't load your account. Check your connection and try again.";
+    showAccountSection(accountErrorSection);
+  } finally {
+    if (generation === refreshGeneration) {
+      retryAccountButton.disabled = false;
+    }
+  }
+}
+
+retryAccountButton.addEventListener("click", refresh);
 
 sendCodeButton.addEventListener("click", async () => {
   const email = emailInput.value.trim();
@@ -96,20 +163,28 @@ verifyCodeButton.addEventListener("click", async () => {
 });
 
 signOutButton.addEventListener("click", async () => {
-  await invoke("sign_out");
-  await refresh();
+  signOutButton.disabled = true;
+  try {
+    await invoke("sign_out");
+    await refresh();
+  } catch (error) {
+    accountSubStatus.textContent = `Could not sign out: ${String(error)}`;
+  } finally {
+    signOutButton.disabled = false;
+  }
 });
 
 subscribeButton.addEventListener("click", async () => {
   try {
     const url = await invoke<string>("subscribe", { annual: false });
-    window.open(url, "_blank");
+    await openUrl(url);
   } catch (e) {
     accountSubStatus.textContent = String(e);
   }
 });
 
-refresh();
+void initializeDictationStatus();
+void refresh();
 // The checkout flow finishes in the browser — pick up the new subscription
 // state without asking the user to close and reopen the window.
-window.addEventListener("focus", refresh);
+window.addEventListener("focus", () => void refresh());

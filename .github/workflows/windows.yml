@@ -1,6 +1,7 @@
 name: Windows
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -36,7 +37,18 @@ jobs:
           key: windows-cargo-${{ hashFiles('windows/src-tauri/Cargo.lock') }}
 
       - name: Install Node dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Test Rust core
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
 
       - name: Build
         run: npm run tauri build -- --debug
+
+      - name: Upload debug bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: plainsay-windows-debug-${{ github.sha }}
+          path: windows/src-tauri/target/debug/bundle/**
+          if-no-files-found: error
+          retention-days: 7

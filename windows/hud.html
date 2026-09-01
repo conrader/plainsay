@@ -3,44 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Plainsay</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      overflow: hidden;
-    }
-    .hud {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      height: 100%;
-      box-sizing: border-box;
-      padding: 0 16px;
-      border-radius: 14px;
-      background: rgba(20, 20, 22, 0.86);
-      color: #fff;
-      font: 13px -apple-system, "Segoe UI", sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #ff4b4b;
-      animation: pulse 1.1s ease-in-out infinite;
-      flex-shrink: 0;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/hud.css" />
 </head>
 <body>
   <div class="hud">
     <span class="dot"></span>
-    <span>Listening…</span>
+    <span id="hud-label">Listening…</span>
   </div>
+  <script type="module" src="/src/hud.ts"></script>
 </body>
 </html>
