@@ -291,6 +291,89 @@ struct CloudCleanupServiceTests {
         #expect(root["key"] == nil)
     }
 
+    // Email layout and translation are both gated on holding a Cloud
+    // subscription, and this is the route a subscriber's dictation takes. When
+    // the style was not sent, the only people entitled to those features were
+    // the only people for whom they did nothing — and nothing failed, so
+    // nothing said so. These assert the exact field names `/v1/cleanup` reads;
+    // plainsay-server has a matching test on its side.
+
+    @Test("Plain dictation sends no style fields at all")
+    func plainSendsNoStyle() async throws {
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"ok"}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        _ = try await makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
+
+        let root = try Self.lastBodyObject()
+        #expect(root["layout"] == nil)
+        #expect(root["translateTo"] == nil)
+    }
+
+    @Test("Email layout reaches the server")
+    func emailLayoutIsSent() async throws {
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"ok"}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        _ = try await makeService().clean(
+            "hello", dictionary: TermDictionary(), style: CleanupStyle(layout: .email)
+        )
+
+        let root = try Self.lastBodyObject()
+        #expect(root["layout"] as? String == "email")
+        #expect(root["translateTo"] == nil)
+    }
+
+    @Test("The translation target reaches the server")
+    func translationTargetIsSent() async throws {
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"ok"}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        _ = try await makeService().clean(
+            "hello", dictionary: TermDictionary(), style: CleanupStyle(translateTo: "en")
+        )
+
+        let root = try Self.lastBodyObject()
+        #expect(root["translateTo"] as? String == "en")
+    }
+
+    @Test("An email that is also translated sends both")
+    func emailAndTranslationCompose() async throws {
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"ok"}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        _ = try await makeService().clean(
+            "hello",
+            dictionary: TermDictionary(),
+            style: CleanupStyle(layout: .email, translateTo: "en")
+        )
+
+        let root = try Self.lastBodyObject()
+        #expect(root["layout"] as? String == "email")
+        #expect(root["translateTo"] as? String == "en")
+    }
+
+    @Test("The request still carries no prompt text")
+    func sendsNoPromptText() async throws {
+        // The server composes the instruction. A client that could supply
+        // wording could make a key Plainsay pays for do anything at all.
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"ok"}"#)
+        MockURLProtocol.reset(host: cloudCleanupHost)
+
+        _ = try await makeService().clean(
+            "hello", dictionary: TermDictionary(),
+            style: CleanupStyle(layout: .email, translateTo: "de")
+        )
+
+        let root = try Self.lastBodyObject()
+        #expect(Set(root.keys).isSubset(of: ["transcript", "terms", "layout", "translateTo"]))
+    }
+
+    private static func lastBodyObject() throws -> [String: Any] {
+        let body = try #require(MockURLProtocol.lastBody(for: cloudCleanupHost))
+        return try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+    }
+
     @Test("A 402 reports the subscription as the problem")
     func mapsSubscriptionRequired() async {
         MockURLProtocol.respond(host: cloudCleanupHost, status: 402, json: #"{"error":"No active subscription"}"#)

@@ -40,6 +40,19 @@ public struct CloudCleanupService: TextCleaning {
 
         var body: [String: Any] = ["transcript": trimmed]
         if let terms = dictionary.cleanupHint() { body["terms"] = terms }
+
+        // Structured fields, never prompt text. The server composes the
+        // instruction from these; a client that could supply wording could
+        // make a key Plainsay pays for do anything at all.
+        //
+        // These were missing, and it was invisible: email layout and
+        // translation are both gated on holding a Cloud subscription, and this
+        // is the route a subscriber uses — so the only people entitled to
+        // those features were the only people for whom they did nothing. The
+        // field names must match `/v1/cleanup` in plainsay-server, and there
+        // is a test on each side asserting these exact strings.
+        if style.layout == .email { body["layout"] = "email" }
+        if let target = style.translateTo { body["translateTo"] = target }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let data: Data

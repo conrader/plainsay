@@ -223,11 +223,12 @@ changed later in Settings.
   recognized webmail compose windows, Plainsay separates a spoken greeting,
   body paragraphs, and sign-off without adding words you did not say. It also
   requires Polishing.
-- **Current provider limitation.** In v0.2.29, the style prompt is honored by
-  BYOK providers and compatible local endpoints. The built-in Plainsay Cloud
-  Polishing route still performs ordinary cleanup because its client request
-  omits the translation and email-layout instructions. Audio recovered after a
-  relaunch is also polished as plain text.
+- **Every provider honors the style.** Until 0.2.31 the built-in Plainsay Cloud
+  route did not: its request omitted the layout and translation fields, so the
+  subscribers those features are sold to were the only people they did nothing
+  for. The request now carries them as structured fields — never prompt text,
+  which the server composes itself. Audio recovered after a relaunch is still
+  polished as plain text: the window it was aimed at is long gone.
 - **Vocabulary suggestions.** Settings can propose recurring names and product
   terms from saved dictations. Nothing is added unless you choose **Add**, and
   you can dismiss a suggestion instead. Applied vocabulary corrections use
