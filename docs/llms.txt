@@ -32,10 +32,10 @@ models that accept only one language hint. Whisper also retries an evidently
 out-of-list result in that main language. Parakeet cannot force a retry and
 records narrow, high-confidence mismatches in diagnostics instead. An active
 Plainsay Cloud subscription unlocks Auto-translate and automatic email layout
-for new dictations from any speech source. In v0.2.29, both styles require a
-BYOK or compatible local Polishing provider: the built-in Plainsay Cloud cleanup
-request sends only the transcript and vocabulary terms, so it performs ordinary
-cleanup instead. Auto-translate is off by default, offers the configured spoken
+for new dictations from any speech source. Since v0.2.33 both styles also work on the
+built-in Plainsay Cloud Polishing route: the cleanup request carries the layout
+and translation target as structured fields, which the server turns into the
+prompt wording. Style-aware BYOK and compatible local providers work as before. Auto-translate is off by default, offers the configured spoken
 languages plus English, and its last target can be toggled globally with
 Control–Option–Command–T. Email mode is also off by default. Recovered audio is
 polished as plain text.

@@ -98,7 +98,7 @@
       <ul>
         <li><strong class="accent">Local transcription:</strong> recorded audio and transcript text stay on your Mac when Polishing is off or uses a local endpoint. No Plainsay account is needed.</li>
         <li><strong class="accent">Plainsay Cloud speech:</strong> the app sends recorded audio and limited request metadata to DMT. DMT processes it on an operated node when available or forwards it to deAPI as a fallback.</li>
-        <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the selected provider. Style-aware BYOK providers also receive any enabled translation-target or email-layout instruction. The v0.2.29 Plainsay Cloud cleanup request does not include those style instructions.</li>
+        <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the selected provider. Style-aware BYOK providers also receive any enabled translation-target or email-layout instruction. Since v0.2.33 the Plainsay Cloud cleanup request carries the same choices as structured fields — a layout name and a target language code, not free prompt text.</li>
         <li><strong class="accent">No advertising analytics:</strong> the Mac client has no analytics or telemetry SDK, and the website has no advertising or analytics cookies.</li>
         <li><strong class="accent">Content database:</strong> Plainsay Cloud does not store recorded audio or transcript text in its application database. It does store account, subscription, session, and usage metadata.</li>
       </ul>
@@ -111,7 +111,7 @@
           <thead><tr><th>Configuration</th><th>Recorded audio</th><th>Transcript, vocabulary, or styling instructions</th><th>DMT account</th></tr></thead>
           <tbody>
             <tr><td>Local speech; Polishing off or local</td><td>Remains on the Mac</td><td>Remains on the Mac</td><td>Not required</td></tr>
-            <tr><td>Local speech; hosted Polishing</td><td>Remains on the Mac</td><td>Transcript and vocabulary terms go to the selected provider. In v0.2.29, enabled styling instructions go to BYOK providers but not to Plainsay Cloud.</td><td>Only for Plainsay Cloud Polishing</td></tr>
+            <tr><td>Local speech; hosted Polishing</td><td>Remains on the Mac</td><td>Transcript and vocabulary terms go to the selected provider. Since v0.2.33, enabled styling choices go to BYOK providers and to Plainsay Cloud alike.</td><td>Only for Plainsay Cloud Polishing</td></tr>
             <tr><td>Plainsay Cloud speech</td><td>Sent to DMT and possibly deAPI</td><td>Vocabulary and language hint accompany the request; the resulting transcript returns to the app</td><td>Required</td></tr>
             <tr><td>Your own speech API</td><td>Sent directly to the provider you configure</td><td>Language and optional vocabulary hint may be sent directly too</td><td>Not required by DMT</td></tr>
           </tbody>
@@ -143,7 +143,7 @@
       <h3>Speech and Polishing content</h3>
       <p>For Cloud speech, DMT receives AAC audio, clip duration, an optional language hint, and optional vocabulary terms. An available DMT-operated transcription node processes the audio first; otherwise it is sent to deAPI. On the DMT node, an upload is placed in an owner-only temporary directory for decoding, removed at the end of the request, and orphaned upload files are cleared when that service starts. Audio is not written to the Cloud application database.</p>
       <p>Account information comes from you, or from Apple when you choose Apple sign-in. Subscription status and transaction identifiers come from Stripe. Request and usage metadata is generated when you use the service.</p>
-      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms, then forwards them through OpenRouter to the configured Google Gemini endpoint. In v0.2.29, the Cloud cleanup request does not include the Auto-translate target or email-layout instruction. If you select your own hosted Polishing provider, the transcript, vocabulary terms, and enabled style instructions go directly to that provider; with a compatible local endpoint, they remain on the Mac. These styles do not create a separate audio route. The Cloud service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
+      <p>When Cloud Polishing is enabled, DMT receives the transcript and optional vocabulary terms, then forwards them through OpenRouter to the configured Google Gemini endpoint. Since v0.2.33, the Cloud cleanup request also carries the Auto-translate target and the email-layout choice, as structured fields rather than prompt text. If you select your own hosted Polishing provider, the transcript, vocabulary terms, and enabled style instructions go directly to that provider; with a compatible local endpoint, they remain on the Mac. These styles do not create a separate audio route. The Cloud service requires a zero-data-retention endpoint and denies provider data collection; if a compliant endpoint is unavailable, Polishing fails and the app retains the raw transcript instead.</p>
     </section>
 
     <section id="purposes">

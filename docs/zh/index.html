@@ -30,7 +30,7 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频用于托管转录，并发送转录文本用于托管 Polishing；无需下载转录模型，价格为每月 4 美元或每年 40 美元（含增值税）。Cloud 订阅还会解锁自动翻译和邮件排版；在 v0.2.29 中，这些样式需要配合 BYOK 或兼容的本地 Polishing 使用。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud（月付，含增值税）"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud（年付，含增值税）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay 是一款面向 Mac 的免费 MIT 许可听写应用。在本地模式下，Whisper 或 Parakeet 完全在你的 Mac 上完成转录，无需账户或订阅。可选的 Plainsay Cloud 会发送录制的音频用于托管转录，并发送转录文本用于托管 Polishing；无需下载转录模型，价格为每月 4 美元或每年 40 美元（含增值税）。Cloud 订阅还会解锁自动翻译和邮件排版；自 v0.2.33 起，这些样式在内置的 Plainsay Cloud Polishing 路径上同样可用。", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud（月付，含增值税）"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud（年付，含增值税）"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
 <style>
   /* ===================================================================
      Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
@@ -334,7 +334,7 @@
           <p>我们能把明天的站会挪到 10:30 吗？我早上有个牙医预约。</p>
         </div>
       </div>
-      <p class="compare-note">清理步骤会去掉口头禅和重新起头的话，并修正标点。默认情况下，Polishing 会保留措辞、含义、语气和语言；重要文字请复核。开启自动翻译并选择支持样式指令的 BYOK 供应商或兼容的本地 Polishing 供应商后，Polishing 会改为用 Plainsay 菜单中选定的目标语言输出此后每一段新听写。供应商可以更换（Gemini、OpenRouter、OpenAI、Claude 或自定义端点），Polishing 也可以完全关闭；任何处理失败都会回退到原始转录文本。</p>
+      <p class="compare-note">清理步骤会去掉口头禅和重新起头的话，并修正标点。默认情况下，Polishing 会保留措辞、含义、语气和语言；重要文字请复核。开启自动翻译后，Polishing 会改为用 Plainsay 菜单中选定的目标语言输出此后每一段新听写。供应商可以更换（Gemini、OpenRouter、OpenAI、Claude 或自定义端点），Polishing 也可以完全关闭；任何处理失败都会回退到原始转录文本。</p>
     </section>
 
     <section id="why">
@@ -360,7 +360,7 @@
     <section id="available-now">
       <div class="block">
         <h2 class="kicker" style="margin:0 0 10px;">现已可用</h2>
-        <p class="dim">先选择一种主要听写语言，再添加你使用的其他语言。对于只接受一种语言提示的供应商和模型，Plainsay 会传入主语言。若 Whisper 返回的结果明显使用了未列出的语言，它会改用主语言重试；Parakeet 无法强制重试，因此会将不匹配情况记入诊断日志。Cloud 订阅处于有效状态且 Polishing 已启用并完成配置时，可在 Plainsay 菜单中从你的听写语言或英语中选择自动翻译目标，也可在任何位置按 Control–Option–Command–T 开关上次所选目标的自动翻译。邮件模式默认关闭；在受支持的邮件应用和识别出的网页邮箱撰写窗口中，它可以自动编排问候语、正文段落和结束语。这些样式目前适用于支持样式指令的 BYOK 和兼容的本地 Polishing 供应商；内置的 Plainsay Cloud Polishing 路径尚不会传递翻译或邮件排版指令。</p>
+        <p class="dim">先选择一种主要听写语言，再添加你使用的其他语言。对于只接受一种语言提示的供应商和模型，Plainsay 会传入主语言。若 Whisper 返回的结果明显使用了未列出的语言，它会改用主语言重试；Parakeet 无法强制重试，因此会将不匹配情况记入诊断日志。Cloud 订阅处于有效状态且 Polishing 已启用并完成配置时，可在 Plainsay 菜单中从你的听写语言或英语中选择自动翻译目标，也可在任何位置按 Control–Option–Command–T 开关上次所选目标的自动翻译。邮件模式默认关闭；在受支持的邮件应用和识别出的网页邮箱撰写窗口中，它可以自动编排问候语、正文段落和结束语。自 v0.2.33 起，这些样式在内置的 Plainsay Cloud Polishing 路径上可用，与支持样式指令的 BYOK 和兼容的本地供应商一样。</p>
       </div>
     </section>
 
@@ -478,7 +478,7 @@
     {
       id: "cloud", eyebrow: "无需下载转录模型", title: "Plainsay Cloud", price: "每月 4 美元<br><small>每年 40 美元 · 含增值税</small>",
       icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["无需下载转录模型或 API 密钥", "包含转录与编辑", "Cloud 权益包括自动翻译和邮件排版；目前需配合 BYOK 或兼容的本地 Polishing 使用"],
+      features: ["无需下载转录模型或 API 密钥", "包含转录与编辑", "包含自动翻译和邮件排版，无需另配供应商密钥"],
       caveats: ["音频会被发送到 Plainsay Cloud 进行转录", "任意连续 30 天内可转录 900 分钟；本地模式不计量"]
     },
     {

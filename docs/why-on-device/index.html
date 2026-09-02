@@ -133,8 +133,8 @@
       <ul class="plain">
         <li><b>Your own provider.</b> Speech sends recorded audio, a language hint, and an optional vocabulary prompt directly to Groq, deAPI, OpenAI, or a compatible custom endpoint. Hosted Polishing sends transcript text, vocabulary terms, and any enabled translation-target or email-layout instructions directly to Google Gemini, Anthropic, OpenRouter, OpenAI, or the compatible endpoint you configure.</li>
         <li><b>Plainsay Cloud transcription.</b> Encoded audio, clip duration, language, and an optional vocabulary prompt go to <code>api.plainsay.app</code>. Speech may run on a Plainsay-operated transcription node or be forwarded to deAPI.</li>
-        <li><b>Plainsay Cloud Polishing.</b> Transcript text and vocabulary terms go through Plainsay Cloud to OpenRouter, using its configured Gemini model. In v0.2.29, this request does not carry the Auto-translate target or email-layout instruction.</li>
-        <li><b>Auto-translate and automatic email layout.</b> A Cloud subscription unlocks these styles. Their instructions currently go only to a BYOK hosted provider or compatible local endpoint; they do not send recorded audio anywhere new. With built-in Cloud Polishing selected, Plainsay performs ordinary cleanup instead.</li>
+        <li><b>Plainsay Cloud Polishing.</b> Transcript text and vocabulary terms go through Plainsay Cloud to OpenRouter, using its configured Gemini model. Since v0.2.33, this request also carries the Auto-translate target and the email-layout choice, as structured fields the server turns into prompt wording.</li>
+        <li><b>Auto-translate and automatic email layout.</b> A Cloud subscription unlocks these styles. Their instructions go to whichever Polishing provider is selected — a BYOK hosted provider, a compatible local endpoint, or, since v0.2.33, Plainsay Cloud. None of them send recorded audio anywhere new.</li>
         <li><b>Voice Filter is best-effort.</b> It runs on the Mac. If it is unavailable or fails, dictation continues; a selected hosted speech service can then receive the unfiltered recording.</li>
       </ul>
     </section>
