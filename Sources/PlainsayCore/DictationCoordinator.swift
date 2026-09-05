@@ -69,6 +69,11 @@ public final class DictationCoordinator {
     /// It is `nil` before loading begins and after the load becomes terminal.
     public private(set) var modelLoadTiming: SpeechModelLoadTiming?
     public private(set) var lastTranscript: String?
+    public private(set) var lastDictation: LastDictation?
+    public private(set) var isCapturingCorrection = false
+    public private(set) var isApplyingCorrection = false
+    private var correctionCompletion: ((Result<String, Error>) -> Void)?
+    private var correctionGeneration = 0
     /// Survives the short HUD error so the menu remains a recovery surface.
     public private(set) var lastErrorMessage: String?
     /// Persists after the HUD fades until a later insertion works or the user
@@ -128,6 +133,12 @@ public final class DictationCoordinator {
     private let usesInjectedEngine: Bool
 
     private let hotkeys: HotkeyMonitor
+    public var onVoiceEdit: (() -> Void)? {
+        didSet { hotkeys.onVoiceEdit = onVoiceEdit }
+    }
+    public var onCorrectLastDictation: (() -> Void)? {
+        didSet { hotkeys.onCorrectLastDictation = onCorrectLastDictation }
+    }
     private var machine: HotkeyStateMachine
     private var meterTask: Task<Void, Never>?
     private var previewTask: Task<Void, Never>?
@@ -286,6 +297,9 @@ public final class DictationCoordinator {
     }
 
     public func stop() {
+        correctionGeneration += 1
+        finishCorrection(.failure(DictationCorrectionError.cancelled))
+        lastDictation = nil
         // After hotkey-up, `phase` remains `.recording` for one scheduler turn
         // while the queued pipeline takes ownership of this work unit. Only
         // release it here if the recorder itself is still capturing.
@@ -310,6 +324,8 @@ public final class DictationCoordinator {
     /// history" in the UI should erase both — the recovery `.f32` files hold the
     /// same dictations as audio, and leaving them behind would defeat the point.
     public func clearAllStoredDictations() {
+        lastDictation = nil
+        lastTranscript = nil
         history.clear()
         pendingAudio.purgeAll()
     }
@@ -645,6 +661,55 @@ public final class DictationCoordinator {
         handle(edge)
     }
 
+    /// Capture a command with the existing speech engine, without polishing,
+    /// pasting, recording it in history, or staging it for crash recovery.
+    @discardableResult
+    public func beginCorrectionCapture(completion: @escaping (Result<String, Error>) -> Void) -> Bool {
+        guard !phase.isBusy, activeEngineWork == 0, !isCapturingCorrection, !isApplyingCorrection else { return false }
+        correctionGeneration += 1
+        correctionCompletion = completion
+        isCapturingCorrection = true
+        beginRecording()
+        guard phase == .recording else {
+            correctionCompletion = nil
+            isCapturingCorrection = false
+            return false
+        }
+        return true
+    }
+
+    public func finishCorrectionCapture() {
+        guard isCapturingCorrection, recorder.isRecording else { return }
+        machine.reset()
+        endRecordingAfterTail()
+    }
+
+    public func cancelCorrectionCapture() {
+        guard isCapturingCorrection else { return }
+        correctionGeneration += 1
+        if recorder.isRecording { _ = cancelDictation() }
+        finishCorrection(.failure(DictationCorrectionError.cancelled))
+    }
+
+    private func finishCorrection(_ result: Result<String, Error>) {
+        let completion = correctionCompletion
+        correctionCompletion = nil
+        isCapturingCorrection = false
+        completion?(result)
+    }
+
+    public func applyCorrection(_ proposal: DictationCorrectionProposal, to dictation: LastDictation) async throws {
+        guard !phase.isBusy, !isApplyingCorrection, activeEngineWork == 0, lastDictation === dictation else {
+            throw DictationCorrectionError.stale
+        }
+        isApplyingCorrection = true
+        defer { isApplyingCorrection = false }
+        try await dictation.apply(proposal)
+        guard lastDictation === dictation else { return }
+        lastTranscript = dictation.text
+        if let id = dictation.historyID { history.updateCorrectedText(id: id, text: dictation.text) }
+    }
+
     /// Abandons an active capture without transcribing, saving, or inserting
     /// anything. Escape reaches this through `HotkeyMonitor`; the public entry
     /// point also keeps the behavior directly testable without a system event
@@ -690,12 +755,17 @@ public final class DictationCoordinator {
         // hand the abandoned audio to the pipeline.
         tailTask?.cancel()
         recorder.cancel()
+        if isCapturingCorrection {
+            correctionGeneration += 1
+            finishCorrection(.failure(DictationCorrectionError.cancelled))
+        }
         finishEngineWork()
         scheduleReset(after: .milliseconds(900))
         Log.pipeline.info("dictation cancelled")
     }
 
     private func handle(_ edge: HotkeyEdge) {
+        guard !isCapturingCorrection else { return }
         switch machine.handle(edge) {
         case .start: beginRecording()
         case .stop: endRecordingAfterTail()
@@ -709,7 +779,7 @@ public final class DictationCoordinator {
 
         // One dictation at a time. In particular, do not start recording while
         // the previous sentence is still transcribing or being cleaned.
-        guard !phase.isBusy, activeEngineWork == 0 else {
+        guard !phase.isBusy, activeEngineWork == 0, !isApplyingCorrection else {
             machine.reset()
             return
         }
@@ -826,6 +896,18 @@ public final class DictationCoordinator {
         }
 
         let duration = Double(samples.count) / whisperSampleRate
+        if isCapturingCorrection {
+            if duration < Self.minimumDuration {
+                phase = .idle
+                finishEngineWork()
+                finishCorrection(.failure(DictationCorrectionError.tooShort))
+            } else {
+                let generation = correctionGeneration
+                phase = .transcribing
+                Task { await processCorrection(samples, generation: generation) }
+            }
+            return
+        }
         if AudioRecorder.endedMidSpeech(samples) {
             // Logged rather than shown: it is normal to trail off into the
             // last word, and a warning on every dictation would train people
@@ -873,6 +955,31 @@ public final class DictationCoordinator {
         defer { pendingAudio.discard(staged) }
 
         await runPipeline(samples, stoppedAtRecordingLimit: stoppedAtRecordingLimit)
+    }
+
+    private func processCorrection(_ samples: [Float], generation: Int) async {
+        defer {
+            finishEngineWork()
+            if generation != correctionGeneration, phase == .transcribing { phase = .idle }
+        }
+        guard generation == correctionGeneration else { return }
+        do {
+            guard let engine else { throw DictationCorrectionError.emptyCommand }
+            let filtered = await applyVoiceFilterIfNeeded(samples)
+            guard generation == correctionGeneration else { return }
+            let transcript = try await engine.transcribe(samples: filtered, prompt: settings.dictionary.asrPrompt())
+            guard generation == correctionGeneration else { return }
+            let instruction = sanitizeForInsertion(transcript).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !instruction.isEmpty else { throw DictationCorrectionError.emptyCommand }
+            phase = .idle
+            targetApp = nil
+            finishCorrection(.success(instruction))
+        } catch {
+            guard generation == correctionGeneration else { return }
+            phase = .idle
+            targetApp = nil
+            finishCorrection(.failure(error))
+        }
     }
 
     private func beginEngineWork() {
@@ -977,7 +1084,11 @@ public final class DictationCoordinator {
             duration: duration
         )
 
+        let anchor = usesInjectedEngine ? nil : DictationInsertionAnchor.capture()
         let outcome = await insert(finalText)
+        let verifiedAnchor = outcome == .inserted && anchor?.confirmInsertion(finalText) == true ? anchor : nil
+        // Commands have a separate pipeline and can never overwrite this target.
+        lastDictation = finalText.isEmpty ? nil : LastDictation(text: finalText, target: verifiedAnchor, historyID: historyID)
 
         switch outcome {
         case .inserted:

@@ -20,6 +20,8 @@ final class AppModel {
     let updates = UpdateController()
     let hud: HUDController
     let settingsWindow: SettingsWindowController
+    lazy var voiceEditWindow = VoiceEditWindowController(settings: settings)
+    lazy var correctionWindow = DictationCorrectionWindow(coordinator: coordinator, settings: settings)
     lazy var setupAssistantWindow: SetupAssistantWindowController = {
         SetupAssistantWindowController(
             settings: settings,
@@ -46,6 +48,13 @@ final class AppModel {
             updates: updates,
             voiceEnrollment: voiceEnrollment
         )
+        coordinator.onVoiceEdit = { [weak self] in
+            guard let self, !self.coordinator.phase.isBusy else { return }
+            self.voiceEditWindow.show()
+        }
+        coordinator.onCorrectLastDictation = { [weak self] in
+            self?.correctionWindow.show(record: true)
+        }
     }
 
     /// Starts the long-lived services once. Setup and normal launch can race
@@ -82,6 +91,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Menu bar only: no Dock icon, no app switcher entry.
         NSApp.setActivationPolicy(.accessory)
+
+        if renderVoiceEditPreviewIfRequested() { return }
+        if renderCorrectionPreviewIfRequested() { return }
 
         // Design review mode: render the HUD's states and start nothing else.
         if ProcessInfo.processInfo.environment["WSPR_HUD_PREVIEW"] == "1" {

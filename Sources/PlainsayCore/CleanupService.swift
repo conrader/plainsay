@@ -54,7 +54,7 @@ public enum CleanupError: LocalizedError, Equatable {
 }
 
 /// Turns spoken language into written language via Gemini Flash Lite.
-public struct GeminiCleanupService: TextCleaning {
+public struct GeminiCleanupService: TextCleaning, TextEditing {
     public static let defaultModel = "gemini-3.1-flash-lite"
 
     private let apiKey: String
@@ -85,6 +85,19 @@ public struct GeminiCleanupService: TextCleaning {
     public func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
+        return try await generate(
+            system: CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style),
+            user: CleanupPrompt.userMessage(trimmed), outputCharacterCount: trimmed.count
+        )
+    }
+
+    public func edit(_ request: VoiceEditRequest) async throws -> String {
+        try request.validate()
+        return try await generate(system: VoiceEditRequest.systemInstruction,
+            user: request.userMessage, outputCharacterCount: request.original.count)
+    }
+
+    private func generate(system: String, user: String, outputCharacterCount: Int) async throws -> String {
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
 
         var request = URLRequest(
@@ -97,17 +110,17 @@ public struct GeminiCleanupService: TextCleaning {
 
         let body: [String: Any] = [
             "systemInstruction": [
-                "parts": [["text": Self.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style)]]
+                "parts": [["text": system]]
             ],
             "contents": [[
                 "role": "user",
-                "parts": [["text": CleanupPrompt.userMessage(trimmed)]],
+                "parts": [["text": user]],
             ]],
             "generationConfig": [
                 "temperature": 0,
                 "candidateCount": 1,
                 // Generous headroom: cleanup output is never longer than input by much.
-                "maxOutputTokens": max(1024, trimmed.count / 2),
+                "maxOutputTokens": max(1024, outputCharacterCount / 2),
             ],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

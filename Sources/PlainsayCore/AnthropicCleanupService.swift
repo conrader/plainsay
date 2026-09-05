@@ -6,7 +6,7 @@ import Foundation
 /// completions dialect `OpenAICompatibleCleanupService` speaks — different
 /// auth header, a required version header, and system prompt as a top-level
 /// field rather than a message.
-public struct AnthropicCleanupService: TextCleaning {
+public struct AnthropicCleanupService: TextCleaning, TextEditing {
     public static let defaultModel = "claude-haiku-4-5"
 
     private let apiKey: String
@@ -29,6 +29,19 @@ public struct AnthropicCleanupService: TextCleaning {
     public func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
+        return try await generate(
+            system: CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style),
+            user: CleanupPrompt.userMessage(trimmed), outputCharacterCount: trimmed.count
+        )
+    }
+
+    public func edit(_ request: VoiceEditRequest) async throws -> String {
+        try request.validate()
+        return try await generate(system: VoiceEditRequest.systemInstruction,
+            user: request.userMessage, outputCharacterCount: request.original.count)
+    }
+
+    private func generate(system: String, user: String, outputCharacterCount: Int) async throws -> String {
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
 
         var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
@@ -40,11 +53,11 @@ public struct AnthropicCleanupService: TextCleaning {
 
         let body: [String: Any] = [
             "model": model,
-            "max_tokens": max(1024, trimmed.count / 2),
+            "max_tokens": max(1024, outputCharacterCount / 2),
             "temperature": 0,
-            "system": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style),
+            "system": system,
             "messages": [
-                ["role": "user", "content": CleanupPrompt.userMessage(trimmed)]
+                ["role": "user", "content": user]
             ],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

@@ -40,6 +40,10 @@ public final class HotkeyMonitor {
     /// Called on key-down of `translationHotkey`. The event is consumed, so
     /// nothing is typed into whatever is in front.
     public var onTranslationToggle: (() -> Void)?
+    public var onVoiceEdit: (() -> Void)?
+    private var consumesVoiceEditSequence = false
+    public var onCorrectLastDictation: (() -> Void)?
+    private var consumesCorrectionSequence = false
 
     /// Called once when Escape is pressed. Returning `true` means an active
     /// dictation was cancelled and the complete Escape press should be kept
@@ -122,6 +126,8 @@ public final class HotkeyMonitor {
         runLoopSource = nil
         isDown = false
         consumesEscapeSequence = false
+        consumesVoiceEditSequence = false
+        consumesCorrectionSequence = false
         isRunning = false
     }
 
@@ -142,6 +148,34 @@ public final class HotkeyMonitor {
     /// `Sendable`, and everything we need from it is read on the tap's thread.
     @discardableResult
     func handle(type: CGEventType, keyCode: UInt16, flags: UInt64, isAutorepeat: Bool) -> Bool {
+        if keyCode == 15 {
+            if type == .keyUp, consumesCorrectionSequence {
+                consumesCorrectionSequence = false
+                return true
+            }
+            if type == .keyDown, consumesCorrectionSequence { return true }
+            let chord = TranslationHotkey(keyCode: 15, requiredFlags: [.maskControl, .maskAlternate, .maskCommand])
+            if type == .keyDown, !isAutorepeat, chord.matches(flags: flags), onCorrectLastDictation != nil {
+                consumesCorrectionSequence = true
+                Task { @MainActor [weak self] in self?.onCorrectLastDictation?() }
+                return true
+            }
+        }
+        // Consume the whole E sequence, even if modifiers are released first.
+        if keyCode == 14 {
+            if type == .keyUp, consumesVoiceEditSequence {
+                consumesVoiceEditSequence = false
+                return true
+            }
+            if type == .keyDown, consumesVoiceEditSequence { return true }
+            let chord = TranslationHotkey(keyCode: 14, requiredFlags: [.maskControl, .maskAlternate, .maskCommand])
+            if type == .keyDown, !isAutorepeat, chord.matches(flags: flags), onVoiceEdit != nil {
+                consumesVoiceEditSequence = true
+                // Accessibility selection reads must not block the event tap.
+                Task { @MainActor [weak self] in self?.onVoiceEdit?() }
+                return true
+            }
+        }
         if keyCode == Self.escapeKeyCode {
             switch type {
             case .keyDown:

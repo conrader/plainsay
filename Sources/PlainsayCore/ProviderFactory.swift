@@ -13,6 +13,22 @@ public enum ProviderFactory {
     /// proxied call to our own server for as long as it's in memory.
     public static var cloudSessionToken: String?
 
+    public static func makeEditor(_ settings: PlainsaySettings) throws -> any TextEditing {
+        let provider = settings.cleanupProvider
+        guard provider != .plainsay else { throw VoiceEditError.cloudUnsupported }
+        let key = settings.apiKey(for: provider)
+        // OpenAI-compatible local servers commonly have no authentication.
+        guard !key.isEmpty || provider == .custom else { throw CleanupError.missingAPIKey }
+        if provider.usesOpenAIDialect {
+            return OpenAICompatibleCleanupService(baseURL: settings.resolvedCleanupBaseURL,
+                apiKey: key.isEmpty ? "local" : key, model: settings.resolvedCleanupModel, timeout: 30)
+        }
+        if provider == .anthropic {
+            return AnthropicCleanupService(apiKey: key, model: settings.resolvedCleanupModel, timeout: 30)
+        }
+        return GeminiCleanupService(apiKey: key, model: settings.resolvedCleanupModel, timeout: 30)
+    }
+
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
         guard settings.cleanupEnabled else { return NoCleanup() }
 

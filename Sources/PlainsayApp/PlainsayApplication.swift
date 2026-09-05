@@ -279,6 +279,16 @@ struct MenuContent: View {
 
             translationMenu
 
+            Button("Correct last dictation…  ⌃⌥⌘R") {
+                AppModel.shared.correctionWindow.show()
+            }
+            .disabled(coordinator.lastDictation == nil || coordinator.phase.isBusy || coordinator.isApplyingCorrection)
+
+            Button("Voice Edit…  ⌃⌥⌘E") {
+                AppModel.shared.voiceEditWindow.show()
+            }
+            .disabled(coordinator.phase.isBusy)
+
             Divider()
 
             // The recovery path when a paste didn't land: get the words back

@@ -178,6 +178,17 @@ public final class TranscriptHistory {
         save()
     }
 
+    /// A verified correction updates the copyable text while preserving the
+    /// original speech transcript and the user's existing retention policy.
+    public func updateCorrectedText(id: UUID, text: String) {
+        guard isEnabled, let index = records.firstIndex(where: { $0.id == id }) else { return }
+        let record = records[index]
+        records[index] = TranscriptRecord(id: record.id, date: record.date, text: text,
+            rawText: record.rawText, outcome: record.outcome,
+            durationSeconds: record.durationSeconds, targetApp: record.targetApp)
+        save()
+    }
+
     private func replacingOutcome(of record: TranscriptRecord, with outcome: DictationOutcome) -> TranscriptRecord {
         TranscriptRecord(
             id: record.id,

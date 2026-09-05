@@ -5,7 +5,7 @@ import Foundation
 /// One client for OpenRouter, OpenAI, Groq, Together, a local Ollama, or
 /// anything else speaking the same dialect — the differences between them are
 /// a base URL, a key, and a model name.
-public struct OpenAICompatibleCleanupService: TextCleaning {
+public struct OpenAICompatibleCleanupService: TextCleaning, TextEditing {
     private let baseURL: String
     private let apiKey: String
     private let model: String
@@ -37,6 +37,19 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
     public func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return trimmed }
+        return try await generate(
+            system: CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style),
+            user: CleanupPrompt.userMessage(trimmed), outputCharacterCount: trimmed.count
+        )
+    }
+
+    public func edit(_ request: VoiceEditRequest) async throws -> String {
+        try request.validate()
+        return try await generate(system: VoiceEditRequest.systemInstruction,
+            user: request.userMessage, outputCharacterCount: request.original.count)
+    }
+
+    private func generate(system: String, user: String, outputCharacterCount: Int) async throws -> String {
         guard !apiKey.isEmpty else { throw CleanupError.missingAPIKey }
         guard !model.isEmpty else { throw CleanupError.missingModel }
         guard let url = URL(string: "\(baseURL)/chat/completions") else {
@@ -58,10 +71,10 @@ public struct OpenAICompatibleCleanupService: TextCleaning {
             // (tens of thousands of tokens) and its preflight affordability
             // check rejects that against a capped key, even though the actual
             // output is a small fraction of it.
-            "max_tokens": max(1024, trimmed.count),
+            "max_tokens": max(1024, outputCharacterCount),
             "messages": [
-                ["role": "system", "content": CleanupPrompt.systemInstruction(dictionaryHint: dictionary.cleanupHint(), style: style)],
-                ["role": "user", "content": CleanupPrompt.userMessage(trimmed)],
+                ["role": "system", "content": system],
+                ["role": "user", "content": user],
             ],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

@@ -41,14 +41,64 @@ in Settings. Optional Plainsay Cloud provides hosted transcription and Polishing
 for US$4 gross/month (VAT included); Cloud speech sends recorded
 audio to the service and includes up to 900 transcription minutes in any rolling
 30-day window. An active subscription also unlocks Auto-translate and automatic
-email layout for new dictations from any transcription source. In v0.2.29,
-those styles require a BYOK or compatible local Polishing provider; the built-in
-Plainsay Cloud Polishing request does not yet carry their instructions.
+email layout for new dictations from any transcription source. Those styles
+work with built-in Plainsay Cloud Polishing and style-aware BYOK or compatible
+local Polishing providers.
 
 > **Requirements:** macOS 14 or newer and an Apple-silicon Mac. The app is
 > signed and notarized. Recommended multilingual models are separate one-time
 > downloads of approximately 475–632 MB; smaller English-only options start at
 > about 150 MB.
+
+## Voice Edit (new in v0.2.34)
+
+### Correct the last dictation
+
+After dictating, press **Control–Option–Command–R**, say **“change Tuesday to
+Thursday”**, then press the shortcut again to stop. Plainsay shows a correction
+preview without requiring you to select the previous text. Choose **Replace last
+dictation** to apply it. **“Undo that”** previews a reversal of the last verified
+change; undoing the initial dictation restores any text it originally replaced.
+You can also open **Correct last dictation…** from the menu and type the request.
+
+Simple change/replace and undo commands run locally, including for Cloud
+subscribers. Polish commands such as **“zamień wtorek na czwartek”** and
+**“cofnij to”** are supported too. Repeated matches require a more specific phrase.
+Broader requests such as “make it shorter” use your configured Voice Edit provider
+when you choose **Preview correction**. Spoken commands still use your selected
+speech service, but bypass Polishing and are not pasted, saved in History, or
+staged as recovery recordings. Escape cancels recording; the window also offers
+Cancel during transcription.
+
+Automatic replacement requires a verified original paste, the same app and field,
+and an unchanged readable document. The destination expires after five minutes
+without a correction and is kept only in memory. If it cannot be verified, use
+**Copy correction** and replace the text manually. Undo never sends a generic
+Command–Z to another app. Successful corrections update History's copyable text
+while preserving its original raw transcript and retention settings.
+
+### Edit selected text
+
+Select text in another Mac app and press **Control–Option–Command–E**, or choose
+**Voice Edit…** from the Plainsay menu. Say the change you want using your usual
+dictation key in the request field, or type it, then choose **Preview edit**.
+The comparison highlights removed and added text and flags possible changes to
+names, numbers, and links. Review those details before copying or replacing.
+
+Replacement checks that the original app, field, selection, and readable document
+still match. If an app cannot expose or replace its selection through Accessibility,
+paste the original into Voice Edit and copy the result back manually. The original
+stays available in the window until you close it. These checks are best-effort;
+they do not prove that every fact or intended meaning survived the edit.
+
+Voice Edit uses the selected **Polishing provider**, independently of whether
+automatic Polishing is enabled. It supports Gemini, Anthropic, OpenAI, OpenRouter,
+and compatible custom endpoints, including configured local models. Preview sends
+the original text and editing request to that provider. Dictating the request uses
+your existing speech and Polishing settings. **Plainsay Cloud editing commands are
+not supported yet**; a Cloud subscription alone does not enable Voice Edit.
+The original is limited to 12,000 characters and the instruction to 2,000.
+Voice Edit and correction commands are available starting in v0.2.34.
 
 ## Install
 
@@ -145,9 +195,9 @@ The hosted routes are explicit:
   vocabulary prompt go to `api.plainsay.app`. Speech may be processed on a
   Plainsay-operated transcription node or forwarded to deAPI. If Cloud
   Polishing is enabled, transcript text and vocabulary terms are sent from
-  Plainsay Cloud to OpenRouter, using its configured Gemini model. The v0.2.29
-  Cloud cleanup request does not send the Auto-translate target or email-layout
-  instruction.
+  Plainsay Cloud to OpenRouter, using its configured Gemini model. Enabled
+  Auto-translate targets and email-layout instructions are sent with the
+  cleanup request.
 - **Optional Voice Filter:** filtering runs on the Mac, but it is best-effort.
   If the filter is unavailable or fails, a hosted speech mode receives the
   unfiltered recording.
@@ -248,11 +298,10 @@ key up ────► transcribe locally, in Plainsay Cloud, or through your AP
 The local engines run as Core ML models accelerated on Apple silicon.
 Polishing asks the selected model to turn spoken language into written language
 while preserving wording, meaning, and tone; by default it also preserves the
-language. With Auto-translate enabled and a style-aware BYOK or compatible local
-provider selected, it renders each new result in the target language instead.
+language. With Auto-translate enabled, built-in Cloud Polishing and style-aware
+BYOK or compatible local providers render each new result in the target language.
 Review important text. Polishing can use Plainsay Cloud, your provider, a
-compatible local endpoint, or remain off; the current Cloud request performs
-ordinary cleanup without the translation or email-layout style. It is also
+compatible local endpoint, or remain off. It is also
 instructed not to invent an ending for a transcript cut off mid-sentence; if a
 provider reports that its own reply hit an output limit, Plainsay keeps the raw
 transcript instead of inserting partial edited text.
