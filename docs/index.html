@@ -2,33 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script>
-(function () {
-  try {
-    var SUPPORTED = ["pl", "de", "fr", "es", "it", "pt", "nl", "ja", "ko", "zh", "ru", "uk"];
-    var stored = localStorage.getItem("plainsay-path");
-    if (stored) {
-      if (stored !== "/") location.replace(stored);
-      return;
-    }
-    var langs = navigator.languages || [navigator.language || ""];
-    for (var i = 0; i < langs.length; i++) {
-      var primary = (langs[i] || "").split("-")[0].toLowerCase();
-      if (SUPPORTED.indexOf(primary) !== -1) {
-        location.replace("/" + primary + "/");
-        return;
-      }
-    }
-  } catch (e) {}
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plainsay — Local-first voice dictation for macOS</title>
-<meta name="description" content="Plainsay is a free, MIT-licensed dictation app for Mac. Run Whisper or Parakeet locally; Cloud subscribers get Auto-translate and email layout on Plainsay Cloud or their own provider.">
+<title>Plainsay — Free, open-source dictation for Mac</title>
+<meta name="description" content="Free, open-source dictation for Mac. Use Local mode without an account or subscription. Premium Cloud features are entirely optional. The Mac client is MIT-licensed.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Plainsay">
-<meta property="og:title" content="Plainsay — Local-first voice dictation for macOS">
-<meta property="og:description" content="Hold a key, speak, release. A 12 MB native Mac app with free Local mode and optional Cloud-gated Auto-translate and email layout, on Plainsay Cloud or your own provider.">
+<meta property="og:title" content="Plainsay — Free, open-source dictation for Mac">
+<meta property="og:description" content="Free, open-source dictation for Mac. Use Local mode without an account or subscription. Premium Cloud features are entirely optional. The Mac client is MIT-licensed.">
 <meta property="og:url" content="https://plainsay.app/">
 <meta property="og:image" content="https://plainsay.app/assets/social-preview.png">
 <meta property="og:image:width" content="1280">
@@ -50,511 +30,74 @@
 <link rel="alternate" hreflang="ru" href="https://plainsay.app/ru/">
 <link rel="alternate" hreflang="uk" href="https://plainsay.app/uk/">
 <link rel="alternate" hreflang="x-default" href="https://plainsay.app/">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed dictation app for Mac. In Local mode, Whisper or Parakeet transcribes entirely on your Mac — no account or subscription. Optional Plainsay Cloud adds hosted transcription and Polishing for US$4 gross/month or US$40 gross/year, VAT included, and unlocks Auto-translate and automatic email layout; since v0.2.33 those styles work on the Plainsay Cloud Polishing route as well as with your own provider.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
-<style>
-  /* ===================================================================
-     Design tokens — transcribed from Sources/PlainsayApp/DesignSystem.swift
-     via the Plainsay design system (colors/typography/spacing/shape/motion).
-     =================================================================== */
-  :root {
-    --ink: #14161a;
-    --bone: #f2efe9;
-    --slate: #7a8194;
-    --signal: #6fd3c7;
-    --ember: #e8896b;
-    --veil: rgba(255, 255, 255, 0.09);
-
-    --sys-accent: #0a84ff;
-    --sys-blue: #0a84ff;
-    --sys-indigo: #5e5ce6;
-    --sys-purple: #bf5af2;
-    --sys-teal: #40c8e0;
-    --sys-mint: #63e6e2;
-    --sys-green: #32d74b;
-    --sys-orange: #ff9f0a;
-    --sys-pink: #ff375f;
-
-    --hairline: rgba(255, 255, 255, 0.16);
-    --label: rgba(255, 255, 255, 0.92);
-    --label-secondary: #a8aebd;
-    --label-tertiary: rgba(255, 255, 255, 0.30);
-
-    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --tracking-instrument: 1.1px;
-    --tracking-eyebrow: 1px;
-    --leading-body: 1.55;
-
-    --radius-card: 18px;
-    --radius-pill: 999px;
-
-    --ease-out: cubic-bezier(0, 0, 0.58, 1);
-    --dur-phase: 180ms;
-  }
-
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-
-  body {
-    margin: 0;
-    background: var(--ink);
-    color: var(--bone);
-    font-family: var(--font-ui);
-    -webkit-font-smoothing: antialiased;
-    line-height: 1.5;
-  }
-
-  a { color: var(--bone); text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); text-underline-offset: 3px; }
-  a:hover { text-decoration-color: var(--bone); }
-  a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
-
-  .page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-  .wrap { width: 100%; max-width: 920px; padding: 0 32px; box-sizing: border-box; display: flex; flex-direction: column; }
-  @media (max-width: 620px) { .wrap { padding: 0 20px; } }
-
-  /* ---------------------------------------------------------------
-     Nav
-  ----------------------------------------------------------------- */
-  nav.top { display: flex; align-items: center; gap: 10px; padding: 30px 0; }
-  nav.top .word { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-  nav.top .spacer { flex: 1; }
-  nav.top .links { display: flex; align-items: center; gap: 22px; font-size: 13px; }
-  nav.top .links a { text-decoration: none; color: var(--bone); opacity: 0.9; }
-  nav.top .links a:hover { opacity: 1; text-decoration: underline; text-decoration-color: rgba(242,239,233,0.35); }
-  @media (max-width: 620px) {
-    nav.top .links { gap: 12px; }
-    nav.top .links a:first-child { display: none; }
-    .lang-switch { max-width: 82px; }
-  }
-
-  .lang-switch {
-    -webkit-appearance: none; appearance: none;
-    background: transparent; color: var(--bone); opacity: 0.9;
-    border: 1px solid var(--hairline); border-radius: 6px;
-    font-family: var(--font-ui); font-size: 12px; padding: 5px 9px; cursor: pointer;
-  }
-  .lang-switch:hover { opacity: 1; border-color: rgba(242,239,233,0.35); }
-  .lang-switch option { background: var(--ink); color: var(--bone); }
-
-  /* ---------------------------------------------------------------
-     Icon (mirrors components/core/Icon.jsx: SF Symbol name -> inline Lucide SVG)
-  ----------------------------------------------------------------- */
-  .ico { display: inline-block; flex: 0 0 auto; }
-
-  /* ---------------------------------------------------------------
-     Button (mirrors components/core/Button.jsx)
-  ----------------------------------------------------------------- */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    font-family: var(--font-ui); font-weight: 500; line-height: 1; white-space: nowrap;
-    text-decoration: none; cursor: pointer;
-    transition: filter var(--dur-phase) var(--ease-out);
-    height: 30px; padding: 0 16px; border-radius: 7px; font-size: 13px;
-    background: var(--sys-accent); border: 1px solid transparent; color: #fff;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
-  }
-  .btn:hover { filter: brightness(1.08); }
-  .btn:active { filter: brightness(0.94); }
-
-  /* ---------------------------------------------------------------
-     Hero
-  ----------------------------------------------------------------- */
-  header.hero { padding: 84px 0 40px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; }
-  header.hero h1 { margin: 0; font-size: 52px; line-height: 1.12; font-weight: 700; letter-spacing: -1.2px; max-width: 15ch; text-wrap: balance; }
-  header.hero .sub { margin: 0; font-size: 17px; line-height: 1.6; color: var(--label-secondary); max-width: 52ch; text-wrap: pretty; }
-  header.hero .cta { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 6px; }
-  header.hero .cta-actions { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-  .btn.secondary { background: rgba(255,255,255,0.06); border-color: var(--hairline); color: var(--bone); }
-  header.hero .req { font-size: 12px; color: var(--slate); }
-  @media (max-width: 620px) { header.hero h1 { font-size: 38px; } }
-
-  .trust-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 2px 0 4px; }
-  .trust-badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 12px; font-weight: 600; color: var(--bone);
-    background: rgba(111,211,199,0.10); border: 1px solid rgba(111,211,199,0.30);
-    border-radius: var(--radius-pill); padding: 6px 13px;
-  }
-  .trust-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--signal); flex: 0 0 auto; }
-
-  /* ---------------------------------------------------------------
-     Section rhythm
-  ----------------------------------------------------------------- */
-  section { border-top: 1px solid var(--hairline); padding: 56px 0 64px; }
-  section .kicker { margin: 0 0 20px; font-size: 13px; font-weight: 600; color: var(--slate); }
-  section .lede { margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: var(--label-secondary); max-width: 62ch; }
-
-  /* Spoken in, written out */
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-  .compare .col { display: flex; flex-direction: column; gap: 8px; }
-  .compare .eyebrow { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: var(--tracking-instrument); }
-  .compare p { margin: 0; font-size: 15px; line-height: 1.65; }
-  .compare-note { margin: 24px 0 0; font-size: 13px; line-height: 1.6; color: var(--slate); max-width: 66ch; }
-  @media (max-width: 700px) { .compare { grid-template-columns: 1fr; gap: 20px; } }
-
-  /* Screenshots */
-  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .screens figure { margin: 0; display: flex; flex-direction: column; gap: 12px; }
-  .screens img {
-    width: 100%; height: auto; display: block;
-    border-radius: var(--radius-card); border: 1px solid var(--hairline);
-    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-  }
-  .screens figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
-  @media (max-width: 760px) { .screens { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; } }
-
-  .hud-figure { margin: 0 0 32px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .hud-figure img { width: 100%; max-width: 420px; height: auto; display: block; border-radius: 20px; }
-  .hud-figure figcaption { font-size: 13px; line-height: 1.5; color: var(--label-secondary); text-align: center; }
-
-  /* Why Plainsay */
-  .reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 48px; }
-  .reason { display: flex; gap: 16px; align-items: flex-start; }
-  .reason .ico { margin-top: 2px; }
-  .reason h3 { margin: 0 0 5px; font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
-  .reason p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--label-secondary); text-wrap: pretty; }
-  @media (max-width: 700px) { .reasons { grid-template-columns: 1fr; gap: 24px; } }
-
-  /* Plan cards (mirrors components/setup/PlanCard + ModelMark) */
-  .plans { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: stretch; }
-  @media (max-width: 760px) { .plans { grid-template-columns: 1fr; } }
-  .plan-card {
-    flex: 1; min-height: 200px; box-sizing: border-box; padding: 18px; cursor: pointer;
-    display: flex; flex-direction: column; gap: 12px;
-    border-radius: var(--radius-card);
-    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025));
-    border: 1px solid var(--hairline);
-    transition: background var(--dur-phase) var(--ease-out), border-color var(--dur-phase) var(--ease-out);
-  }
-  .plan-card.selected {
-    border: 2px solid var(--pc-a);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--pc-a) 12%, transparent), color-mix(in srgb, var(--pc-b) 4.5%, transparent));
-    box-shadow: 0 5px 12px color-mix(in srgb, var(--pc-a) 10%, transparent);
-  }
-  .plan-card .top-row { display: flex; align-items: flex-start; justify-content: space-between; }
-  .plan-mark {
-    width: 52px; height: 52px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
-    border-radius: 14.5px;
-    background: linear-gradient(135deg, var(--pc-a), var(--pc-b));
-    box-shadow: 0 3px 7px color-mix(in srgb, var(--pc-a) 20%, transparent);
-  }
-  .plan-card .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: var(--tracking-eyebrow); color: var(--pc-a); }
-  .plan-card .title { font-size: 15px; font-weight: 700; color: var(--label); }
-  .plan-card .price { font-size: 17px; font-weight: 700; color: var(--label); }
-  .plan-card .head-text { display: flex; flex-direction: column; gap: 4px; }
-  .plan-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-  .plan-card ul li { display: flex; gap: 6px; align-items: flex-start; font-size: 10px; line-height: var(--leading-body); color: var(--label-secondary); }
-  .plan-card ul.caveats li { color: var(--sys-orange); }
-  .plan-card ul li .ico { margin-top: 1px; }
-
-  /* Reliability */
-  .reliability { display: grid; grid-template-columns: 260px 1fr; gap: 48px; }
-  @media (max-width: 700px) { .reliability { grid-template-columns: 1fr; gap: 24px; } }
-  .reliability .headline { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 600; letter-spacing: -0.3px; text-wrap: balance; }
-  .failures { display: flex; flex-direction: column; gap: 20px; }
-  .failure { display: flex; flex-direction: column; gap: 3px; border-left: 2px solid rgba(232,137,107,0.5); padding-left: 16px; }
-  .failure .when { font-size: 13px; color: var(--ember); }
-  .failure .then { margin: 0; font-size: 14px; line-height: 1.55; color: var(--bone); }
-
-  /* Open source / Coming */
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-  @media (max-width: 700px) { .split { grid-template-columns: 1fr; gap: 24px; } }
-  .split .block { display: flex; flex-direction: column; gap: 12px; }
-  .split p { margin: 0; font-size: 15px; line-height: 1.65; }
-  .split p.dim { font-size: 13px; line-height: 1.6; color: var(--slate); }
-  .split p.link { margin-top: 6px; font-size: 14px; }
-
-  /* Final CTA */
-  section.final { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; padding: 64px 0 72px; }
-  section.final .headline { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.4px; text-wrap: balance; }
-  section.final .sub { margin: 0; font-size: 13px; color: var(--slate); }
-
-  /* Footer */
-  footer { border-top: 1px solid var(--hairline); padding: 28px 0 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  footer .text { font-size: 12px; color: var(--slate); }
-  footer .spacer { flex: 1; }
-  footer .links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 18px; font-size: 12px; }
-  footer .links a { color: var(--slate); text-decoration: none; }
-  footer .links a:hover { color: var(--bone); }
-  footer .imprint { flex: 0 0 100%; margin-top: 4px; color: var(--slate); font-size: 10.5px; line-height: 1.55; overflow-wrap: anywhere; }
-  @media (max-width: 620px) {
-    footer .spacer { display: none; }
-    footer .links { width: 100%; justify-content: flex-start; gap: 12px 18px; }
-    footer .imprint { margin-top: 0; font-size: 10px; line-height: 1.6; }
-  }
-</style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plainsay", "url": "https://plainsay.app/", "description": "Plainsay is a free, MIT-licensed, open-source dictation app for Apple silicon Macs running macOS 14 or later. Local dictation runs on your Mac without an account or subscription. Premium Cloud features are optional; the separate hosted service is not open source. Cloud costs US$4 per month or US$40 per year, VAT included, with 900 transcription minutes per rolling 30 days.", "applicationCategory": "ProductivityApplication", "operatingSystem": "macOS 14+", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Local (on-device)"}, {"@type": "Offer", "price": "4", "priceCurrency": "USD", "name": "Plainsay Cloud (monthly, VAT included)"}, {"@type": "Offer", "price": "40", "priceCurrency": "USD", "name": "Plainsay Cloud (annual, VAT included)"}], "downloadUrl": "https://api.plainsay.app/releases/Plainsay-latest.dmg", "sameAs": ["https://github.com/conrader/plainsay"]}</script>
+<link rel="stylesheet" href="/assets/home.css">
+<link rel="stylesheet" href="/assets/comparisons.css">
 </head>
 <body>
-<div class="page">
-  <div class="wrap">
-
-    <nav class="top">
-      <img src="assets/logo.svg" alt="" width="28" height="28" style="display:block">
-      <span class="word">Plainsay</span>
-      <span class="spacer"></span>
-      <div class="links">
-        <a href="#pricing">Pricing</a>
-        <a href="https://github.com/conrader/plainsay" aria-label="Star Plainsay on GitHub">★ GitHub</a>
-        <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a>
-        <select class="lang-switch" aria-label="Language" onchange="if(this.value){try{localStorage.setItem('plainsay-path',this.value);}catch(e){}location.href=this.value;}"><option value="/" selected>English</option><option value="/pl/">Polski</option><option value="/de/">Deutsch</option><option value="/fr/">Français</option><option value="/es/">Español</option><option value="/it/">Italiano</option><option value="/pt/">Português</option><option value="/nl/">Nederlands</option><option value="/ja/">日本語</option><option value="/ko/">한국어</option><option value="/zh/">中文</option><option value="/ru/">Русский</option><option value="/uk/">Українська</option></select>
-      </div>
-    </nav>
-
-    <header class="hero">
-      <h1>Hold a key, speak, release.</h1>
-      <p class="sub">Text lands at the cursor in many Mac apps; if safe insertion is unavailable, it stays on the clipboard. With Local transcription, speech recognition and recorded audio stay on your Mac.</p>
-      <div class="trust-row">
-        <span class="trust-badge"><span class="dot"></span>Open source</span>
-        <span class="trust-badge"><span class="dot"></span>Transparent</span>
-        <span class="trust-badge"><span class="dot"></span>Safe by design</span>
-      </div>
-      <div class="cta">
-        <div class="cta-actions">
-          <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-          <a class="btn secondary" href="https://github.com/conrader/plainsay" aria-label="Star Plainsay on GitHub">★ GitHub</a>
-        </div>
-        <span class="req">Free · MIT licensed · macOS 14+, Apple silicon</span>
-      </div>
-    </header>
-
-    <section id="screenshots">
-      <h2 class="kicker" style="margin-bottom: 28px;">Inside Plainsay</h2>
-      <figure class="hud-figure">
-        <img src="assets/screenshots/hud-listening.svg" alt="The HUD — right where you&#x27;re already typing" loading="lazy" width="420" height="140">
-        <figcaption>The HUD — right where you&#x27;re already typing</figcaption>
-      </figure>
-    </section>
-
-    <section id="open-source">
-      <h2 class="kicker" style="margin-bottom: 8px;">Open source, transparent, safe</h2>
-      <p class="lede">Trust isn&#x27;t a claim here — it&#x27;s something you can read. The Plainsay Mac client source is public under MIT. Every version already released under MIT remains free to fork, modify, and build yourself; third-party components and models have their own licenses.</p>
-      <div class="compare" style="margin-top: 28px;">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">WHAT&#x27;S OPEN</span>
-          <p>The Plainsay Mac client source includes its transcription and Polishing integrations, HUD, Settings, and Setup Assistant. Third-party components and models retain their own licenses. The Mac client sends no analytics or telemetry. Signed-update checks contact api.plainsay.app by default and can be disabled in Settings. Optional Cloud records the account, subscription, and usage metadata needed to operate the paid service.</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">WHAT ISN&#x27;T</span>
-          <p>The backend for the paid Cloud tier — it manages subscription state through Stripe, holds service-provider credentials, and records the account, subscription, and usage metadata needed for the paid service. The Plainsay Mac client source is open; the optional Cloud service is not.</p>
-        </div>
-      </div>
-      <p class="link" style="margin-top: 20px;"><a href="https://github.com/conrader/plainsay">github.com/conrader/plainsay</a> — browse the Mac client source</p>
-    </section>
-
-    <section id="how">
-      <h2 class="kicker">Spoken in, written out</h2>
-      <div class="compare">
-        <div class="col">
-          <span class="eyebrow" style="color: var(--slate);">YOU SAID</span>
-          <p style="color: var(--slate);">um so basically can we uh move the standup to like ten thirty tomorrow because i have a a dentist thing in the morning</p>
-        </div>
-        <div class="col">
-          <span class="eyebrow" style="color: var(--signal);">PLAINSAY TYPED</span>
-          <p>Can we move the standup to 10:30 tomorrow? I have a dentist appointment in the morning.</p>
-        </div>
-      </div>
-      <p class="compare-note">The cleanup pass removes fillers and false starts and fixes punctuation. By default, Polishing preserves wording, meaning, tone, and language; review important text. With Auto-translate on, it instead renders each new dictation in the target language selected from the Plainsay menu. The provider is swappable (Gemini, OpenRouter, OpenAI, Claude, or a custom endpoint), it can be switched off entirely, and any failure falls back to the raw transcript instead of failing the dictation.</p>
-    </section>
-
-    <section id="why">
-      <h2 class="kicker" style="margin-bottom: 32px;">Why Plainsay</h2>
-      <div class="reasons" id="reasons"></div>
-    </section>
-
-    <section id="reliability">
-      <div class="reliability">
-        <div style="display:flex; flex-direction:column; gap:10px;">
-          <h2 class="kicker" style="margin:0;">Reliability</h2>
-          <p class="headline">Clear recovery paths after a recording finishes.</p>
-        </div>
-        <div class="failures">
-          <div class="failure"><span class="when">A configured Polishing provider fails</span><p class="then">Falls back to the raw transcript automatically, with a HUD notice.</p></div>
-          <div class="failure"><span class="when">Nothing was focused to paste into</span><p class="then">Text stays on the clipboard, with a HUD prompt to press ⌘V.</p></div>
-          <div class="failure"><span class="when">The app closes after recording finishes</span><p class="then">Plainsay attempts to stage the finished audio before transcription. If staging succeeds, it can retry on the next launch.</p></div>
-          <div class="failure"><span class="when">A paste fails for any other reason</span><p class="then">When History is enabled, Plainsay adds the completed transcript to local history before attempting insertion.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="available-now">
-      <div class="block">
-        <h2 class="kicker" style="margin:0 0 10px;">Available now</h2>
-        <p class="dim">Choose a main spoken language, then add any others you use. Providers and models that accept only one language hint receive the main language. If Whisper returns an evidently unlisted language, it retries in the main language; Parakeet logs the mismatch because it cannot force a retry. With an active Cloud subscription and Polishing enabled and configured, choose an Auto-translate target from your spoken languages or English in the Plainsay menu, or toggle the last target anywhere with Control–Option–Command–T. Email mode is off by default and can lay out greetings, body paragraphs, and sign-offs automatically in supported mail apps and recognized webmail compose windows. Since v0.2.33 these styles work on the built-in Plainsay Cloud Polishing route as well as with style-aware BYOK and compatible local providers.</p>
-      </div>
-    </section>
-
-    <section id="pricing">
-      <h2 class="kicker" style="margin-bottom: 8px;">Three ways to run it</h2>
-      <p class="lede">Local is the free default: speech recognition and recorded audio stay on your Mac after a one-time transcription-model download. Plainsay Cloud needs no transcription-model download or API key to configure and costs US$4 gross/month or US$40 gross/year, VAT included.</p>
-      <div class="plans" id="plans"></div>
-    </section>
-
-    <section class="final">
-      <img src="assets/logo.svg" alt="" width="40" height="40" style="display:block">
-      <p class="headline">Start dictating with guided setup.</p>
-      <p class="sub">The time depends on your chosen transcription-model download; Cloud skips that model.</p>
-      <div style="margin-top:6px;">
-        <a class="btn" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download for macOS</a>
-      </div>
-    </section>
-
-    <footer>
-      <img src="assets/logo.svg" alt="" width="18" height="18" style="display:block">
-      <span class="text">Plainsay · dictation for macOS · MIT licensed</span>
-      <span class="spacer"></span>
-      <div class="links">
-        <a href="/compare/">Compare apps</a>
-        <a href="/vs/wispr-flow/">vs Wispr Flow</a>
-        <a href="/why-on-device/">Why on-device</a>
-        <a href="/how-it-works/">How it works</a>
-        <a href="https://github.com/conrader/plainsay">Source</a>
-        <a href="https://github.com/conrader/plainsay/releases/latest">Releases</a>
-        <a href="/about/">About</a>
-      <a href="/privacy/">Privacy</a>
-        <a href="/terms/">Terms</a>
-        <a href="mailto:hi@plainsay.app">hi@plainsay.app</a>
-      </div>
-      <div class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</div>
-    </footer>
-
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+<nav class="nav" aria-label="Main navigation">
+  <a class="brand" href="/" aria-label="Plainsay home"><img src="/assets/logo.svg" width="30" height="30" alt="">Plainsay</a>
+  <div class="nav-links"><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="https://github.com/conrader/plainsay">GitHub ↗</a><a class="button small" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download</a></div>
+</nav>
+<main id="main">
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Free, open-source dictation for Mac</p>
+    <h1>Good thoughts.<br>Fewer keystrokes.</h1>
+    <p class="intro">The email, the quick reply, the idea you don't want to lose. Say it naturally. Plainsay puts your words where you're writing.</p>
+    <div class="actions"><a class="button" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download free for Mac <span aria-hidden="true">↓</span></a><a class="text-link" href="https://github.com/conrader/plainsay">View source code ↗</a></div>
+    <p class="free-note">No account. No subscription. Premium features are optional.</p><p class="fine">macOS 14 or later · Apple silicon</p>
   </div>
+  <figure class="product-example">
+    <div class="paper"><div class="paper-bar"><span class="window-dots" aria-hidden="true">● ● ●</span><span>A note for tomorrow</span></div>
+      <div class="paper-body"><p class="document-label">THE MONDAY PLAN</p><p id="sample-text" aria-live="polite">Let's keep the morning free for the proposal. We can catch up after lunch.</p><span class="caret" aria-hidden="true"></span></div>
+      <img class="hud" src="/assets/screenshots/hud-listening.svg" width="420" height="140" alt="Plainsay's compact listening indicator">
+    </div>
+    <figcaption><span>Speak. Let go. Keep going.</span><button id="sample-button" class="text-link" type="button">Try another example ↻</button></figcaption>
+    <p class="example-note">Illustrative example. No microphone needed.</p>
+  </figure>
+</header>
+<div class="proof"><span>A native Mac app</span><span>MIT-licensed Mac app</span><span>Signed &amp; notarized</span><span>No analytics in the Mac client</span></div>
+
+<section class="section split" id="how">
+  <div><p class="eyebrow">Fits into your day</p><h2>Write where<br>you already work.</h2><p>You don't need another place to put your thoughts. Just click a text field in the app you're using.</p></div>
+  <ol class="steps"><li><span class="number">01</span><div><h3>Press your dictation key.</h3><p>Hold to talk, or tap to start and stop. Choose the key that feels right.</p></div></li><li><span class="number">02</span><div><h3>Say what you mean.</h3><p>A quick message or a longer thought. Optional Polishing tidies filler and punctuation.</p></div></li><li><span class="number">03</span><div><h3>Carry on.</h3><p>Your text lands at the cursor. If an app can't accept it, Plainsay keeps it on the clipboard for you.</p></div></li></ol>
+</section>
+
+<section class="section everyday" aria-labelledby="everyday-title">
+  <div class="section-heading"><p class="eyebrow">Useful in the ordinary moments</p><h2 id="everyday-title">From a thought to a finished message.</h2></div>
+  <div class="use-cases"><article><h3>The email you've been putting off.</h3><p>Say the greeting, the message, and the sign-off. Dictate into your email app with free Local mode.</p></article><article><h3>The idea you don't want to lose.</h3><p>Talk through a thought in your notes app. Local speech recognition runs on your Mac, without an account or subscription.</p></article><article><h3>The names you say every day.</h3><p>Add people, projects, and product names to your vocabulary. History and voice filtering are included in the free app too.</p></article></div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="section-heading pricing-heading"><div><p class="eyebrow">Free to use. Optional extras.</p><h2>Free comes first.<br>Premium is optional.</h2></div><p>Local is a complete, free dictation app. You never need to upgrade to keep dictating. Cloud is an optional paid service for hosted transcription, Polishing, and translation.</p></div>
+  <div class="pricing-grid">
+    <article class="plan"><p class="eyebrow">KEEP SPEECH ON YOUR MAC</p><h3>Plainsay Local</h3><p class="price">Free</p><p class="plan-description">For everyday dictation, with your audio staying on your Mac.</p><ul><li>Unlimited local dictation</li><li>Whisper or Parakeet speech models</li><li>No account or subscription</li><li>History, vocabulary, and voice filtering</li></ul><a class="button" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download free</a><p class="fine">Requires a one-time speech-model download. Optional hosted Polishing sends transcript text to its provider.</p></article>
+    <article class="plan cloud"><p class="eyebrow">OPTIONAL PREMIUM SERVICE</p><h3>Plainsay Cloud</h3><div class="billing" role="group" aria-label="Billing period"><button type="button" data-billing="monthly" aria-pressed="true">Monthly</button><button type="button" data-billing="annual" aria-pressed="false">Yearly · save US$8</button></div><p class="price" aria-live="polite"><span id="cloud-price">US$4</span><span class="period" id="cloud-period"> / month</span></p><p id="billing-note" class="fine">Billed monthly. VAT included.</p><noscript><p class="fine">Yearly billing is US$40, VAT included.</p></noscript><ul><li>Hosted transcription and Polishing</li><li>No speech-model download or API keys</li><li>Auto-translate and email formatting</li><li>900 transcription minutes per rolling 30 days</li></ul><a class="button outline" id="cloud-cta" href="#get-cloud">Get Plainsay Cloud →</a><p class="fine">Audio and transcript text are processed by the Cloud service. Selected-text AI rewrites currently require your own provider.</p></article>
+  </div>
+  <p class="provider-note">Already have an AI provider? Bring your own key in Settings. Provider charges apply. <a href="/how-it-works/">See how providers work →</a></p>
+  <details class="subscribe" id="get-cloud"><summary>Getting started with Cloud</summary><div><p>Subscriptions are set up inside the Mac app, so your purchase is connected to your Plainsay account.</p><ol><li><a href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download and open Plainsay.</a></li><li>Choose Plainsay Cloud in Setup, or Settings → Speech, then sign in.</li><li>Choose the monthly or annual subscription. Review your total in Stripe before paying.</li></ol><p class="fine">Already subscribed? Sign in with the same account in the app. Manage your subscription from Cloud settings.</p></div></details>
+</section>
+
+<section class="section home-comparisons"><p class="eyebrow">Looking at other dictation apps?</p><h2>Find the right fit for your Mac.</h2><p>Compare free options, paid extras, and how your speech is processed.</p><ul class="comparison-links"><li><a href="/vs/wispr-flow/">Plainsay vs Wispr Flow</a><span>Free local dictation, or a broader cloud workflow?</span></li><li><a href="/vs/superwhisper/">Plainsay vs Superwhisper</a><span>A focused free app, or more configurable modes?</span></li><li><a href="/vs/voiceink/">Plainsay vs VoiceInk</a><span>Two open-source approaches to Mac dictation.</span></li><li><a href="/vs/macwhisper/">Plainsay vs MacWhisper</a><span>Choose by the work in front of you.</span></li><li><a href="/vs/macos-dictation/">Plainsay vs Apple Dictation</a><span>Try the built-in option. Add more control if you need it.</span></li></ul><a class="text-link" href="/compare/">All Mac dictation comparisons →</a></section>
+<section class="section questions" aria-labelledby="questions-title"><h2 id="questions-title">A few things<br>you might wonder.</h2><div>
+<details><summary>Is it really free, or just a trial?</summary><p>Local mode is free, with no subscription and no word or minute quotas. You don't need an account or a payment card. Cloud is optional—you can keep using Local without buying premium features.</p></details>
+<details><summary>Is Plainsay open source?</summary><p>Yes. The Mac client is <a href="https://github.com/conrader/plainsay/blob/main/LICENSE">MIT-licensed</a>. You can <a href="https://github.com/conrader/plainsay">read the source, build it yourself, or contribute</a>. Third-party models and components have their own licenses. The optional hosted Cloud service is separate and is not open source.</p></details>
+<details><summary>Can I use it completely offline?</summary><p>Yes. Download a local speech model, then turn Polishing off or use a compatible local provider. Local speech recognition runs on your Mac. Cloud and hosted providers need an internet connection.</p></details>
+<details><summary>What leaves my Mac?</summary><p>Local transcription keeps recorded audio on your Mac. Cloud sends audio for transcription and text for Polishing. Your own providers receive the data needed for the features you enable. The Mac client sends no analytics; automatic update checks can be disabled. <a href="/privacy/">Read the privacy policy.</a></p></details>
+<details><summary>Does it work in every app?</summary><p>Plainsay works with many native Mac apps, browsers, and desktop tools. Some fields don't support reliable insertion or selection replacement. In those cases, copy the result and paste it yourself.</p></details>
+<details><summary>What does Cloud add?</summary><p>Hosted speech recognition and Polishing, plus translation and email layout. You don't need to download a transcription model or configure provider keys. Cloud includes 900 transcription minutes in any rolling 30-day window. Local dictation remains unmetered.</p></details>
+<details><summary>Is Voice Edit included with Cloud?</summary><p>Simple last-dictation replace and undo commands work locally with any speech service. Broader AI rewrites and selected-text Voice Edit currently need Gemini, Anthropic, OpenAI, OpenRouter, or a compatible custom provider configured in Polishing. A Cloud subscription alone does not enable those rewrites.</p></details>
+</div></section>
+
+<section class="closing"><p class="eyebrow">Give your keyboard a moment off.</p><h2>Your next message<br>starts with your voice.</h2><a class="button" href="https://api.plainsay.app/releases/Plainsay-latest.dmg">Download Plainsay free ↓</a><p class="fine">Free and open source. No subscription required.</p></section>
+</main>
+<footer><div class="footer-top"><a class="brand" href="/"><img src="/assets/logo.svg" width="24" height="24" alt="">Plainsay</a><p>Made for the way you write.</p></div><div class="footer-links"><a href="/about/">About</a><a href="/compare/">Compare apps</a><a href="https://github.com/conrader/plainsay">Source code</a><a href="https://github.com/conrader/plainsay/releases/latest">Releases</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="mailto:hi@plainsay.app">Contact</a></div>
+<details class="languages"><summary>Languages</summary><div><a href="/" lang="en">English</a><a href="/pl/" lang="pl">Polski</a><a href="/de/" lang="de">Deutsch</a><a href="/fr/" lang="fr">Français</a><a href="/es/" lang="es">Español</a><a href="/it/" lang="it">Italiano</a><a href="/pt/" lang="pt">Português</a><a href="/nl/" lang="nl">Nederlands</a><a href="/ja/" lang="ja">日本語</a><a href="/ko/" lang="ko">한국어</a><a href="/zh/" lang="zh">中文</a><a href="/ru/" lang="ru">Русский</a><a href="/uk/" lang="uk">Українська</a></div></details>
+<p class="imprint">DMT sp. z o.o. · ul. Budowlanych 1A, 62-081 Baranowo, Poland · KRS 0000836521 · NIP 7812007881 · Kapitał zakładowy: 25 000 PLN · Sąd Rejonowy Poznań–Nowe Miasto i Wilda w Poznaniu, VIII Wydział Gospodarczy KRS</p></footer>
 </div>
-
-<script>
-(function () {
-  "use strict";
-
-  // Inlined rather than loaded from a CDN as a CSS mask: cross-origin SVG
-  // masks are unreliable across browsers (silently blank in some), and every
-  // icon this page uses fits in a few hundred bytes anyway. Paths are
-  // Lucide's (ISC licensed), unmodified.
-  var SF_TO_LUCIDE = {
-    "lock.shield.fill": "shield-check",
-    "cloud.fill": "cloud",
-    "key.horizontal.fill": "key-round",
-    "text.quote": "quote",
-    "gearshape.2": "settings",
-    "clock.arrow.circlepath": "history",
-    "waveform.badge.mic": "mic",
-    "checkmark.circle.fill": "circle-check",
-    "checkmark": "check",
-    "minus.circle": "circle-minus",
-    "circle": "circle"
-  };
-  var ICON_PATHS = {
-    "shield-check": '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
-    "cloud": '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
-    "key-round": '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/>',
-    "quote": '<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>',
-    "settings": '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
-    "history": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
-    "mic": '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>',
-    "circle-check": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-    "check": '<path d="M20 6 9 17l-5-5"/>',
-    "circle-minus": '<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>',
-    "circle": '<circle cx="12" cy="12" r="10"/>'
-  };
-
-  function icon(name, size, color, extra) {
-    var slug = SF_TO_LUCIDE[name] || name;
-    var inner = ICON_PATHS[slug] || "";
-    return '<svg class="ico" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
-      'style="width:' + size + 'px;height:' + size + 'px;color:' + color + ';' + (extra || "") + '">' +
-      inner + '</svg>';
-  }
-
-  // -----------------------------------------------------------------
-  // Why Plainsay — feature and trust reasons
-  // -----------------------------------------------------------------
-  var REASONS = [
-    { icon: "text.quote", title: "Open source", body: "The Plainsay Mac client source is public under MIT. Every version already released under MIT remains free to fork and modify; third-party components and models have their own licenses." },
-    { icon: "lock.shield.fill", title: "Transparent by default", body: "The Mac client sends no analytics or telemetry. Signed-update checks contact api.plainsay.app by default and can be disabled in Settings. Optional Cloud records the account, subscription, and usage metadata needed to operate the paid service." },
-    { icon: "clock.arrow.circlepath", title: "Recoverable fallbacks", body: "If Polishing fails, Plainsay uses the raw transcript. If there is no safe paste target, text stays on the clipboard; when History is enabled, Plainsay adds the completed transcript before insertion." },
-    { icon: "clock.arrow.circlepath", title: "History you control", body: "History keeps up to 100 dictations for 30 days by default. Choose 7, 30, 90, or 365 days, clear it, or turn it off; turning it off deletes saved transcripts." },
-    { icon: "text.quote", title: "Vocabulary suggestions", body: "Settings proposes recurring names and product terms from saved dictations. Nothing is added unless you choose Add, and every suggestion can be dismissed. Applied corrections use conservative matching and choose the closest candidate." },
-    { icon: "gearshape.2", title: "No vendor lock-in", body: "Multiple local and hosted transcription and Polishing providers are supported, including your own API key and OpenAI-compatible endpoint." },
-    { icon: "waveform.badge.mic", title: "Voice filtering", body: "Voice enrollment is a best-effort local filter. If filtering is unavailable or fails, dictation continues unfiltered; Cloud or BYOK transcription may then receive unfiltered audio." },
-    { icon: "checkmark.circle.fill", title: "Real pricing", body: "The hosted tier is US$4 gross/month or US$40 gross/year, VAT included. Local includes complete on-device dictation with no minute or word quotas and no account. Hosted transcription and Polishing are optional." }
-  ];
-  var reasonsEl = document.getElementById("reasons");
-  REASONS.forEach(function (r) {
-    var div = document.createElement("div");
-    div.className = "reason";
-    div.innerHTML = icon(r.icon, 20, "var(--signal)") +
-      '<div><h3>' + r.title + '</h3><p>' + r.body + '</p></div>';
-    reasonsEl.appendChild(div);
-  });
-
-  // -----------------------------------------------------------------
-  // Three plan cards — selectable, mirrors components/setup/PlanCard.jsx
-  // -----------------------------------------------------------------
-  var PLANS = [
-    {
-      id: "local", eyebrow: "LOCAL SPEECH", title: "On this Mac", price: "Free",
-      icon: "lock.shield.fill", pair: ["#32D74B", "#66D4CF"],
-      features: ["Whisper or Parakeet, on-device", "Local transcription keeps recorded audio on this Mac", "No account, no subscription"],
-      caveats: ["Recommended multilingual models: 475–632 MB; English-only from 150 MB", "Hosted Polishing can send transcript text unless it is off or uses a compatible local endpoint", "Keeps using memory while Plainsay is running"]
-    },
-    {
-      id: "cloud", eyebrow: "NO TRANSCRIPTION-MODEL DOWNLOAD", title: "Plainsay Cloud", price: "US$4 gross/month<br><small>US$40 gross/year · VAT included</small>",
-      icon: "cloud.fill", pair: ["#5E5CE6", "#0A84FF"],
-      features: ["No transcription-model download, no API keys", "Transcription and Polishing included", "Auto-translate and email layout included, no separate provider key needed"],
-      caveats: ["Audio is sent to Plainsay Cloud to be transcribed", "900 transcription minutes in any rolling 30-day window; Local mode is unmetered"]
-    },
-    {
-      id: "byok", eyebrow: "YOUR PROVIDER", title: "Bring your own key", price: "Provider rates",
-      icon: "key.horizontal.fill", pair: ["#FF9F0A", "#FF375F"],
-      features: ["Groq, OpenAI, deAPI, or any OpenAI-compatible endpoint", "You control the model and the bill"],
-      caveats: ["Audio goes to the provider you choose"]
-    }
-  ];
-  var plansEl = document.getElementById("plans");
-  var selectedPlan = "local";
-
-  function renderPlans() {
-    plansEl.innerHTML = "";
-    PLANS.forEach(function (p) {
-      var isSelected = p.id === selectedPlan;
-      var card = document.createElement("div");
-      card.className = "plan-card" + (isSelected ? " selected" : "");
-      card.style.setProperty("--pc-a", p.pair[0]);
-      card.style.setProperty("--pc-b", p.pair[1]);
-      card.setAttribute("role", "button");
-      card.setAttribute("tabindex", "0");
-      card.setAttribute("aria-pressed", String(isSelected));
-
-      var featuresHtml = p.features.map(function (t) {
-        return '<li>' + icon("checkmark", 11, "var(--label-secondary)") + '<span>' + t + '</span></li>';
-      }).join("");
-      var caveatsHtml = p.caveats.map(function (t) {
-        return '<li>' + icon("minus.circle", 11, "var(--sys-orange)") + '<span>' + t + '</span></li>';
-      }).join("");
-
-      card.innerHTML =
-        '<div class="top-row">' +
-          '<div class="plan-mark">' + icon(p.icon, 22, "#fff") + '</div>' +
-          icon(isSelected ? "checkmark.circle.fill" : "circle", 17, isSelected ? "var(--sys-accent)" : "rgba(120,128,148,0.45)") +
-        '</div>' +
-        '<div class="head-text">' +
-          '<div class="eyebrow">' + p.eyebrow + '</div>' +
-          '<div class="title">' + p.title + '</div>' +
-          '<div class="price">' + p.price + '</div>' +
-        '</div>' +
-        '<ul>' + featuresHtml + '</ul>' +
-        '<ul class="caveats">' + caveatsHtml + '</ul>';
-
-      function select() { selectedPlan = p.id; renderPlans(); }
-      card.addEventListener("click", select);
-      card.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); }
-      });
-      plansEl.appendChild(card);
-    });
-  }
-  renderPlans();
-})();
-</script>
+<script src="/assets/home.js" defer></script>
 </body>
 </html>
