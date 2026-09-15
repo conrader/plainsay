@@ -108,3 +108,101 @@ struct EmailPromptTests {
     }
 }
 
+/// T-238 / PROJECT_REVIEW.md P1: `resolvedDictationStyle()` gates email
+/// layout and translation on `cloud.account?.isActive`, but that account is
+/// memory-only and was previously only refreshed for two provider choices
+/// (Cloud transcription, Plainsay Polishing). A subscriber on local speech
+/// with a BYOK cleanup provider therefore had `cloud.account == nil` after
+/// every fresh launch, so turning on "Format dictation as an email" did
+/// nothing — the toggle looked broken rather than merely unrefreshed.
+private final class MemoryTokenStore: CloudTokenStoring, @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: String?
+    init(token: String? = nil) { stored = token }
+    var token: String? {
+        get { lock.withLock { stored } }
+        set { lock.withLock { stored = newValue } }
+    }
+}
+
+@Suite("Email mode needs a refreshed Cloud account", .serialized)
+@MainActor
+struct EmailModeCloudRefreshTests {
+    private let host = "email-mode-refresh.plainsay.test"
+
+    private func makeCoordinator(
+        cloud: PlainsayCloudClient,
+        transcriptionSource: TranscriptionSource,
+        cleanupProvider: CleanupProvider,
+        emailModeEnabled: Bool
+    ) -> DictationCoordinator {
+        let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
+        let settings = PlainsaySettings(defaults: suite)
+        settings.transcriptionSource = transcriptionSource
+        settings.cleanupProvider = cleanupProvider
+        settings.emailModeEnabled = emailModeEnabled
+        let history = TranscriptHistory(
+            directory: URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("plainsay-email-mode-\(UUID().uuidString)")
+        )
+        let engine = FakeEngine()
+        let cleaner = FakeCleaner()
+        return DictationCoordinator(
+            settings: settings,
+            history: history,
+            cloud: cloud,
+            recorder: FakeRecorder(),
+            inserter: FakeInserter(),
+            makeEngine: { _, _, _ in engine },
+            makeCleaner: { _ in cleaner },
+            usesInjectedEngine: true
+        )
+    }
+
+    @Test("On-device speech + BYOK cleanup + email mode still refreshes the Cloud account")
+    func emailModeTriggersRefresh() async {
+        MockURLProtocol.respond(
+            host: host,
+            json: #"{"status":"active","usage":{"usedSeconds":0,"limitSeconds":1000}}"#
+        )
+        let cloud = PlainsayCloudClient(
+            baseURL: "https://\(host)",
+            tokenStore: MemoryTokenStore(token: "psk_test"),
+            session: MockURLProtocol.session()
+        )
+        let coordinator = makeCoordinator(
+            cloud: cloud,
+            transcriptionSource: .onDevice,
+            cleanupProvider: .gemini,
+            emailModeEnabled: true
+        )
+
+        await coordinator.reloadModel()
+
+        #expect(cloud.account?.isActive == true, "an active subscriber with email mode on must have a live account, or resolvedDictationStyle() silently falls back to plain")
+    }
+
+    @Test("Without email mode, translation, Cloud transcription, or Plainsay Polishing, local users stay network-free")
+    func noPremiumControlInUseSkipsRefresh() async {
+        MockURLProtocol.respond(
+            host: host,
+            json: #"{"status":"active","usage":{"usedSeconds":0,"limitSeconds":1000}}"#
+        )
+        let cloud = PlainsayCloudClient(
+            baseURL: "https://\(host)",
+            tokenStore: MemoryTokenStore(token: "psk_test"),
+            session: MockURLProtocol.session()
+        )
+        let coordinator = makeCoordinator(
+            cloud: cloud,
+            transcriptionSource: .onDevice,
+            cleanupProvider: .gemini,
+            emailModeEnabled: false
+        )
+
+        await coordinator.reloadModel()
+
+        #expect(cloud.account == nil, "a purely local setup must never call the subscription service")
+    }
+}
+

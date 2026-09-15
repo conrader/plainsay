@@ -257,6 +257,28 @@ final class FakeInserter: TextInserting {
     }
 }
 
+/// An unsigned-in, unreachable-host client. `DictationCoordinator`'s own
+/// default (`PlainsayCloudClient()`) reads the *real* system Keychain and
+/// talks to production `api.plainsay.app` — harmless as long as nothing in
+/// the pipeline ever has a reason to call it, but a coordinator built for
+/// tests must never depend on that being true. Whichever developer machine
+/// runs the suite may well have a real, active Plainsay Cloud session in its
+/// Keychain, and a future code path that legitimately starts refreshing the
+/// account (as `emailModeEnabled` now does, T-238) would otherwise make a
+/// live request against production using that developer's real credentials
+/// mid test run.
+private final class UnsignedTokenStore: CloudTokenStoring, @unchecked Sendable {
+    var token: String?
+}
+
+@MainActor
+private func isolatedCloudClient() -> PlainsayCloudClient {
+    PlainsayCloudClient(
+        baseURL: "https://cloud.invalid.plainsay.tests",
+        tokenStore: UnsignedTokenStore()
+    )
+}
+
 // MARK: - Harness
 
 @MainActor
@@ -292,6 +314,7 @@ private struct Harness {
         coordinator = DictationCoordinator(
             settings: settings,
             history: history,
+            cloud: isolatedCloudClient(),
             recorder: recorder,
             inserter: inserter,
             makeEngine: { _, _, _ in engine },

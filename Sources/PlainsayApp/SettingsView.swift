@@ -179,6 +179,12 @@ private struct GeneralSettings: View {
         .formStyle(.grouped)
         .onChange(of: settings.binding) { coordinator.settingsChanged() }
         .onChange(of: settings.hotkeyMode) { coordinator.settingsChanged() }
+        // Turning this on is itself "using a premium control" — refresh the
+        // Cloud entitlement right away rather than waiting for some other
+        // setting change to trigger the next model reload. Otherwise a
+        // subscriber on local speech + BYOK cleanup flips the switch and
+        // dictates immediately into plain text (T-238).
+        .onChange(of: settings.emailModeEnabled) { Task { await coordinator.refreshCloudCleanupIfNeeded() } }
     }
 
     private var behaviorHint: String {
