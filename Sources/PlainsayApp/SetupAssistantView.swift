@@ -1284,6 +1284,7 @@ private struct ReadySetupStep: View {
                 ModelLoadStatusView(
                     state: coordinator.modelState,
                     timing: coordinator.modelLoadTiming,
+                    totalSize: settings.model.approximateSize,
                     onRetry: { Task { await coordinator.retryModel() } },
                     onRestart: restartPlainsay
                 )

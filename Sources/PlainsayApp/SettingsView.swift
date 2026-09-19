@@ -221,6 +221,25 @@ private struct SpeechSettings: View {
     @State private var asrKeyRevision = 0
     @State private var editingKeyRevision = 0
 
+    /// What a first run actually costs, said before it starts rather than
+    /// discovered by waiting. The preparation sentence only appears for a
+    /// model whose preparation has been timed — see
+    /// `OnDeviceModel.approximatePreparationTime` (conrader/plainsay#46).
+    private var modelDownloadNote: String {
+        guard let preparation = settings.model.approximatePreparationTime else {
+            return Localization.appFormat(
+                "settings.modelDownloadNote", fallback: "%@ download, then it runs entirely on this Mac.",
+                settings.model.approximateSize
+            )
+        }
+        return Localization.appFormat(
+            "settings.modelDownloadNoteWithPreparation",
+            fallback: "%@ download, then a one-time preparation for this Mac — %@. After that it runs entirely on this Mac.",
+            settings.model.approximateSize,
+            preparation
+        )
+    }
+
     var body: some View {
         Form {
             Section {
@@ -246,15 +265,11 @@ private struct SpeechSettings: View {
                     ModelLoadStatusView(
                         state: coordinator.modelState,
                         timing: coordinator.modelLoadTiming,
+                        totalSize: settings.model.approximateSize,
                         onRetry: { Task { await coordinator.retryModel() } },
                         onRestart: restartPlainsay
                     )
-                    Text(
-                        Localization.appFormat(
-                            "settings.modelDownloadNote", fallback: "%@ download, then it runs entirely on this Mac.",
-                            settings.model.approximateSize
-                        )
-                    )
+                    Text(modelDownloadNote)
                         .font(.callout)
                         .foregroundStyle(.secondary)
 

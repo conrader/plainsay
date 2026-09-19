@@ -211,6 +211,17 @@ public struct SpeechModelLoadWatchdog: Sendable, Equatable {
         }
     }
 
+    /// Whether the download's size belongs on screen right now.
+    ///
+    /// It answers "how much longer" only while bytes are still arriving. Once
+    /// the file is on disk and Core ML is compiling it, the megabyte count is
+    /// no longer what the wait is made of, and leaving it up implies the
+    /// remaining time is proportional to it (conrader/plainsay#46).
+    public var showsDownloadSize: Bool {
+        if case .downloading = state { return true }
+        return false
+    }
+
     public var recoveryAction: RecoveryAction? {
         if case .failed = state { return .retry }
         if attention == .downloadStalled { return .retry }
@@ -273,6 +284,27 @@ public enum OnDeviceModel: String, Codable, CaseIterable, Sendable {
         case .distilLargeV3Turbo: Localization.coreString("model.size.distilLargeV3Turbo", fallback: "600 MB")
         case .largeV3Turbo: Localization.coreString("model.size.largeV3Turbo", fallback: "632 MB")
         case .parakeetTDT06BV3: Localization.coreString("model.size.parakeetTDT06BV3", fallback: "~475 MB")
+        }
+    }
+
+    /// Roughly how long the one-time preparation takes after the download,
+    /// or nil for a model nobody has timed.
+    ///
+    /// Core ML gives no ETA while it compiles, so this is measured rather than
+    /// computed — and only where a measurement exists. Parakeet: 23s of model
+    /// compilation on an M4 (Encoder 22.2s, the other three under a second
+    /// between them), measured 2026-09-11. Nothing is claimed for the Whisper
+    /// models, because a number invented for them would be indistinguishable
+    /// on screen from this one.
+    public var approximatePreparationTime: String? {
+        switch self {
+        case .parakeetTDT06BV3:
+            Localization.coreString(
+                "model.preparationTime.parakeetTDT06BV3",
+                fallback: "under a minute on Apple Silicon"
+            )
+        case .baseEN, .smallEN, .distilLargeV3Turbo, .largeV3Turbo:
+            nil
         }
     }
 

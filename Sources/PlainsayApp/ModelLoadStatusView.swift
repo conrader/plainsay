@@ -11,6 +11,11 @@ struct ModelLoadPresentation {
     let state: SpeechModelLoadState
     let timing: SpeechModelLoadTiming?
     let now: Date
+    /// How big this download is, where the caller knows. Shown beside the
+    /// percentage so "42%" answers "of what?" — a first run is the only time
+    /// anyone sees this, and it is the moment they decide whether the app is
+    /// working (conrader/plainsay#46).
+    var totalSize: String?
 
     private var watchdog: SpeechModelLoadWatchdog {
         SpeechModelLoadWatchdog(state: state, timing: timing, now: now)
@@ -29,10 +34,15 @@ struct ModelLoadPresentation {
     }
 
     var progressSummary: String? {
-        let parts = [
-            percentage.map { Localization.appFormat("modelStatus.percentage", fallback: "%d%%", $0) },
-            elapsedText,
-        ].compactMap { $0 }
+        let progress: String? = switch (percentage, totalSize, watchdog.showsDownloadSize) {
+        case let (.some(percent), .some(size), true):
+            Localization.appFormat("modelStatus.percentageOfSize", fallback: "%d%% of %@", percent, size)
+        case let (.some(percent), _, _):
+            Localization.appFormat("modelStatus.percentage", fallback: "%d%%", percent)
+        default:
+            nil
+        }
+        let parts = [progress, elapsedText].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
@@ -116,6 +126,7 @@ struct ModelLoadStatusView: View {
     let state: SpeechModelLoadState
     let timing: SpeechModelLoadTiming?
     let subject: Subject
+    let totalSize: String?
     let onRetry: (() -> Void)?
     let onRestart: (() -> Void)?
 
@@ -123,12 +134,14 @@ struct ModelLoadStatusView: View {
         state: SpeechModelLoadState,
         timing: SpeechModelLoadTiming? = nil,
         subject: Subject = .speech,
+        totalSize: String? = nil,
         onRetry: (() -> Void)? = nil,
         onRestart: (() -> Void)? = nil
     ) {
         self.state = state
         self.timing = timing
         self.subject = subject
+        self.totalSize = totalSize
         self.onRetry = onRetry
         self.onRestart = onRestart
     }
@@ -137,10 +150,10 @@ struct ModelLoadStatusView: View {
         Group {
             if timing != nil {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
-                    content(presentation: ModelLoadPresentation(state: state, timing: timing, now: context.date))
+                    content(presentation: ModelLoadPresentation(state: state, timing: timing, now: context.date, totalSize: totalSize))
                 }
             } else {
-                content(presentation: ModelLoadPresentation(state: state, timing: nil, now: Date()))
+                content(presentation: ModelLoadPresentation(state: state, timing: nil, now: Date(), totalSize: totalSize))
             }
         }
     }
