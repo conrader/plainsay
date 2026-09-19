@@ -98,7 +98,7 @@ struct VoiceEnrollmentView: View {
         recordTask = Task {
             do {
                 try await enrollment.prepare()
-                try enrollment.start()
+                try await enrollment.start()
                 secondsRemaining = Self.sampleSeconds
                 for _ in 0..<Self.sampleSeconds {
                     try Task.checkCancellation()

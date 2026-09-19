@@ -210,12 +210,28 @@ public final class AudioRecorder: AudioRecording {
         AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
     }
 
+    /// Whether to put the question to macOS at all.
+    ///
+    /// Only an already-granted microphone is worth skipping. Asking when the
+    /// answer is already no costs nothing — `requestAccess` returns false
+    /// without showing a dialog — and it is the only call that registers
+    /// Plainsay as a requester, which is what puts the switch in System
+    /// Settings in the first place.
+    ///
+    /// Skipping it for every status except `.notDetermined` produced
+    /// conrader/plainsay#49: no prompt, no entry in Privacy & Security ›
+    /// Microphone, and therefore no way to grant it from inside the app *or*
+    /// from System Settings. Accessibility and Input Monitoring registered
+    /// fine on the same install, which is what made it look like a signing
+    /// or entitlement fault rather than our own gate.
+    nonisolated static func shouldAskSystemForMicrophone(_ status: AVAuthorizationStatus) -> Bool {
+        status != .authorized
+    }
+
     public static func requestMicrophoneAccess() async -> Bool {
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized: return true
-        case .notDetermined: return await AVCaptureDevice.requestAccess(for: .audio)
-        default: return false
-        }
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        guard shouldAskSystemForMicrophone(status) else { return true }
+        return await AVCaptureDevice.requestAccess(for: .audio)
     }
 
     public func start() throws {
