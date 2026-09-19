@@ -16,6 +16,7 @@
   · <a href="#install">Homebrew</a>
   · <a href="https://plainsay.app/">Website</a>
   · <a href="BENCHMARK.md">Benchmark</a>
+  · <a href="COMPATIBILITY.md">App compatibility</a>
 </p>
 
 <p align="center">
