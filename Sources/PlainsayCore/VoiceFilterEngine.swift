@@ -142,6 +142,10 @@ public final class VoiceEnrollment {
     public private(set) var loadTiming: SpeechModelLoadTiming?
     private var pollTask: Task<Void, Never>?
     private let now: @MainActor @Sendable () -> Date
+    /// Injected so tests can exercise a refusal without a real TCC prompt —
+    /// a test run that raises the system microphone dialog is a test run
+    /// nobody can leave unattended.
+    private let requestMicrophone: @MainActor @Sendable () async -> Bool
 
     /// Shorter than this isn't enough audio to extract a reliable embedding.
     public static let minimumSampleDuration: TimeInterval = 2.0
@@ -158,11 +162,15 @@ public final class VoiceEnrollment {
 
     public init(
         recorder: any AudioRecording = AudioRecorder(),
-        now: @escaping @MainActor @Sendable () -> Date = { Date() }
+        now: @escaping @MainActor @Sendable () -> Date = { Date() },
+        requestMicrophone: @escaping @MainActor @Sendable () async -> Bool = {
+            await AudioRecorder.requestMicrophoneAccess()
+        }
     ) {
         self.recorder = recorder
         self.filterEngine = VoiceFilterEngine()
         self.now = now
+        self.requestMicrophone = requestMicrophone
     }
 
     public func prepare() async throws {
@@ -219,7 +227,16 @@ public final class VoiceEnrollment {
         )
     }
 
-    public func start() throws {
+    /// Asks macOS for the microphone, then records.
+    ///
+    /// `recorder.start()` only reads the authorization status and throws, so
+    /// going straight to it meant the button in Settings could report
+    /// "Microphone access denied" on a Mac that had never been asked — and,
+    /// because `requestAccess` is also what registers an app in Privacy &
+    /// Security › Microphone, left nothing there to switch on either
+    /// (conrader/plainsay#49).
+    public func start() async throws {
+        guard await requestMicrophone() else { throw AudioRecorderError.microphoneDenied }
         try recorder.start()
         isRecording = true
     }

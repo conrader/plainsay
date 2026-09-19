@@ -222,8 +222,13 @@ public final class DictationCoordinator {
         // prompt is the *only* way this grant can ever be given — and if we
         // wait until the first hotkey press to ask, the prompt steals focus
         // mid-sentence and that dictation is lost regardless of the answer.
+        // Ask unless it is already granted — not only when the status is
+        // `.notDetermined`. A Mac whose TCC record reads anything else was
+        // never asked by us again, and since `requestAccess` is what puts an
+        // app in the Microphone list, it never appeared there to be switched
+        // on by hand either (conrader/plainsay#49).
         if requestMicrophonePermission,
-           AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
+           AudioRecorder.shouldAskSystemForMicrophone(AVCaptureDevice.authorizationStatus(for: .audio)) {
             await Permission.microphone.request()
         }
 
