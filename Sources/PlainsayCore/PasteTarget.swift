@@ -30,13 +30,26 @@ public enum PasteTargetDecision: Equatable, Sendable {
     case keepOnClipboard(PasteTargetLoss)
 }
 
+/// Which app is in front when the decision is made, relative to the target.
+public enum PasteTargetFront: Equatable, Sendable {
+    /// The app the dictation was aimed at.
+    case target
+    /// Plainsay itself: its HUD, menu-bar menu or one of its windows.
+    case plainsay
+    /// Some other app.
+    case otherApp
+    /// `NSWorkspace` named no frontmost app at all.
+    case unknown
+}
+
 /// What is known about a remembered target at the moment of deciding.
 ///
 /// A plain value with no AppKit in it, so the policy below is a pure function
 /// of an observation rather than of the machine the code is running on.
 public struct PasteTargetObservation: Equatable, Sendable {
     public let isTerminated: Bool
-    public let isFrontmost: Bool
+    public let front: PasteTargetFront
+    public var isFrontmost: Bool { front == .target }
     /// Whether focus is on the window that was captured.
     ///
     /// Nil means Accessibility could not say — no grant, or an app that
@@ -45,10 +58,19 @@ public struct PasteTargetObservation: Equatable, Sendable {
     /// probe.
     public let focusedWindowStillMatches: Bool?
 
-    public init(isTerminated: Bool, isFrontmost: Bool, focusedWindowStillMatches: Bool?) {
+    public init(isTerminated: Bool, front: PasteTargetFront, focusedWindowStillMatches: Bool?) {
         self.isTerminated = isTerminated
-        self.isFrontmost = isFrontmost
+        self.front = front
         self.focusedWindowStillMatches = focusedWindowStillMatches
+    }
+
+    /// "Not frontmost" here means another app is.
+    public init(isTerminated: Bool, isFrontmost: Bool, focusedWindowStillMatches: Bool?) {
+        self.init(
+            isTerminated: isTerminated,
+            front: isFrontmost ? .target : .otherApp,
+            focusedWindowStillMatches: focusedWindowStillMatches
+        )
     }
 }
 
@@ -100,7 +122,11 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
     /// compatibility table — and bringing Plainsay back to the front is as
     /// correct a restoration as any other app's.
     public static func capture() -> FrontmostPasteTarget? {
-        guard let application = NSWorkspace.shared.frontmostApplication else { return nil }
+        target(for: NSWorkspace.shared.frontmostApplication)
+    }
+
+    static func target(for application: NSRunningApplication?) -> FrontmostPasteTarget? {
+        guard let application else { return nil }
         return FrontmostPasteTarget(application: application)
     }
 
@@ -144,7 +170,7 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
     private func observe() -> PasteTargetObservation {
         PasteTargetObservation(
             isTerminated: application.isTerminated,
-            isFrontmost: isFrontmost,
+            front: isFrontmost ? .target : .otherApp,
             focusedWindowStillMatches: focusedWindowStillMatches()
         )
     }

@@ -186,7 +186,10 @@ public struct PasteboardTextInserter: TextInserting {
         if focusedElement == .present { return true }
 
         guard let frontmost = NSWorkspace.shared.frontmostApplication else { return false }
-        let allowsFocusedWindowFallback = frontmost.bundleIdentifier == "com.openai.codex"
+        let allowsFocusedWindowFallback = Self.allowsFocusedWindowFallback(
+            bundleIdentifier: frontmost.bundleIdentifier,
+            bundleURL: frontmost.bundleURL
+        )
 
         // A definite missing element normally means no paste target. ChatGPT's
         // custom editor is the confirmed exception: its focused window accepts
@@ -237,6 +240,12 @@ public struct PasteboardTextInserter: TextInserting {
             // an inconclusive probe, not proof that no editor can receive ⌘V.
             return .unknown
         }
+    }
+
+    /// Whether a focused window is enough evidence of somewhere to paste when
+    /// the focused-element probe definitely came back empty.
+    static func allowsFocusedWindowFallback(bundleIdentifier: String?, bundleURL: URL?) -> Bool {
+        bundleIdentifier == "com.openai.codex"
     }
 
     /// Accessibility cannot expose the focused editor in every native app or
