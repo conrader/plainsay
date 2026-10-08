@@ -1139,12 +1139,12 @@ public final class DictationCoordinator {
 
         let anchor = usesInjectedEngine ? nil : DictationInsertionAnchor.capture()
         let outcome = await insert(finalText)
-        let verifiedAnchor = outcome == .inserted && anchor?.confirmInsertion(finalText) == true ? anchor : nil
+        let verifiedAnchor = outcome.sentPaste && anchor?.confirmInsertion(finalText) == true ? anchor : nil
         // Commands have a separate pipeline and can never overwrite this target.
         lastDictation = finalText.isEmpty ? nil : LastDictation(text: finalText, target: verifiedAnchor, historyID: historyID)
 
         switch outcome {
-        case .inserted:
+        case .inserted, .insertedUnconfirmed:
             history.acknowledgeInsertionIssues()
             phase = usedRaw ? .insertedRaw : .idle
             scheduleReset()
@@ -1211,7 +1211,8 @@ public final class DictationCoordinator {
             outcome: outcome,
             report: pasteTarget?.lastReport,
             targetBundleIdentifier: pasteTarget?.bundleIdentifier ?? targetApp?.bundleIdentifier,
-            frontmostBundleIdentifier: NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            frontmostBundleIdentifier: NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+            keepOnClipboardSetting: settings.keepOnClipboard
         )
         Log.insertion.notice("\(line, privacy: .public)")
         return outcome

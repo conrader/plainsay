@@ -609,6 +609,22 @@ struct PipelineTests {
         #expect(harness.history.records.contains { $0.outcome == .insertionUnverifiedAcknowledged })
     }
 
+    @Test("An unconfirmed paste still counts as pasted, not as a clipboard fallback")
+    func unconfirmedPasteIsStillAPaste() async throws {
+        let harness = Harness()
+        harness.inserter.outcome = .insertedUnconfirmed
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.inserter.inserted == ["The thing is, it works."])
+        #expect(harness.inserter.copied.isEmpty)
+        #expect(harness.coordinator.phase == .idle)
+        #expect(!harness.coordinator.lastInsertionNeedsManualPaste)
+        #expect(harness.history.mostRecent?.outcome == .inserted)
+    }
+
     @Test("A dictation whose window went away waits on the clipboard instead of landing elsewhere")
     func lostTargetIsNotPastedSomewhereElse() async throws {
         // The bug, in one test. Cloud Polishing takes seconds; the user moves
