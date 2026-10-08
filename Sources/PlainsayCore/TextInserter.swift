@@ -172,7 +172,7 @@ public struct PasteboardTextInserter: TextInserting {
         Log.insertion.info(
             "inserted \(text.count, privacy: .public) chars, accessibility=\(trusted, privacy: .public)"
         )
-        return .inserted
+        return certainty == .confirmed ? .inserted : .insertedUnconfirmed
     }
 
     @MainActor
@@ -316,8 +316,10 @@ public struct PasteboardTextInserter: TextInserting {
     }
 
     /// Whether the clipboard from before the dictation is put back after ⌘V.
+    /// Not after an unconfirmed paste: if that ⌘V landed nowhere, the restore
+    /// would leave the dictation only in History.
     static func restoresPreviousClipboard(certainty: PasteTargetCertainty, keepOnClipboard: Bool) -> Bool {
-        !keepOnClipboard
+        !keepOnClipboard && certainty == .confirmed
     }
 
     /// Virtual keycode for `v` on any layout (ANSI position-based).

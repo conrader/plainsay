@@ -16,21 +16,32 @@ enum PasteDecisionLog {
     ) -> String {
         let decision: String
         let reason: String
+        // Whether the dictation is still on the clipboard afterwards, rather
+        // than the contents from before it.
+        let clipboardKept: Bool
         switch outcome {
-        case .inserted, .insertedUnconfirmed:
+        case .inserted:
             decision = "paste"
             reason = report?.reason ?? "noTarget"
+            clipboardKept = keepOnClipboardSetting
+        case .insertedUnconfirmed:
+            decision = "paste"
+            reason = report?.reason ?? "noTarget"
+            clipboardKept = true
         case .noFocusedElement:
             decision = "keepOnClipboard"
             reason = "nothingFocused"
+            clipboardKept = true
         case .targetUnavailable(let loss):
             decision = "keepOnClipboard"
             reason = loss.rawValue
+            clipboardKept = true
         }
         let frontmost = report?.frontmostBundleIdentifier ?? frontmostBundleIdentifier
         return "paste decision=\(decision) reason=\(reason)"
             + " target=\(targetBundleIdentifier ?? "none")"
             + " reactivationAttempted=\(report?.reactivationAttempted ?? false)"
             + " frontmost=\(frontmost ?? "unknown")"
+            + " clipboardKept=\(clipboardKept)"
     }
 }
