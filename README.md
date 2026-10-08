@@ -1,37 +1,29 @@
-<p align="center">
-  <img src="docs/assets/logo.svg" alt="Plainsay" width="96" height="96">
-</p>
-
+<p align="center"><img src="docs/assets/logo.svg" alt="Plainsay" width="96" height="96"></p>
 <h1 align="center">Plainsay</h1>
-
-<p align="center"><strong>Hold a key. Speak. Release. Get text at your cursor—or safely on the clipboard.</strong></p>
-
-<p align="center">
-  A native Mac dictation app in a 12 MB download, with Whisper and Parakeet running locally.
-</p>
-
-<p align="center">
-  <a href="https://github.com/conrader/plainsay"><strong>Star Plainsay on GitHub ★</strong></a>
-  · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download Plainsay.dmg</strong></a>
-  · <a href="#install">Homebrew</a>
-  · <a href="https://plainsay.app/">Website</a>
-  · <a href="BENCHMARK.md">Benchmark</a>
-  · <a href="COMPATIBILITY.md">App compatibility</a>
-</p>
-
+<p align="center"><strong>Hold a key. Speak. Release. Get text at your cursor—or safely on the clipboard.</strong><br>
+A native Mac dictation app in a 12 MB download, with Whisper and Parakeet running locally.</p>
 <p align="center">
   <a href="https://github.com/conrader/plainsay/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/conrader/plainsay?style=flat-square"></a>
+  <a href="https://github.com/conrader/plainsay/releases"><img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/conrader/plainsay/total?style=flat-square&label=GitHub%20downloads"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/conrader/plainsay?style=flat-square"></a>
+  <a href="https://github.com/conrader/plainsay/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/conrader/plainsay?style=flat-square"></a>
   <img alt="macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-14161A?style=flat-square&logo=apple">
   <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-required-14161A?style=flat-square&logo=apple">
 </p>
+<p align="center"><code>brew install --cask conrader/plainsay/plainsay</code> · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download the notarized DMG</strong></a></p>
+<p align="center"><strong>12 MB native app · free Local mode · no account · no telemetry</strong><br>
+⭐ If Plainsay is useful to you, <a href="https://github.com/conrader/plainsay/stargazers">star it on GitHub</a>; it helps other Mac users find it.</p>
 
 <p align="center">
   <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><img src="docs/assets/social-preview.png" alt="Hold a key, speak, and release to put locally transcribed text at your cursor with Plainsay" width="820"></a>
 </p>
 
 <p align="center">
-  <strong>12 MB native app · free Local mode · no account · no telemetry</strong>
+  <a href="https://plainsay.app/">Website</a>
+  · <a href="#install">Install</a>
+  · <a href="BENCHMARK.md">Benchmark</a>
+  · <a href="COMPATIBILITY.md">App compatibility</a>
+  · <a href="https://plainsay.app/compare/">Compare Mac dictation apps</a>
 </p>
 
 Plainsay is free and MIT-licensed. With **Local transcription** and Polishing
