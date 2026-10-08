@@ -52,6 +52,14 @@ public enum TextInsertionOutcome: Sendable, Equatable {
     /// at all), so a synthetic ⌘V has nowhere safe to land. The text was left
     /// on the clipboard either way.
     case noFocusedElement
+    /// There *was* somewhere to paste, but not where the dictation was aimed:
+    /// the app quit, focus would not come back, or a different window of it is
+    /// in front now. No ⌘V was sent. The text is on the clipboard.
+    ///
+    /// Produced by `DictationCoordinator`, not by an inserter — which window a
+    /// dictation belongs to is a fact about the dictation, not about the
+    /// mechanics of pasting.
+    case targetUnavailable(PasteTargetLoss)
 }
 
 public protocol TextInserting: Sendable {
@@ -59,6 +67,14 @@ public protocol TextInserting: Sendable {
     ///   than restoring the previous contents, so a swallowed ⌘V costs one
     ///   manual paste instead of the whole dictation.
     @MainActor func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome
+
+    /// Put the text on the clipboard and stop there: no ⌘V, and no restoring
+    /// of the previous contents afterwards.
+    ///
+    /// For when there is a paste target but it is the wrong one. The dictation
+    /// becomes the clipboard's contents and stays there — `keepOnClipboard`
+    /// does not apply, because here the clipboard is the only copy there is.
+    @MainActor func copyToClipboard(_ text: String)
 }
 
 /// Inserts text by writing it to the pasteboard and synthesizing ⌘V.
@@ -137,6 +153,21 @@ public struct PasteboardTextInserter: TextInserting {
             "inserted \(text.count, privacy: .public) chars, accessibility=\(trusted, privacy: .public)"
         )
         return .inserted
+    }
+
+    @MainActor
+    public func copyToClipboard(_ text: String) {
+        guard !text.isEmpty else { return }
+        let pasteboard = NSPasteboard.general
+        // No snapshot and no restore, deliberately. The previous clipboard is
+        // overwritten and stays overwritten, exactly as on the
+        // `.noFocusedElement` path above: restoring over a dictation that has
+        // nowhere else to live is how a dictation disappears.
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        Log.insertion.info(
+            "left \(text.count, privacy: .public) chars on the clipboard without pasting"
+        )
     }
 
     /// Best-effort: a visible focused element is authoritative. If that probe

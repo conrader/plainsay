@@ -104,10 +104,19 @@ private struct MenuBarIcon: View {
             Localization.appFormat("menu.a11y.error", fallback: "Plainsay error: %@", message)
         case .insertedRaw:
             Localization.appString("menu.a11y.insertedRaw", fallback: "Plainsay inserted an unpolished transcript")
-        case .savedToClipboard:
+        case .savedToClipboard(.nothingFocused):
             Localization.appString(
                 "menu.a11y.savedToClipboard",
                 fallback: "Plainsay saved the dictation to the clipboard — nothing was focused to paste into"
+            )
+        case .savedToClipboard(.targetGone):
+            // Not the same sentence: telling someone "nothing was focused"
+            // when something plainly was, and the dictation was held back on
+            // purpose, is wrong information rather than a shorter version of
+            // the right one.
+            Localization.appString(
+                "menu.a11y.savedToClipboardTargetGone",
+                fallback: "Plainsay saved the dictation to the clipboard — the window it was meant for could not be brought back"
             )
         case .cancelled:
             Localization.appString("menu.a11y.cancelled", fallback: "Plainsay cancelled the dictation")
@@ -392,9 +401,14 @@ struct MenuContent: View {
             return modelStatusLine(at: now)
         case .insertedRaw:
             return Localization.appString("menu.status.insertedRaw", fallback: "Inserted without Polishing")
-        case .savedToClipboard:
+        case .savedToClipboard(.nothingFocused):
             return Localization.appString(
                 "menu.status.savedToClipboard", fallback: "Not pasted — dictation saved to the clipboard"
+            )
+        case .savedToClipboard(.targetGone):
+            return Localization.appString(
+                "menu.status.savedToClipboardTargetGone",
+                fallback: "Not pasted — the window you dictated into was gone"
             )
         case .cancelled:
             return Localization.appString("menu.status.cancelled", fallback: "Dictation cancelled")

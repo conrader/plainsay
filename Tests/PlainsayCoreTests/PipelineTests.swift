@@ -249,11 +249,44 @@ final class FakeCleaner: TextCleaning, @unchecked Sendable {
 @MainActor
 final class FakeInserter: TextInserting {
     private(set) var inserted: [String] = []
+    /// Text left on the clipboard without a paste being attempted at all.
+    private(set) var copied: [String] = []
     var outcome: TextInsertionOutcome = .inserted
 
     func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
         inserted.append(text)
         return outcome
+    }
+
+    func copyToClipboard(_ text: String) {
+        copied.append(text)
+    }
+
+    /// Either path having run means the dictation reached the clipboard.
+    var handledAnything: Bool { !inserted.isEmpty || !copied.isEmpty }
+}
+
+@MainActor
+final class CaptureCount {
+    var value = 0
+}
+
+/// A paste target whose answer is decided by the test rather than by whatever
+/// happens to be frontmost on the machine running it.
+@MainActor
+final class FakePasteTarget: DictationPasteTargeting {
+    var bundleIdentifier: String?
+    var decision: PasteTargetDecision
+    private(set) var reacquireCount = 0
+
+    init(bundleIdentifier: String? = "com.example.editor", decision: PasteTargetDecision = .paste) {
+        self.bundleIdentifier = bundleIdentifier
+        self.decision = decision
+    }
+
+    func reacquire() async -> PasteTargetDecision {
+        reacquireCount += 1
+        return decision
     }
 }
 
@@ -288,12 +321,19 @@ private struct Harness {
     let engine = FakeEngine()
     let cleaner = FakeCleaner()
     let inserter = FakeInserter()
+    let pasteTarget: FakePasteTarget
+    /// How many times the coordinator asked for a fresh paste target.
+    let captures: CaptureCount
     let coordinator: DictationCoordinator
     let history: TranscriptHistory
 
     init(
         terms: [String] = [],
-        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { true }
+        microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { true },
+        // Default `.paste`: the suite below is about the pipeline, and the
+        // real capture would otherwise read whatever application happens to
+        // be frontmost on the machine running the tests.
+        pasteTargetDecision: PasteTargetDecision = .paste
     ) {
         // An isolated defaults suite so tests never disturb real preferences.
         let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
@@ -309,6 +349,11 @@ private struct Harness {
         )
         self.history = history
 
+        let pasteTarget = FakePasteTarget(decision: pasteTargetDecision)
+        self.pasteTarget = pasteTarget
+        let captures = CaptureCount()
+        self.captures = captures
+
         let engine = self.engine
         let cleaner = self.cleaner
         coordinator = DictationCoordinator(
@@ -320,6 +365,10 @@ private struct Harness {
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in cleaner },
             microphoneAuthorized: microphoneAuthorized,
+            capturePasteTarget: {
+                captures.value += 1
+                return pasteTarget
+            },
             usesInjectedEngine: true
         )
     }
@@ -351,7 +400,7 @@ private struct Harness {
     func settle(timeout: Duration = .seconds(2)) async throws {
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
-            if !coordinator.phase.isBusy && !inserter.inserted.isEmpty { return }
+            if !coordinator.phase.isBusy && inserter.handledAnything { return }
             if coordinator.phase == .idle && recorder.isRecording == false && !coordinator.phase.isBusy {
                 // Give the task one more turn before declaring it finished.
                 try await Task.sleep(for: .milliseconds(10))
@@ -546,7 +595,7 @@ struct PipelineTests {
         // Still written to the clipboard and to history — only where it
         // landed changes, not whether the dictation survived.
         #expect(harness.inserter.inserted == ["The thing is, it works."])
-        #expect(harness.coordinator.phase == .savedToClipboard)
+        #expect(harness.coordinator.phase == .savedToClipboard(.nothingFocused))
         #expect(harness.coordinator.lastInsertionNeedsManualPaste)
         #expect(harness.history.mostRecent?.outcome == .insertionUnverified)
 
@@ -558,6 +607,85 @@ struct PipelineTests {
         #expect(!harness.coordinator.lastInsertionNeedsManualPaste)
         #expect(harness.history.mostRecent?.outcome == .inserted)
         #expect(harness.history.records.contains { $0.outcome == .insertionUnverifiedAcknowledged })
+    }
+
+    @Test("A dictation whose window went away waits on the clipboard instead of landing elsewhere")
+    func lostTargetIsNotPastedSomewhereElse() async throws {
+        // The bug, in one test. Cloud Polishing takes seconds; the user moves
+        // to another window while waiting; the answer comes back. It used to
+        // be pasted into whatever was in front by then.
+        let harness = Harness(pasteTargetDecision: .keepOnClipboard(.notFrontmost))
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        // No paste was attempted at all — not a paste that happened to go
+        // nowhere, but a ⌘V that was never sent.
+        #expect(harness.inserter.inserted.isEmpty)
+        #expect(harness.inserter.copied == ["The thing is, it works."])
+        #expect(harness.coordinator.phase == .savedToClipboard(.targetGone(.notFrontmost)))
+        #expect(harness.coordinator.lastInsertionNeedsManualPaste)
+        // Recorded the same way the no-focus fallback is: the dictation
+        // survives in History and is offered back.
+        #expect(harness.history.mostRecent?.outcome == .insertionUnverified)
+        #expect(harness.pasteTarget.reacquireCount == 1)
+    }
+
+    @Test("Each way of losing the target is carried through to the phase, not flattened")
+    func lossReasonSurvivesToThePhase() async throws {
+        // The HUD says different things for these, so the reason has to reach
+        // it rather than being collapsed into one "saved to clipboard".
+        for loss in [PasteTargetLoss.appTerminated, .notFrontmost, .windowChanged] {
+            let harness = Harness(pasteTargetDecision: .keepOnClipboard(loss))
+            await harness.ready()
+
+            harness.dictate()
+            try await harness.settle()
+
+            #expect(harness.coordinator.phase == .savedToClipboard(.targetGone(loss)))
+            #expect(harness.inserter.inserted.isEmpty)
+        }
+    }
+
+    @Test("A target that never moved pastes exactly as it did before")
+    func intactTargetPastesNormally() async throws {
+        // The requirement that matters most: no behaviour change in the
+        // overwhelmingly common case.
+        let harness = Harness(pasteTargetDecision: .paste)
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+
+        #expect(harness.inserter.inserted == ["The thing is, it works."])
+        #expect(harness.inserter.copied.isEmpty)
+        #expect(harness.coordinator.phase == .idle)
+        #expect(harness.history.mostRecent?.outcome == .inserted)
+    }
+
+    @Test("A paste target is captured once per dictation, and consulted once")
+    func targetIsCapturedPerDictation() async throws {
+        let harness = Harness()
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.settle()
+        // Capture happens synchronously inside `beginRecording`, which is the
+        // point: it reads the frontmost window before any of the waiting.
+        #expect(harness.captures.value == 1)
+        #expect(harness.pasteTarget.reacquireCount == 1)
+
+        // The next dictation gets its own target rather than reusing a stale
+        // one — the previous dictation's window is not where this one is aimed.
+        harness.dictate()
+        #expect(harness.captures.value == 2)
+        // Polled rather than settled: `settle` is satisfied by the *first*
+        // dictation's paste still being on record, so it can return before the
+        // second one has reached the inserter.
+        try await harness.waitUntil { harness.pasteTarget.reacquireCount == 2 }
+        #expect(harness.pasteTarget.reacquireCount == 2)
+        #expect(harness.inserter.inserted.count == 2)
     }
 
     @Test("A stray tap shorter than the minimum inserts nothing")
