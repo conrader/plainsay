@@ -68,7 +68,7 @@ public struct PasteTargetObservation: Equatable, Sendable {
     public init(isTerminated: Bool, isFrontmost: Bool, focusedWindowStillMatches: Bool?) {
         self.init(
             isTerminated: isTerminated,
-            front: front(),
+            front: isFrontmost ? .target : .otherApp,
             focusedWindowStillMatches: focusedWindowStillMatches
         )
     }
