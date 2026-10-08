@@ -96,8 +96,9 @@ public actor VoiceFilterEngine {
     /// own embedding, so a recording's last window — often a few seconds of
     /// speech padded out with silence — carries the weakest one. Matching each
     /// segment's embedding against the enrollment dropped that whole window
-    /// whenever it missed the threshold, and a 37 s dictation lost its last
-    /// 7 s mid-sentence (2026-10-08). So a speaker is matched by the identity
+    /// whenever it missed the threshold — the likeliest reading of a 37 s
+    /// dictation that came back cut off mid-sentence (2026-10-08), since its
+    /// last 7 s were exactly such a window. So a speaker is matched by the identity
     /// the diarizer gave it across the recording: one confident match vouches
     /// for every segment carrying that speaker's id.
     ///
@@ -112,18 +113,34 @@ public actor VoiceFilterEngine {
         matching embedding: [Float],
         threshold: Float
     ) -> [Float] {
-        let matches = segments
-            .filter { SpeakerUtilities.cosineDistance($0.embedding, embedding) < threshold }
-            .sorted { $0.startTimeSeconds < $1.startTimeSeconds }
-        guard !matches.isEmpty else { return samples }
+        let enrolledIDs = Set(
+            segments
+                .filter { SpeakerUtilities.cosineDistance($0.embedding, embedding) < threshold }
+                .map(\.speakerId)
+        )
+        guard !enrolledIDs.isEmpty else { return samples }
+
+        func range(of segment: TimedSpeakerSegment) -> Range<Int>? {
+            let start = max(0, Int(segment.startTimeSeconds * Float(whisperSampleRate)))
+            let end = min(samples.count, Int(segment.endTimeSeconds * Float(whisperSampleRate)))
+            return start < end ? start..<end : nil
+        }
+
+        var keep = [Bool](repeating: true, count: samples.count)
+        for segment in segments where !enrolledIDs.contains(segment.speakerId) {
+            guard let range = range(of: segment) else { continue }
+            keep.replaceSubrange(range, with: repeatElement(false, count: range.count))
+        }
+        // Overlapping speech still has the user in it.
+        for segment in segments where enrolledIDs.contains(segment.speakerId) {
+            guard let range = range(of: segment) else { continue }
+            keep.replaceSubrange(range, with: repeatElement(true, count: range.count))
+        }
 
         var kept: [Float] = []
         kept.reserveCapacity(samples.count)
-        for segment in matches {
-            let start = max(0, Int(segment.startTimeSeconds * Float(whisperSampleRate)))
-            let end = min(samples.count, Int(segment.endTimeSeconds * Float(whisperSampleRate)))
-            guard start < end else { continue }
-            kept.append(contentsOf: samples[start..<end])
+        for (index, sample) in samples.enumerated() where keep[index] {
+            kept.append(sample)
         }
         return kept.isEmpty ? samples : kept
     }
