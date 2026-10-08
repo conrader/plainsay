@@ -70,8 +70,8 @@ public actor VoiceFilterEngine {
         return try diarizer.extractSpeakerEmbedding(from: samples)
     }
 
-    /// Keeps only the stretches of `samples` attributed to whichever speaker
-    /// best matches `embedding`.
+    /// Removes the stretches of `samples` attributed to a speaker other than
+    /// the one matching `embedding`.
     ///
     /// Falls back to the untouched recording when diarization finds no
     /// segment within `threshold` of the enrolled voice at all — occasionally
@@ -84,8 +84,35 @@ public actor VoiceFilterEngine {
     ) throws -> [Float] {
         guard let diarizer else { throw VoiceFilterError.notReady }
         let result = try diarizer.performCompleteDiarization(samples)
+        return Self.removingOtherSpeakers(
+            from: samples, segments: result.segments, matching: embedding, threshold: threshold
+        )
+    }
 
-        let matches = result.segments
+    /// The decision behind `filtered`, apart from the diarizer so it can be
+    /// tested without a model.
+    ///
+    /// The diarizer works in 10 s windows and gives each window's speaker its
+    /// own embedding, so a recording's last window — often a few seconds of
+    /// speech padded out with silence — carries the weakest one. Matching each
+    /// segment's embedding against the enrollment dropped that whole window
+    /// whenever it missed the threshold, and a 37 s dictation lost its last
+    /// 7 s mid-sentence (2026-10-08). So a speaker is matched by the identity
+    /// the diarizer gave it across the recording: one confident match vouches
+    /// for every segment carrying that speaker's id.
+    ///
+    /// And only audio positively attributed to someone else is removed.
+    /// Anything the diarizer left unattributed — speech under its 1 s minimum,
+    /// a window whose embedding failed validation, the pauses between
+    /// segments — stays, because a second voice it could not even pick out is
+    /// a smaller loss than the user's own words.
+    static func removingOtherSpeakers(
+        from samples: [Float],
+        segments: [TimedSpeakerSegment],
+        matching embedding: [Float],
+        threshold: Float
+    ) -> [Float] {
+        let matches = segments
             .filter { SpeakerUtilities.cosineDistance($0.embedding, embedding) < threshold }
             .sorted { $0.startTimeSeconds < $1.startTimeSeconds }
         guard !matches.isEmpty else { return samples }
