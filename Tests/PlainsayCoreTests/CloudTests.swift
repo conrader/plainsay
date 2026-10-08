@@ -383,6 +383,48 @@ struct CloudCleanupServiceTests {
         }
     }
 
+    // The statuses `/v1/cleanup` answers with when the upstream model fails,
+    // asserted here because nothing else does.
+    //
+    // 502 was the only one the server could produce; it now answers 504 when
+    // it runs out of time, so that a timeout stops surfacing as the unhandled
+    // 500 it used to be. That is a change on the other side of a boundary this
+    // client never tested: `clean` has no per-status branch at all, only one
+    // `(200..<300)` range check, so every one of these throws and
+    // `DictationCoordinator` keeps the raw transcript. Which is exactly the
+    // shape of the bug the style and layout fields had — every unit test on
+    // both sides green, and none of them crossing the boundary. So: a test
+    // that crosses it.
+    //
+    // If a future status *should* be treated differently — a 429 that ought to
+    // back off rather than silently degrade, say — this test fails and says so,
+    // rather than the behaviour quietly being whatever the range check happens
+    // to do.
+    @Test(
+        "Every upstream-failure status degrades to the raw transcript, including the new 504",
+        arguments: [500, 502, 503, 504]
+    )
+    func upstreamFailureStatusesThrowRatherThanReturningNothing(status: Int) async {
+        // The body the server actually sends on all of them.
+        MockURLProtocol.respond(host: cloudCleanupHost, status: status, json: #"{"error":"Cleanup service failed"}"#)
+
+        await #expect(throws: CleanupError.http(status: status, body: #"{"error":"Cleanup service failed"}"#)) {
+            try await self.makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
+        }
+    }
+
+    @Test("A success body missing its text is a failure, not an empty dictation")
+    func emptyTextIsNotSilentSuccess() async {
+        // A 200 with no usable text would otherwise replace someone's
+        // dictation with nothing, which is worse than any error status: the
+        // raw-transcript fallback only runs if `clean` throws.
+        MockURLProtocol.respond(host: cloudCleanupHost, json: #"{"text":"   "}"#)
+
+        await #expect(throws: CleanupError.emptyResponse) {
+            try await self.makeService().clean("hello", dictionary: TermDictionary(), style: .plain)
+        }
+    }
+
     @Test("Empty transcripts never reach the network")
     func emptyTranscriptSkipsUpload() async throws {
         MockURLProtocol.reset(host: cloudCleanupHost)
