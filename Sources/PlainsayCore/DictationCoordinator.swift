@@ -1196,19 +1196,25 @@ public final class DictationCoordinator {
             pasteTarget = nil
         }
 
+        let outcome: TextInsertionOutcome
         if let pasteTarget, case .keepOnClipboard(let loss) = await pasteTarget.reacquire() {
-            // The app is named because it is the first thing anyone
-            // diagnosing "it did not paste" needs, and History already
-            // records the same bundle identifier for the same dictation.
-            let application = pasteTarget.bundleIdentifier ?? "an unnamed app"
-            Log.insertion.info(
-                "paste target lost: \(loss.rawValue, privacy: .public) in \(application, privacy: .public), left \(text.count, privacy: .public) chars on the clipboard"
-            )
             inserter.copyToClipboard(text)
-            return .targetUnavailable(loss)
+            outcome = .targetUnavailable(loss)
+        } else {
+            outcome = await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
         }
 
-        return await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
+        // The app is named because it is the first thing anyone diagnosing
+        // "it did not paste" needs, and History already records the same
+        // bundle identifier for the same dictation.
+        let line = PasteDecisionLog.message(
+            outcome: outcome,
+            report: pasteTarget?.lastReport,
+            targetBundleIdentifier: pasteTarget?.bundleIdentifier ?? targetApp?.bundleIdentifier,
+            frontmostBundleIdentifier: NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        )
+        Log.insertion.notice("\(line, privacy: .public)")
+        return outcome
     }
 
     // MARK: - HUD feed

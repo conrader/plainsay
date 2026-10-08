@@ -172,8 +172,8 @@ public struct PasteboardTextInserter: TextInserting {
 
     /// Best-effort: a visible focused element is authoritative. If that probe
     /// is inconclusive, a focused window supplies the missing evidence; the
-    /// known ChatGPT custom editor may use that fallback even when the element
-    /// probe explicitly has no value.
+    /// known ChatGPT custom editor and Electron apps may use that fallback
+    /// even when the element probe explicitly has no value.
     @MainActor
     private static func hasPossiblePasteTarget() -> Bool {
         let systemWide = AXUIElementCreateSystemWide()
@@ -192,8 +192,9 @@ public struct PasteboardTextInserter: TextInserting {
         )
 
         // A definite missing element normally means no paste target. ChatGPT's
-        // custom editor is the confirmed exception: its focused window accepts
-        // ⌘V even though the editor itself can be hidden from Accessibility.
+        // custom editor and Electron apps are the exceptions: their focused
+        // window accepts ⌘V even though the editor can be hidden from
+        // Accessibility.
         guard focusedElement == .unknown || allowsFocusedWindowFallback else { return false }
 
         let focusedWindow = accessibilityValueState(
@@ -244,14 +245,27 @@ public struct PasteboardTextInserter: TextInserting {
 
     /// Whether a focused window is enough evidence of somewhere to paste when
     /// the focused-element probe definitely came back empty.
+    ///
+    /// Electron apps are the general case of the ChatGPT one: Chromium keeps
+    /// its accessibility tree switched off until an assistive app asks for
+    /// it, so "no focused element" from one of them says nothing about
+    /// whether a text field has the caret. Grok Bot sent every dictation to
+    /// the clipboard this way while its field never lost focus.
     static func allowsFocusedWindowFallback(bundleIdentifier: String?, bundleURL: URL?) -> Bool {
-        bundleIdentifier == "com.openai.codex"
+        if bundleIdentifier == "com.openai.codex" { return true }
+        guard let bundleURL else { return false }
+        return isElectronApp(at: bundleURL)
+    }
+
+    static func isElectronApp(at bundleURL: URL) -> Bool {
+        let framework = bundleURL.appendingPathComponent("Contents/Frameworks/Electron Framework.framework")
+        return FileManager.default.fileExists(atPath: framework.path)
     }
 
     /// Accessibility cannot expose the focused editor in every native app or
     /// app-backed web view. An inconclusive element probe still needs a focused
-    /// window before we risk ⌘V. ChatGPT gets the narrower window-only fallback
-    /// because its custom editor is known to omit the element entirely.
+    /// window before we risk ⌘V. ChatGPT and Electron apps get the narrower
+    /// window-only fallback because their editors can omit the element entirely.
     static func shouldAttemptPaste(
         focusedElement: AccessibilityValueState,
         focusedWindow: AccessibilityValueState,

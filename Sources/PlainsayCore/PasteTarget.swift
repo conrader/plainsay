@@ -68,7 +68,7 @@ public struct PasteTargetObservation: Equatable, Sendable {
     public init(isTerminated: Bool, isFrontmost: Bool, focusedWindowStillMatches: Bool?) {
         self.init(
             isTerminated: isTerminated,
-            front: isFrontmost ? .target : .otherApp,
+            front: front(),
             focusedWindowStillMatches: focusedWindowStillMatches
         )
     }
@@ -80,6 +80,23 @@ public protocol DictationPasteTargeting: Sendable {
     var bundleIdentifier: String? { get }
     /// Get the focus back if it has moved, then say whether pasting is safe.
     func reacquire() async -> PasteTargetDecision
+    /// How the last `reacquire` reached its decision, for the log.
+    var lastReport: PasteTargetReport? { get }
+}
+
+extension DictationPasteTargeting {
+    public var lastReport: PasteTargetReport? { nil }
+}
+
+/// One decision and what it was based on. Never holds any dictated text.
+public struct PasteTargetReport: Equatable, Sendable {
+    public let decision: PasteTargetDecision
+    /// Stable name for why: a `PasteTargetLoss` raw value, or why a paste was
+    /// allowed (`targetInFront`, `windowUnverified`, `frontmostIsPlainsay`,
+    /// `frontmostUnknown`).
+    public let reason: String
+    public let reactivationAttempted: Bool
+    public let frontmostBundleIdentifier: String?
 }
 
 /// The app — and where Accessibility will say, the exact window — that was in
@@ -107,6 +124,7 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
     private let activationDelay: Duration
 
     public var bundleIdentifier: String? { application.bundleIdentifier }
+    public private(set) var lastReport: PasteTargetReport?
 
     init(application: NSRunningApplication, activationDelay: Duration = .milliseconds(200)) {
         self.application = application
@@ -116,26 +134,32 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
 
     /// Whatever is frontmost right now, with its focused window when
     /// Accessibility will say.
-    ///
-    /// Plainsay itself is deliberately *not* excluded: dictating into
-    /// Plainsay's own text field is a real case — it has a row in the
-    /// compatibility table — and bringing Plainsay back to the front is as
-    /// correct a restoration as any other app's.
     public static func capture() -> FrontmostPasteTarget? {
         target(for: NSWorkspace.shared.frontmostApplication)
     }
 
+    /// Nil for Plainsay itself. A Plainsay target would be "re-activated" at
+    /// paste time, pulling Plainsay over whatever the user is actually in.
+    /// With no target the paste goes to whatever is frontmost, which keeps
+    /// dictating into Plainsay's own text field working as it always has.
     static func target(for application: NSRunningApplication?) -> FrontmostPasteTarget? {
-        guard let application else { return nil }
+        guard let application, !isPlainsay(application) else { return nil }
         return FrontmostPasteTarget(application: application)
     }
 
+    private static func isPlainsay(_ application: NSRunningApplication) -> Bool {
+        application.processIdentifier == ProcessInfo.processInfo.processIdentifier
+    }
+
     public func reacquire() async -> PasteTargetDecision {
-        // Only activate when it is actually needed. An app that never lost the
-        // front gets no activation request at all, so the common path cannot
-        // disturb anything — "no behaviour change when the target is still
-        // frontmost" starts here.
-        if !application.isTerminated, !isFrontmost {
+        // Only activate when something else has the front. An app that never
+        // lost it gets no activation request at all. A Plainsay window in
+        // front is asked to give the target back too, so that the paste does
+        // not land in one of Plainsay's own fields — but if it stays, that is
+        // still not the user switching apps.
+        let currentFront = front()
+        let reactivate = !application.isTerminated && (currentFront == .otherApp || currentFront == .plainsay)
+        if reactivate {
             // The Bool is discarded on purpose: `activate` can report success
             // and not take, and can report failure on an app that is already
             // coming forward. The observation below is the only answer worth
@@ -143,7 +167,14 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
             _ = application.activate(options: [])
             try? await Task.sleep(for: activationDelay)
         }
-        return Self.decide(observe())
+        let (decision, reason) = Self.judge(observe())
+        lastReport = PasteTargetReport(
+            decision: decision,
+            reason: reason,
+            reactivationAttempted: reactivate,
+            frontmostBundleIdentifier: NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        )
+        return decision
     }
 
     /// The verdict, as a pure function of what was observed.
@@ -155,22 +186,39 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
     /// is asserted: the cause named in the log has to be the one that
     /// actually happened, and a terminated app would otherwise read as merely
     /// not frontmost.
+    ///
+    /// If in doubt, paste: only positive evidence that the user is somewhere
+    /// else withholds it. Plainsay's own HUD, menu or window in front is not
+    /// the user going anywhere, and neither is `NSWorkspace` naming nobody.
     nonisolated static func decide(_ observation: PasteTargetObservation) -> PasteTargetDecision {
-        if observation.isTerminated { return .keepOnClipboard(.appTerminated) }
-        if !observation.isFrontmost { return .keepOnClipboard(.notFrontmost) }
+        judge(observation).decision
+    }
+
+    nonisolated static func judge(_ observation: PasteTargetObservation) -> (decision: PasteTargetDecision, reason: String) {
+        if observation.isTerminated { return lost(.appTerminated) }
+        switch observation.front {
+        case .otherApp: return lost(.notFrontmost)
+        case .plainsay: return (.paste, "frontmostIsPlainsay")
+        case .unknown: return (.paste, "frontmostUnknown")
+        case .target: break
+        }
         // Only a positive "different window" withholds the paste. Reading an
         // unanswerable probe as the wrong window would send every dictation in
         // an app that publishes no focused window to the clipboard — worse
         // than the bug being guarded against, because text would stop
         // arriving where it currently arrives fine.
-        if observation.focusedWindowStillMatches == false { return .keepOnClipboard(.windowChanged) }
-        return .paste
+        guard let sameWindow = observation.focusedWindowStillMatches else { return (.paste, "windowUnverified") }
+        return sameWindow ? (.paste, "targetInFront") : lost(.windowChanged)
+    }
+
+    private nonisolated static func lost(_ loss: PasteTargetLoss) -> (decision: PasteTargetDecision, reason: String) {
+        (.keepOnClipboard(loss), loss.rawValue)
     }
 
     private func observe() -> PasteTargetObservation {
         PasteTargetObservation(
             isTerminated: application.isTerminated,
-            front: isFrontmost ? .target : .otherApp,
+            front: front(),
             focusedWindowStillMatches: focusedWindowStillMatches()
         )
     }
@@ -179,13 +227,22 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
     /// identity: `frontmostApplication` is free to hand back a different
     /// instance for the same running app, and the pid is what
     /// `DictationInsertionAnchor.focusMatches` already compares.
-    private var isFrontmost: Bool {
-        NSWorkspace.shared.frontmostApplication?.processIdentifier == application.processIdentifier
+    private func front() -> PasteTargetFront {
+        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return .unknown }
+        if frontmost.processIdentifier == application.processIdentifier { return .target }
+        return Self.isPlainsay(frontmost) ? .plainsay : .otherApp
     }
 
+    /// False only on positive evidence: the captured window still answers
+    /// Accessibility, so it still exists, and focus is on another one.
+    /// A window element that no longer answers may simply have been
+    /// re-created by its app, which is doubt, not a different window.
     private func focusedWindowStillMatches() -> Bool? {
         guard AXIsProcessTrusted(), let window, let focused = Self.focusedWindow(of: application) else { return nil }
-        return CFEqual(window, focused)
+        if CFEqual(window, focused) { return true }
+        var role: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(window, kAXRoleAttribute as CFString, &role) == .success else { return nil }
+        return false
     }
 
     private static func focusedWindow(of application: NSRunningApplication) -> AXUIElement? {
