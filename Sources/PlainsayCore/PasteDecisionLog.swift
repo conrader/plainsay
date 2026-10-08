@@ -11,12 +11,13 @@ enum PasteDecisionLog {
         outcome: TextInsertionOutcome,
         report: PasteTargetReport?,
         targetBundleIdentifier: String?,
-        frontmostBundleIdentifier: String?
+        frontmostBundleIdentifier: String?,
+        keepOnClipboardSetting: Bool
     ) -> String {
         let decision: String
         let reason: String
         switch outcome {
-        case .inserted:
+        case .inserted, .insertedUnconfirmed:
             decision = "paste"
             reason = report?.reason ?? "noTarget"
         case .noFocusedElement:

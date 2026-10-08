@@ -60,6 +60,24 @@ public enum TextInsertionOutcome: Sendable, Equatable {
     /// dictation belongs to is a fact about the dictation, not about the
     /// mechanics of pasting.
     case targetUnavailable(PasteTargetLoss)
+    /// ⌘V was sent, but Accessibility could not show a focused text field —
+    /// only a focused window vouched for it (an Electron app, or an unreadable
+    /// probe). The paste may have landed nowhere, so the dictation was left on
+    /// the clipboard instead of the previous contents being put back.
+    case insertedUnconfirmed
+
+    /// ⌘V was sent, whether or not a text field was seen to take it.
+    public var sentPaste: Bool { self == .inserted || self == .insertedUnconfirmed }
+}
+
+/// How sure Accessibility is that ⌘V has a text field to land in.
+enum PasteTargetCertainty: Equatable {
+    /// Nothing that could take a paste. No ⌘V is sent.
+    case none
+    /// Only a focused window vouches for it. ⌘V is sent, but may land nowhere.
+    case unconfirmed
+    /// A focused element answered.
+    case confirmed
 }
 
 public protocol TextInserting: Sendable {
@@ -129,7 +147,8 @@ public struct PasteboardTextInserter: TextInserting {
         // the pasteboard write above already keeps the dictation safe either
         // way, so leave it there instead of restoring the old clipboard over
         // it — that restore is exactly how a dictation used to vanish.
-        guard trusted, Self.hasPossiblePasteTarget() else {
+        let certainty = trusted ? Self.pasteTargetCertainty() : .none
+        guard certainty != .none else {
             Log.insertion.info(
                 "no focused element — left \(text.count, privacy: .public) chars on the clipboard"
             )
@@ -145,7 +164,8 @@ public struct PasteboardTextInserter: TextInserting {
         // right after, and the second copy would vanish back to whatever was
         // on the clipboard before the dictation. Only restore if nothing else
         // touched the pasteboard since our own write.
-        if !keepOnClipboard, pasteboard.changeCount == changeCountAfterOurWrite {
+        if Self.restoresPreviousClipboard(certainty: certainty, keepOnClipboard: keepOnClipboard),
+           pasteboard.changeCount == changeCountAfterOurWrite {
             snapshot.restore(to: pasteboard)
         }
 
@@ -175,7 +195,7 @@ public struct PasteboardTextInserter: TextInserting {
     /// known ChatGPT custom editor and Electron apps may use that fallback
     /// even when the element probe explicitly has no value.
     @MainActor
-    private static func hasPossiblePasteTarget() -> Bool {
+    private static func pasteTargetCertainty() -> PasteTargetCertainty {
         let systemWide = AXUIElementCreateSystemWide()
         let focusedElement = accessibilityValueState(
             on: systemWide,
@@ -183,9 +203,9 @@ public struct PasteboardTextInserter: TextInserting {
         )
 
         // A definite focused element needs no slower cross-process fallback.
-        if focusedElement == .present { return true }
+        if focusedElement == .present { return .confirmed }
 
-        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return false }
+        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return .none }
         let allowsFocusedWindowFallback = Self.allowsFocusedWindowFallback(
             bundleIdentifier: frontmost.bundleIdentifier,
             bundleURL: frontmost.bundleURL
@@ -195,14 +215,14 @@ public struct PasteboardTextInserter: TextInserting {
         // custom editor and Electron apps are the exceptions: their focused
         // window accepts ⌘V even though the editor can be hidden from
         // Accessibility.
-        guard focusedElement == .unknown || allowsFocusedWindowFallback else { return false }
+        guard focusedElement == .unknown || allowsFocusedWindowFallback else { return .none }
 
         let focusedWindow = accessibilityValueState(
             on: AXUIElementCreateApplication(frontmost.processIdentifier),
             attribute: kAXFocusedWindowAttribute as CFString
         )
 
-        return shouldAttemptPaste(
+        return pasteTargetCertainty(
             focusedElement: focusedElement,
             focusedWindow: focusedWindow,
             allowsFocusedWindowFallback: allowsFocusedWindowFallback
@@ -271,14 +291,33 @@ public struct PasteboardTextInserter: TextInserting {
         focusedWindow: AccessibilityValueState,
         allowsFocusedWindowFallback: Bool
     ) -> Bool {
+        pasteTargetCertainty(
+            focusedElement: focusedElement,
+            focusedWindow: focusedWindow,
+            allowsFocusedWindowFallback: allowsFocusedWindowFallback
+        ) != .none
+    }
+
+    /// Only a focused element confirms a text field. A focused window standing
+    /// in for one is enough to try ⌘V, not enough to trust it landed.
+    static func pasteTargetCertainty(
+        focusedElement: AccessibilityValueState,
+        focusedWindow: AccessibilityValueState,
+        allowsFocusedWindowFallback: Bool
+    ) -> PasteTargetCertainty {
         switch focusedElement {
         case .present:
-            return true
+            return .confirmed
         case .unknown:
-            return focusedWindow == .present
+            return focusedWindow == .present ? .unconfirmed : .none
         case .absent:
-            return allowsFocusedWindowFallback && focusedWindow == .present
+            return allowsFocusedWindowFallback && focusedWindow == .present ? .unconfirmed : .none
         }
+    }
+
+    /// Whether the clipboard from before the dictation is put back after ⌘V.
+    static func restoresPreviousClipboard(certainty: PasteTargetCertainty, keepOnClipboard: Bool) -> Bool {
+        !keepOnClipboard
     }
 
     /// Virtual keycode for `v` on any layout (ANSI position-based).

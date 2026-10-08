@@ -15,8 +15,9 @@ struct PasteDecisionLogTests {
             outcome: .inserted,
             report: report,
             targetBundleIdentifier: "com.anysphere.sand",
-            frontmostBundleIdentifier: "com.example.later"
-        ) == "paste decision=paste reason=targetInFront target=com.anysphere.sand reactivationAttempted=false frontmost=com.anysphere.sand")
+            frontmostBundleIdentifier: "com.example.later",
+            keepOnClipboardSetting: false
+        ) == "paste decision=paste reason=targetInFront target=com.anysphere.sand reactivationAttempted=false frontmost=com.anysphere.sand clipboardKept=false")
     }
 
     @Test("A clipboard fallback names which check refused")
@@ -31,14 +32,16 @@ struct PasteDecisionLogTests {
             outcome: .targetUnavailable(.notFrontmost),
             report: report,
             targetBundleIdentifier: "com.example.editor",
-            frontmostBundleIdentifier: nil
-        ) == "paste decision=keepOnClipboard reason=notFrontmost target=com.example.editor reactivationAttempted=true frontmost=com.example.chat")
+            frontmostBundleIdentifier: nil,
+            keepOnClipboardSetting: false
+        ) == "paste decision=keepOnClipboard reason=notFrontmost target=com.example.editor reactivationAttempted=true frontmost=com.example.chat clipboardKept=true")
         #expect(PasteDecisionLog.message(
             outcome: .noFocusedElement,
             report: nil,
             targetBundleIdentifier: nil,
-            frontmostBundleIdentifier: nil
-        ) == "paste decision=keepOnClipboard reason=nothingFocused target=none reactivationAttempted=false frontmost=unknown")
+            frontmostBundleIdentifier: nil,
+            keepOnClipboardSetting: false
+        ) == "paste decision=keepOnClipboard reason=nothingFocused target=none reactivationAttempted=false frontmost=unknown clipboardKept=true")
     }
 
     @Test("Every policy outcome has a stable reason name")
