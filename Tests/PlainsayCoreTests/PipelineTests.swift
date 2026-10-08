@@ -671,15 +671,21 @@ struct PipelineTests {
 
         harness.dictate()
         try await harness.settle()
+        // Capture happens synchronously inside `beginRecording`, which is the
+        // point: it reads the frontmost window before any of the waiting.
         #expect(harness.captures.value == 1)
         #expect(harness.pasteTarget.reacquireCount == 1)
 
         // The next dictation gets its own target rather than reusing a stale
         // one — the previous dictation's window is not where this one is aimed.
         harness.dictate()
-        try await harness.settle()
         #expect(harness.captures.value == 2)
+        // Polled rather than settled: `settle` is satisfied by the *first*
+        // dictation's paste still being on record, so it can return before the
+        // second one has reached the inserter.
+        try await harness.waitUntil { harness.pasteTarget.reacquireCount == 2 }
         #expect(harness.pasteTarget.reacquireCount == 2)
+        #expect(harness.inserter.inserted.count == 2)
     }
 
     @Test("A stray tap shorter than the minimum inserts nothing")

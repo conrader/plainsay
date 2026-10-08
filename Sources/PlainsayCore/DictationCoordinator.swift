@@ -1200,8 +1200,9 @@ public final class DictationCoordinator {
             // The app is named because it is the first thing anyone
             // diagnosing "it did not paste" needs, and History already
             // records the same bundle identifier for the same dictation.
+            let application = pasteTarget.bundleIdentifier ?? "an unnamed app"
             Log.insertion.info(
-                "paste target lost: \(loss.rawValue, privacy: .public) in \(pasteTarget.bundleIdentifier ?? "an unnamed app", privacy: .public) — left \(text.count, privacy: .public) chars on the clipboard"
+                "paste target lost: \(loss.rawValue, privacy: .public) in \(application, privacy: .public), left \(text.count, privacy: .public) chars on the clipboard"
             )
             inserter.copyToClipboard(text)
             return .targetUnavailable(loss)
