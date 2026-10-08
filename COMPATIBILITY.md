@@ -16,7 +16,13 @@ before. That is the only method that works in every kind of text field on
 macOS, including web pages and Electron apps, where synthetic keystrokes are
 unreliable.
 
-Three consequences worth knowing:
+Before any of that, Plainsay **remembers which window you were in** when you
+started dictating, and brings it back to the front before pasting. A dictation
+is not instantaneous — transcription and Polishing take seconds — so whatever
+is frontmost when the text is ready is not necessarily where you meant it to
+go.
+
+Four consequences worth knowing:
 
 - **Your clipboard is borrowed, not taken.** Plainsay snapshots every
   pasteboard item first and puts it back afterwards. If Plainsay is killed in
@@ -24,6 +30,20 @@ Three consequences worth knowing:
 - **If nothing is focused, there is nothing to paste into.** The dictation is
   left on the clipboard and the HUD says so — press ⌘V wherever you actually
   meant it to go. Nothing is lost.
+- **If the window you dictated into cannot be brought back, nothing is
+  pasted.** The app quit, focus would not return, or a different window of the
+  same app is in front now. Plainsay does not paste into whatever is there
+  instead — that window may be a shell prompt, a password field, or somebody
+  else's conversation — so the dictation waits on the clipboard and the HUD
+  says which of the two clipboard cases happened. Switching between two windows
+  of the *same* app counts: the app is still frontmost, but it is not the
+  document you dictated into.
+
+  One deliberate exception: if Accessibility cannot say which window has focus
+  — permission not granted, or an app that publishes no focused window — that
+  is treated as *no evidence* rather than as the wrong window, and the paste
+  goes ahead. Reading an unanswerable probe as a failure would stop dictation
+  arriving in apps where it currently works.
 - **If Plainsay cannot confirm the paste landed, it says so rather than
   assuming.** The dictation is kept in History marked unverified, and the menu
   offers it back until you copy or dismiss it. This is the case that matters:
@@ -52,6 +72,18 @@ short (a stray key tap, not a failure), and 1 could not be verified.
 evidence it works — it is evidence it was not exercised. It needs a deliberate
 test: start a dictation, click somewhere with no text field focused, and check
 that the HUD says the text was saved to the clipboard and that ⌘V produces it.
+
+**The lost-target fallback is new and equally untested in the table above**,
+which predates it. Two deliberate tests, both worth reporting:
+
+- Start a dictation in one app, switch to another app while it is still
+  processing, and release. The text should appear in the **first** app, not the
+  second.
+- Start a dictation, then quit that app before the text comes back. The HUD
+  should say the window was gone and ⌘V should produce the dictation.
+
+Both are more reliably reproduced with Cloud Polishing on, which is what makes
+the window between release and paste long enough to switch away in.
 
 ## Cancelling
 

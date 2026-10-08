@@ -207,10 +207,15 @@ struct HUDView: View {
         case .modelLoading: modelAccessibilityLabel(now: now)
         case .insertedRaw:
             Localization.appString("hud.a11y.insertedRaw", fallback: "Inserted raw transcript, cleanup unavailable")
-        case .savedToClipboard:
+        case .savedToClipboard(.nothingFocused):
             Localization.appString(
                 "hud.a11y.savedToClipboard",
                 fallback: "Nothing was focused to paste into. Dictation saved to the clipboard — press Command V to paste it."
+            )
+        case .savedToClipboard(.targetGone):
+            Localization.appString(
+                "hud.a11y.savedToClipboardTargetGone",
+                fallback: "The window you dictated into could not be brought back. Dictation saved to the clipboard — press Command V where you want it."
             )
         case .cancelled:
             Localization.appString("hud.a11y.cancelled", fallback: "Dictation cancelled")
@@ -424,18 +429,37 @@ struct VisualEffectBackground: NSViewRepresentable {
 struct HUDContainer: View {
     let state: HUDState
 
+    /// What the HUD says when a dictation is on the clipboard and nowhere else.
+    ///
+    /// Two different sentences, because the two reasons need different things
+    /// from the reader: "nothing was focused" means click into a field and
+    /// paste; "the window is gone" means the text is deliberately *not* in
+    /// whatever is in front right now, which is the more surprising of the two
+    /// and has to say so.
+    static func clipboardNotice(_ reason: DictationCoordinator.Phase.ClipboardFallbackReason) -> String {
+        switch reason {
+        case .nothingFocused:
+            return Localization.appString(
+                "hud.error.clipboard",
+                fallback: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it."
+            )
+        case .targetGone:
+            return Localization.appString(
+                "hud.error.clipboardTargetGone",
+                fallback: "The window you dictated into is gone — your dictation is on the clipboard, not pasted elsewhere. Press ⌘V where you want it."
+            )
+        }
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             HUDView(state: state)
             if case .error(let message) = state.phase {
                 HUDErrorView(message: message)
             }
-            if case .savedToClipboard = state.phase {
+            if case .savedToClipboard(let reason) = state.phase {
                 HUDErrorView(
-                    message: Localization.appString(
-                        "hud.error.clipboard",
-                        fallback: "Nothing was focused to paste into — your dictation is on the clipboard. Press ⌘V to paste it."
-                    ),
+                    message: Self.clipboardNotice(reason),
                     tint: Palette.signal
                 )
             }

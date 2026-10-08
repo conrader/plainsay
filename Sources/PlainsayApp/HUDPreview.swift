@@ -62,7 +62,11 @@ struct HUDPreview: View {
             )
         )),
         ("Cleanup unavailable", HUDState(phase: .insertedRaw, levelHistory: sampleLevels)),
-        ("Saved to clipboard", HUDState(phase: .savedToClipboard, levelHistory: sampleLevels)),
+        ("Saved to clipboard", HUDState(phase: .savedToClipboard(.nothingFocused), levelHistory: sampleLevels)),
+        (
+            "Saved to clipboard, target gone",
+            HUDState(phase: .savedToClipboard(.targetGone(.notFrontmost)), levelHistory: sampleLevels)
+        ),
         ("Cancelled", HUDState(phase: .cancelled)),
         ("Error", HUDState(
             phase: .error("Microphone access denied. Enable it in System Settings › Privacy & Security › Microphone."),

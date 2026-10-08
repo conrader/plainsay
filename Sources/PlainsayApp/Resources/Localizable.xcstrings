@@ -12099,6 +12099,88 @@
         }
       }
     },
+    "hud.a11y.savedToClipboardTargetGone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Fenster, in das du diktiert hast, konnte nicht zurückgeholt werden. Diktat in der Zwischenablage gespeichert — Befehl V dort drücken, wo es hin soll."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window you dictated into could not be brought back. Dictation saved to the clipboard — press Command V where you want it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo recuperar la ventana en la que dictaste. Dictado guardado en el portapapeles — pulsa Comando V donde lo quieras."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fenêtre dans laquelle vous avez dicté n'a pas pu être rappelée. Dictée enregistrée dans le presse-papiers — appuyez sur Commande V là où vous la voulez."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato possibile riportare in primo piano la finestra in cui hai dettato. Dettato salvato negli appunti — premi Comando V dove lo vuoi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口述した先のウィンドウを前面に戻せませんでした。口述筆記はクリップボードに保存されました——貼り付けたい場所で Command V を押してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰던 창을 다시 앞으로 가져올 수 없었습니다. 받아쓰기가 클립보드에 저장되었습니다 — 원하는 위치에서 Command V를 누르세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Het venster waarin je dicteerde kon niet worden teruggehaald. Dictatie opgeslagen op het klembord — druk op Command V waar je het wilt hebben."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie udało się przywrócić okna, do którego miało trafić dyktowanie. Dyktowanie zapisano w schowku — naciśnij Command V tam, gdzie ma trafić."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível voltar à janela onde ditaste. Ditado guardado na área de transferência — prime Comando V onde o queres."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось вернуть окно, куда шла запись. Запись сохранена в буфер обмена — нажмите Command V там, где нужно."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вдалося повернути вікно, куди йшов запис. Запис збережено в буфер обміну — натисніть Command V там, де потрібно."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法切回原来听写的窗口。听写内容已保存到剪贴板——请在需要的位置按 Command V。"
+          }
+        }
+      }
+    },
     "hud.a11y.transcribing": {
       "localizations": {
         "de": {
@@ -12259,6 +12341,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有可粘贴的焦点位置——听写内容已在剪贴板中。按 ⌘V 即可粘贴。"
+          }
+        }
+      }
+    },
+    "hud.error.clipboardTargetGone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Fenster, in das du diktiert hast, ist nicht mehr da — dein Diktat liegt in der Zwischenablage und wurde nicht woanders eingefügt. ⌘V dort drücken, wo es hin soll."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window you dictated into is gone — your dictation is on the clipboard, not pasted elsewhere. Press ⌘V where you want it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La ventana en la que dictaste ya no está — tu dictado está en el portapapeles, no pegado en otro sitio. Pulsa ⌘V donde lo quieras."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La fenêtre dans laquelle vous avez dicté n'est plus là — votre dictée est dans le presse-papiers, pas collée ailleurs. Appuyez sur ⌘V là où vous la voulez."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La finestra in cui hai dettato non c'è più — il tuo dettato è negli appunti, non incollato altrove. Premi ⌘V dove lo vuoi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口述した先のウィンドウが見つかりません——口述筆記はクリップボードにあり、別の場所には貼り付けていません。貼り付けたい場所で ⌘V を押してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰던 창을 찾을 수 없습니다 — 받아쓰기는 클립보드에 있으며 다른 곳에 붙여넣지 않았습니다. 원하는 위치에서 ⌘V를 누르세요."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Het venster waarin je dicteerde is er niet meer — je dictatie staat op het klembord en is niet elders geplakt. Druk op ⌘V waar je het wilt hebben."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Okno, do którego miało trafić dyktowanie, zniknęło — Twoje dyktowanie jest w schowku i nie zostało wklejone gdzie indziej. Naciśnij ⌘V tam, gdzie ma trafić."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A janela onde ditaste já não existe — o teu ditado está na área de transferência, não foi colado noutro lado. Prime ⌘V onde o queres."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Окна, куда шла запись, больше нет — ваша запись в буфере обмена и не вставлена в другое место. Нажмите ⌘V там, где нужно."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вікна, куди йшов запис, більше немає — ваш запис у буфері обміну й не вставлений в інше місце. Натисніть ⌘V там, де потрібно."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原来听写的窗口已不在——听写内容已在剪贴板中，没有粘贴到别处。请在需要的位置按 ⌘V。"
           }
         }
       }
@@ -15461,6 +15625,88 @@
         }
       }
     },
+    "menu.a11y.savedToClipboardTargetGone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay hat das Diktat in der Zwischenablage gespeichert — das vorgesehene Fenster konnte nicht zurückgeholt werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay saved the dictation to the clipboard — the window it was meant for could not be brought back"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay guardó el dictado en el portapapeles — no se pudo recuperar la ventana a la que iba destinado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay a enregistré la dictée dans le presse-papiers — la fenêtre visée n'a pas pu être rappelée"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay ha salvato il dettato negli appunti — non è stato possibile riportare in primo piano la finestra di destinazione"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsayが口述筆記をクリップボードに保存しました——本来の宛先ウィンドウを前面に戻せませんでした"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay가 받아쓰기를 클립보드에 저장했습니다 — 원래 대상 창을 다시 앞으로 가져올 수 없었습니다"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay heeft de dictatie op het klembord opgeslagen — het bedoelde venster kon niet worden teruggehaald"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay zapisała dyktowanie w schowku — nie udało się przywrócić okna, do którego miało trafić"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Plainsay guardou o ditado na área de transferência — não foi possível voltar à janela de destino"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay сохранил запись в буфер обмена — не удалось вернуть окно, для которого она была"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay зберіг запис у буфер обміну — не вдалося повернути вікно, для якого він був"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay 已将听写内容保存到剪贴板——无法切回原本的目标窗口"
+          }
+        }
+      }
+    },
     "menu.a11y.setupIncomplete": {
       "localizations": {
         "de": {
@@ -17999,6 +18245,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "未粘贴——听写内容已保存到剪贴板"
+          }
+        }
+      }
+    },
+    "menu.status.savedToClipboardTargetGone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht eingefügt — das Fenster, in das du diktiert hast, war nicht mehr da"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not pasted — the window you dictated into was gone"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se ha pegado: la ventana en la que dictaste ya no estaba"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non collée — la fenêtre dans laquelle vous avez dicté n'était plus là"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non incollata: la finestra in cui hai dettato non c'era più"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貼り付けられませんでした — 口述した先のウィンドウが見つかりませんでした"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "붙여넣지 않음 — 받아쓰던 창을 찾을 수 없었음"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niet geplakt — het venster waarin je dicteerde was er niet meer"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie wklejono — okno, do którego miało trafić dyktowanie, zniknęło"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não colado — a janela onde ditaste já não existia"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вставлено — окна, куда шла запись, больше не было"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не вставлено — вікна, куди йшов запис, більше не було"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未粘贴——原来听写的窗口已不在"
           }
         }
       }

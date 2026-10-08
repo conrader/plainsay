@@ -139,6 +139,11 @@ It is the simplest way to help more Mac users find the project.
 - **Safe fallback.** Polishing is optional and time-bounded. If it is disabled,
   offline, or fails, Plainsay continues with the raw transcript. If no safe
   paste target is found, the text stays on the clipboard.
+- **It goes where you dictated it.** The window you were in when you started is
+  remembered and brought back before the paste. If it cannot be — the app quit,
+  focus will not return, or a different window of it is in front — Plainsay does
+  not paste into whatever happens to be there. The text waits on the clipboard
+  and the HUD says so.
 - **Clear open-source boundary.** The Mac client code, benchmark harness, and
   release scripts are MIT-licensed and auditable; the committed LibriSpeech
   clips are CC BY 4.0. Plainsay Cloud is a separate optional hosted service.
@@ -289,10 +294,11 @@ changed later in Settings.
 ## How it works
 
 ```text
-key down ──► remember frontmost app → show HUD → record 16 kHz mono audio
+key down ──► remember frontmost app and window → show HUD → record 16 kHz mono
 key up ────► transcribe locally, in Plainsay Cloud, or through your API
              optional Polishing, translation, and email layout
              (bounded timeout or truncated reply → raw-transcript fallback)
+             bring the remembered window back, or stop and keep the clipboard
              snapshot clipboard → paste text → attempt clipboard restore
 ```
 

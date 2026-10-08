@@ -23,12 +23,27 @@ public final class DictationCoordinator {
         case modelLoading
         /// Finished, but cleanup fell back to the raw transcript.
         case insertedRaw
-        /// Nothing was focused to paste into. The text is safe on the
-        /// clipboard, but it did not land anywhere on its own.
-        case savedToClipboard
+        /// The text is safe on the clipboard, but it did not land anywhere on
+        /// its own. The reason decides what the HUD says, because "nothing was
+        /// focused" and "the window you dictated into is gone" need different
+        /// answers from the person reading it.
+        case savedToClipboard(ClipboardFallbackReason)
         /// The user deliberately abandoned an active recording with Escape.
         case cancelled
         case error(String)
+
+        /// Why a dictation ended up on the clipboard rather than in a
+        /// document.
+        public enum ClipboardFallbackReason: Equatable, Sendable {
+            /// Nothing anywhere was focused, so a synthetic Command-V had
+            /// nowhere to land.
+            case nothingFocused
+            /// Something was focused, but not what the dictation was aimed at.
+            /// The loss records which way it went wrong; the HUD does not,
+            /// because "quit", "would not come forward" and "different window"
+            /// all mean the same thing to the person waiting for their text.
+            case targetGone(PasteTargetLoss)
+        }
 
         public var isBusy: Bool {
             switch self {
@@ -153,6 +168,13 @@ public final class DictationCoordinator {
     private var resetTask: Task<Void, Never>?
     private var tailTask: Task<Void, Never>?
     private var targetApp: NSRunningApplication?
+    /// Where the dictation in flight is meant to land, captured when recording
+    /// starts. Nil until then, and cleared the moment insertion is over.
+    private var pasteTarget: (any DictationPasteTargeting)?
+    /// Injectable so the target policy can be exercised without a second
+    /// running application to steal focus from. Nil means "decide for
+    /// yourself", which is what production and every existing test pass.
+    private let capturePasteTarget: (@MainActor @Sendable () -> (any DictationPasteTargeting)?)?
 
     public init(
         settings: PlainsaySettings = .shared,
@@ -169,6 +191,7 @@ public final class DictationCoordinator {
         makeCleaner: @escaping @MainActor (PlainsaySettings) -> any TextCleaning = ProviderFactory.makeCleaner,
         modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
         microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { AudioRecorder.microphoneAuthorized() },
+        capturePasteTarget: (@MainActor @Sendable () -> (any DictationPasteTargeting)?)? = nil,
         usesInjectedEngine: Bool = false
     ) {
         self.settings = settings
@@ -181,6 +204,7 @@ public final class DictationCoordinator {
         self.makeCleaner = makeCleaner
         self.modelLoadNow = modelLoadNow
         self.microphoneAuthorized = microphoneAuthorized
+        self.capturePasteTarget = capturePasteTarget
         self.usesInjectedEngine = usesInjectedEngine
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
@@ -754,6 +778,7 @@ public final class DictationCoordinator {
         stopLivePreview()
         machine.reset()
         targetApp = nil
+        pasteTarget = nil
         elapsed = 0
         levelHistory = []
         phase = .cancelled
@@ -826,8 +851,20 @@ public final class DictationCoordinator {
         }
 
         // Captured now, not at insertion time: by the time we paste, the HUD or
-        // a notification may have shuffled the frontmost app.
+        // a notification may have shuffled the frontmost app — and with Cloud
+        // Polishing in the path, the user may simply have moved on to another
+        // window while waiting for it.
         targetApp = NSWorkspace.shared.frontmostApplication
+        // A test that wants to exercise the target policy supplies its own.
+        // Otherwise nothing is captured under an injected engine, for the same
+        // reason the insertion anchor is skipped there: a test process has no
+        // business reading, let alone reactivating, whatever window happens to
+        // be in front of the machine running the suite.
+        if let capturePasteTarget {
+            pasteTarget = capturePasteTarget()
+        } else {
+            pasteTarget = usesInjectedEngine ? nil : FrontmostPasteTarget.capture()
+        }
 
         do {
             try recorder.start()
@@ -987,11 +1024,13 @@ public final class DictationCoordinator {
             guard !instruction.isEmpty else { throw DictationCorrectionError.emptyCommand }
             phase = .idle
             targetApp = nil
+            pasteTarget = nil
             finishCorrection(.success(instruction))
         } catch {
             guard generation == correctionGeneration else { return }
             phase = .idle
             targetApp = nil
+            pasteTarget = nil
             finishCorrection(.failure(error))
         }
     }
@@ -1111,13 +1150,21 @@ public final class DictationCoordinator {
             scheduleReset()
             playSound("Pop")
         case .noFocusedElement:
-            // Longer than the normal reset: this is the one outcome that
-            // needs the user to actually read and act on it before it fades.
-            history.updateOutcome(id: historyID, to: .insertionUnverified)
-            phase = .savedToClipboard
-            scheduleReset(after: .seconds(5))
-            playSound("Funk")
+            saveToClipboard(historyID: historyID, reason: .nothingFocused)
+        case .targetUnavailable(let loss):
+            saveToClipboard(historyID: historyID, reason: .targetGone(loss))
         }
+    }
+
+    /// The dictation is on the clipboard and nowhere else, so say so and leave
+    /// it on screen long enough to be read.
+    private func saveToClipboard(historyID: UUID, reason: Phase.ClipboardFallbackReason) {
+        history.updateOutcome(id: historyID, to: .insertionUnverified)
+        phase = .savedToClipboard(reason)
+        // Longer than the normal reset: this is the one outcome that needs the
+        // user to actually read and act on it before it fades.
+        scheduleReset(after: .seconds(5))
+        playSound("Funk")
     }
 
     @discardableResult
@@ -1133,15 +1180,34 @@ public final class DictationCoordinator {
         return record.id
     }
 
+    /// Puts the dictation where it was aimed, or nowhere at all.
+    ///
+    /// This used to notice that the user had switched windows mid-dictation,
+    /// log it, and paste anyway: "stealing focus back would be more surprising
+    /// than a stray paste." With Cloud Polishing in the path that wait is
+    /// seconds long, and the stray paste lands in whatever the user moved on
+    /// to — somebody else's chat window, the wrong document. So it is the
+    /// other way round now: the target is asked for its focus back, and if it
+    /// will not come, the dictation waits on the clipboard rather than going
+    /// somewhere nobody dictated into.
     private func insert(_ text: String) async -> TextInsertionOutcome {
-        if let targetApp, NSWorkspace.shared.frontmostApplication?.bundleIdentifier != targetApp.bundleIdentifier {
-            // The user switched apps mid-dictation. Paste where they are now —
-            // stealing focus back would be more surprising than a stray paste.
-            NSLog("[Plainsay] frontmost app changed during dictation; inserting into current app")
+        defer {
+            targetApp = nil
+            pasteTarget = nil
         }
-        let outcome = await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
-        targetApp = nil
-        return outcome
+
+        if let pasteTarget, case .keepOnClipboard(let loss) = await pasteTarget.reacquire() {
+            // The app is named because it is the first thing anyone
+            // diagnosing "it did not paste" needs, and History already
+            // records the same bundle identifier for the same dictation.
+            Log.insertion.info(
+                "paste target lost: \(loss.rawValue, privacy: .public) in \(pasteTarget.bundleIdentifier ?? "an unnamed app", privacy: .public) — left \(text.count, privacy: .public) chars on the clipboard"
+            )
+            inserter.copyToClipboard(text)
+            return .targetUnavailable(loss)
+        }
+
+        return await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
     }
 
     // MARK: - HUD feed
