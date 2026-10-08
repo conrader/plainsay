@@ -147,8 +147,12 @@ public final class FrontmostPasteTarget: DictationPasteTargeting {
         return FrontmostPasteTarget(application: application)
     }
 
+    /// Against `NSRunningApplication.current` rather than `getpid()`: a process
+    /// that LaunchServices does not know as an app (a test runner) gets an
+    /// instance that does not carry its pid, and that instance is still what
+    /// "this process" means to AppKit.
     private static func isPlainsay(_ application: NSRunningApplication) -> Bool {
-        application.processIdentifier == ProcessInfo.processInfo.processIdentifier
+        application.processIdentifier == NSRunningApplication.current.processIdentifier
     }
 
     public func reacquire() async -> PasteTargetDecision {
