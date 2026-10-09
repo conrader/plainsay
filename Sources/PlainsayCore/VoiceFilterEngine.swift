@@ -82,14 +82,39 @@ public actor VoiceFilterEngine {
         matching embedding: [Float],
         threshold: Float = 0.6
     ) throws -> [Float] {
+        try filter(samples: samples, matching: embedding, threshold: threshold).samples
+    }
+
+    /// `filtered`, plus which stretches were removed, for the log.
+    public func filter(
+        samples: [Float],
+        matching embedding: [Float],
+        threshold: Float = 0.6
+    ) throws -> VoiceFilterOutcome {
         guard let diarizer else { throw VoiceFilterError.notReady }
         let result = try diarizer.performCompleteDiarization(samples)
-        return Self.removingOtherSpeakers(
-            from: samples, segments: result.segments, matching: embedding, threshold: threshold
+        return Self.filtering(
+            samples, segments: result.segments, matching: embedding, threshold: threshold
         )
     }
 
-    /// The decision behind `filtered`, apart from the diarizer so it can be
+    /// FluidAudio's `DiarizerConfig.chunkDuration` default, which
+    /// `DiarizerManager()` uses.
+    static let diarizerChunkSeconds: Double = 10
+    /// Less speech than this from an unmatched speaker is kept: too little to
+    /// tell a second person from the user's own voice gone astray.
+    static let minimumOtherSpeakerSeconds: Double = 3
+
+    static func removingOtherSpeakers(
+        from samples: [Float],
+        segments: [TimedSpeakerSegment],
+        matching embedding: [Float],
+        threshold: Float
+    ) -> [Float] {
+        filtering(samples, segments: segments, matching: embedding, threshold: threshold).samples
+    }
+
+    /// The decision behind `filter`, apart from the diarizer so it can be
     /// tested without a model.
     ///
     /// The diarizer works in 10 s windows and gives each window's speaker its
@@ -107,18 +132,27 @@ public actor VoiceFilterEngine {
     /// a window whose embedding failed validation, the pauses between
     /// segments — stays, because a second voice it could not even pick out is
     /// a smaller loss than the user's own words.
-    static func removingOtherSpeakers(
-        from samples: [Float],
+    ///
+    /// Nor is every new speaker id evidence of a second person. The diarizer
+    /// mints one for any 1 s of speech that misses its existing speakers, and
+    /// a closing phrase in the padded last window does exactly that: a 43.54 s
+    /// dictation (2026-10-08 17:43) kept 42.21 s and lost its last words. So a
+    /// speaker is removed only when there is real evidence it is someone else
+    /// — at least `minimumOtherSpeakerSeconds` of speech, and not first heard
+    /// in the recording's padded last window.
+    static func filtering(
+        _ samples: [Float],
         segments: [TimedSpeakerSegment],
         matching embedding: [Float],
         threshold: Float
-    ) -> [Float] {
+    ) -> VoiceFilterOutcome {
+        let untouched = VoiceFilterOutcome(samples: samples, removed: [])
         let enrolledIDs = Set(
             segments
                 .filter { SpeakerUtilities.cosineDistance($0.embedding, embedding) < threshold }
                 .map(\.speakerId)
         )
-        guard !enrolledIDs.isEmpty else { return samples }
+        guard !enrolledIDs.isEmpty else { return untouched }
 
         func range(of segment: TimedSpeakerSegment) -> Range<Int>? {
             let start = max(0, Int(segment.startTimeSeconds * Float(whisperSampleRate)))
@@ -126,8 +160,22 @@ public actor VoiceFilterEngine {
             return start < end ? start..<end : nil
         }
 
+        let otherSegments = segments.filter { !enrolledIDs.contains($0.speakerId) }
+        // The diarizer's last window starts at the last multiple of its
+        // chunk; when the recording ends inside it, the rest is zero padding.
+        let chunk = Int(diarizerChunkSeconds * whisperSampleRate)
+        let lastWindowStart = samples.isEmpty ? 0 : (samples.count - 1) / chunk * chunk
+        let lastWindowIsPadded = samples.count % chunk != 0
+        let removableIDs = Set(otherSegments.map(\.speakerId)).filter { id in
+            let ranges = otherSegments.filter { $0.speakerId == id }.compactMap(range(of:))
+            let seconds = Double(ranges.reduce(0) { $0 + $1.count }) / whisperSampleRate
+            guard seconds >= minimumOtherSpeakerSeconds else { return false }
+            let bornInPaddedTail = lastWindowIsPadded && ranges.allSatisfy { $0.lowerBound >= lastWindowStart }
+            return !bornInPaddedTail
+        }
+
         var keep = [Bool](repeating: true, count: samples.count)
-        for segment in segments where !enrolledIDs.contains(segment.speakerId) {
+        for segment in otherSegments where removableIDs.contains(segment.speakerId) {
             guard let range = range(of: segment) else { continue }
             keep.replaceSubrange(range, with: repeatElement(false, count: range.count))
         }
@@ -139,16 +187,73 @@ public actor VoiceFilterEngine {
 
         var kept: [Float] = []
         kept.reserveCapacity(samples.count)
-        for (index, sample) in samples.enumerated() where keep[index] {
-            kept.append(sample)
+        var removed: [Range<Double>] = []
+        var removedStart: Int?
+        for (index, sample) in samples.enumerated() {
+            if keep[index] {
+                kept.append(sample)
+                if let start = removedStart {
+                    removed.append(Double(start) / whisperSampleRate..<Double(index) / whisperSampleRate)
+                    removedStart = nil
+                }
+            } else if removedStart == nil {
+                removedStart = index
+            }
         }
-        return kept.isEmpty ? samples : kept
+        if let start = removedStart {
+            removed.append(Double(start) / whisperSampleRate..<Double(samples.count) / whisperSampleRate)
+        }
+        return kept.isEmpty ? untouched : VoiceFilterOutcome(samples: kept, removed: removed)
     }
 
     public func shutdown() {
         diarizer?.cleanup()
         diarizer = nil
         setState(.idle)
+    }
+}
+
+/// What the voice filter kept, and which stretches of the recording it
+/// removed — the ranges are what make a lost ending diagnosable from the log.
+public struct VoiceFilterOutcome: Sendable {
+    public let samples: [Float]
+    /// Removed stretches in seconds from the start of the recording, in order.
+    public let removed: [Range<Double>]
+
+    /// "20.00-25.00s, 41.00-43.54s", or "none".
+    public static func describe(_ ranges: [Range<Double>]) -> String {
+        guard !ranges.isEmpty else { return "none" }
+        return ranges
+            .map { String(format: "%.2f-%.2fs", $0.lowerBound, $0.upperBound) }
+            .joined(separator: ", ")
+    }
+}
+
+/// Hidden diagnostic: with `defaults write <bundle id> PlainsayDebugSaveAudio
+/// -bool YES`, the last dictation's captured and filtered audio are written to
+/// ~/Library/Application Support/Plainsay/debug/, overwriting the previous
+/// pair, so a lost ending can be listened to rather than guessed at.
+enum VoiceFilterDebugAudio {
+    static let defaultsKey = "PlainsayDebugSaveAudio"
+
+    static func saveIfEnabled(
+        captured: [Float], filtered: [Float], defaults: UserDefaults = .standard
+    ) {
+        guard defaults.bool(forKey: defaultsKey) else { return }
+        Task.detached(priority: .utility) {
+            let directory = FileManager.default
+                .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("Plainsay/debug", isDirectory: true)
+            do {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+                try WAVEncoder.encode(samples: captured)
+                    .write(to: directory.appendingPathComponent("last-captured.wav"), options: .atomic)
+                try WAVEncoder.encode(samples: filtered)
+                    .write(to: directory.appendingPathComponent("last-filtered.wav"), options: .atomic)
+            } catch {
+                Log.pipeline.error("debug audio not saved: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 }
 
