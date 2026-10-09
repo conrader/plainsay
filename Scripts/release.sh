@@ -117,29 +117,54 @@ PLIST_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Scripts/Info.p
 
 echo "==> Version $VERSION (build $BUILD)"
 
-./Scripts/bundle.sh
+# A rerun after a late failure (the DMG step, an upload) shouldn't cost a
+# rebuild and another notarization round trip. The stamp is written only after
+# this exact version, build and commit was notarized, stapled and assessed —
+# the tree is clean, so the commit pins the source — and the app is checked
+# again before it is reused. REBUILD=1 forces a fresh build anyway.
+APP_STAMP="build/Plainsay.app.release-stamp"
+RELEASE_KEY="$VERSION $BUILD $(git rev-parse HEAD)"
+reuse_notarized_app() {
+	[ "${NOTARIZE:-1}" = "1" ] && [ "${REBUILD:-0}" != "1" ] || return 1
+	[ -d build/Plainsay.app ] && [ "$(cat "$APP_STAMP" 2>/dev/null)" = "$RELEASE_KEY" ] || return 1
+	local plist=build/Plainsay.app/Contents/Info.plist
+	[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null)" = "$VERSION" ] || return 1
+	[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$plist" 2>/dev/null)" = "$BUILD" ] || return 1
+	codesign --verify --deep --strict build/Plainsay.app 2>/dev/null || return 1
+	xcrun stapler validate build/Plainsay.app >/dev/null 2>&1 || return 1
+	spctl -a -t exec build/Plainsay.app 2>/dev/null
+}
 
-# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
-# the app the first time anyone launches it from a download — which is every
-# new user, and every user whose update arrives quarantined.
-#
-# The credentials live in a Keychain profile created once with:
-#   xcrun notarytool store-credentials "plainsay-notary" \
-#     --key <AuthKey_*.p8> --key-id <id> --issuer <uuid>
-if [ "${NOTARIZE:-1}" = "1" ]; then
-	echo "==> Notarising (a few minutes)"
-	rm -rf dist && mkdir -p dist
-	ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app dist/notarize.zip
-	xcrun notarytool submit dist/notarize.zip \
-		--keychain-profile "plainsay-notary" --wait --timeout 20m
-	xcrun stapler staple build/Plainsay.app
-	# The ticket is what makes this offline-verifiable; without stapling, a
-	# machine with no network sees an unnotarized app.
-	xcrun stapler validate build/Plainsay.app
-	spctl -a -vvv -t exec build/Plainsay.app
-	rm -f dist/notarize.zip
+if reuse_notarized_app; then
+	echo "==> Reusing build/Plainsay.app — already notarized and stapled for $VERSION at this commit (REBUILD=1 to rebuild)"
+	rm -rf dist
 else
-	echo "==> Skipping notarisation (NOTARIZE=0) — do not ship this build"
+	rm -f "$APP_STAMP"
+	./Scripts/bundle.sh
+
+	# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
+	# the app the first time anyone launches it from a download — which is every
+	# new user, and every user whose update arrives quarantined.
+	#
+	# The credentials live in a Keychain profile created once with:
+	#   xcrun notarytool store-credentials "plainsay-notary" \
+	#     --key <AuthKey_*.p8> --key-id <id> --issuer <uuid>
+	if [ "${NOTARIZE:-1}" = "1" ]; then
+		echo "==> Notarising (a few minutes)"
+		rm -rf dist && mkdir -p dist
+		ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app dist/notarize.zip
+		xcrun notarytool submit dist/notarize.zip \
+			--keychain-profile "plainsay-notary" --wait --timeout 20m
+		xcrun stapler staple build/Plainsay.app
+		# The ticket is what makes this offline-verifiable; without stapling, a
+		# machine with no network sees an unnotarized app.
+		xcrun stapler validate build/Plainsay.app
+		spctl -a -vvv -t exec build/Plainsay.app
+		rm -f dist/notarize.zip
+		echo "$RELEASE_KEY" > "$APP_STAMP"
+	else
+		echo "==> Skipping notarisation (NOTARIZE=0) — do not ship this build"
+	fi
 fi
 
 echo "==> Packaging"
@@ -171,9 +196,19 @@ DMG="dist/Plainsay-$VERSION.dmg"
 DMG_RW="dist/Plainsay-$VERSION-rw.dmg"
 DMG_STAGING=$(mktemp -d)
 DMG_MOUNT=""
+# Finder can keep a just-closed window's volume busy for a moment, so a single
+# detach attempt is not enough; the read-write image is scratch, so forcing
+# it as a last resort loses nothing.
+detach_dmg() {
+	for _ in 1 2 3; do
+		hdiutil detach "$1" -quiet 2>/dev/null && return 0
+		sleep 2
+	done
+	hdiutil detach "$1" -force -quiet
+}
 cleanup_dmg_build() {
 	rm -rf "$DMG_STAGING"
-	if [ -n "$DMG_MOUNT" ]; then hdiutil detach "$DMG_MOUNT" -quiet 2>/dev/null || true; fi
+	if [ -n "$DMG_MOUNT" ]; then detach_dmg "$DMG_MOUNT" || true; fi
 }
 trap cleanup_dmg_build EXIT
 
@@ -182,6 +217,16 @@ ln -s /Applications "$DMG_STAGING/Applications"
 mkdir -p "$DMG_STAGING/.background"
 swift Scripts/make-dmg-background.swift "$DMG_STAGING/.background" >/dev/null
 
+# A scratch image left mounted by an interrupted run would make this one mount
+# as "Plainsay $VERSION 1". Only our own read-write images are detached here.
+hdiutil info | awk -F'\t' '
+	/^image-path/ { scratch = ($0 ~ /\/dist\/Plainsay-[0-9.]+-rw\.dmg$/) }
+	scratch && $NF ~ /^\/Volumes\// { print $NF }
+' | while IFS= read -r stale; do
+	echo "    detaching stale scratch volume $stale"
+	detach_dmg "$stale" || true
+done
+
 rm -f "$DMG" "$DMG_RW"
 # Sized generously above the staged contents — this read-write image is
 # thrown away after the conversion below, so a few spare MB costs nothing.
@@ -189,33 +234,26 @@ DMG_SIZE_MB=$(( $(du -sm "$DMG_STAGING" | cut -f1) + 40 ))
 hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -fs HFS+ \
 	-format UDRW -size "${DMG_SIZE_MB}m" "$DMG_RW" >/dev/null
 
-DMG_MOUNT=$(hdiutil attach "$DMG_RW" -readwrite -noverify -noautoopen | tail -1 | awk -F'\t' '{print $NF}')
+# The mount point comes from hdiutil, not from the volume name we asked for:
+# if that name is already taken, the volume lands at "<name> 1".
+DMG_MOUNT=$(hdiutil attach "$DMG_RW" -readwrite -noverify -noautoopen \
+	| awk -F'\t' '$NF ~ /^\/Volumes\// { mount = $NF } END { print mount }' \
+	| sed 's/[[:space:]]*$//')
+[ -d "$DMG_MOUNT" ] || { echo "could not read the DMG mount point from hdiutil attach" >&2; exit 1; }
+DMG_VOLNAME=$(basename "$DMG_MOUNT")
+[ "$DMG_VOLNAME" = "Plainsay $VERSION" ] || \
+	echo "    warning: volume mounted as \"$DMG_VOLNAME\" — another \"Plainsay $VERSION\" is already mounted" >&2
 
-osascript <<OSA
-tell application "Finder"
-	tell disk "Plainsay $VERSION"
-		open
-		set current view of container window to icon view
-		set toolbar visible of container window to false
-		set statusbar visible of container window to false
-		set the bounds of container window to {400, 100, 1060, 500}
-		set theViewOptions to icon view options of container window
-		set arrangement of theViewOptions to not arranged
-		set icon size of theViewOptions to 128
-		set background picture of theViewOptions to file ".background:background.png"
-		set position of item "Plainsay.app" of container window to {180, 195}
-		set position of item "Applications" of container window to {480, 195}
-		select {}
-		close
-		open
-		update without registering applications
-		delay 1
-	end tell
-end tell
-OSA
+# The layout is cosmetic; the app inside is what ships. If Finder cannot be
+# driven (see dmg-layout.applescript for the -1728 race it waits out), ship a
+# plain DMG rather than abort a release that is already built and notarized.
+if ! osascript Scripts/dmg-layout.applescript "$DMG_MOUNT" "$DMG_VOLNAME"; then
+	echo "    warning: Finder layout failed — shipping a plain DMG without the custom window" >&2
+	rm -f "$DMG_MOUNT/.DS_Store"
+fi
 
 sync
-hdiutil detach "$DMG_MOUNT" -quiet
+detach_dmg "$DMG_MOUNT"
 DMG_MOUNT=""
 
 hdiutil convert "$DMG_RW" -format UDZO -ov -o "$DMG" >/dev/null
