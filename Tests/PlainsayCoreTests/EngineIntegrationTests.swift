@@ -5,7 +5,7 @@ import Testing
 
 /// Renders speech at exactly the format both local engines expect, so the
 /// integration suites need no audio fixture in the repository.
-private func synthesizeSpeech(_ phrase: String, voice: String? = nil) throws -> [Float] {
+func synthesizeSpeech(_ phrase: String, voice: String? = nil) throws -> [Float] {
     let url = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent("plainsay-\(UUID().uuidString).wav")
     defer { try? FileManager.default.removeItem(at: url) }

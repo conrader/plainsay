@@ -10,7 +10,9 @@ import FluidAudio
 ///
 /// Exists because pinning digests from the Hugging Face repository tree was
 /// wrong — FluidAudio fetches a subset and lays it out under its own directory
-/// structure, so 65 of 88 pinned paths had nothing behind them.
+/// structure, so 65 of 88 pinned paths had nothing behind them. The pins are
+/// now limited to that subset (`DOWNLOADED` in the script); re-run this after
+/// bumping FluidAudio.
 ///
 ///     PLAINSAY_DUMP_PARAKEET=1 swift test --filter ParakeetLayoutDump
 @Suite("Parakeet layout dump")
