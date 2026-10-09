@@ -100,11 +100,24 @@ echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
 ssh "$HOST" "sudo mkdir -p $REMOTE_DIR && sudo chown -R \$(whoami) $REMOTE_DIR"
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
-# Internal planning material, if present, is not website content.
-rsync -az --delete --delete-excluded \
-  --exclude '/launch/' \
-  --exclude '/superpowers/' \
-  docs/ "$HOST:$REMOTE_DIR/"
+#
+# Files that live under docs/ but are not website content: internal planning
+# material (launch/, superpowers/, design/), Finder litter, and markdown. No
+# site page serves a .md (every .md link points at github.com); llms.txt is
+# .txt and is still published. Kept in step with plainsay-server's
+# deploy/deploy-site.sh, the other path that publishes this same docroot.
+#
+# Deliberately --delete without --delete-excluded: anything matching these
+# patterns that already exists on the server is left alone rather than
+# deleted, so the two deploy scripts never fight over the same files.
+EXCLUDES=(
+  --exclude='/launch/'
+  --exclude='superpowers/'
+  --exclude='design/'
+  --exclude='.DS_Store'
+  --exclude='*.md'
+)
+rsync -az --delete "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
 ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
 
 echo "==> Live: https://plainsay.app/"
