@@ -54,6 +54,8 @@ compare active recording time with the samples actually captured.
 - [README](https://github.com/conrader/plainsay/blob/main/README.md): install, first launch, architecture, how it works
 - [Source](https://github.com/conrader/plainsay): the whole client, MIT licensed
 - [Releases](https://github.com/conrader/plainsay/releases): notarized builds, changelog
+- [Changelog](https://plainsay.app/changelog/): what changed in recent Plainsay releases, explained in plain words
+- [Plainsay 0.2.38](https://plainsay.app/changelog/0.2.38/): long Mac dictations keep their last words — Voice Filter no longer trims your ending, and FluidAudio 0.15.8 keeps the tail of long Parakeet recordings
 - [Homepage](https://plainsay.app/): overview, pricing, screenshots
 - [Privacy Policy](https://plainsay.app/privacy/): how the website, Mac client, optional providers, and Plainsay Cloud handle data
 - [Terms of Service](https://plainsay.app/terms/): terms for the website, free Local client, and optional Plainsay Cloud service
