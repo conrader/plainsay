@@ -92,7 +92,13 @@ public enum ModelIntegrity {
     /// This answers "did anyone record what to expect", which is a fact about
     /// the shipped manifest and is the thing worth failing a build over.
     static func pinnedFileCount(for model: String) -> Int {
-        manifest?.models[model]?.files.count ?? 0
+        pinnedPaths(for: model).count
+    }
+
+    /// The relative paths pinned for `model`, so tests can hold the manifest
+    /// to the layout the downloading library actually produces.
+    static func pinnedPaths(for model: String) -> [String] {
+        manifest?.models[model]?.files.keys.sorted() ?? []
     }
 
     /// Verifies `directory` against the pins recorded for `model`.

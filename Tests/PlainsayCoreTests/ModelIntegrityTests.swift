@@ -2,6 +2,9 @@ import CryptoKit
 import Foundation
 import Testing
 @testable import PlainsayCore
+#if canImport(FluidAudio)
+import FluidAudio
+#endif
 
 /// Issue #27, carried over from the external security review in #1.
 @Suite("Model integrity")
@@ -71,6 +74,27 @@ struct ModelIntegrityTests {
             )
         }
     }
+
+    #if canImport(FluidAudio)
+    @Test("Parakeet pins describe exactly what FluidAudio downloads")
+    func parakeetPinsMatchFluidAudioLayout() {
+        // Pinning the whole repository left 65 of 88 paths with nothing on
+        // disk, and the app said so in the log on every load. FluidAudio's own
+        // list of required models is what decides the download, so a bump
+        // that changes it fails here instead of in a user's log.
+        let pinned = Set(
+            ModelIntegrity.pinnedPaths(for: OnDeviceModel.parakeetTDT06BV3.rawValue)
+                .map { String($0.split(separator: "/", maxSplits: 1)[0]) }
+        )
+        let required = ModelNames.ASR.requiredModelsV3(precision: .int8)
+        let sidecars: Set = ["config.json", ModelNames.ASR.vocabularyFile, "parakeet_v3_vocab.json"]
+        #expect(required.isSubset(of: pinned), "unpinned: \(required.subtracting(pinned).sorted())")
+        #expect(
+            pinned.isSubset(of: required.union(sidecars)),
+            "pinned but never downloaded: \(pinned.subtracting(required.union(sidecars)).sorted())"
+        )
+    }
+    #endif
 
     @Test("A model whose file was modified is rejected")
     func modifiedFileIsRejected() {
@@ -178,9 +202,11 @@ struct IntegrityResilienceTests {
     @Test("A pinned file that was never downloaded is not treated as tampering")
     func absentPinsAreNotFailures() {
         // FluidAudio fetches a subset of its repository — the int8 encoder, not
-        // the int4 one — so 65 of the 88 pinned paths have nothing behind them
-        // on a perfectly good install. Calling that a failure is what bricked
-        // the app: the model was deleted and re-fetched on every launch.
+        // the int4 one — and until the pins were trimmed to that subset, 65 of
+        // 88 pinned paths had nothing behind them on a perfectly good install.
+        // Calling that a failure is what bricked the app: the model was
+        // deleted and re-fetched on every launch. A future layout change can
+        // open the same gap again, so absence must stay non-fatal.
         let dir = makeDirectory()
         let result = ModelIntegrity.verify(model: OnDeviceModel.parakeetTDT06BV3.rawValue, in: dir)
         #expect(result.isAcceptable)

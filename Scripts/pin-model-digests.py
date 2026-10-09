@@ -54,6 +54,25 @@ MODELS = {
     "nvidia_parakeet-tdt-0.6b-v3": ("FluidInference/parakeet-tdt-0.6b-v3-coreml", ""),
 }
 
+# What FluidAudio actually fetches, by top-level path. Its repo also carries
+# int4 and v2 encoders, fused variants and the source .mlpackages, which it
+# never downloads; pinning those left 65 of 88 paths with nothing on disk, so
+# the app logged a manifest that "does not describe this layout" on every
+# load. This mirrors `ModelNames.ASR.requiredModelsV3(precision: .int8)` plus
+# the config and vocabulary files it downloads beside them — re-check it when
+# FluidAudio is bumped (ParakeetLayoutDump prints the real layout).
+DOWNLOADED = {
+    "nvidia_parakeet-tdt-0.6b-v3": {
+        "Preprocessor.mlmodelc",
+        "Encoder.mlmodelc",
+        "Decoder.mlmodelc",
+        "JointDecisionv3.mlmodelc",
+        "config.json",
+        "parakeet_vocab.json",
+        "parakeet_v3_vocab.json",
+    },
+}
+
 # Emitted as Swift source, not as a bundled resource.
 #
 # `Bundle.module` is a trap for an app packaged by hand: the accessor SwiftPM
@@ -104,7 +123,7 @@ def head_commit(repo):
     return fetch(f"{API}/{repo}")["sha"]
 
 
-def digests_for(repo, path):
+def digests_for(repo, path, keep=None):
     """Maps each file to the strongest digest Hugging Face publishes for it.
 
     LFS files — the weights, and everything else of any size — carry a real
@@ -121,6 +140,8 @@ def digests_for(repo, path):
         relative = entry["path"]
         if prefix and relative.startswith(prefix):
             relative = relative[len(prefix):]
+        if keep is not None and relative.split("/", 1)[0] not in keep:
+            continue
         lfs = entry.get("lfs")
         if lfs and lfs.get("oid"):
             files[relative] = {"algorithm": "sha256", "digest": lfs["oid"], "size": lfs.get("size", entry.get("size"))}
@@ -145,7 +166,7 @@ def build():
         manifest["models"][name] = {
             "repo": repo,
             "commit": head_commit(repo),
-            "files": digests_for(repo, path),
+            "files": digests_for(repo, path, DOWNLOADED.get(name)),
         }
     return manifest
 
