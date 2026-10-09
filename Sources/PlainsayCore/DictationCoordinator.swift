@@ -458,14 +458,17 @@ public final class DictationCoordinator {
         else { return samples }
 
         do {
-            let filtered = try await voiceFilter.filtered(samples: samples, matching: embedding)
+            let outcome = try await voiceFilter.filter(samples: samples, matching: embedding)
             // Without this a filtered-out tail is indistinguishable from one
-            // the engine never transcribed.
+            // the engine never transcribed, and without the ranges a lost
+            // ending cannot be told from a second voice mid-dictation.
             Log.pipeline.info("""
-                voice filter kept \(Double(filtered.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s \
-                of \(Double(samples.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s
+                voice filter kept \(Double(outcome.samples.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s \
+                of \(Double(samples.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s, \
+                removed \(VoiceFilterOutcome.describe(outcome.removed), privacy: .public)
                 """)
-            return filtered
+            VoiceFilterDebugAudio.saveIfEnabled(captured: samples, filtered: outcome.samples)
+            return outcome.samples
         } catch {
             Log.pipeline.error("voice filter failed, using unfiltered audio: \(error.localizedDescription, privacy: .public)")
             return samples
