@@ -11,8 +11,8 @@ A native Mac dictation app in a 12 MB download, with Whisper and Parakeet runnin
   <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-required-14161A?style=flat-square&logo=apple">
 </p>
 <p align="center"><code>brew install --cask conrader/plainsay/plainsay</code> · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download the notarized DMG</strong></a></p>
-<p align="center"><strong>12 MB native app · free Local mode · no account · no telemetry</strong><br>
-⭐ If Plainsay is useful to you, <a href="https://github.com/conrader/plainsay/stargazers">star it on GitHub</a>; it helps other Mac users find it.</p>
+<p align="center"><strong>12 MB native app · free Local mode · no account · no telemetry</strong></p>
+<p align="center"><a href="https://github.com/conrader/plainsay"><strong>⭐ Star Plainsay on GitHub</strong></a>, the simplest way to help other Mac users find it.</p>
 
 <p align="center">
   <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><img src="docs/assets/social-preview.png" alt="Hold a key, speak, and release to put locally transcribed text at your cursor with Plainsay" width="820"></a>
@@ -43,7 +43,7 @@ local Polishing providers.
 > downloads of approximately 475–632 MB; smaller English-only options start at
 > about 150 MB.
 
-## Voice Edit (new in v0.2.34)
+## Voice Edit
 
 ### Correct the last dictation
 
