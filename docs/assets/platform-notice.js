@@ -34,7 +34,8 @@
       label: "Tell me when there's a Windows version", submit: 'Notify me', close: 'Close',
       anyway: 'Download the Mac version anyway', success: "Thanks — we'll email you once.",
       error: 'Something went wrong. Email', errorEnd: 'instead.',
-      privacy: 'We only store your email to send that one message.',
+      privacy: 'We store your email, platform and language only to send that one message, then delete it.',
+      privacyLink: 'Privacy policy',
     },
     de: {
       heading: 'Plainsay ist eine Mac-App',
@@ -43,7 +44,8 @@
       label: 'Sag mir Bescheid, wenn es eine Windows-Version gibt', submit: 'Benachrichtigen', close: 'Schließen',
       anyway: 'Mac-Version trotzdem herunterladen', success: 'Danke — wir schicken dir einmal eine E-Mail.',
       error: 'Etwas ist schiefgelaufen. Schreib stattdessen an', errorEnd: '.',
-      privacy: 'Wir speichern nur deine E-Mail-Adresse, um diese eine Nachricht zu senden.',
+      privacy: 'Wir speichern deine E-Mail-Adresse, Plattform und Sprache nur, um dir diese eine Nachricht zu senden, und löschen die Daten anschließend.',
+      privacyLink: 'Datenschutzerklärung',
     },
     es: {
       heading: 'Plainsay es una app para Mac',
@@ -52,7 +54,8 @@
       label: 'Avísame cuando haya una versión para Windows', submit: 'Avisarme', close: 'Cerrar',
       anyway: 'Descargar la versión para Mac de todos modos', success: 'Gracias — te enviaremos un solo correo.',
       error: 'Algo ha salido mal. Escribe a', errorEnd: 'para avisarnos.',
-      privacy: 'Solo guardamos tu correo electrónico para enviarte ese único mensaje.',
+      privacy: 'Guardamos tu correo electrónico, tu plataforma y tu idioma solo para enviarte ese único mensaje y luego eliminamos esos datos.',
+      privacyLink: 'Política de privacidad',
     },
     fr: {
       heading: 'Plainsay est une app pour Mac',
@@ -61,7 +64,8 @@
       label: 'Prévenez-moi quand une version Windows sera disponible', submit: 'Me prévenir', close: 'Fermer',
       anyway: 'Télécharger quand même la version Mac', success: 'Merci — nous vous enverrons un seul e-mail.',
       error: 'Une erreur est survenue. Écrivez plutôt à', errorEnd: '.',
-      privacy: 'Nous conservons uniquement votre e-mail pour envoyer ce seul message.',
+      privacy: 'Nous conservons votre adresse e-mail, votre plateforme et votre langue uniquement pour vous envoyer ce seul message, puis nous supprimons ces données.',
+      privacyLink: 'Politique de confidentialité',
     },
     it: {
       heading: 'Plainsay è un’app per Mac',
@@ -70,7 +74,8 @@
       label: 'Avvisami quando sarà disponibile una versione per Windows', submit: 'Avvisami', close: 'Chiudi',
       anyway: 'Scarica comunque la versione per Mac', success: 'Grazie — ti invieremo una sola email.',
       error: 'Qualcosa è andato storto. Scrivi invece a', errorEnd: '.',
-      privacy: 'Conserviamo solo la tua email per inviarti quell’unico messaggio.',
+      privacy: 'Conserviamo il tuo indirizzo email, la tua piattaforma e la tua lingua solo per inviarti quell’unico messaggio, poi eliminiamo questi dati.',
+      privacyLink: 'Informativa sulla privacy',
     },
     ja: {
       heading: 'PlainsayはMac用アプリです',
@@ -79,7 +84,8 @@
       label: 'Windows版が公開されたら知らせてほしい', submit: '通知を受け取る', close: '閉じる',
       anyway: 'それでもMac版をダウンロードする', success: 'ありがとうございます。公開時に一度だけメールでお知らせします。',
       error: 'エラーが発生しました。代わりに', errorEnd: 'までメールをお送りください。',
-      privacy: 'この一度の通知を送るために、メールアドレスのみを保存します。',
+      privacy: 'メールアドレス、プラットフォーム、言語を、この一度の通知を送るためだけに保存し、送信後に削除します。',
+      privacyLink: 'プライバシーポリシー',
     },
     ko: {
       heading: 'Plainsay는 Mac용 앱입니다',
@@ -88,7 +94,8 @@
       label: 'Windows 버전이 나오면 알려 주세요', submit: '알림 받기', close: '닫기',
       anyway: '그래도 Mac 버전 다운로드', success: '감사합니다. 출시되면 이메일을 한 번만 보내 드릴게요.',
       error: '문제가 발생했습니다. 대신', errorEnd: '으로 이메일을 보내 주세요.',
-      privacy: '이 알림 한 번을 보내기 위해 이메일 주소만 저장합니다.',
+      privacy: '이 한 번의 알림을 보내기 위해서만 이메일 주소, 플랫폼, 언어를 저장하며, 전송 후에는 삭제합니다.',
+      privacyLink: '개인정보 처리방침',
     },
     nl: {
       heading: 'Plainsay is een Mac-app',
@@ -97,7 +104,8 @@
       label: 'Laat me weten wanneer er een Windows-versie is', submit: 'Houd me op de hoogte', close: 'Sluiten',
       anyway: 'Toch de Mac-versie downloaden', success: 'Bedankt — we sturen je één e-mail.',
       error: 'Er ging iets mis. Mail in plaats daarvan naar', errorEnd: '.',
-      privacy: 'We bewaren alleen je e-mailadres om dat ene bericht te sturen.',
+      privacy: 'We bewaren je e-mailadres, platform en taal alleen om je dat ene bericht te sturen en verwijderen deze gegevens daarna.',
+      privacyLink: 'Privacybeleid',
     },
     pl: {
       heading: 'Plainsay to aplikacja na Maca',
@@ -106,7 +114,8 @@
       label: 'Daj mi znać, gdy pojawi się wersja na Windows', submit: 'Powiadom mnie', close: 'Zamknij',
       anyway: 'Pobierz mimo to wersję na Maca', success: 'Dzięki — napiszemy do Ciebie raz, gdy będzie gotowa.',
       error: 'Coś poszło nie tak. Napisz zamiast tego na', errorEnd: '.',
-      privacy: 'Zapisujemy tylko Twój e-mail, żeby wysłać tę jedną wiadomość.',
+      privacy: 'Przechowujemy Twój adres e-mail, platformę i język wyłącznie po to, by wysłać Ci tę jedną wiadomość, a potem usuwamy te dane.',
+      privacyLink: 'Polityka prywatności',
     },
     pt: {
       heading: 'O Plainsay é uma aplicação para Mac',
@@ -115,7 +124,8 @@
       label: 'Avise-me quando houver uma versão para Windows', submit: 'Avisar-me', close: 'Fechar',
       anyway: 'Descarregar a versão para Mac mesmo assim', success: 'Obrigado — enviaremos apenas um e-mail.',
       error: 'Ocorreu um erro. Escreva para', errorEnd: 'em alternativa.',
-      privacy: 'Guardamos apenas o seu e-mail para enviar essa única mensagem.',
+      privacy: 'Guardamos o seu endereço de e-mail, a sua plataforma e o seu idioma apenas para lhe enviar essa única mensagem e depois apagamos esses dados.',
+      privacyLink: 'Política de privacidade',
     },
     ru: {
       heading: 'Plainsay — приложение для Mac',
@@ -124,7 +134,8 @@
       label: 'Сообщите мне, когда появится версия для Windows', submit: 'Уведомить меня', close: 'Закрыть',
       anyway: 'Всё равно скачать версию для Mac', success: 'Спасибо — мы отправим вам только одно письмо.',
       error: 'Что-то пошло не так. Напишите на', errorEnd: '.',
-      privacy: 'Мы храним только ваш e-mail, чтобы отправить это единственное письмо.',
+      privacy: 'Мы храним ваш адрес электронной почты, платформу и язык только для того, чтобы отправить вам это единственное сообщение, а затем удаляем эти данные.',
+      privacyLink: 'Политика конфиденциальности',
     },
     uk: {
       heading: 'Plainsay — застосунок для Mac',
@@ -133,7 +144,8 @@
       label: 'Повідомте мене, коли з’явиться версія для Windows', submit: 'Повідомити мене', close: 'Закрити',
       anyway: 'Усе одно завантажити версію для Mac', success: 'Дякуємо — ми надішлемо вам лише один лист.',
       error: 'Щось пішло не так. Напишіть на', errorEnd: '.',
-      privacy: 'Ми зберігаємо лише вашу електронну адресу, щоб надіслати цей один лист.',
+      privacy: 'Ми зберігаємо вашу адресу електронної пошти, платформу й мову лише для того, щоб надіслати вам це єдине повідомлення, а потім видаляємо ці дані.',
+      privacyLink: 'Політика конфіденційності',
     },
     zh: {
       heading: 'Plainsay 是一款 Mac 应用',
@@ -142,7 +154,8 @@
       label: 'Windows 版推出时通知我', submit: '通知我', close: '关闭',
       anyway: '仍然下载 Mac 版', success: '谢谢 — 我们只会给你发送一次邮件。',
       error: '出了点问题。请改为发送邮件至', errorEnd: '。',
-      privacy: '我们只保存你的邮箱地址，用于发送这一次通知。',
+      privacy: '我们保存你的邮箱地址、平台和语言，仅用于发送这一次通知，发送后便删除这些数据。',
+      privacyLink: '隐私政策',
     },
   };
 
@@ -279,7 +292,11 @@
     });
     anyway = element('a', 'pn-anyway', strings.anyway);
     anyway.setAttribute('data-pn-anyway', '');
-    dialog.append(header, description, form, anyway, element('p', 'pn-privacy', strings.privacy));
+    const privacy = element('p', 'pn-privacy', `${strings.privacy}${['ja', 'zh'].includes(lang) ? '' : ' '}`);
+    const privacyLink = element('a', '', strings.privacyLink);
+    privacyLink.href = '/privacy/#waitlist';
+    privacy.append(privacyLink);
+    dialog.append(header, description, form, anyway, privacy);
     if (nativeDialog) {
       document.body.append(dialog);
       dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeNotice(); });
