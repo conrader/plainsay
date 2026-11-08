@@ -117,7 +117,7 @@ struct HUDView: View {
         case .idle, .cancelled, .error: break
         default: if state.isPrivate { return privateBadge }
         }
-        switch state.phase {
+        return switch state.phase {
         case .recording: Localization.appString("hud.label.listening", fallback: "LISTENING")
         case .recordingLimitReached:
             Localization.appString("hud.label.recordingLimitReached", fallback: "10-MINUTE LIMIT")
