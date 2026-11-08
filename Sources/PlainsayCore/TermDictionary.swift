@@ -204,7 +204,7 @@ public struct TermDictionary: Codable, Sendable, Equatable {
 
     /// Lowercased, diacritic-folded, punctuation-stripped — so "Plainsay",
     /// "plain say", and "PlainSay" all fold to the same comparison key.
-    private static func foldedKey(_ text: String) -> String {
+    static func foldedKey(_ text: String) -> String {
         String(
             text
                 .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
