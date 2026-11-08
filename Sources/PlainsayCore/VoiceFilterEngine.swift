@@ -236,10 +236,16 @@ public struct VoiceFilterOutcome: Sendable {
 enum VoiceFilterDebugAudio {
     static let defaultsKey = "PlainsayDebugSaveAudio"
 
+    /// Pure gate, so the private-session rule is testable without writing
+    /// to the real Application Support directory.
+    static func shouldSave(policy: DictationSessionPolicy, defaults: UserDefaults = .standard) -> Bool {
+        policy.writesDebugAudio && defaults.bool(forKey: defaultsKey)
+    }
+
     static func saveIfEnabled(
-        captured: [Float], filtered: [Float], defaults: UserDefaults = .standard
+        captured: [Float], filtered: [Float], policy: DictationSessionPolicy, defaults: UserDefaults = .standard
     ) {
-        guard defaults.bool(forKey: defaultsKey) else { return }
+        guard shouldSave(policy: policy, defaults: defaults) else { return }
         Task.detached(priority: .utility) {
             let directory = FileManager.default
                 .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

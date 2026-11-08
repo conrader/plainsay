@@ -12,7 +12,11 @@ enum PasteDecisionLog {
         report: PasteTargetReport?,
         targetBundleIdentifier: String?,
         frontmostBundleIdentifier: String?,
-        keepOnClipboardSetting: Bool
+        keepOnClipboardSetting: Bool,
+        // A private dictation's log line names no app. Redacted here rather
+        // than by the caller passing nil, because the frontmost identifier
+        // also arrives inside `report`.
+        redactsBundleIdentifiers: Bool = false
     ) -> String {
         let decision: String
         let reason: String
@@ -37,9 +41,11 @@ enum PasteDecisionLog {
             reason = loss.rawValue
             clipboardKept = true
         }
-        let frontmost = report?.frontmostBundleIdentifier ?? frontmostBundleIdentifier
+        let frontmost = redactsBundleIdentifiers
+            ? "redacted" : report?.frontmostBundleIdentifier ?? frontmostBundleIdentifier
+        let target = redactsBundleIdentifiers ? "redacted" : targetBundleIdentifier
         return "paste decision=\(decision) reason=\(reason)"
-            + " target=\(targetBundleIdentifier ?? "none")"
+            + " target=\(target ?? "none")"
             + " reactivationAttempted=\(report?.reactivationAttempted ?? false)"
             + " frontmost=\(frontmost ?? "unknown")"
             + " clipboardKept=\(clipboardKept)"

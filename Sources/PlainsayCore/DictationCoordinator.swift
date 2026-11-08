@@ -40,6 +40,11 @@ public final class DictationCoordinator {
     public private(set) var modelLoadTiming: SpeechModelLoadTiming?
     public private(set) var lastTranscript: String?
     public private(set) var lastDictation: LastDictation?
+    /// What this work unit may do (R1): frozen at recording start, `.standard` again when it ends.
+    public private(set) var sessionPolicy = DictationSessionPolicy.standard
+    public let privateDictation: PrivateDictationState
+    /// Source of the engine actually prepared (not the setting); nil while (re)loading or failed.
+    public private(set) var preparedSource: TranscriptionSource?
     public private(set) var isCapturingCorrection = false
     public private(set) var isApplyingCorrection = false
     private var correctionCompletion: ((Result<String, Error>) -> Void)?
@@ -76,7 +81,8 @@ public final class DictationCoordinator {
     /// Subscription and credential client for the hosted plan.
     public let cloud: PlainsayCloudClient
 
-    private let settings: PlainsaySettings
+    /// Internal only so `DictationCoordinator+Private.swift` can read the speech source.
+    let settings: PlainsaySettings
     private let recorder: any AudioRecording
     private let inserter: any TextInserting
     private var engine: (any TranscriptionEngine)?
@@ -101,6 +107,7 @@ public final class DictationCoordinator {
     private let microphoneAuthorized: @MainActor @Sendable () -> Bool
     /// Tests pass a fake engine; production resolves one from settings.
     private let usesInjectedEngine: Bool
+    private let injectedSource: TranscriptionSource
 
     private let hotkeys: HotkeyMonitor
     public var onVoiceEdit: (() -> Void)? {
@@ -147,7 +154,9 @@ public final class DictationCoordinator {
         modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
         microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { AudioRecorder.microphoneAuthorized() },
         capturePasteTarget: (@MainActor @Sendable () -> (any DictationPasteTargeting)?)? = nil,
-        usesInjectedEngine: Bool = false
+        usesInjectedEngine: Bool = false,
+        injectedSource: TranscriptionSource = .onDevice,
+        privateDictation: PrivateDictationState = PrivateDictationState()
     ) {
         self.settings = settings
         self.history = history
@@ -161,6 +170,8 @@ public final class DictationCoordinator {
         self.microphoneAuthorized = microphoneAuthorized
         self.capturePasteTarget = capturePasteTarget
         self.usesInjectedEngine = usesInjectedEngine
+        self.injectedSource = injectedSource
+        self.privateDictation = privateDictation
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
 
@@ -284,6 +295,7 @@ public final class DictationCoordinator {
         correctionGeneration += 1
         finishCorrection(.failure(DictationCorrectionError.cancelled))
         lastDictation = nil
+        privateDictation.ephemeral.wipe()
         // After hotkey-up, `phase` remains `.recording` for one scheduler turn
         // while the queued pipeline takes ownership of this work unit. Only
         // release it here if the recorder itself is still capturing.
@@ -422,7 +434,7 @@ public final class DictationCoordinator {
                 of \(Double(samples.count) / whisperSampleRate, format: .fixed(precision: 2), privacy: .public)s, \
                 removed \(VoiceFilterOutcome.describe(outcome.removed), privacy: .public)
                 """)
-            VoiceFilterDebugAudio.saveIfEnabled(captured: samples, filtered: outcome.samples)
+            VoiceFilterDebugAudio.saveIfEnabled(captured: samples, filtered: outcome.samples, policy: sessionPolicy)
             return outcome.samples
         } catch {
             Log.pipeline.error("voice filter failed, using unfiltered audio: \(error.localizedDescription, privacy: .public)")
@@ -446,6 +458,7 @@ public final class DictationCoordinator {
     }
 
     private func queueModelReload(preserveProgressWhileCancelling: Bool) async {
+        preparedSource = nil
         modelLoadGeneration &+= 1
         let generation = modelLoadGeneration
         clearModelLoadError()
@@ -552,6 +565,7 @@ public final class DictationCoordinator {
         }
         // Tests inject `makeEngine`; production goes through the factory, which
         // is the only thing that knows about remote providers.
+        let source = usesInjectedEngine ? injectedSource : settings.transcriptionSource
         let engine = usesInjectedEngine
             ? makeEngine(settings.model, settings.primaryLanguage, onState)
             : ProviderFactory.makeEngine(settings, onState: onState)
@@ -566,6 +580,7 @@ public final class DictationCoordinator {
             }
             // Don't depend on the engine having reported readiness itself —
             // a successful `prepare()` is the definition of ready.
+            preparedSource = source
             applyModelState(.ready)
         } catch {
             guard generation == modelLoadGeneration else {
@@ -656,6 +671,16 @@ public final class DictationCoordinator {
         }
     }
 
+    // Arm, refusal and editing gates: DictationCoordinator+Private.swift.
+
+    /// Shows `editingRefusal` in the HUD; true means the caller must not open.
+    @discardableResult
+    public func refuseEditingIfPrivate() -> Bool {
+        guard let message = editingRefusal else { return false }
+        if !phase.isBusy { phase = .error(message); scheduleReset(after: .seconds(4)) }
+        return true
+    }
+
     // MARK: - Hotkey
 
     /// Feeds a press or release into the pipeline. Called by the hotkey monitor;
@@ -668,7 +693,7 @@ public final class DictationCoordinator {
     /// pasting, recording it in history, or staging it for crash recovery.
     @discardableResult
     public func beginCorrectionCapture(completion: @escaping (Result<String, Error>) -> Void) -> Bool {
-        guard !phase.isBusy, activeEngineWork == 0, !isCapturingCorrection, !isApplyingCorrection else { return false }
+        guard editingRefusal == nil, !phase.isBusy, activeEngineWork == 0, !isCapturingCorrection, !isApplyingCorrection else { return false }
         correctionGeneration += 1
         correctionCompletion = completion
         isCapturingCorrection = true
@@ -815,6 +840,14 @@ public final class DictationCoordinator {
             return
         }
 
+        // Re-checked at the press. A refusal records nothing and keeps the arm; it never decays into a normal dictation.
+        if privateDictation.isArmed, privateRefusal != nil {
+            flashError(PrivateDictationRefusal.refusedMessage)
+            machine.reset()
+            return
+        }
+        privateDictation.ephemeral.wipe()
+
         // Captured now, not at insertion time: by the time we paste, the HUD or
         // a notification may have shuffled the frontmost app — and with Cloud
         // Polishing in the path, the user may simply have moved on to another
@@ -841,6 +874,8 @@ public final class DictationCoordinator {
 
         lastErrorMessage = nil
         lastErrorCameFromModelLoad = false
+        sessionPolicy = .make(privacy: privateDictation.isArmed ? .privateLocal : .standard)
+        if !sessionPolicy.keepsLastDictation { lastTranscript = nil; lastDictation = nil }
         phase = .recording
         beginEngineWork()
         elapsed = 0
@@ -967,7 +1002,7 @@ public final class DictationCoordinator {
         defer { finishEngineWork() }
         // On disk before transcription, deleted after. Whatever survives a
         // crash here is a dictation that was never turned into text.
-        let staged = pendingAudio.save(samples)
+        let staged = sessionPolicy.stagesRecoveryAudio ? pendingAudio.save(samples) : nil
         defer { pendingAudio.discard(staged) }
 
         await runPipeline(samples, stoppedAtRecordingLimit: stoppedAtRecordingLimit)
@@ -1008,6 +1043,7 @@ public final class DictationCoordinator {
         guard activeEngineWork > 0 else { return }
         activeEngineWork -= 1
         guard activeEngineWork == 0 else { return }
+        sessionPolicy = .standard
 
         let waiters = engineIdleWaiters
         engineIdleWaiters.removeAll()
@@ -1047,7 +1083,7 @@ public final class DictationCoordinator {
         } catch {
             Log.pipeline.error("transcription failed: \(error.localizedDescription, privacy: .public)")
             record(text: "", raw: "", outcome: .transcriptionFailed, duration: duration)
-            flashError(error.localizedDescription)
+            flashError(PrivateDictationState.notice(error.localizedDescription, stillArmed: sessionPolicy.privacy == .privateLocal))
             return
         }
         Log.pipeline.info("""
@@ -1060,7 +1096,7 @@ public final class DictationCoordinator {
             // Whisper heard nothing worth inserting.
             Log.pipeline.info("empty transcript — nothing inserted")
             record(text: "", raw: "", outcome: .silence, duration: duration)
-            phase = .idle
+            if sessionPolicy.privacy == .privateLocal { flashError(PrivateDictationState.stillArmedMessage) } else { phase = .idle }
             return
         }
 
@@ -1069,10 +1105,12 @@ public final class DictationCoordinator {
         // corrections at all unless editing happens to catch them too.
         transcript = settings.dictionary.applyCorrections(to: transcript)
 
-        if !stoppedAtRecordingLimit { phase = .cleaning }
+        // A private session never builds a cleaner: no hosted object, no window-title read.
+        let policy = sessionPolicy
+        if !stoppedAtRecordingLimit, policy.allowsCleanup { phase = .cleaning }
         let dictionary = settings.dictionary
-        let cleaner = makeCleaner(settings)
-        let style = resolvedDictationStyle()
+        let cleaner = policy.allowsCleanup ? makeCleaner(settings) : NoCleanup()
+        let style = policy.allowsCleanup ? resolvedDictationStyle() : .plain
 
         var finalText = transcript
         var usedRaw = false
@@ -1091,7 +1129,7 @@ public final class DictationCoordinator {
         // here so both the auto-paste below and a later manual copy from
         // history see the same safe text.
         finalText = sanitizeForInsertion(finalText)
-        lastTranscript = finalText
+        if policy.keepsLastDictation { lastTranscript = finalText }
 
         // Written down *before* the paste is attempted. Insertion is the one
         // step we cannot verify, so the history has to survive its failure.
@@ -1106,11 +1144,19 @@ public final class DictationCoordinator {
         let outcome = await insert(finalText)
         let verifiedAnchor = outcome.sentPaste && anchor?.confirmInsertion(finalText) == true ? anchor : nil
         // Commands have a separate pipeline and can never overwrite this target.
-        lastDictation = finalText.isEmpty ? nil : LastDictation(text: finalText, target: verifiedAnchor, historyID: historyID)
+        if policy.keepsLastDictation {
+            lastDictation = finalText.isEmpty ? nil : LastDictation(text: finalText, target: verifiedAnchor, historyID: historyID)
+        }
+        let isPrivate = policy.privacy == .privateLocal
+        if isPrivate { privateDictation.consume() }
+        // Short of a confirmed paste the private text stays on the clipboard; keep one in-memory way back.
+        if isPrivate, outcome != .inserted { privateDictation.ephemeral.set(finalText) }
 
         switch outcome {
+        case .insertedUnconfirmed where isPrivate:
+            saveToClipboard(historyID: historyID, reason: .nothingFocused)
         case .inserted, .insertedUnconfirmed:
-            history.acknowledgeInsertionIssues()
+            if policy.writesHistory { history.acknowledgeInsertionIssues() }
             phase = usedRaw ? .insertedRaw : .idle
             scheduleReset()
             playSound("Pop")
@@ -1124,7 +1170,7 @@ public final class DictationCoordinator {
     /// The dictation is on the clipboard and nowhere else, so say so and leave
     /// it on screen long enough to be read.
     private func saveToClipboard(historyID: UUID, reason: Phase.ClipboardFallbackReason) {
-        history.updateOutcome(id: historyID, to: .insertionUnverified)
+        if sessionPolicy.writesHistory { history.updateOutcome(id: historyID, to: .insertionUnverified) }
         phase = .savedToClipboard(reason)
         // Longer than the normal reset: this is the one outcome that needs the
         // user to actually read and act on it before it fades.
@@ -1134,6 +1180,8 @@ public final class DictationCoordinator {
 
     @discardableResult
     private func record(text: String, raw: String, outcome: DictationOutcome, duration: Double) -> UUID {
+        // One choke point for every History write of a private session.
+        guard sessionPolicy.writesHistory else { return UUID() }
         let record = TranscriptRecord(
             text: text,
             rawText: raw,
@@ -1161,12 +1209,14 @@ public final class DictationCoordinator {
             pasteTarget = nil
         }
 
+        let policy = sessionPolicy
+        let keepOnClipboard = policy.honorsKeepOnClipboard && settings.keepOnClipboard
         let outcome: TextInsertionOutcome
         if let pasteTarget, case .keepOnClipboard(let loss) = await pasteTarget.reacquire() {
-            inserter.copyToClipboard(text)
+            inserter.copyToClipboard(text, concealed: policy.concealsPasteboard)
             outcome = .targetUnavailable(loss)
         } else {
-            outcome = await inserter.insert(text, keepOnClipboard: settings.keepOnClipboard)
+            outcome = await inserter.insert(text, keepOnClipboard: keepOnClipboard, concealed: policy.concealsPasteboard)
         }
 
         // The app is named because it is the first thing anyone diagnosing
@@ -1177,7 +1227,8 @@ public final class DictationCoordinator {
             report: pasteTarget?.lastReport,
             targetBundleIdentifier: pasteTarget?.bundleIdentifier ?? targetApp?.bundleIdentifier,
             frontmostBundleIdentifier: NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
-            keepOnClipboardSetting: settings.keepOnClipboard
+            keepOnClipboardSetting: keepOnClipboard,
+            redactsBundleIdentifiers: !policy.logsBundleIdentifiers
         )
         Log.insertion.notice("\(line, privacy: .public)")
         return outcome
@@ -1254,16 +1305,6 @@ public final class DictationCoordinator {
                 self.livePreviewText = text
             }
         }
-    }
-
-    /// The gap before the next preview pass, given how long the last one took.
-    ///
-    /// Clamped at both ends: never faster than `previewInterval`, so a cheap
-    /// pass on a two-second clip does not spin the engine continuously, and
-    /// never slower than `previewMaximumInterval`, so a long recording still
-    /// updates often enough to be worth showing.
-    static func nextPreviewInterval(afterPassLasting duration: Duration) -> Duration {
-        min(max(duration, previewInterval), previewMaximumInterval)
     }
 
     private func stopLivePreview() {

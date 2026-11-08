@@ -252,14 +252,29 @@ final class FakeInserter: TextInserting {
     /// Text left on the clipboard without a paste being attempted at all.
     private(set) var copied: [String] = []
     var outcome: TextInsertionOutcome = .inserted
+    /// What the coordinator asked for on each `insert`, in order.
+    private(set) var receivedKeepOnClipboard: [Bool] = []
+    /// Whether each pasteboard write (insert or copy) was marked concealed.
+    private(set) var receivedConcealed: [Bool] = []
 
     func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
+        await insert(text, keepOnClipboard: keepOnClipboard, concealed: false)
+    }
+
+    func insert(_ text: String, keepOnClipboard: Bool, concealed: Bool) async -> TextInsertionOutcome {
         inserted.append(text)
+        receivedKeepOnClipboard.append(keepOnClipboard)
+        receivedConcealed.append(concealed)
         return outcome
     }
 
     func copyToClipboard(_ text: String) {
+        copyToClipboard(text, concealed: false)
+    }
+
+    func copyToClipboard(_ text: String, concealed: Bool) {
         copied.append(text)
+        receivedConcealed.append(concealed)
     }
 
     /// Either path having run means the dictation reached the clipboard.
