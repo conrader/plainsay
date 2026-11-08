@@ -129,7 +129,7 @@ final class HUDController {
         case .idle:
             hide()
         case .recording, .recordingLimitReached, .transcribing, .cleaning,
-             .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error:
+             .modelLoading, .insertedRaw, .savedToClipboard, .copied, .cancelled, .error:
             show()
             // Supplementary error/notice text changes the panel's height.
             if let panel { position(panel) }

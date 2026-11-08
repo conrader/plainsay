@@ -14,27 +14,30 @@ public enum DictationPrivacy: Sendable, Equatable {
 /// frozen until that work unit ends.
 ///
 /// This is the single resolver the session-level features share (R1 in
-/// spec-ranking/RANKING.md §3). Only the privacy input exists today. Later
-/// inputs plug into `make` with a fixed precedence:
+/// spec-ranking/RANKING.md §3). Inputs plug into `make` with a fixed
+/// precedence:
 ///
 /// 1. **privacy** (this file) — always wins; it can only take capabilities
 ///    away, never grant one.
-/// 2. **app profile** (appprofiles spec) — will add a `profile:` input that may
-///    turn Polishing/translation/email/output off or pick a dictionary. Under
-///    `.privateLocal` its Polishing, translation, email and output fields are
-///    forced off/plain; its dictionary still applies, because it is local.
+/// 2. **app profile** (`DictationProfile`) — may turn Polishing off, allow or
+///    forbid email layout, set or clear translation, pick Copy only and add
+///    vocabulary. Under `.privateLocal` its Polishing, translation, email and
+///    output fields are forced off/plain/paste; its dictionary still applies,
+///    because it is local.
 /// 3. **notation/template mode** (devnotation/templates specs) — a mode and
 ///    route identity resolved inside whatever 1–2 leave allowed.
 ///
 /// The policy is a ceiling, not an entitlement. `allowsCleanup == true` means
 /// "the normal settings and paid-feature gates decide", and the coordinator
-/// still evaluates those (`resolvedDictationStyle()` checks the Cloud
+/// still evaluates those (`resolvedDictationStyle(for:)` checks the Cloud
 /// entitlement live). No input here can unlock a paid feature.
 public struct DictationSessionPolicy: Sendable, Equatable {
     public let privacy: DictationPrivacy
     /// Polishing of any kind, including a `.custom` endpoint on localhost:
     /// "local" cannot be proven from a URL. Translation and email layout only
-    /// ever reach the text through the cleaner, so they go with it.
+    /// ever reach the text through the cleaner, so they go with it. False for
+    /// a private session, a Polishing-Off profile, or Default Polishing off
+    /// at recording start.
     public let allowsCleanup: Bool
     /// Crash-recovery `.f32` staging in `PendingAudioStore`.
     public let stagesRecoveryAudio: Bool
@@ -56,10 +59,29 @@ public struct DictationSessionPolicy: Sendable, Equatable {
     /// something Plainsay controls.
     public let concealsPasteboard: Bool
 
-    private init(privacy: DictationPrivacy) {
+    // MARK: Profile inputs (appprofiles, precedence level 2)
+
+    /// The app profile chosen when recording started; nil means Default.
+    public let profileID: UUID?
+    /// Shown in the HUD chip only. Never logged.
+    public let profileName: String?
+    /// Profile terms first, then the Default vocabulary (deduplicated by
+    /// `normalizedTerms`), frozen for the speech hint, live preview and local
+    /// corrections. It is local, so privacy keeps it.
+    public let dictionary: TermDictionary
+    /// Email layout *requested* (snapshot). The entitlement and the webmail
+    /// window title are still checked live by the coordinator.
+    public let emailLayoutEnabled: Bool
+    /// Translation target *requested* (snapshot); entitlement checked live.
+    public let translateTo: String?
+    /// The profile set Translation to Off while Default would translate; the
+    /// HUD chip says so, because the chord/menu change only the global value.
+    public let translationSuppressedByProfile: Bool
+    public let output: DictationOutput
+
+    private init(privacy: DictationPrivacy, defaults: DictationDefaults, profile: DictationProfile?) {
         let standard = privacy == .standard
         self.privacy = privacy
-        allowsCleanup = standard
         stagesRecoveryAudio = standard
         writesHistory = standard
         writesDebugAudio = standard
@@ -67,17 +89,54 @@ public struct DictationSessionPolicy: Sendable, Equatable {
         logsBundleIdentifiers = standard
         honorsKeepOnClipboard = standard
         concealsPasteboard = !standard
+
+        profileID = profile?.id
+        profileName = profile?.name
+        dictionary = TermDictionary(terms: (profile?.extraTerms ?? []) + defaults.dictionary.terms)
+
+        // Polishing: privacy, then the profile (Off only, Q3), then the
+        // Default switch frozen here. Provider/key stay live in `makeCleaner`,
+        // so a switch turned *off* mid-recording still applies (fail-closed).
+        let cleanup = standard && profile?.polishing != .off && defaults.cleanupEnabled
+        allowsCleanup = cleanup
+
+        // Email and translation run inside the cleaner, so they go with it.
+        let email: Bool
+        switch profile?.emailLayout ?? .inherit {
+        case .inherit: email = defaults.emailModeEnabled
+        case .composers: email = true
+        case .off: email = false
+        }
+        emailLayoutEnabled = cleanup && email
+
+        let translation: String?
+        switch profile?.translation ?? .inherit {
+        case .inherit: translation = defaults.translationTargetLanguage
+        case .off: translation = nil
+        case .target(let code): translation = code
+        }
+        translateTo = cleanup ? translation : nil
+        translationSuppressedByProfile = cleanup && profile?.translation == .off
+            && defaults.translationTargetLanguage != nil
+
+        // Private always pastes and restores the clipboard when it can.
+        output = standard && profile?.output == .copyOnly ? .copyOnly : .paste
     }
 
     /// The behaviour every dictation had before this type existed.
-    public static let standard = DictationSessionPolicy(privacy: .standard)
+    public static let standard = DictationSessionPolicy(privacy: .standard, defaults: .none, profile: nil)
 
-    /// The one resolver. Pure: no I/O, no settings reads, so it can be frozen
-    /// and unit-tested. Extension point: future `profile:` / mode inputs are
-    /// added here as defaulted parameters, applied *after* privacy so privacy
-    /// keeps the last word on everything it turns off.
-    public static func make(privacy: DictationPrivacy = .standard) -> DictationSessionPolicy {
-        DictationSessionPolicy(privacy: privacy)
+    /// The one resolver. Pure: no I/O and no settings reads (the coordinator
+    /// passes `defaults` read once at recording start), so it can be frozen
+    /// and unit-tested. Precedence: privacy > profile > Default. Extension
+    /// point: notation/template modes are added here as further defaulted
+    /// parameters, applied inside whatever privacy and the profile allow.
+    public static func make(
+        privacy: DictationPrivacy = .standard,
+        defaults: DictationDefaults = .none,
+        profile: DictationProfile? = nil
+    ) -> DictationSessionPolicy {
+        DictationSessionPolicy(privacy: privacy, defaults: defaults, profile: profile)
     }
 
     /// Whether a private session may start right now. Pure; returns nil when
@@ -96,6 +155,37 @@ public struct DictationSessionPolicy: Sendable, Equatable {
         guard modelState == .ready else { return .modelNotReady }
         return nil
     }
+}
+
+/// The global settings a session starts from, read once by the coordinator
+/// when recording starts so the resolver itself stays pure.
+public struct DictationDefaults: Sendable, Equatable {
+    public var dictionary: TermDictionary
+    public var cleanupEnabled: Bool
+    public var emailModeEnabled: Bool
+    public var translationTargetLanguage: String?
+
+    public init(
+        dictionary: TermDictionary = TermDictionary(),
+        cleanupEnabled: Bool = true,
+        emailModeEnabled: Bool = false,
+        translationTargetLanguage: String? = nil
+    ) {
+        self.dictionary = dictionary
+        self.cleanupEnabled = cleanupEnabled
+        self.emailModeEnabled = emailModeEnabled
+        self.translationTargetLanguage = translationTargetLanguage
+    }
+
+    /// Outside a session: nothing requested.
+    public static let none = DictationDefaults()
+}
+
+/// Where the text goes after a dictation.
+public enum DictationOutput: Sendable, Equatable {
+    case paste
+    /// Clipboard only: never sends ⌘V, never reacquires the target.
+    case copyOnly
 }
 
 /// Why "Private next dictation" cannot run. Never a reason to fall back to

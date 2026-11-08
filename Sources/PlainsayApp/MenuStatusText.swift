@@ -58,6 +58,8 @@ extension MenuContent {
                 "menu.status.savedToClipboardTargetGone",
                 fallback: "Not pasted — the window you dictated into was gone"
             )
+        case .copied:
+            return Localization.appString("menu.status.copied", fallback: "Copied — this app’s profile does not paste")
         case .cancelled:
             return Localization.appString("menu.status.cancelled", fallback: "Dictation cancelled")
         case .error(let message):

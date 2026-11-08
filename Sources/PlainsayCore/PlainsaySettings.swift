@@ -53,6 +53,9 @@ public final class PlainsaySettings {
     /// hand it to every local user for free. Off by default: a mode that
     /// reformats text the speaker did not want reformatted is worse than no
     /// mode, so it is opted into rather than discovered by surprise.
+    /// Per-app overrides (FEATURES #4). Empty means everything uses Default,
+    /// which is the rest of these settings; nothing is migrated.
+    public var appProfiles: [DictationProfile] { didSet { persist(appProfiles, .appProfiles) } }
     public var emailModeEnabled: Bool { didSet { defaults.set(emailModeEnabled, forKey: Key.emailModeEnabled.rawValue) } }
     /// Language code every dictation is translated into, or nil for none.
     ///
@@ -269,6 +272,7 @@ public final class PlainsaySettings {
         case dismissedTermProposals
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
+        case appProfiles
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -298,6 +302,8 @@ public final class PlainsaySettings {
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
+        // Lossy and logged, unlike `decode`: one bad profile drops alone.
+        appProfiles = DictationProfile.decodeList(defaults.data(forKey: Key.appProfiles.rawValue))
         translationTargetLanguage = defaults.string(forKey: Key.translationTargetLanguage.rawValue)
         // English by default: the common target, and often not something
         // people list among the languages they speak.

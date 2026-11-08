@@ -50,4 +50,12 @@ enum PasteDecisionLog {
             + " frontmost=\(frontmost ?? "unknown")"
             + " clipboardKept=\(clipboardKept)"
     }
+
+    /// An app profile's "Copy only": no paste was attempted, by design. Takes
+    /// no profile name; the target is nil when it must be redacted.
+    static func copyOnlyMessage(targetBundleIdentifier: String?) -> String {
+        "paste decision=keepOnClipboard reason=profile output=copy-only"
+            + " target=\(targetBundleIdentifier ?? "redacted")"
+            + " reactivationAttempted=false clipboardKept=true"
+    }
 }

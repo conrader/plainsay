@@ -75,7 +75,7 @@ private struct MenuBarIcon: View {
         case .recording: "waveform.circle.fill"
         case .recordingLimitReached, .transcribing, .cleaning, .modelLoading: "waveform.circle"
         case .error: "waveform.slash"
-        case .insertedRaw, .savedToClipboard, .cancelled: canDictate ? "waveform" : unavailableSymbol
+        case .insertedRaw, .savedToClipboard, .copied, .cancelled: canDictate ? "waveform" : unavailableSymbol
         case .idle:
             canDictate ? "waveform" : unavailableSymbol
         }
@@ -125,6 +125,8 @@ private struct MenuBarIcon: View {
                 "menu.a11y.savedToClipboardTargetGone",
                 fallback: "Plainsay saved the dictation to the clipboard — the window it was meant for could not be brought back"
             )
+        case .copied:
+            Localization.appString("menu.status.copied", fallback: "Copied — this app’s profile does not paste")
         case .cancelled:
             Localization.appString("menu.a11y.cancelled", fallback: "Plainsay cancelled the dictation")
         case .idle: readinessAccessibilityLabel(at: now)

@@ -126,6 +126,7 @@ struct HUDView: View {
         case .modelLoading: Localization.appString("hud.label.preparingModel", fallback: "PREPARING MODEL")
         case .insertedRaw: Localization.appString("hud.label.insertedRaw", fallback: "INSERTED · RAW")
         case .savedToClipboard: Localization.appString("hud.label.savedToClipboard", fallback: "SAVED TO CLIPBOARD")
+        case .copied: Localization.appString("hud.label.copied", fallback: "COPIED")
         case .cancelled: Localization.appString("hud.label.cancelled", fallback: "CANCELLED")
         case .error: Localization.appString("hud.label.error", fallback: "ERROR")
         case .idle: ""
@@ -177,7 +178,7 @@ struct HUDView: View {
     private func standardAccessibilityLabel(now: Date) -> String {
         switch state.phase {
         case .recording:
-            recordingAccessibilityLabel
+            [state.profileChip, recordingAccessibilityLabel].compactMap { $0 }.joined(separator: ". ")
         case .recordingLimitReached:
             Localization.appString(
                 "hud.a11y.recordingLimitReached",
@@ -197,6 +198,10 @@ struct HUDView: View {
             Localization.appString(
                 "hud.a11y.savedToClipboardTargetGone",
                 fallback: "The window you dictated into could not be brought back. Dictation saved to the clipboard — press Command V where you want it."
+            )
+        case .copied:
+            Localization.appString(
+                "hud.a11y.copied", fallback: "Copied to the clipboard; this app’s profile does not paste."
             )
         case .cancelled:
             Localization.appString("hud.a11y.cancelled", fallback: "Dictation cancelled")
@@ -434,6 +439,7 @@ struct HUDContainer: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            if let chip = state.profileChip { HUDProfileChip(text: chip) }
             HUDView(state: state)
             if case .error(let message) = state.phase {
                 HUDErrorView(message: message)

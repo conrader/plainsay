@@ -4921,6 +4921,22 @@
         }
       }
     },
+    "Profiles": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profiles"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        }
+      }
+    },
     "Quit Plainsay": {
       "localizations": {
         "de": {
@@ -10787,6 +10803,22 @@
         }
       }
     },
+    "hud.a11y.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied to the clipboard; this app’s profile does not paste."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano do schowka; profil tej aplikacji nie wkleja tekstu."
+          }
+        }
+      }
+    },
     "hud.a11y.error": {
       "localizations": {
         "de": {
@@ -12767,6 +12799,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "已取消"
+          }
+        }
+      }
+    },
+    "hud.label.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COPIED"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKOPIOWANO"
           }
         }
       }
@@ -16639,6 +16687,22 @@
         }
       }
     },
+    "menu.status.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied — this app’s profile does not paste"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano — profil tej aplikacji nie wkleja tekstu"
+          }
+        }
+      }
+    },
     "menu.status.downloadStalled": {
       "localizations": {
         "de": {
@@ -20325,6 +20389,454 @@
           "stringUnit": {
             "state": "translated",
             "value": "主要"
+          }
+        }
+      }
+    },
+    "profiles.add": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj profil"
+          }
+        }
+      }
+    },
+    "profiles.addApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add app…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj aplikację…"
+          }
+        }
+      }
+    },
+    "profiles.addTerm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a term"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj termin"
+          }
+        }
+      }
+    },
+    "profiles.apps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apps"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplikacje"
+          }
+        }
+      }
+    },
+    "profiles.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
+          }
+        }
+      }
+    },
+    "profiles.chooseApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose app…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz aplikację…"
+          }
+        }
+      }
+    },
+    "profiles.cloudRequired": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requires Plainsay Cloud."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wymaga Plainsay Cloud."
+          }
+        }
+      }
+    },
+    "profiles.default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default (your current settings)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domyślny (obecne ustawienia)"
+          }
+        }
+      }
+    },
+    "profiles.delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń profil"
+          }
+        }
+      }
+    },
+    "profiles.email": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila"
+          }
+        }
+      }
+    },
+    "profiles.email.composers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In mail composers"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W oknach pisania e-maili"
+          }
+        }
+      }
+    },
+    "profiles.explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick settings for specific apps. Plainsay chooses the profile from the app in front when you start recording. Everything else uses Default."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz ustawienia dla konkretnych aplikacji. Plainsay dobiera profil według aplikacji na pierwszym planie w chwili rozpoczęcia nagrywania. W pozostałych działa profil Domyślny."
+          }
+        }
+      }
+    },
+    "profiles.inherit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same as Default"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jak w profilu Domyślnym"
+          }
+        }
+      }
+    },
+    "profiles.limit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to 20 profiles."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maksymalnie 20 profili."
+          }
+        }
+      }
+    },
+    "profiles.move": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przenieś"
+          }
+        }
+      }
+    },
+    "profiles.moveApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already in “%@”. Move it here?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ jest już w profilu „%@”. Przenieść tutaj?"
+          }
+        }
+      }
+    },
+    "profiles.name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwa"
+          }
+        }
+      }
+    },
+    "profiles.needsPolishing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout and translation need Polishing turned on."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila i tłumaczenie wymagają włączonej Korekty tekstu."
+          }
+        }
+      }
+    },
+    "profiles.network": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile names, apps and settings stay on this Mac. Extra vocabulary is sent to remote speech and Polishing providers exactly like your main vocabulary."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwy profili, aplikacje i ustawienia zostają na tym Macu. Dodatkowy słownik trafia do zdalnego rozpoznawania mowy i dostawców Korekty tekstu tak samo jak Twój główny słownik."
+          }
+        }
+      }
+    },
+    "profiles.newName": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowy profil"
+          }
+        }
+      }
+    },
+    "profiles.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączone"
+          }
+        }
+      }
+    },
+    "profiles.output": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Po dyktowaniu"
+          }
+        }
+      }
+    },
+    "profiles.output.copy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy only"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tylko kopiuj"
+          }
+        }
+      }
+    },
+    "profiles.output.paste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wklej"
+          }
+        }
+      }
+    },
+    "profiles.polishing.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off for this app"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączona dla tej aplikacji"
+          }
+        }
+      }
+    },
+    "profiles.translation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tłumaczenie"
+          }
+        }
+      }
+    },
+    "profiles.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra vocabulary"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodatkowy słownik"
+          }
+        }
+      }
+    },
+    "profiles.vocabulary.overflow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d terms may not fit in the speech hint; they still get local corrections."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d terminów może nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują je lokalne poprawki."
           }
         }
       }
