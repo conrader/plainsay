@@ -13,6 +13,8 @@ struct HUDState: Equatable {
     var elapsed: TimeInterval = 0
     var livePreviewText: String = ""
     var recordingStyle: HotkeyRecordingStyle?
+    /// A private dictation is in flight, or its result is still on screen.
+    var isPrivate = false
 
     init(
         phase: DictationCoordinator.Phase = .idle,
@@ -21,7 +23,8 @@ struct HUDState: Equatable {
         levelHistory: [Float] = [],
         elapsed: TimeInterval = 0,
         livePreviewText: String = "",
-        recordingStyle: HotkeyRecordingStyle? = nil
+        recordingStyle: HotkeyRecordingStyle? = nil,
+        isPrivate: Bool = false
     ) {
         self.phase = phase
         self.modelState = modelState
@@ -30,6 +33,7 @@ struct HUDState: Equatable {
         self.elapsed = elapsed
         self.livePreviewText = livePreviewText
         self.recordingStyle = recordingStyle
+        self.isPrivate = isPrivate
     }
 
     @MainActor
@@ -41,5 +45,14 @@ struct HUDState: Equatable {
         elapsed = coordinator.elapsed
         livePreviewText = coordinator.livePreviewText
         recordingStyle = coordinator.recordingStyle
+        // The policy resets when the work unit ends, but a private clipboard
+        // result is still on screen for a few seconds after that.
+        let showsPrivateResult: Bool
+        if case .savedToClipboard = coordinator.phase {
+            showsPrivateResult = coordinator.privateDictation.ephemeral.hasText
+        } else {
+            showsPrivateResult = false
+        }
+        isPrivate = coordinator.sessionPolicy.privacy == .privateLocal || showsPrivateResult
     }
 }

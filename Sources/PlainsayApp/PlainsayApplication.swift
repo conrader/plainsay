@@ -59,8 +59,15 @@ private struct MenuBarIcon: View {
                     .symbolRenderingMode(.hierarchical)
             }
         }
-        .accessibilityLabel(accessibilityLabel(at: now))
-        .help(accessibilityLabel(at: now))
+        .accessibilityLabel(iconLabel(at: now))
+        .help(iconLabel(at: now))
+    }
+
+    /// The state label, plus whether the next dictation is private.
+    private func iconLabel(at now: Date) -> String {
+        let base = accessibilityLabel(at: now)
+        guard coordinator.privateDictation.isArmed else { return base }
+        return base + ", " + Localization.appString("menu.a11y.privateArmed", fallback: "Private dictation armed")
     }
 
     private var symbol: String {
@@ -221,15 +228,20 @@ struct MenuContent: View {
 
             translationMenu
 
-            Button("Correct last dictation…  ⌃⌥⌘R") {
+            privateDictationMenu
+
+            Button(Localization.appString("menu.correctLast", fallback: "Correct last dictation…") + "  ⌃⌥⌘R") {
                 AppModel.shared.correctionWindow.show()
             }
-            .disabled(coordinator.lastDictation == nil || coordinator.phase.isBusy || coordinator.isApplyingCorrection)
+            .disabled(
+                coordinator.lastDictation == nil || coordinator.phase.isBusy || coordinator.isApplyingCorrection
+                    || coordinator.editingRefusal != nil
+            )
 
             Button("Voice Edit…  ⌃⌥⌘E") {
                 AppModel.shared.voiceEditWindow.show()
             }
-            .disabled(coordinator.phase.isBusy)
+            .disabled(coordinator.phase.isBusy || coordinator.editingRefusal != nil)
 
             Divider()
 
@@ -239,7 +251,9 @@ struct MenuContent: View {
                 Button("Copy last dictation") {
                     coordinator.history.copyToClipboard(last)
                 }
-                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .keyboardShortcut(
+                    coordinator.privateDictation.ephemeral.hasText ? nil : KeyboardShortcut("c", modifiers: [.command, .shift])
+                )
             }
 
             if coordinator.lastErrorMessage != nil || coordinator.lastInsertionNeedsManualPaste {

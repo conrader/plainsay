@@ -61,6 +61,40 @@ extension MenuContent {
         }
     }
 
+    /// "Private next dictation" (oneshot). Shown disabled with the reason
+    /// when the prepared engine is not on-device or not ready, never hidden.
+    /// Arming is memory only; every launch starts disarmed.
+    @ViewBuilder
+    var privateDictationMenu: some View {
+        let privateDictation = coordinator.privateDictation
+        if privateDictation.isArmed {
+            Button {
+                coordinator.disarmPrivate()
+            } label: {
+                Label(
+                    Localization.appString("menu.private.armed", fallback: "Private dictation armed — turn off"),
+                    systemImage: "checkmark"
+                )
+            }
+        } else {
+            Button(Localization.appString("menu.private.arm", fallback: "Private next dictation")) {
+                coordinator.armPrivateNextDictation()
+            }
+            .disabled(coordinator.privateRefusal != nil || coordinator.phase.isBusy)
+            if let refusal = coordinator.privateRefusal {
+                Text(refusal.menuReason)
+            }
+        }
+        // While it exists, ⇧⌘C copies this rather than the newest History
+        // record, which would be the previous, non-private dictation.
+        if privateDictation.ephemeral.hasText {
+            Button(Localization.appString("menu.private.copy", fallback: "Copy private dictation")) {
+                privateDictation.ephemeral.copy()
+            }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
+        }
+    }
+
     private var translationMenuTitle: String {
         guard let target = settings.translationTargetLanguage else {
             return Localization.appString("menu.translate.idle", fallback: "Translate")

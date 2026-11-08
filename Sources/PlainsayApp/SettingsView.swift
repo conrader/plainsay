@@ -37,7 +37,8 @@ struct SettingsView: View {
                 history: coordinator.history,
                 settings: settings,
                 onClearAll: { coordinator.clearAllStoredDictations() },
-                onPolicyChange: { coordinator.applyHistoryPolicy() }
+                onPolicyChange: { coordinator.applyHistoryPolicy() },
+                coordinator: coordinator
             )
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)

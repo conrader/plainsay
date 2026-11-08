@@ -105,10 +105,17 @@ final class VoiceEditWindowController: NSObject, NSWindowDelegate {
     private let settings: PlainsaySettings
     private var window: NSWindow?
     private var model: VoiceEditModel?
+    /// True while private dictation is armed or in flight: Voice Edit may call
+    /// a hosted editor, so it must not open then (the closure shows why).
+    private let refusesEditing: @MainActor () -> Bool
 
-    init(settings: PlainsaySettings) { self.settings = settings }
+    init(settings: PlainsaySettings, refusesEditing: @escaping @MainActor () -> Bool = { false }) {
+        self.settings = settings
+        self.refusesEditing = refusesEditing
+    }
 
     func show() {
+        guard !refusesEditing() else { return }
         if let window, window.isVisible {
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)

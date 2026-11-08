@@ -16,6 +16,8 @@ struct HistoryView: View {
     /// Pushes a changed switch or window into the store. Turning history off
     /// deletes what is already saved, so this is not a cosmetic refresh.
     let onPolicyChange: () -> Void
+    /// Supplies the "Private next dictation" section; nil leaves it out.
+    var coordinator: DictationCoordinator? = nil
     @State private var query = ""
     @State private var copiedID: UUID?
 
@@ -33,6 +35,7 @@ struct HistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             controls
+            if let coordinator { PrivateDictationSettingsSection(coordinator: coordinator) }
 
             if !settings.historyEnabled {
                 ContentUnavailableView(

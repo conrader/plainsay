@@ -175,6 +175,8 @@ final class DictationCorrectionWindow: NSObject, NSWindowDelegate {
     }
 
     func show(record: Bool = false) {
+        // Private armed or in flight: corrections may call a hosted editor.
+        guard !coordinator.refuseEditingIfPrivate() else { return }
         guard let dictation = coordinator.lastDictation, !coordinator.isApplyingCorrection else { return }
         if coordinator.phase.isBusy && model?.ownsCapture != true { return }
         if model?.dictation !== dictation {

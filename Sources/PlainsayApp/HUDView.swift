@@ -33,13 +33,13 @@ struct HUDView: View {
                     .frame(height: 22)
                     .frame(maxWidth: .infinity)
 
-                    if state.phase == .recording {
+                    if let hint = secondaryLine {
                         VStack(alignment: .trailing, spacing: 1) {
                             Text(label)
                                 .font(.hudLabel)
                                 .instrumentTracking()
                                 .foregroundStyle(labelColor)
-                            Text(recordingHint)
+                            Text(hint)
                                 .font(.system(size: 7.5, weight: .medium, design: .monospaced))
                                 .foregroundStyle(Palette.slate)
                                 .fixedSize()
@@ -99,7 +99,24 @@ struct HUDView: View {
         }
     }
 
+    /// The small line under the label: the recording hint, or where a private
+    /// dictation that did not paste went.
+    private var secondaryLine: String? {
+        if state.phase == .recording { return recordingHint }
+        if state.isPrivate, case .savedToClipboard = state.phase { return PrivateDictationState.onClipboardMessage }
+        return nil
+    }
+
+    /// Replaces the ordinary state label for the whole private session.
+    private var privateBadge: String {
+        Localization.appString("hud.label.private", fallback: "PRIVATE · ON THIS MAC · NOT SAVED")
+    }
+
     private var label: String {
+        switch state.phase {
+        case .idle, .cancelled, .error: break
+        default: if state.isPrivate { return privateBadge }
+        }
         switch state.phase {
         case .recording: Localization.appString("hud.label.listening", fallback: "LISTENING")
         case .recordingLimitReached:
@@ -151,6 +168,13 @@ struct HUDView: View {
     }
 
     private func accessibilityLabel(now: Date) -> String {
+        guard state.isPrivate else { return standardAccessibilityLabel(now: now) }
+        let badge = Localization.appString("hud.a11y.private", fallback: "Private dictation, on this Mac, not saved")
+        if case .savedToClipboard = state.phase { return "\(badge). \(PrivateDictationState.onClipboardMessage)" }
+        return "\(badge). \(standardAccessibilityLabel(now: now))"
+    }
+
+    private func standardAccessibilityLabel(now: Date) -> String {
         switch state.phase {
         case .recording:
             recordingAccessibilityLabel

@@ -20,7 +20,10 @@ final class AppModel {
     let updates = UpdateController()
     let hud: HUDController
     let settingsWindow: SettingsWindowController
-    lazy var voiceEditWindow = VoiceEditWindowController(settings: settings)
+    lazy var voiceEditWindow = VoiceEditWindowController(
+        settings: settings,
+        refusesEditing: { [weak self] in self?.coordinator.refuseEditingIfPrivate() ?? false }
+    )
     lazy var correctionWindow = DictationCorrectionWindow(coordinator: coordinator, settings: settings)
     lazy var setupAssistantWindow: SetupAssistantWindowController = {
         SetupAssistantWindowController(
@@ -49,11 +52,12 @@ final class AppModel {
             voiceEnrollment: voiceEnrollment
         )
         coordinator.onVoiceEdit = { [weak self] in
-            guard let self, !self.coordinator.phase.isBusy else { return }
+            guard let self, !self.coordinator.phase.isBusy, !self.coordinator.refuseEditingIfPrivate() else { return }
             self.voiceEditWindow.show()
         }
         coordinator.onCorrectLastDictation = { [weak self] in
-            self?.correctionWindow.show(record: true)
+            guard let self, !self.coordinator.refuseEditingIfPrivate() else { return }
+            self.correctionWindow.show(record: true)
         }
     }
 

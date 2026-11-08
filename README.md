@@ -180,6 +180,7 @@ file import, so if you have recordings to transcribe rather than words to speak,
 | Local transcription + hosted Polishing | Stays on your Mac | Sent to the provider you select | Depends on provider | Depends on provider |
 | Plainsay Cloud | Sent to Plainsay Cloud | Returned by Cloud; sent onward if Cloud Polishing is enabled | Yes | US$4 gross/month, VAT included; 900 transcription minutes per rolling 30 days |
 | Your own speech API | Sent directly to the provider you configure | Returned to Plainsay | Provider key | Provider pricing |
+| [Private next dictation](#private-next-dictation) (on-device, no Polishing) | Stays on your Mac | Stays on your Mac; not saved by Plainsay | No | Free |
 
 The hosted routes are explicit:
 
@@ -225,6 +226,28 @@ and removed after a successful or completed attempt. Interrupted recordings
 can remain for recovery. On each launch, Plainsay removes ones older than 7
 days and keeps no more than the newest 20; clearing History purges them too.
 These files are excluded from backups.
+
+### Private next dictation
+
+The menu bar item **Private next dictation** arms one dictation that uses only
+the on-device model Plainsay has already loaded. It skips Polishing,
+translation and email layout, and Plainsay writes nothing for it to History,
+crash-recovery audio, debug audio or "Correct last dictation"; the paste log
+line names no app. After one finished private dictation the app returns to
+normal. It is available only when Speech is set to On-device and the model is
+ready; otherwise it is refused and nothing is recorded. It never falls back to
+Cloud or a remote provider.
+
+What it does not cover: the app you paste into and anything it syncs; the
+system clipboard (about 600 ms for a confirmed paste, longer if the paste is
+unconfirmed or the text was left on the clipboard). Plainsay marks those
+clipboard writes concealed and transient, but whether a clipboard manager
+honours that is untested. macOS memory, swap and Accessibility, and unified-log
+metadata (duration, character count, outcome) are also outside it. Model
+downloads and update checks still use the network, and whether the speech
+libraries make any network call while transcribing has not been checked
+beyond Plainsay's own code, which makes none. A crash or quit before the
+paste loses the dictation, because nothing is staged for recovery.
 
 API keys and the Plainsay Cloud session token are stored in macOS Keychain.
 Local mode is the default choice on a new installation; cloud use requires an
