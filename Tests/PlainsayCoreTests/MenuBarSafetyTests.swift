@@ -15,6 +15,7 @@ final class MenuBarSafetyTests: XCTestCase {
         let menuBarSources = [
             "Sources/PlainsayApp/PlainsayApplication.swift",
             "Sources/PlainsayApp/MenuSections.swift",
+            "Sources/PlainsayApp/MenuStatusText.swift",
         ]
         let timelineConstruction = try NSRegularExpression(pattern: #"\bTimelineView\s*\("#)
 
