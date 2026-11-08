@@ -20923,6 +20923,518 @@
         }
       }
     },
+    "rules.confirm.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
+          }
+        }
+      }
+    },
+    "rules.confirm.from": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When Plainsay writes"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy Plainsay napisze"
+          }
+        }
+      }
+    },
+    "rules.confirm.inflection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other forms of the word (e.g. other endings) need their own rule."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inne formy słowa (np. inne końcówki) wymagają osobnej reguły."
+          }
+        }
+      }
+    },
+    "rules.confirm.save": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save rule"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisz regułę"
+          }
+        }
+      }
+    },
+    "rules.confirm.saveAnyway": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save anyway"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisz mimo to"
+          }
+        }
+      }
+    },
+    "rules.confirm.scope": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only this exact phrase is replaced, everywhere you dictate, on this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zamieniana jest tylko ta dokładna fraza, we wszystkim, co dyktujesz, na tym Macu."
+          }
+        }
+      }
+    },
+    "rules.confirm.to": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write instead"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Napisz zamiast tego"
+          }
+        }
+      }
+    },
+    "rules.confirm.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Also add \"%@\" to Vocabulary (sent as a hint to your speech and Polishing services)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj też „%@” do Słownika (trafia jako podpowiedź do usług mowy i Korekty tekstu)"
+          }
+        }
+      }
+    },
+    "rules.confirm.vocabularyFuzzy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay will then also correct similar spellings."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay będzie wtedy poprawiać też podobne zapisy."
+          }
+        }
+      }
+    },
+    "rules.duplicate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rule for \"%@\" already exists. Replace it?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguła dla „%@” już istnieje. Zastąpić ją?"
+          }
+        }
+      }
+    },
+    "rules.duplicate.replace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zastąp"
+          }
+        }
+      }
+    },
+    "rules.forget": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forget this rule"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapomnij tę regułę"
+          }
+        }
+      }
+    },
+    "rules.forgotten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule forgotten."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapomniano regułę."
+          }
+        }
+      }
+    },
+    "rules.inverse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This reverses your rule \"%1$@ → %2$@\". Turn that rule off?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To odwraca Twoją regułę „%1$@ → %2$@”. Wyłączyć ją?"
+          }
+        }
+      }
+    },
+    "rules.inverse.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule turned off. Turn it back on in Settings → Speech → Replacement rules."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguła wyłączona. Włączysz ją ponownie w Ustawieniach → Mowa → Reguły zamiany."
+          }
+        }
+      }
+    },
+    "rules.inverse.keep": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zostaw"
+          }
+        }
+      }
+    },
+    "rules.inverse.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłącz"
+          }
+        }
+      }
+    },
+    "rules.offer.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next time, write \"%2$@\" whenever Plainsay would write \"%1$@\"."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następnym razem pisz „%2$@” wszędzie tam, gdzie Plainsay napisałby „%1$@”."
+          }
+        }
+      }
+    },
+    "rules.offer.notNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie teraz"
+          }
+        }
+      }
+    },
+    "rules.offer.remember": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętaj…"
+          }
+        }
+      }
+    },
+    "rules.offer.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember this correction?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętać tę poprawkę?"
+          }
+        }
+      }
+    },
+    "rules.reject.contains": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The new spelling contains the old phrase, so the rule would repeat itself."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowa pisownia zawiera starą frazę, więc reguła powtarzałaby się."
+          }
+        }
+      }
+    },
+    "rules.reject.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in both phrases."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wpisz obie frazy."
+          }
+        }
+      }
+    },
+    "rules.reject.limit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have 200 rules, the maximum."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masz już 200 reguł, to maksimum."
+          }
+        }
+      }
+    },
+    "rules.reject.same": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The new spelling is the same."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowa pisownia jest taka sama."
+          }
+        }
+      }
+    },
+    "rules.reject.tooLong": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rules are for short phrases: up to 4 words, replaced by up to 8."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguły są dla krótkich fraz: do 4 słów, zamienianych na maksymalnie 8."
+          }
+        }
+      }
+    },
+    "rules.reject.tooShort": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A single word needs at least 3 letters."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pojedyncze słowo musi mieć co najmniej 3 litery."
+          }
+        }
+      }
+    },
+    "rules.reject.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is in your Vocabulary. Remove it there first."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@” jest w Twoim Słowniku. Najpierw usuń je stamtąd."
+          }
+        }
+      }
+    },
+    "rules.saved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remembered. Manage rules in Settings → Speech → Replacement rules."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętano. Reguły znajdziesz w Ustawieniach → Mowa → Reguły zamiany."
+          }
+        }
+      }
+    },
+    "rules.warn.common": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is a common word. This rule will change it everywhere."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@” to częste słowo. Ta reguła zmieni je wszędzie."
+          }
+        }
+      }
+    },
+    "rules.warn.factual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This looks like a one-time fact (a date, day, number or address), not a spelling. Save anyway?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To wygląda na jednorazowy fakt (data, dzień, liczba lub adres), a nie pisownię. Zapisać mimo to?"
+          }
+        }
+      }
+    },
+    "rules.warn.short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short phrases can change other words. Check it only matches what you mean."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krótkie frazy mogą zmieniać inne słowa. Upewnij się, że pasują tylko tam, gdzie trzeba."
+          }
+        }
+      }
+    },
     "settings.apiKeyTitle": {
       "localizations": {
         "de": {
@@ -21919,6 +22431,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "Następne dyktowanie prywatne"
+          }
+        }
+      }
+    },
+    "settings.rules.delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete rule %1$@ → %2$@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń regułę %1$@ → %2$@"
+          }
+        }
+      }
+    },
+    "settings.rules.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No rules yet. After you fix a dictation with \"Change … to …\", Plainsay can offer to remember it."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brak reguł. Gdy poprawisz dyktowanie poleceniem „Zmień … na …”, Plainsay może zaproponować zapamiętanie tej poprawki."
+          }
+        }
+      }
+    },
+    "settings.rules.enable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use rule %1$@ → %2$@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stosuj regułę %1$@ → %2$@"
+          }
+        }
+      }
+    },
+    "settings.rules.explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exact phrases replaced on this Mac after Polishing, just before Plainsay types. Rules never leave this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dokładne frazy zamieniane na tym Macu po Korekcie tekstu, tuż przed wpisaniem. Reguły nie opuszczają tego Maca."
+          }
+        }
+      }
+    },
+    "settings.rules.source.correction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From a correction"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Z poprawki"
+          }
+        }
+      }
+    },
+    "settings.rules.source.manual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added by you"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodana przez Ciebie"
+          }
+        }
+      }
+    },
+    "settings.rules.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replacement rules"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguły zamiany"
+          }
+        }
+      }
+    },
+    "settings.rules.toggle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply replacement rules"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stosuj reguły zamiany"
+          }
+        }
+      }
+    },
+    "settings.rules.translation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With translation or email layout on, rules apply to the translated or laid-out text."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przy włączonym tłumaczeniu lub układzie e-maila reguły działają na tekście po tłumaczeniu lub formatowaniu."
           }
         }
       }

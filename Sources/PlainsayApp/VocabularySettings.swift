@@ -92,7 +92,8 @@ extension SpeechSettings {
     }
 
     /// Terms worth offering: recurring in the speaker's own dictations, not
-    /// already in the vocabulary, and not previously turned down.
+    /// already in the vocabulary, not previously turned down, and not written
+    /// by a replacement rule.
     private var termProposals: [DictionaryProposal] {
         let dismissed = Set(settings.dismissedTermProposals.map { $0.lowercased() })
         return DictionaryProposer.propose(
@@ -100,6 +101,8 @@ extension SpeechSettings {
             existing: settings.dictionary
         )
         .filter { !dismissed.contains($0.term.lowercased()) }
+        // History holds post-rule text: a rule target is not a new term.
+        .filter { !settings.replacementRules.hasTarget(matching: $0.term) }
     }
 
     private static func occurrenceSummary(_ count: Int) -> String {

@@ -23,6 +23,10 @@ public final class PlainsaySettings {
     public var hotkeyMode: HotkeyMode { didSet { persist(hotkeyMode, .hotkeyMode) } }
     public var model: OnDeviceModel { didSet { persist(model, .model) } }
     public var dictionary: TermDictionary { didSet { persist(dictionary, .dictionary) } }
+    /// Exact phrases replaced after Polishing (remember-correction). Local
+    /// only: never in a speech prompt or a Polishing request. Decoded lossily,
+    /// one rule at a time, so a bad rule cannot wipe the rest on the next save.
+    public var replacementRules: ReplacementRuleSet { didSet { persist(replacementRules, .replacementRules) } }
     /// Proposed terms the user turned down, so the same suggestion is not
     /// offered again every time they open Settings.
     public var dismissedTermProposals: [String] {
@@ -273,6 +277,7 @@ public final class PlainsaySettings {
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
         case appProfiles
+        case replacementRules
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -297,6 +302,7 @@ public final class PlainsaySettings {
         // applies when no dictionary was ever saved; an existing user's
         // dictionary, even an empty one, is never overwritten.
         dictionary = decode(.dictionary, TermDictionary(terms: ["Plainsay"]))
+        replacementRules = decode(.replacementRules, ReplacementRuleSet())
         dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true

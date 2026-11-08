@@ -462,6 +462,7 @@ struct SpeechSettings: View {
             }
 
             vocabularySection
+            ReplacementRulesSection(settings: settings)
         }
         .formStyle(.grouped)
         .onChange(of: settings.model) {

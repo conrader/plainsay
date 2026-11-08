@@ -231,6 +231,22 @@ struct ProfilePipelineTests {
         #expect(harness.cleaner.receivedStyle == CleanupStyle(layout: .plain, translateTo: "pl"))
     }
 
+    @Test("remember-correction 20a. With translation, replacement rules apply to the translated output")
+    func rulesAfterTranslation() async throws {
+        let mail = DictationProfile(name: "Mail", bundleIdentifiers: ["com.apple.mail"], translation: .target("pl"))
+        let harness = ProfileHarness(signedIn: true, profiles: [mail])
+        harness.settings.replacementRules = ReplacementRuleSet(rules: [ReplacementRule(from: "jason", to: "JSON")])
+        harness.engine.transcript = "open the jason file"
+        harness.cleaner.output = "Otwórz plik jason."
+        await harness.ready()
+
+        harness.dictate(in: "com.apple.mail")
+        try await harness.settle()
+        #expect(harness.cleaner.receivedStyle?.translateTo == "pl")
+        #expect(harness.cleaner.received == "open the jason file")
+        #expect(harness.inserter.inserted.last == "Otwórz plik JSON.")
+    }
+
     @Test("9b. A hand-edited Polishing Off + translation profile builds no cleaner and pastes plain text")
     func polishingOffBeatsTranslation() async throws {
         let stored = DictationProfile(name: "Odd", bundleIdentifiers: [vscode], polishing: .off, translation: .target("pl"))
