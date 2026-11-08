@@ -16354,7 +16354,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kopiuj prywatne dyktowanie"
+            "value": "Kopiuj dyktowanie prywatne"
           }
         }
       }
@@ -20564,7 +20564,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "W oknach pisania e-maili"
+            "value": "W oknach nowej wiadomości e-mail"
           }
         }
       }
@@ -20580,7 +20580,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wybierz ustawienia dla konkretnych aplikacji. Plainsay dobiera profil według aplikacji na pierwszym planie w chwili rozpoczęcia nagrywania. W pozostałych działa profil Domyślny."
+            "value": "Wybierz ustawienia dla konkretnych aplikacji. Plainsay dobiera profil według aplikacji na pierwszym planie w chwili rozpoczęcia nagrywania. Pozostałe aplikacje korzystają z profilu Domyślnego."
           }
         }
       }
@@ -20692,7 +20692,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nazwy profili, aplikacje i ustawienia zostają na tym Macu. Dodatkowy słownik trafia do zdalnego rozpoznawania mowy i dostawców Korekty tekstu tak samo jak Twój główny słownik."
+            "value": "Nazwy profili, aplikacje i ustawienia zostają na tym Macu. Dodatkowy słownik jest wysyłany do zdalnych dostawców rozpoznawania mowy i Korekty tekstu tak samo jak główny słownik."
           }
         }
       }
@@ -20724,7 +20724,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wyłączone"
+            "value": "Wył."
           }
         }
       }
@@ -20788,7 +20788,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wyłączona dla tej aplikacji"
+            "value": "Wyłączona w tej aplikacji"
           }
         }
       }
@@ -20836,7 +20836,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d terminów może nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują je lokalne poprawki."
+            "value": "Terminy, które mogą nie zmieścić się w podpowiedzi dla modelu mowy: %d. Nadal obejmują je lokalne poprawki."
           }
         }
       }
@@ -21886,7 +21886,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jedno ukończone dyktowanie prywatne wyłącza tę opcję. Jeśli zostanie odrzucone, anulowane, nic nie usłyszy albo się nie powiedzie, opcja pozostaje włączona, dopóki jej nie wyłączysz."
+            "value": "Opcja wyłącza się po jednym ukończonym dyktowaniu prywatnym. Jeśli dyktowanie zostanie odrzucone lub anulowane, nie wykryje mowy albo zakończy się błędem, opcja pozostanie włączona, dopóki jej nie wyłączysz."
           }
         }
       }
@@ -21902,7 +21902,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Następne dyktowanie prywatne korzysta tylko z modelu na tym Macu. Pomija Korektę tekstu, tłumaczenie i układ e-maila, a tekstu i dźwięku nie zapisuje w Historii ani w odzyskiwaniu po awarii. Jeśli Plainsay zamknie się w trakcie, to dyktowanie przepadnie. Potem nie da się użyć „Popraw ostatnie dyktowanie”, a po potwierdzonym wklejeniu tekst nie zostaje w schowku. Aplikacja docelowa, menedżery schowka i sam macOS są poza kontrolą Plainsay. Pobieranie modeli i sprawdzanie aktualizacji nadal korzysta z sieci."
+            "value": "Następne dyktowanie prywatne korzysta tylko z modelu na tym Macu. Pomija Korektę tekstu, tłumaczenie i układ e-maila, a tekstu i dźwięku nie zapisuje w Historii ani w danych odzyskiwania po awarii. Jeśli Plainsay zakończy działanie w trakcie dyktowania, zostanie ono utracone. Potem nie da się użyć „Popraw ostatnie dyktowanie”, a po potwierdzonym wklejeniu tekst nie zostaje w schowku. Aplikacja, do której dyktujesz, menedżery schowka i sam macOS są poza kontrolą Plainsay. Pobieranie modeli i sprawdzanie aktualizacji nadal korzystają z sieci."
           }
         }
       }
