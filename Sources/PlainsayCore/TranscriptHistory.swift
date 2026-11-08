@@ -48,6 +48,20 @@ public final class TranscriptHistory {
     private let limit: Int
     private let fileURL: URL
 
+    /// How far `save()` may trust the file it is about to replace.
+    ///
+    /// - `owned`: absent, read in full, or written by us. Normal behaviour.
+    /// - `backedUp`: it did not fully decode, and a verified copy sits beside
+    ///   it. A non-empty history may replace it; an empty one may not.
+    /// - `protected`: it could not be read, or could not be copied. Nothing
+    ///   replaces it until a copy succeeds — the dictations stay in memory
+    ///   for this run rather than costing what is on disk.
+    enum DiskState: Equatable { case owned, backedUp, protected }
+    private(set) var diskState: DiskState = .owned
+
+    private let now: () -> Date
+    private let backUp: (URL, Data, Date) -> URL?
+
     /// Default age ceiling. A transcript older than this has outlived the
     /// recovery it exists for: nobody re-pastes last month's dictation.
     public static let defaultMaxAge: TimeInterval = 30 * 24 * 60 * 60
@@ -75,15 +89,30 @@ public final class TranscriptHistory {
     /// have not — which is worse than not offering the switch.
     public private(set) var isEnabled: Bool
 
-    public init(
+    public convenience init(
         limit: Int = 100,
         maxAge: TimeInterval? = TranscriptHistory.defaultMaxAge,
         isEnabled: Bool = true,
         directory: URL? = nil
     ) {
+        self.init(limit: limit, maxAge: maxAge, isEnabled: isEnabled, directory: directory,
+                  now: { Date() }, backUp: { HistoryFile.backUp($0, original: $1, now: $2) })
+    }
+
+    /// Seams for tests: the backup clock, and a backup that can be made to fail.
+    init(
+        limit: Int,
+        maxAge: TimeInterval?,
+        isEnabled: Bool,
+        directory: URL?,
+        now: @escaping () -> Date,
+        backUp: @escaping (URL, Data, Date) -> URL?
+    ) {
         self.limit = limit
         self.maxAge = maxAge
         self.isEnabled = isEnabled
+        self.now = now
+        self.backUp = backUp
 
         let base = directory ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -135,8 +164,12 @@ public final class TranscriptHistory {
         return true
     }
 
+    /// Explicit user intent — clear, or turn history off — so this removes
+    /// `history.json` whatever state it is in. It never touches the
+    /// `.damaged-*` copies beside it.
     private func purgeFromDisk() {
         try? FileManager.default.removeItem(at: fileURL)
+        if !FileManager.default.fileExists(atPath: fileURL.path) { diskState = .owned }
     }
 
     public var mostRecent: TranscriptRecord? { records.first }
@@ -223,22 +256,72 @@ public final class TranscriptHistory {
     }
 
     private func load() {
-        guard let data = try? Data(contentsOf: fileURL) else { return }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        records = (try? decoder.decode([TranscriptRecord].self, from: data)) ?? []
+        switch HistoryFile.load(from: fileURL) {
+        case .missing:
+            diskState = .owned
+        case .clean(let stored):
+            records = stored
+            diskState = .owned
+        case .damaged(let recovered, let original):
+            // Show what survived; keep the whole original beside it as a copy.
+            records = recovered
+            let copy = backUp(fileURL, original, now())
+            diskState = copy == nil ? .protected : .backedUp
+            let backupName = copy?.lastPathComponent ?? "FAILED; file left untouched"
+            Log.history.error("history.json did not fully decode; recovered \(recovered.count, privacy: .public) record(s); backup: \(backupName, privacy: .public)")
+        case .unreadable:
+            diskState = .protected
+            Log.history.error("history.json exists but could not be read; it will not be replaced")
+        }
+    }
+
+    /// Whether `save()` may replace the file now. A protected file gets
+    /// another chance at a backup each time, so a transient failure (a full
+    /// disk, a permission since fixed) does not block history for the run.
+    private func mayReplaceFile() -> Bool {
+        guard diskState == .protected else { return true }
+        switch HistoryFile.load(from: fileURL) {
+        case .missing:
+            diskState = .owned
+        case .unreadable:
+            return false
+        case .clean:
+            // Readable now, but still not what this run loaded: copy it first.
+            guard let data = try? Data(contentsOf: fileURL),
+                  backUp(fileURL, data, now()) != nil else { return false }
+            diskState = .backedUp
+        case .damaged(_, let original):
+            guard backUp(fileURL, original, now()) != nil else { return false }
+            diskState = .backedUp
+        }
+        return true
     }
 
     private func save() {
+        // Never let an empty history stand in for a file this run did not
+        // fully read — that is exactly the wipe this guards against. (`clear()`
+        // and the off-switch delete on purpose, through `purgeFromDisk`.)
+        if records.isEmpty, diskState != .owned { return }
+        guard mayReplaceFile() else {
+            Log.history.error("history not saved: the existing file could not be backed up")
+            return
+        }
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         guard let data = try? encoder.encode(records) else { return }
-        // Atomic: a crash mid-write must not corrupt the whole history.
-        try? data.write(to: fileURL, options: .atomic)
+        // Atomic: a crash mid-write must not corrupt the whole history, and a
+        // failed write leaves the previous file as it was.
+        do {
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            Log.history.error("history save failed: \(error.localizedDescription, privacy: .public)")
+            return
+        }
         // After the write, never before — the atomic rename above replaces
         // the file, and with it any mode already set on the old one.
         PrivateFiles.protectWrittenFile(fileURL)
+        diskState = .owned
     }
 }
 
