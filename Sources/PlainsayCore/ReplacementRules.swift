@@ -119,8 +119,11 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
     // MARK: Applying
 
     /// Horizontal whitespace only: rules run after e-mail layout, and `\s+`
-    /// would join a phrase across a line or paragraph break.
-    static let phraseGap = #"[\p{Zs}\t]+"#
+    /// would join a phrase across a line or paragraph break. ICU defines `\h`
+    /// as exactly `[\p{Zs}\t]` (general category Zs, or U+0009) but tests it
+    /// without building a property set. With 200 rules the spelled-out class
+    /// cost ~10 ms of regex compilation per call, the largest single item.
+    static let phraseGap = #"\h+"#
     /// Word boundaries as in `DictationCorrectionCommand.localReplacement`,
     /// plus: no match glued to `@` (handles) or to `.`+letter/digit on either
     /// side (bare domains and file names such as `jason.dev`, `jason.txt`),
@@ -132,50 +135,10 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
     /// phrase first. Output is never rescanned, so `A→B`, `B→C` turns `A`
     /// into `B`. Matches inside a URL or e-mail address are skipped. Returns
     /// the original string untouched when nothing fired.
+    /// `ReplacementMatcher` holds the compiled form and the performance notes.
     public func apply(to text: String) -> (text: String, count: Int) {
         guard isEnabled else { return (text, 0) }
-        var seen = Set<String>()
-        let active = rules
-            .filter { $0.isEnabled }
-            .map { (from: $0.from.precomposedStringWithCanonicalMapping.trimmingCharacters(in: .whitespacesAndNewlines),
-                    to: $0.to.precomposedStringWithCanonicalMapping) }
-            .filter { !$0.from.isEmpty && seen.insert(Self.key($0.from)).inserted }
-            .sorted { lhs, rhs in
-                let l = lhs.from.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
-                let r = rhs.from.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
-                return l.count != r.count ? l.count > r.count : l < r
-            }
-        guard !active.isEmpty else { return (text, 0) }
-
-        let alternatives = active.map { rule in
-            "(" + rule.from.split(whereSeparator: { $0.isWhitespace })
-                .map { NSRegularExpression.escapedPattern(for: String($0)) }
-                .joined(separator: Self.phraseGap) + ")"
-        }
-        let pattern = Self.before + "(?:" + alternatives.joined(separator: "|") + ")" + Self.after
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
-            return (text, 0)
-        }
-
-        let source = text.precomposedStringWithCanonicalMapping
-        let ns = source as NSString
-        let protected = StructuredDetails.spans(in: source).filter { $0.kind != .number }.map(\.range)
-        var replacements: [(range: NSRange, with: String)] = []
-        for match in regex.matches(in: source, range: NSRange(location: 0, length: ns.length)) {
-            if protected.contains(where: { NSIntersectionRange($0, match.range).length > 0 }) { continue }
-            guard let index = (1...active.count).first(where: { match.range(at: $0).location != NSNotFound }) else { continue }
-            let matched = ns.substring(with: match.range)
-            let replacement = Self.cased(active[index - 1].to, like: matched)
-            // Already correct (`jira → Jira` on "Jira"): not a firing.
-            if replacement == matched { continue }
-            replacements.append((match.range, replacement))
-        }
-        guard !replacements.isEmpty else { return (text, 0) }
-        let output = NSMutableString(string: source)
-        for replacement in replacements.reversed() {
-            output.replaceCharacters(in: replacement.range, with: replacement.with)
-        }
-        return (output as String, replacements.count)
+        return ReplacementMatcher(rules: rules).apply(to: text)
     }
 
     /// `to` verbatim, except that an all-lowercase `to` gets its first letter
