@@ -12,7 +12,7 @@ struct SettingsView: View {
     let updates: UpdateController
     let voiceEnrollment: VoiceEnrollment
 
-    private enum Tab: Hashable { case speech, general, history, permissions, about }
+    private enum Tab: Hashable { case speech, general, profiles, history, permissions, about }
     @State private var selection: Tab = .speech
 
     var body: some View {
@@ -32,6 +32,10 @@ struct SettingsView: View {
             GeneralSettings(settings: settings, coordinator: coordinator, updates: updates)
                 .tabItem { Label("General", systemImage: "keyboard") }
                 .tag(Tab.general)
+
+            ProfilesSettings(settings: settings, coordinator: coordinator)
+                .tabItem { Label("Profiles", systemImage: "square.stack.3d.up") }
+                .tag(Tab.profiles)
 
             HistoryView(
                 history: coordinator.history,
