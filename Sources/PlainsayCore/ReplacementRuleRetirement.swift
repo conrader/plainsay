@@ -18,14 +18,37 @@ public struct RetiredRuleTarget: Codable, Sendable, Equatable {
 /// Set when a retired target had to be forgotten (the list was full, or a
 /// stored list was longer than `retiredLimit`). The forgotten target may
 /// still be in History, so while this is set no History-derived Vocabulary
-/// proposal is offered at all. `settledAt` is the first prune at which no
-/// dictation could still write History: every record a forgotten rule wrote
-/// is then dated at or before it, so the flag clears once History holds no
-/// record that old.
+/// proposal is offered at all. `pendingRecords` is nil until the first prune
+/// at which no dictation could still write History; it then holds the ids of
+/// the History records present at that point. Only those records can hold
+/// a forgotten target's text (later dictations froze rule sets without it),
+/// so the flag clears once none of them is retained. Record ids, not dates:
+/// a clock moved back or forward cannot make an old record look new.
 public struct RetiredOverflow: Codable, Sendable, Equatable {
-    public var settledAt: Date?
+    public var pendingRecords: [UUID]?
 
-    public init(settledAt: Date? = nil) { self.settledAt = settledAt }
+    public init(pendingRecords: [UUID]? = nil) { self.pendingRecords = pendingRecords }
+
+    /// At most this many stored ids are decoded; a longer list loads unsettled.
+    static let pendingLimit = 1_000
+
+    private enum CodingKeys: String, CodingKey { case pendingRecords }
+
+    /// A missing, unreadable or oversized id list (including a marker written
+    /// with the earlier date-based `settledAt`) loads unsettled. That is always
+    /// safe: settling again at any quiet prune captures every record that can
+    /// still hold a forgotten target.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        pendingRecords = nil
+        guard var list = try? c.nestedUnkeyedContainer(forKey: .pendingRecords) else { return }
+        var ids: [UUID] = []
+        while !list.isAtEnd {
+            guard ids.count < Self.pendingLimit, let id = try? list.decode(UUID.self) else { return }
+            ids.append(id)
+        }
+        pendingRecords = ids
+    }
 }
 
 extension ReplacementRuleSet {
@@ -79,8 +102,7 @@ extension ReplacementRuleSet {
     /// the same split and folding as `hasTarget`, and pruned once retention
     /// has removed them all. No time bound is assumed. Over-keeping only
     /// hides a proposal; every doubt keeps the entry.
-    public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool,
-                                      now: Date = Date()) -> ReplacementRuleSet {
+    public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool) -> ReplacementRuleSet {
         guard !workInFlight else { return self }
         var present = Set<String>()
         for record in history {
@@ -89,10 +111,10 @@ extension ReplacementRuleSet {
         }
         var copy = self
         copy.retiredTargets.removeAll { Self.targetKeys($0.to).isDisjoint(with: present) }
-        if var overflow = copy.retiredOverflow {
-            let settledAt = overflow.settledAt ?? now
-            overflow.settledAt = settledAt
-            copy.retiredOverflow = history.contains { $0.date <= settledAt } ? overflow : nil
+        if copy.retiredOverflow != nil {
+            let retained = Set(history.map(\.id))
+            let pending = copy.retiredOverflow?.pendingRecords?.filter(retained.contains) ?? history.map(\.id)
+            copy.retiredOverflow = pending.isEmpty ? nil : RetiredOverflow(pendingRecords: pending)
         }
         return copy
     }

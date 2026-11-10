@@ -76,7 +76,7 @@ struct ReplacementRuleRetirementTests {
         #expect(offered(history, ReplacementRuleSet()) == ["Lumenta", "Studio", "Kubernetes"])
         #expect(offered(history, live).isEmpty)
         // While the dictation may still write, nothing is pruned, even with History empty.
-        #expect(live.pruningRetiredTargets(history: [], workInFlight: true, now: t0 + 600) == live)
+        #expect(live.pruningRetiredTargets(history: [], workInFlight: true) == live)
     }
 
     @Test("A late write after the old one-hour bound is still excluded; pruning follows History, not time")
@@ -86,17 +86,17 @@ struct ReplacementRuleRetirementTests {
         live.remove(id: lumenta.id, now: t0)
         // Days later the frozen dictation is still running: prune keeps the entry.
         let days = t0 + 3 * 86_400
-        live = live.pruningRetiredTargets(history: [], workInFlight: true, now: days)
+        live = live.pruningRetiredTargets(history: [], workInFlight: true)
         #expect(live.retiredTargets.count == 1)
         // It completes and writes the old target, dated well after retirement.
         let late = record(snapshot.apply(to: "lumen tar again").text, at: days + 1)
         let history = [late, record("Ask about Lumenta Studio", at: days + 2)]
-        live = live.pruningRetiredTargets(history: history, workInFlight: false, now: days + 10)
+        live = live.pruningRetiredTargets(history: history, workInFlight: false)
         #expect(live.retiredTargets.map(\.to) == ["Lumenta Studio"])
         #expect(offered(history, live).isEmpty)
         // One word of the target left in History is enough to keep it.
         let partial = [record("Lumenta only", at: days + 3)]
-        #expect(live.pruningRetiredTargets(history: partial, workInFlight: false, now: days + 20).retiredTargets.count == 1)
+        #expect(live.pruningRetiredTargets(history: partial, workInFlight: false).retiredTargets.count == 1)
     }
 
     @Test("A retired target is pruned only after History no longer holds any of its words")
@@ -110,8 +110,8 @@ struct ReplacementRuleRetirementTests {
         let folded = record("lumentá", at: t0 + 1)
         #expect(rules.pruningRetiredTargets(history: [folded], workInFlight: false).retiredTargets.count == 1)
         // Retention removed it: pruned at once, with no grace period.
-        #expect(rules.pruningRetiredTargets(history: [other], workInFlight: false, now: t0 + 1).retiredTargets.isEmpty)
-        #expect(rules.pruningRetiredTargets(history: [], workInFlight: false, now: t0).retiredTargets.isEmpty)
+        #expect(rules.pruningRetiredTargets(history: [other], workInFlight: false).retiredTargets.isEmpty)
+        #expect(rules.pruningRetiredTargets(history: [], workInFlight: false).retiredTargets.isEmpty)
         // Pruning never touches rules.
         let live = ReplacementRuleSet(rules: [lumenta])
         #expect(live.pruningRetiredTargets(history: [], workInFlight: false) == live)
@@ -126,12 +126,18 @@ struct ReplacementRuleRetirementTests {
         #expect(rules.retiredOverflow == nil)
     }
 
-    @Test("Overflowing the retired list never reopens a forgotten target: proposals stay hidden until History drops it")
-    func overflow() {
+    /// `lumenta` removed, then `retiredLimit` more retirements forget it.
+    private func overflowed() -> ReplacementRuleSet {
         var rules = ReplacementRuleSet(rules: [lumenta])
         rules.remove(id: lumenta.id, now: t0)
+        for i in 0..<ReplacementRuleSet.retiredLimit { rules.retire("Term\(i)x", now: t0 + Double(i + 1)) }
+        return rules
+    }
+
+    @Test("Overflowing the retired list never reopens a forgotten target: proposals stay hidden until History drops it")
+    func overflow() {
+        let rules = overflowed()
         let limit = ReplacementRuleSet.retiredLimit
-        for i in 0..<limit { rules.retire("Term\(i)x", now: t0 + Double(i + 1)) }
         #expect(rules.retiredTargets.count == limit)
         #expect(!rules.retiredTargets.contains { $0.to == "Lumenta Studio" })   // forgotten...
         #expect(rules.retiredOverflow == RetiredOverflow())
@@ -139,22 +145,47 @@ struct ReplacementRuleRetirementTests {
         #expect(offered(history, rules).isEmpty)                                // ...but never offered
         // In flight: nothing settles or clears.
         #expect(rules.pruningRetiredTargets(history: [], workInFlight: true) == rules)
-        // First quiet prune settles; History holding older records keeps the fallback.
-        let settle = t0 + 2_000
-        var pruned = rules.pruningRetiredTargets(history: history, workInFlight: false, now: settle)
-        #expect(pruned.retiredOverflow == RetiredOverflow(settledAt: settle))
+        #expect(rules.pruningRetiredTargets(history: history, workInFlight: true) == rules)
+        // First quiet prune settles on the records present; they keep the fallback.
+        var pruned = rules.pruningRetiredTargets(history: history, workInFlight: false)
+        #expect(pruned.retiredOverflow == RetiredOverflow(pendingRecords: history.map(\.id)))
         #expect(pruned.retiredTargets.isEmpty)        // known targets follow their own History check
         #expect(offered(history, pruned).isEmpty)
-        // A newer record alone does not clear it while the old ones remain...
-        let newer = record("Ask Plainsay about Lumenta Studio.", at: settle + 1)
-        pruned = pruned.pruningRetiredTargets(history: history + [newer], workInFlight: false, now: settle + 5)
-        #expect(pruned.retiredOverflow == RetiredOverflow(settledAt: settle))
-        // ...retention removing everything dated at or before the settle point does.
-        pruned = pruned.pruningRetiredTargets(history: [newer], workInFlight: false, now: settle + 10)
+        // A newer record does not clear it while an old one remains, and is not added...
+        let newer = record("Ask Plainsay about Lumenta Studio.", at: t0 + 2_000)
+        pruned = pruned.pruningRetiredTargets(history: [newer] + history, workInFlight: false)
+        #expect(pruned.retiredOverflow == RetiredOverflow(pendingRecords: history.map(\.id)))
+        // ...retention removing one shrinks the set...
+        pruned = pruned.pruningRetiredTargets(history: [newer, history[1]], workInFlight: false)
+        #expect(pruned.retiredOverflow == RetiredOverflow(pendingRecords: [history[1].id]))
+        #expect(offered([newer, history[1]], pruned).isEmpty)
+        // ...and removing every settled record clears it, whatever their dates.
+        pruned = pruned.pruningRetiredTargets(history: [newer], workInFlight: false)
         #expect(pruned.retiredOverflow == nil)
         // A further overflow resets settling.
-        for i in 0...limit { pruned.retire("More\(i)x", now: settle + 20) }
+        for i in 0...limit { pruned.retire("More\(i)x", now: t0 + 3_000) }
         #expect(pruned.retiredOverflow == RetiredOverflow())
+        // An empty History settles and clears at once.
+        #expect(rules.pruningRetiredTargets(history: [], workInFlight: false).retiredOverflow == nil)
+    }
+
+    @Test("Clock rollback: History dated after the prune still holds the overflow (reviewer counterexample)")
+    func overflowClockRollback() {
+        let rules = overflowed()
+        // Records written at t0 + 1000; the clock is then set back and the prune runs "at" t0.
+        let history = ruledHistory(at: t0 + 1_000)
+        let pruned = rules.pruningRetiredTargets(history: history, workInFlight: false)
+        #expect(pruned.retiredOverflow != nil)
+        #expect(!pruned.retiredTargets.contains { $0.to == "Lumenta Studio" })
+        #expect(offered(history, pruned).isEmpty)
+        // A second prune, and a reload, keep it while either record remains.
+        let again = pruned.pruningRetiredTargets(history: history, workInFlight: false)
+        #expect(again == pruned && offered(history, again).isEmpty)
+        let reloaded = try? JSONDecoder().decode(ReplacementRuleSet.self, from: JSONEncoder().encode(again))
+        #expect(reloaded == again)
+        // Clock jumped forward instead: records dated in the far past still hold it.
+        let old = ruledHistory(at: t0 - 1_000_000)
+        #expect(offered(old, rules.pruningRetiredTargets(history: old, workInFlight: false)).isEmpty)
     }
 
     @Test("Stored lists longer than the limit, or a bad overflow marker, load as an unsettled overflow")
@@ -178,8 +209,18 @@ struct ReplacementRuleRetirementTests {
         #expect(bad.retiredOverflow == RetiredOverflow())
         // The marker round-trips.
         var settled = full
-        settled.retiredOverflow = RetiredOverflow(settledAt: t0)
+        settled.retiredOverflow = RetiredOverflow(pendingRecords: [UUID(), UUID()])
         #expect(try JSONDecoder().decode(ReplacementRuleSet.self, from: JSONEncoder().encode(settled)) == settled)
+        // A date-based marker from the earlier build, a bad id, or too many ids load unsettled.
+        let dated = try JSONDecoder().decode(ReplacementRuleSet.self, from: json(1, extra: #","retiredOverflow":{"settledAt":5}"#))
+        #expect(dated.retiredOverflow == RetiredOverflow())
+        let badID = try JSONDecoder().decode(ReplacementRuleSet.self,
+            from: json(1, extra: #","retiredOverflow":{"pendingRecords":["\#(UUID().uuidString)","nope"]}"#))
+        #expect(badID.retiredOverflow == RetiredOverflow())
+        let ids = (0...RetiredOverflow.pendingLimit).map { _ in "\"\(UUID().uuidString)\"" }.joined(separator: ",")
+        let many = try JSONDecoder().decode(ReplacementRuleSet.self,
+            from: json(1, extra: #","retiredOverflow":{"pendingRecords":[\#(ids)]}"#))
+        #expect(many.retiredOverflow == RetiredOverflow())
     }
 
     @Test("Retired targets persist; malformed or oversized entries are dropped on load")
