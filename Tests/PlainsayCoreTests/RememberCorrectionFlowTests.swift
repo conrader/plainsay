@@ -184,4 +184,41 @@ struct ReplacementRuleSaveTests {
         #expect(ReplacementRuleSet.vocabulary(["Kraków"], contains: "krakow"))
         #expect(!ReplacementRuleSet.vocabulary(["Plainsay"], contains: "Kowalski"))
     }
+
+    @Test("A multiword target excludes each word the proposer could offer")
+    func multiwordTargetWords() {
+        let rules = ReplacementRuleSet(rules: [
+            ReplacementRule(from: "kubernetis", to: "Kubernetes Engine"),
+            ReplacementRule(from: "open router", to: "Open-Router's API"),
+            ReplacementRule(from: "lumen tar", to: "Lumenta Studio", isEnabled: false),
+        ])
+        #expect(rules.hasTarget(matching: "Kubernetes Engine"))
+        #expect(rules.hasTarget(matching: "Kubernetes"))
+        #expect(rules.hasTarget(matching: "engine"))
+        #expect(rules.hasTarget(matching: "KUBERNETES"))
+        // Split as the proposer splits: hyphen and apostrophe stay inside a word.
+        #expect(rules.hasTarget(matching: "Open-Router's"))
+        #expect(rules.hasTarget(matching: "API"))
+        #expect(!rules.hasTarget(matching: "Kube"))
+        #expect(!rules.hasTarget(matching: "Kowalski"))
+        #expect(!rules.hasTarget(matching: "Studio"))
+    }
+
+    @Test("Regression: History with a multiword rule target proposes none of its words")
+    func multiwordTargetProposals() {
+        func record(_ text: String) -> TranscriptRecord {
+            TranscriptRecord(text: text, rawText: text, outcome: .inserted, durationSeconds: 4, targetApp: nil)
+        }
+        let rules = ReplacementRuleSet(rules: [ReplacementRule(from: "kubernetis", to: "Kubernetes Engine")])
+        let history = [
+            record("Use Kubernetes Engine for the Plainsay build."),
+            record("Use Kubernetes Engine and ask Plainsay."),
+        ]
+        let raw = DictionaryProposer.propose(from: history).map(\.term)
+        #expect(Set(raw) == ["Kubernetes", "Engine", "Plainsay"])
+        let offered = DictionaryProposer.propose(from: history)
+            .filter { !rules.hasTarget(matching: $0.term) }
+            .map(\.term)
+        #expect(offered == ["Plainsay"])
+    }
 }
