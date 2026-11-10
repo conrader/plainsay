@@ -178,7 +178,8 @@ struct ReplacementRuleSaveTests {
             ReplacementRule(from: "lumen tar", to: "Lumenta", isEnabled: false),
         ])
         #expect(rules.hasTarget(matching: "json"))
-        #expect(!rules.hasTarget(matching: "Lumenta"))
+        #expect(rules.hasTarget(matching: "lumenta"))   // disabled still counts
+        #expect(!rules.hasTarget(matching: "Kowalski"))
         #expect(!rules.hasTarget(matching: "--"))
         #expect(ReplacementRuleSet.vocabulary(["Plainsay"], contains: "plain say"))
         #expect(ReplacementRuleSet.vocabulary(["Kraków"], contains: "krakow"))
@@ -201,7 +202,8 @@ struct ReplacementRuleSaveTests {
         #expect(rules.hasTarget(matching: "API"))
         #expect(!rules.hasTarget(matching: "Kube"))
         #expect(!rules.hasTarget(matching: "Kowalski"))
-        #expect(!rules.hasTarget(matching: "Studio"))
+        // A disabled rule still counts: History may hold what it wrote.
+        #expect(rules.hasTarget(matching: "Studio"))
     }
 
     @Test("Regression: History with a multiword rule target proposes none of its words")
@@ -216,9 +218,7 @@ struct ReplacementRuleSaveTests {
         ]
         let raw = DictionaryProposer.propose(from: history).map(\.term)
         #expect(Set(raw) == ["Kubernetes", "Engine", "Plainsay"])
-        let offered = DictionaryProposer.propose(from: history)
-            .filter { !rules.hasTarget(matching: $0.term) }
-            .map(\.term)
+        let offered = rules.excludingTargets(from: DictionaryProposer.propose(from: history)).map(\.term)
         #expect(offered == ["Plainsay"])
     }
 }

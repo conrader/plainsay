@@ -179,6 +179,26 @@ struct ReplacementRulesPipelineTests {
         #expect(h.inserter.inserted.last == "open the jason file")
     }
 
+    @Test("A rule disabled or deleted mid-recording: what it wrote is still not proposed for Vocabulary")
+    func inFlightTargetNotProposed() async throws {
+        let kube = ReplacementRule(from: "kubernetis", to: "Kubernetes")
+        let lumenta = ReplacementRule(from: "lumen tar", to: "Lumenta")
+        let h = RulesHarness(rules: [kube, lumenta], polishing: false)
+        h.engine.transcript = "we run kubernetis and lumen tar daily"
+        await h.coordinator.reloadModel()
+        try await h.dictate()
+        try await h.dictate {
+            h.settings.replacementRules.setEnabled(false, id: kube.id)
+            h.settings.replacementRules.remove(id: lumenta.id)
+        }
+        #expect(h.history.records.map(\.text) == Array(repeating: "we run Kubernetes and Lumenta daily", count: 2))
+        let proposed = DictionaryProposer.propose(from: h.history.records).map(\.term)
+        #expect(Set(proposed) == ["Kubernetes", "Lumenta"])
+        #expect(h.settings.replacementRules.excludingTargets(from: DictionaryProposer.propose(from: h.history.records)).isEmpty)
+        let pruned = h.settings.replacementRules.pruningRetiredTargets(history: h.history.records)
+        #expect(pruned.retiredTargets.map(\.to) == ["Lumenta"])
+    }
+
     @Test("21. The correction-command transcript is returned without rules")
     func correctionCapture() async throws {
         let h = RulesHarness(rules: [jason], polishing: false)

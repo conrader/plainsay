@@ -76,6 +76,15 @@ extension SpeechSettings {
                 }
             }
         }
+        .onAppear(perform: pruneRetiredRuleTargets)
+    }
+
+    /// Storage hygiene only: a retired target stays excluded until History
+    /// can no longer hold text its rule wrote. Assigns only on a change, so
+    /// opening Settings does not rewrite the rules.
+    private func pruneRetiredRuleTargets() {
+        let pruned = settings.replacementRules.pruningRetiredTargets(history: coordinator.history.records)
+        if pruned != settings.replacementRules { settings.replacementRules = pruned }
     }
 
     private var vocabularyExplanation: String {
@@ -93,16 +102,16 @@ extension SpeechSettings {
 
     /// Terms worth offering: recurring in the speaker's own dictations, not
     /// already in the vocabulary, not previously turned down, and not written
-    /// by a replacement rule.
+    /// by a replacement rule (enabled, disabled or retired).
     private var termProposals: [DictionaryProposal] {
         let dismissed = Set(settings.dismissedTermProposals.map { $0.lowercased() })
-        return DictionaryProposer.propose(
+        let proposals = DictionaryProposer.propose(
             from: coordinator.history.records,
             existing: settings.dictionary
         )
         .filter { !dismissed.contains($0.term.lowercased()) }
         // History holds post-rule text: a rule target is not a new term.
-        .filter { !settings.replacementRules.hasTarget(matching: $0.term) }
+        return settings.replacementRules.excludingTargets(from: proposals)
     }
 
     private static func occurrenceSummary(_ count: Int) -> String {

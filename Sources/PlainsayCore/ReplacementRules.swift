@@ -27,18 +27,25 @@ public struct ReplacementRule: Codable, Sendable, Equatable, Identifiable {
 
     /// Every field but `from`/`to` is optional, and an unknown `source` falls
     /// back to `.manual`, so a rule written by a newer or older build still
-    /// loads. A rule without a usable `from`/`to` throws, and the set skips it.
+    /// loads. A rule without a usable `from`/`to`, or with a raw phrase
+    /// (padding included) over the validator's length limit, throws before
+    /// any trimming or normalization, and the set skips it. A missing or
+    /// unreadable id is derived from the phrases, so it is the same on every
+    /// reload.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let from = try c.decode(String.self, forKey: .from)
         let to = try c.decode(String.self, forKey: .to)
-        guard !from.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        guard ReplacementRuleValidator.rawWithinSize(from, max: ReplacementRuleValidator.maxFromLength),
+              ReplacementRuleValidator.rawWithinSize(to, max: ReplacementRuleValidator.maxToLength),
+              !from.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !to.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw DecodingError.dataCorrupted(.init(codingPath: c.codingPath, debugDescription: "Empty rule phrase"))
+            throw DecodingError.dataCorrupted(.init(codingPath: c.codingPath, debugDescription: "Unusable rule phrase"))
         }
         self.from = from
         self.to = to
-        id = (try? c.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
+        id = (try? c.decodeIfPresent(UUID.self, forKey: .id))
+            ?? ReplacementRuleSet.derivedID("missing\u{1F}\(from)\u{1F}\(to)")
         isEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
         source = (try? c.decodeIfPresent(Source.self, forKey: .source)) ?? .manual
         createdAt = (try? c.decodeIfPresent(Date.self, forKey: .createdAt)) ?? Date(timeIntervalSinceReferenceDate: 0)
@@ -51,48 +58,43 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
 
     public var isEnabled: Bool
     public var rules: [ReplacementRule]
+    /// Targets of deleted or retargeted rules that History may still hold
+    /// (`ReplacementRuleRetirement.swift`).
+    public var retiredTargets: [RetiredRuleTarget]
 
-    public init(isEnabled: Bool = true, rules: [ReplacementRule] = []) {
+    public init(isEnabled: Bool = true, rules: [ReplacementRule] = [],
+                retiredTargets: [RetiredRuleTarget] = []) {
         self.isEnabled = isEnabled
         self.rules = rules
+        self.retiredTargets = retiredTargets
     }
 
-    private enum CodingKeys: String, CodingKey { case isEnabled, rules }
+    private enum CodingKeys: String, CodingKey { case isEnabled, rules, retiredTargets }
 
     /// Lossy on purpose. `PlainsaySettings.decode` falls back to an empty value
     /// on any error, and the next save would then erase every rule the user
-    /// curated. Here one malformed rule is dropped and the rest survive, and
-    /// the save-time invariants are enforced (`loadable`).
+    /// curated. Here one malformed rule is dropped and the rest survive.
+    /// Only the structural bounds are re-checked (`loadable`); the offer-level
+    /// checks `save` runs (identical, contained, vocabulary...) are not.
+    /// At most `rawElementLimit` stored elements of each list are decoded.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         isEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
-        let lossy = (try? c.decodeIfPresent([LossyRule].self, forKey: .rules)) ?? []
-        rules = Self.loadable(lossy.compactMap(\.rule))
+        rules = Self.loadable(Self.decodeBounded(LossyReplacementRule.self, c, .rules).compactMap(\.rule))
+        retiredTargets = Self.loadableRetired(Self.decodeBounded(LossyRetiredTarget.self, c, .retiredTargets)
+            .compactMap(\.target))
     }
 
-    /// Persisted data is not trusted to have gone through `save`. In stored
-    /// order: a rule outside the validator's length limits or with a control
-    /// character is dropped; a second rule for the same `from` phrase is
-    /// dropped (the first wins, as in `rule(forFrom:)`); a rule reusing an
-    /// earlier rule's id gets a fresh one, so the Settings list and
-    /// `remove`/`setEnabled` address exactly one rule; rules past `limit`
-    /// are dropped.
-    static func loadable(_ decoded: [ReplacementRule]) -> [ReplacementRule] {
-        var kept: [ReplacementRule] = []
-        var ids = Set<UUID>(), phrases = Set<String>()
-        for var rule in decoded {
-            guard kept.count < limit else { break }
-            guard ReplacementRuleValidator.withinBounds(from: rule.from, to: rule.to),
-                  phrases.insert(key(rule.from)).inserted else { continue }
-            while !ids.insert(rule.id).inserted { rule.id = UUID() }
-            kept.append(rule)
+    /// Up to `rawElementLimit` elements of the list under `key`; elements
+    /// past it are never decoded. A missing or non-list value is empty.
+    private static func decodeBounded<T: Decodable>(_ type: T.Type, _ c: KeyedDecodingContainer<CodingKeys>,
+                                                    _ key: CodingKeys) -> [T] {
+        guard var list = try? c.nestedUnkeyedContainer(forKey: key) else { return [] }
+        var items: [T] = []
+        while !list.isAtEnd, items.count < rawElementLimit, let item = try? list.decode(T.self) {
+            items.append(item)
         }
-        return kept
-    }
-
-    private struct LossyRule: Decodable {
-        let rule: ReplacementRule?
-        init(from decoder: Decoder) throws { rule = try? ReplacementRule(from: decoder) }
+        return items
     }
 
     // MARK: Lookup and editing
@@ -117,12 +119,14 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
         return rules.first { $0.isEnabled && Self.key($0.from) == t && Self.key($0.to) == f }
     }
 
-    /// Replaces the rule with the same `from` phrase, or appends a new one.
+    /// Replaces the rule with the same `from` phrase (retiring its old target
+    /// if the target changes), or appends a new one.
     /// Returns false, changing nothing, when appending would pass `limit`.
     @discardableResult
-    public mutating func upsert(_ rule: ReplacementRule) -> Bool {
+    public mutating func upsert(_ rule: ReplacementRule, now: Date = Date()) -> Bool {
         let k = Self.key(rule.from)
         if let index = rules.firstIndex(where: { Self.key($0.from) == k }) {
+            if rules[index].to != rule.to { retire(rules[index].to, now: now) }
             rules[index] = rule
             return true
         }
@@ -131,7 +135,11 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
         return true
     }
 
-    public mutating func remove(id: UUID) { rules.removeAll { $0.id == id } }
+    /// Removes the rule and retires its target (`hasTarget(matching:)`).
+    public mutating func remove(id: UUID, now: Date = Date()) {
+        for rule in rules where rule.id == id { retire(rule.to, now: now) }
+        rules.removeAll { $0.id == id }
+    }
 
     public mutating func setEnabled(_ enabled: Bool, id: UUID) {
         if let index = rules.firstIndex(where: { $0.id == id }) { rules[index].isEnabled = enabled }

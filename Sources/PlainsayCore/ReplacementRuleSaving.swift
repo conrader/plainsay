@@ -41,29 +41,12 @@ extension ReplacementRuleSet {
         let rule = ReplacementRule(from: ReplacementRuleValidator.normalized(from),
                                    to: ReplacementRuleValidator.normalized(to),
                                    source: source, createdAt: now)
-        return upsert(rule) ? rule : nil
+        return upsert(rule, now: now) ? rule : nil
     }
 
     /// Rules newest first, for the Settings list.
     public var newestFirst: [ReplacementRule] {
         rules.sorted { $0.createdAt > $1.createdAt }
-    }
-
-    /// Whether an enabled rule writes `term`, as its whole target or as one
-    /// word of it (folded as `TermDictionary` folds terms). The Vocabulary
-    /// proposer skips these: History holds post-rule text, so a rule target
-    /// would otherwise come back as a Vocabulary suggestion and, if accepted,
-    /// leave the Mac in speech and Polishing hints. The proposer offers single
-    /// words, so `Kubernetes Engine` must also exclude `Kubernetes` and
-    /// `Engine`; targets are split exactly as the proposer splits History.
-    public func hasTarget(matching term: String) -> Bool {
-        let key = TermDictionary.foldedKey(term)
-        guard !key.isEmpty else { return false }
-        return rules.contains { rule in
-            guard rule.isEnabled else { return false }
-            if TermDictionary.foldedKey(rule.to) == key { return true }
-            return DictionaryProposer.words(in: rule.to).contains { TermDictionary.foldedKey($0) == key }
-        }
     }
 
     /// Whether `term` is already in `vocabulary`, compared by folded key. The

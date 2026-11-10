@@ -86,12 +86,24 @@ public enum ReplacementRuleValidator {
     /// control characters and within the word and character limits. Loading
     /// saved rules enforces this; the offer-level checks stay with `assess`.
     static func withinBounds(from rawFrom: String, to rawTo: String) -> Bool {
+        guard rawWithinSize(rawFrom, max: maxFromLength), rawWithinSize(rawTo, max: maxToLength) else { return false }
         let from = normalized(rawFrom), to = normalized(rawTo)
         guard !from.isEmpty, !to.isEmpty,
               !rawFrom.contains(where: isControl), !rawTo.contains(where: isControl) else { return false }
         return words(from).count <= maxFromWords && from.count <= maxFromLength
             && words(to).count <= maxToWords && to.count <= maxToLength
     }
+
+    /// A stored phrase is at most `max` characters before normalization,
+    /// padding included: `save` stores normalized text, so anything longer
+    /// is not ours. The UTF-8 size is checked first (constant time for a
+    /// native string) so a huge value is refused without walking it.
+    static func rawWithinSize(_ raw: String, max: Int) -> Bool {
+        raw.utf8.count <= max * maxBytesPerCharacter && raw.count <= max
+    }
+
+    /// Generous: a flag or ZWJ emoji sequence is one character of many bytes.
+    static let maxBytesPerCharacter = 32
 
     // MARK: Helpers
 
