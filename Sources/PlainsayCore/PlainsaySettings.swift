@@ -152,7 +152,10 @@ public final class PlainsaySettings {
 
     public var geminiAPIKey: String {
         get { Keychain.get(account: Keychain.geminiKeyAccount) ?? "" }
-        set { Keychain.set(newValue, account: Keychain.geminiKeyAccount) }
+        set {
+            Keychain.set(newValue, account: Keychain.geminiKeyAccount)
+            cleanupKeyPresence = [:]
+        }
     }
 
     public var hasGeminiKey: Bool { !geminiAPIKey.isEmpty }
@@ -163,14 +166,36 @@ public final class PlainsaySettings {
         cleanupKeyLookup(provider)
     }
 
-    /// Where Polishing keys are read from: the Keychain. Tests swap it so the
-    /// real `ProviderFactory` availability rules run without the login Keychain.
+    /// Where Polishing keys are read from and written to: the Keychain. Tests
+    /// swap them (before the first read: `hasAPIKey` caches what the lookup
+    /// returned) so the real `ProviderFactory` availability rules run without
+    /// the login Keychain.
     @ObservationIgnored var cleanupKeyLookup: (CleanupProvider) -> String = {
         Keychain.get(account: $0.keychainAccount) ?? ""
     }
+    @ObservationIgnored var cleanupKeyStore: (String, CleanupProvider) -> Void = {
+        Keychain.set($0, account: $1.keychainAccount)
+    }
+
+    /// Whether a Polishing key is stored, for callers that poll (the HUD chip
+    /// redraws 30 times a second, the profile editor on every render): the
+    /// Keychain is read once per provider, and every key write below clears
+    /// the answer, so it agrees with `ProviderFactory.makeCleaner`, which reads
+    /// the key itself. Cleared on every write, not per account, because
+    /// accounts are shared (the OpenAI key serves speech and Polishing, the
+    /// legacy Gemini key is the Gemini Polishing key).
+    public func hasAPIKey(for provider: CleanupProvider) -> Bool {
+        if let known = cleanupKeyPresence[provider] { return known }
+        let present = !apiKey(for: provider).isEmpty
+        cleanupKeyPresence[provider] = present
+        return present
+    }
+
+    @ObservationIgnored private var cleanupKeyPresence: [CleanupProvider: Bool] = [:]
 
     public func setAPIKey(_ key: String, for provider: CleanupProvider) {
-        Keychain.set(key, account: provider.keychainAccount)
+        cleanupKeyStore(key, provider)
+        cleanupKeyPresence = [:]
     }
 
     public func apiKey(for provider: ASRProvider) -> String {
@@ -179,6 +204,7 @@ public final class PlainsaySettings {
 
     public func setAPIKey(_ key: String, for provider: ASRProvider) {
         Keychain.set(key, account: provider.keychainAccount)
+        cleanupKeyPresence = [:]
     }
 
     /// Resolved values, falling back to the provider's defaults.

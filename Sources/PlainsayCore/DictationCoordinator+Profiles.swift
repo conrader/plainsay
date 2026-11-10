@@ -135,19 +135,12 @@ extension DictationCoordinator {
         return parts.joined(separator: " · ")
     }
 
-    /// Reads the Polishing key once per profiled dictation: the HUD redraws
-    /// the chip 30 times a second while recording, too often for the Keychain.
-    func captureChipKeyCheck() {
-        guard sessionPolicy.profileName != nil else { chipKeyCheck = nil; return }
-        let provider = settings.cleanupProvider
-        chipKeyCheck = (provider, provider != .plainsay && !settings.apiKey(for: provider).isEmpty)
-    }
-
-    /// Live readiness, using the key presence captured at recording start
-    /// unless the provider changed since (then the Keychain is read).
+    /// Live readiness. Key presence is cached in `PlainsaySettings` and
+    /// cleared by key writes, so this stays off the Keychain at HUD cadence —
+    /// including after a provider switch — and follows a key added or removed
+    /// before the hotkey is released.
     func effectivePolishingReadiness() -> PolishingReadiness {
-        let cached = chipKeyCheck.flatMap { $0.provider == settings.cleanupProvider ? $0.hasKey : nil }
-        return ProviderFactory.polishingReadiness(settings, hasKey: cached)
+        ProviderFactory.polishingReadiness(settings)
     }
 }
 
