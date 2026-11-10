@@ -10311,6 +10311,88 @@
         }
       }
     },
+    "history.disabledDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diktate werden nicht gespeichert, und alles bisher Gespeicherte wurde gelöscht. Plainsay kann ein Diktat, dessen Einfügen unbemerkt fehlgeschlagen ist, nicht mehr wiederherstellen – du müsstest es noch einmal sagen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations are not being saved, and anything previously saved has been deleted. Plainsay can no longer recover a dictation whose paste silently failed — you would have to say it again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los dictados no se están guardando y todo lo guardado antes se ha eliminado. Plainsay ya no puede recuperar un dictado cuyo pegado haya fallado sin avisar: tendrías que decirlo otra vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dictées ne sont pas enregistrées, et tout ce qui l'était a été supprimé. Plainsay ne peut plus récupérer une dictée dont le collage a échoué sans prévenir — il faudrait la redire."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dettature non vengono salvate e tutto ciò che era stato salvato è stato eliminato. Plainsay non può più recuperare una dettatura il cui incolla non è andato a buon fine senza avvisare: dovresti ripeterla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口述筆記は保存されておらず、以前に保存した内容は削除されています。貼り付けが気づかないうちに失敗した口述筆記を、Plainsayは復元できなくなります。もう一度話す必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰기가 저장되지 않으며, 이전에 저장된 내용은 모두 삭제되었습니다. 붙여넣기가 알림 없이 실패한 받아쓰기는 Plainsay가 더 이상 복구할 수 없으므로 다시 말해야 합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dicteringen worden niet bewaard en alles wat eerder was bewaard, is verwijderd. Plainsay kan een dictaat waarvan het plakken ongemerkt mislukte niet meer terughalen — je zou het opnieuw moeten zeggen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania nie są zapisywane, a wszystko, co zapisano wcześniej, zostało usunięte. Jeśli wklejenie po cichu się nie uda, Plainsay nie odzyska już takiego dyktowania — trzeba będzie powiedzieć je jeszcze raz."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os ditados não estão a ser guardados e tudo o que foi guardado antes foi eliminado. O Plainsay já não consegue recuperar um ditado cuja colagem falhou sem aviso — terias de o dizer outra vez."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записи не сохраняются, а всё сохранённое ранее удалено. Plainsay больше не сможет восстановить запись, вставка которой незаметно не удалась, — её придётся надиктовать заново."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записи не зберігаються, а все збережене раніше видалено. Plainsay більше не зможе відновити запис, вставлення якого непомітно не вдалося, — його доведеться надиктувати знову."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写不会被保存，之前保存的内容也已删除。如果粘贴悄无声息地失败，Plainsay 将无法再找回这段听写，你需要重新说一遍。"
+          }
+        }
+      }
+    },
     "history.durationSeconds": {
       "localizations": {
         "de": {
@@ -10471,6 +10553,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "按住快捷键并说话。完成的转录会在 Plainsay 尝试插入前显示在这里，方便你在需要时再次复制。"
+          }
+        }
+      }
+    },
+    "history.explainerOff": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du dies einschaltest, werden neue Diktate gespeichert. Bereits Gelöschtes kommt dadurch nicht zurück."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turning this on starts saving new dictations. It does not bring back anything already deleted."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al activarlo se empiezan a guardar los nuevos dictados. No recupera nada de lo que ya se eliminó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'activer enregistre les nouvelles dictées. Cela ne restaure rien de ce qui a déjà été supprimé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attivandolo inizi a salvare le nuove dettature. Non recupera nulla di ciò che è già stato eliminato."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンにすると、新しい口述筆記の保存が始まります。すでに削除された内容は元に戻りません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "켜면 새 받아쓰기부터 저장됩니다. 이미 삭제된 내용은 복구되지 않습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als je dit inschakelt, worden nieuwe dicteringen bewaard. Wat al is verwijderd, komt niet terug."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Po włączeniu Plainsay zacznie zapisywać nowe dyktowania. Nie przywróci to niczego, co już zostało usunięte."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao ativar, os novos ditados passam a ser guardados. Nada do que já foi eliminado é recuperado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если включить, новые записи начнут сохраняться. Уже удалённое это не вернёт."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Якщо ввімкнути, нові записи почнуть зберігатися. Уже видалене це не поверне."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启后将开始保存新的听写。已删除的内容不会恢复。"
+          }
+        }
+      }
+    },
+    "history.explainerOn": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkripte werden nur auf diesem Mac gespeichert, sind nur für deinen Account lesbar und von Time Machine ausgeschlossen. Sie werden aufbewahrt, damit ein Diktat nicht verloren geht, dessen Einfügen unbemerkt fehlgeschlagen ist."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcripts are stored on this Mac only, readable by your account alone, and excluded from Time Machine. They are kept so a dictation whose paste silently failed is not lost."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las transcripciones se guardan solo en este Mac, solo tu cuenta puede leerlas y se excluyen de Time Machine. Se conservan para que no se pierda un dictado cuyo pegado haya fallado sin avisar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les transcriptions sont stockées uniquement sur ce Mac, lisibles par votre seul compte et exclues de Time Machine. Elles sont conservées pour qu'une dictée dont le collage a échoué sans prévenir ne soit pas perdue."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le trascrizioni sono archiviate solo su questo Mac, leggibili soltanto dal tuo account ed escluse da Time Machine. Vengono conservate perché una dettatura il cui incolla non è andato a buon fine senza avvisare non vada persa."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字起こしはこのMacにのみ保存され、あなたのアカウントだけが読み取れ、Time Machineの対象外です。貼り付けが気づかないうちに失敗した口述筆記を失わないために保存されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "필사문은 이 Mac에만 저장되고 내 계정만 읽을 수 있으며 Time Machine에서 제외됩니다. 붙여넣기가 알림 없이 실패한 받아쓰기를 잃지 않도록 보관됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcripties worden alleen op deze Mac bewaard, zijn alleen leesbaar voor jouw account en worden uitgesloten van Time Machine. Ze worden bewaard zodat een dictaat waarvan het plakken ongemerkt mislukte niet verloren gaat."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkrypcje są przechowywane tylko na tym Macu, może je odczytać wyłącznie Twoje konto i nie trafiają do Time Machine. Plainsay je zachowuje, żeby nie przepadło dyktowanie, którego wklejenie po cichu się nie udało."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As transcrições ficam guardadas apenas neste Mac, só a tua conta as pode ler e são excluídas do Time Machine. São mantidas para que um ditado cuja colagem falhou sem aviso não se perca."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расшифровки хранятся только на этом Mac, доступны для чтения только вашей учётной записи и исключены из Time Machine. Они сохраняются, чтобы не потерять запись, вставка которой незаметно не удалась."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розшифрування зберігаються лише на цьому Mac, доступні для читання лише вашому обліковому запису й виключені з Time Machine. Вони зберігаються, щоб не втратити запис, вставлення якого непомітно не вдалося."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转录仅存储在这台 Mac 上，只有你的账户可以读取，且不会纳入 Time Machine 备份。保留它们是为了在粘贴悄无声息地失败时不丢失听写。"
           }
         }
       }
@@ -10833,6 +11079,88 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "history.retention.year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Jahr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 year"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 año"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 an"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 anno"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1年"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1년"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 jaar"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 rok"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 ano"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 год"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 рік"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 年"
           }
         }
       }
@@ -21083,6 +21411,88 @@
         }
       }
     },
+    "modelStatus.percentageOfSize": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d %% von %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% of %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d %% de %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% di %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%%（%@中）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% (%@ 중)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% van %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% z %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% de %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% из %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% із %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%%（共 %@）"
+          }
+        }
+      }
+    },
     "modelStatus.restart": {
       "localizations": {
         "de": {
@@ -21243,6 +21653,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "重试"
+          }
+        }
+      }
+    },
+    "permission.action.grant": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlauben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grant"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conceder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concedi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "許可"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "허용"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toestaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przyznaj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conceder"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозволити"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授权"
+          }
+        }
+      }
+    },
+    "permission.action.openSettings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einstellungen öffnen…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les Réglages…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Impostazioni…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정 열기…"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instellingen openen…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz Ustawienia…"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Definições…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Настройки…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити Налаштування…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置…"
           }
         }
       }
@@ -22423,6 +22997,252 @@
         }
       }
     },
+    "settings.about.copied": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copié"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピーしました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사됨"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gekopieerd"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировано"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопійовано"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
+          }
+        }
+      }
+    },
+    "settings.about.copy": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiëren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiuj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制"
+          }
+        }
+      }
+    },
+    "settings.about.version": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versione %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "버전 %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versie %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wersja %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versão %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версия %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версія %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 %@"
+          }
+        }
+      }
+    },
     "settings.apiKeyTitle": {
       "localizations": {
         "de": {
@@ -22997,6 +23817,170 @@
         }
       }
     },
+    "settings.emailMode.explanation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du in eine Mail-App oder ein Webmail-Fenster zum Verfassen diktierst, formatiert Plainsay das Ergebnis als E-Mail: die Anrede in einer eigenen Zeile, Absätze im Text und die Grußformel davon abgesetzt. Es fügt nie eine Anrede oder Grußformel hinzu, die du nicht gesagt hast. Überall sonst bleibt das Diktat unverändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you dictate into a mail app, or a webmail compose window, Plainsay lays the result out as an email: the greeting on its own line, paragraphs in the body, and the sign-off separated from it. It never adds a greeting or a sign-off you did not say. Everywhere else, dictation is unchanged."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando dictas en una app de correo o en una ventana de redacción de correo web, Plainsay da al resultado forma de correo: el saludo en su propia línea, párrafos en el cuerpo y la despedida separada. Nunca añade un saludo ni una despedida que no hayas dicho. En cualquier otro lugar, el dictado no cambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsque vous dictez dans une app de messagerie ou une fenêtre de rédaction de webmail, Plainsay met le résultat en forme d'e-mail : la formule d'appel sur sa propre ligne, des paragraphes dans le corps et la formule de politesse séparée. Il n'ajoute jamais de formule d'appel ni de politesse que vous n'avez pas dite. Partout ailleurs, la dictée reste inchangée."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando detti in un'app di posta o in una finestra di composizione webmail, Plainsay impagina il risultato come un'email: il saluto su una riga a sé, i paragrafi nel corpo e la chiusura separata. Non aggiunge mai un saluto o una chiusura che non hai detto. Altrove la dettatura resta invariata."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メールアプリやWebメールの作成ウインドウで口述筆記すると、Plainsayは結果をメールの形に整えます。宛名の挨拶は独立した行に、本文は段落に分け、結びの挨拶は本文から離して配置します。話していない挨拶や結びを追加することはありません。それ以外の場所では口述筆記は変わりません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "메일 앱이나 웹메일 작성 창에 받아쓰면 Plainsay가 결과를 이메일 형식으로 정리합니다. 인사말은 별도 줄에, 본문은 문단으로, 맺음말은 본문과 분리해 배치합니다. 말하지 않은 인사말이나 맺음말은 절대 추가하지 않습니다. 그 밖의 곳에서는 받아쓰기가 그대로입니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als je dicteert in een mail-app of een webmailvenster om een bericht op te stellen, zet Plainsay het resultaat op als e-mail: de aanhef op een eigen regel, alinea's in de tekst en de afsluiting daarvan gescheiden. Het voegt nooit een aanhef of afsluiting toe die je niet hebt gezegd. Overal elders blijft dicteren ongewijzigd."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy dyktujesz w aplikacji pocztowej albo w oknie tworzenia wiadomości w poczcie przeglądarkowej, Plainsay układa tekst jak e-mail: powitanie w osobnym wierszu, treść w akapitach, a zakończenie oddzielone od reszty. Nigdy nie dodaje powitania ani zakończenia, których nie wypowiedziano. Poza pocztą dyktowanie działa bez zmian."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando ditas numa app de e-mail ou numa janela de redação de webmail, o Plainsay formata o resultado como um e-mail: a saudação numa linha própria, parágrafos no corpo e a despedida separada. Nunca acrescenta uma saudação ou despedida que não tenhas dito. Em todos os outros sítios, o ditado não muda."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда вы диктуете в почтовом приложении или в окне создания письма веб-почты, Plainsay оформляет результат как письмо: приветствие на отдельной строке, текст разбит на абзацы, а подпись отделена от него. Plainsay никогда не добавляет приветствие или подпись, которых вы не произносили. Во всех остальных местах диктовка не меняется."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли ви диктуєте в поштовому застосунку або у вікні створення листа вебпошти, Plainsay оформлює результат як лист: привітання в окремому рядку, текст розбитий на абзаци, а підпис відокремлений від нього. Plainsay ніколи не додає привітання чи підпис, яких ви не промовляли. В усіх інших місцях диктування не змінюється."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在邮件 App 或网页邮箱的撰写窗口中听写时，Plainsay 会将结果排成邮件格式：称呼单独一行，正文分段，结尾敬语与正文分开。它绝不会添加你没有说出的称呼或结尾敬语。在其他地方，听写保持不变。"
+          }
+        }
+      }
+    },
+    "settings.emailMode.needsSubscription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das gehört zu Plainsay Cloud – ohne aktives Abo hat der Schalter keine Wirkung."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is part of Plainsay Cloud — without an active subscription the switch has no effect."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forma parte de Plainsay Cloud: sin una suscripción activa, el interruptor no tiene efecto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette fonction fait partie de Plainsay Cloud — sans abonnement actif, l'interrupteur n'a aucun effet."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fa parte di Plainsay Cloud: senza un abbonamento attivo l'interruttore non ha effetto."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これはPlainsay Cloudの機能です。有効なサブスクリプションがない場合、このスイッチは効果がありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay Cloud 기능입니다. 활성 구독이 없으면 이 스위치는 효과가 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dit hoort bij Plainsay Cloud — zonder actief abonnement heeft de schakelaar geen effect."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To funkcja Plainsay Cloud — bez aktywnej subskrypcji ten przełącznik nic nie zmienia."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Isto faz parte do Plainsay Cloud — sem uma subscrição ativa, o interruptor não tem efeito."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это часть Plainsay Cloud — без активной подписки переключатель ни на что не влияет."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це частина Plainsay Cloud — без активної підписки перемикач ні на що не впливає."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是 Plainsay Cloud 的功能——没有有效订阅时，此开关不起作用。"
+          }
+        }
+      }
+    },
     "settings.emailMode.toggle": {
       "localizations": {
         "de": {
@@ -23109,6 +24093,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "下载 %@，之后将完全在这台 Mac 上运行。"
+          }
+        }
+      }
+    },
+    "settings.modelDownloadNoteWithPreparation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Download, danach eine einmalige Vorbereitung für diesen Mac – %@. Anschließend läuft es vollständig auf diesem Mac."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ download, then a one-time preparation for this Mac — %@. After that it runs entirely on this Mac."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descarga de %@ y después una preparación única para este Mac: %@. A partir de ahí se ejecuta totalmente en este Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargement de %@, puis une préparation unique pour ce Mac — %@. Ensuite, fonctionne entièrement sur ce Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download di %@, poi una preparazione una tantum per questo Mac: %@. Dopodiché funziona interamente su questo Mac."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をダウンロードした後、このMac向けの1回限りの準備（%@）があります。その後は完全にこのMac上で動作します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 다운로드 후 이 Mac을 위한 1회 준비 과정(%@)이 있습니다. 그 이후에는 이 Mac에서 완전히 실행됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ downloaden, daarna een eenmalige voorbereiding voor deze Mac — %@. Daarna draait het volledig op deze Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobranie %@, potem jednorazowe przygotowanie dla tego Maca — %@. Później działa w całości na tym Macu."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transferência de %@ e depois uma preparação única para este Mac — %@. A partir daí funciona inteiramente neste Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка %@, затем однократная подготовка для этого Mac — %@. После этого всё работает полностью на этом Mac."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завантаження %@, потім одноразова підготовка для цього Mac — %@. Після цього все працює повністю на цьому Mac."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载 %@，然后为这台 Mac 进行一次性准备——%@。之后将完全在这台 Mac 上运行。"
           }
         }
       }
@@ -24745,6 +25811,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "根据你常说的词语推荐"
+          }
+        }
+      }
+    },
+    "spokenLanguages.makePrimary": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ als Hauptsprache festlegen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make %@ the main language"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar %@ como idioma principal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définir %@ comme langue principale"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imposta %@ come lingua principale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をメイン言語にする"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기본 언어로 설정: %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ als hoofdtaal instellen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ustaw jako główny język: %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Definir %@ como idioma principal"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сделать основным языком: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зробити основною мовою: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 %@ 设为主要语言"
           }
         }
       }
