@@ -42,6 +42,8 @@ public final class DictationCoordinator {
     public private(set) var lastDictation: LastDictation?
     /// What this work unit may do (R1): frozen at recording start, `.standard` again when it ends.
     public private(set) var sessionPolicy = DictationSessionPolicy.standard
+    /// Polishing key presence read once at recording start, for the HUD chip only.
+    @ObservationIgnored var chipKeyCheck: (provider: CleanupProvider, hasKey: Bool)?
     public let privateDictation: PrivateDictationState
     /// Source of the engine actually prepared (not the setting); nil while (re)loading or failed.
     public private(set) var preparedSource: TranscriptionSource?
@@ -841,6 +843,7 @@ public final class DictationCoordinator {
             profile: resolvedProfile(forCorrection: isCapturingCorrection)
         )
         if !sessionPolicy.keepsLastDictation { lastTranscript = nil; lastDictation = nil }
+        captureChipKeyCheck()
         phase = .recording
         beginEngineWork()
         elapsed = 0

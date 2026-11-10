@@ -34,6 +34,13 @@ struct ProfileEditor: View {
     private var inherit: String { Localization.appString("profiles.inherit", fallback: "Same as Default") }
     private var isEntitled: Bool { coordinator.cloud.account?.isActive == true }
     private var polishingOff: Bool { profile.wrappedValue.polishing == .off }
+    /// The Default's Polishing as the factory will build it (§2.2): off or a
+    /// missing key means email layout and translation cannot run at all.
+    private var readiness: PolishingReadiness { ProviderFactory.polishingReadiness(settings) }
+
+    private var missingKeyProvider: CleanupProvider? {
+        if case .missingKey(let provider) = readiness { provider } else { nil }
+    }
 
     var body: some View {
         Section {
@@ -168,25 +175,39 @@ struct ProfileEditor: View {
                 Text(Localization.appString("profiles.polishing.off", fallback: "Off for this app"))
                     .tag(DictationProfile.PolishingOverride.off)
             }
-            // Email and translation run inside Polishing, so they are greyed
-            // with it rather than offered as options that do nothing.
-            Picker(Localization.appString("profiles.email", fallback: "Email layout"), selection: profile.emailLayout) {
-                Text(inherit).tag(DictationProfile.LayoutOverride.inherit)
-                Text(Localization.appString("profiles.email.composers", fallback: "In mail composers"))
-                    .tag(DictationProfile.LayoutOverride.composers)
-                Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.LayoutOverride.off)
-            }
-            .disabled(polishingOff)
-            Picker(Localization.appString("profiles.translation", fallback: "Translation"), selection: profile.translation) {
-                Text(inherit).tag(DictationProfile.TranslationOverride.inherit)
-                Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.TranslationOverride.off)
-                ForEach(translationTargets, id: \.self) { code in
-                    Text(verbatim: "→ \(SupportedLanguage.named(code))").tag(DictationProfile.TranslationOverride.target(code))
+            // Email and translation run inside Polishing. A profile's own Off
+            // greys them; a Default whose Polishing cannot run (off, or no key
+            // for the provider) hides them and says why, rather than offering
+            // a translation that would silently come out untranslated.
+            if readiness.offersStyles {
+                Picker(Localization.appString("profiles.email", fallback: "Email layout"), selection: profile.emailLayout) {
+                    Text(inherit).tag(DictationProfile.LayoutOverride.inherit)
+                    Text(Localization.appString("profiles.email.composers", fallback: "In mail composers"))
+                        .tag(DictationProfile.LayoutOverride.composers)
+                    Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.LayoutOverride.off)
                 }
+                .disabled(polishingOff)
+                Picker(Localization.appString("profiles.translation", fallback: "Translation"), selection: profile.translation) {
+                    Text(inherit).tag(DictationProfile.TranslationOverride.inherit)
+                    Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.TranslationOverride.off)
+                    ForEach(translationTargets, id: \.self) { code in
+                        Text(verbatim: "→ \(SupportedLanguage.named(code))").tag(DictationProfile.TranslationOverride.target(code))
+                    }
+                }
+                .disabled(polishingOff)
             }
-            .disabled(polishingOff)
         } footer: {
-            if polishingOff || !settings.cleanupEnabled {
+            if let provider = missingKeyProvider, !polishingOff {
+                Text(
+                    Localization.appFormat(
+                        "profiles.needsKey",
+                        fallback: "Email layout and translation need Polishing, and %@ has no API key. Add one in Settings › Speech › Polishing.",
+                        provider.displayName
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            } else if polishingOff || readiness == .off {
                 Text(Localization.appString("profiles.needsPolishing", fallback: "Email layout and translation need Polishing turned on."))
                     .font(.caption)
                     .foregroundStyle(.secondary)

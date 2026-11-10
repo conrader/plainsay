@@ -160,7 +160,13 @@ public final class PlainsaySettings {
     // Keys are stored per provider, so switching back and forth does not make
     // you paste them in again.
     public func apiKey(for provider: CleanupProvider) -> String {
-        Keychain.get(account: provider.keychainAccount) ?? ""
+        cleanupKeyLookup(provider)
+    }
+
+    /// Where Polishing keys are read from: the Keychain. Tests swap it so the
+    /// real `ProviderFactory` availability rules run without the login Keychain.
+    @ObservationIgnored var cleanupKeyLookup: (CleanupProvider) -> String = {
+        Keychain.get(account: $0.keychainAccount) ?? ""
     }
 
     public func setAPIKey(_ key: String, for provider: CleanupProvider) {

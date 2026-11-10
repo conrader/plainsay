@@ -51,7 +51,7 @@ private final class ProfileTokenStore: CloudTokenStoring, @unchecked Sendable {
 }
 
 @MainActor
-private struct ProfileHarness {
+struct ProfileHarness {
     let settings: PlainsaySettings
     let recorder = FakeRecorder()
     let engine = FakeEngine()
@@ -67,13 +67,17 @@ private struct ProfileHarness {
 
     /// `signedIn` makes the Cloud client answer as an active subscriber (no
     /// network: `CountingCloudProtocol`). Otherwise it is unsigned and unreachable.
-    init(signedIn: Bool = false, profiles: [DictationProfile] = [], terms: [String] = ["Plainsay"]) {
+    /// `cleanupKey` stands in for the Keychain (empty = no key), and
+    /// `realCleaner` uses `ProviderFactory.makeCleaner` instead of the fake.
+    init(signedIn: Bool = false, profiles: [DictationProfile] = [], terms: [String] = ["Plainsay"],
+         cleanupKey: String = "", realCleaner: Bool = false) {
         let suite = UserDefaults(suiteName: "plainsay.profile.pipeline.\(UUID().uuidString)")!
         let settings = PlainsaySettings(defaults: suite)
         settings.dictionary = TermDictionary(terms: terms)
         settings.playFeedbackSounds = false
         settings.transcriptionSource = .onDevice
         settings.cleanupProvider = .gemini
+        settings.cleanupKeyLookup = { _ in cleanupKey }
         settings.appProfiles = profiles
         self.settings = settings
         history = TranscriptHistory(
@@ -98,7 +102,8 @@ private struct ProfileHarness {
             recorder: recorder,
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
-            makeCleaner: { _ in
+            makeCleaner: { settings in
+                if realCleaner { return ProviderFactory.makeCleaner(settings) }
                 builds.value += 1
                 return cleaner
             },

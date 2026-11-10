@@ -20665,6 +20665,22 @@
         }
       }
     },
+    "profiles.needsKey": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout and translation need Polishing, and %@ has no API key. Add one in Settings › Speech › Polishing."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila i tłumaczenie wymagają Korekty tekstu, a %@ nie ma klucza API. Dodaj go w Ustawieniach › Mowa › Korekta tekstu."
+          }
+        }
+      }
+    },
     "profiles.needsPolishing": {
       "localizations": {
         "en": {

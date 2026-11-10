@@ -112,19 +112,42 @@ extension DictationCoordinator {
     /// `<Name> · <route>[ · → PL | · no translation]` while a non-Default
     /// profile's dictation is in flight; nil for Default, for a private
     /// session (its own badge states the route) and once the work unit ends.
+    ///
+    /// States what will actually run, not what was requested: Polishing and
+    /// translation count only when `PolishingReadiness` says the cleaner is
+    /// built (the rule `ProviderFactory.makeCleaner` uses). The global switch
+    /// is read live, so turning Polishing off mid-recording — which the
+    /// pipeline honours — changes the chip too. A requested translation that
+    /// will not run says “no translation” rather than nothing.
     public var profileChip: String? {
         let policy = sessionPolicy
         guard policy.privacy == .standard, let name = policy.profileName else { return nil }
         let source = preparedSource ?? settings.transcriptionSource
+        let polishes = policy.allowsCleanup && effectivePolishingReadiness().runs
         var parts = name.isEmpty ? [] : [name]
-        parts.append(DictationProfileRoute.label(source: source, polishing: policy.allowsCleanup,
+        parts.append(DictationProfileRoute.label(source: source, polishing: polishes,
                                                 provider: settings.cleanupProvider))
-        if cloud.account?.isActive == true, let target = policy.translateTo {
+        if let target = policy.translateTo, polishes, cloud.account?.isActive == true {
             parts.append("→ " + target.uppercased())
-        } else if policy.translationSuppressedByProfile {
+        } else if policy.translateTo != nil || policy.translationSuppressedByProfile {
             parts.append(Localization.coreString("hud.profile.noTranslation", fallback: "no translation"))
         }
         return parts.joined(separator: " · ")
+    }
+
+    /// Reads the Polishing key once per profiled dictation: the HUD redraws
+    /// the chip 30 times a second while recording, too often for the Keychain.
+    func captureChipKeyCheck() {
+        guard sessionPolicy.profileName != nil else { chipKeyCheck = nil; return }
+        let provider = settings.cleanupProvider
+        chipKeyCheck = (provider, provider != .plainsay && !settings.apiKey(for: provider).isEmpty)
+    }
+
+    /// Live readiness, using the key presence captured at recording start
+    /// unless the provider changed since (then the Keychain is read).
+    func effectivePolishingReadiness() -> PolishingReadiness {
+        let cached = chipKeyCheck.flatMap { $0.provider == settings.cleanupProvider ? $0.hasKey : nil }
+        return ProviderFactory.polishingReadiness(settings, hasKey: cached)
     }
 }
 
