@@ -18,6 +18,8 @@ final class VoiceEditModel {
     private let settings: PlainsaySettings
     /// Asked right before every hosted request: the window may have opened before private was armed.
     private let editGate: HostedEditGate
+    /// The running Preview; settles busy even if private is armed and disarmed meanwhile.
+    private let previewRequest: HostedEditSlot
     private var work: Task<Void, Never>?
 
     init(selection: SelectedText?, settings: PlainsaySettings, message: String?, editGate: HostedEditGate = HostedEditGate()) {
@@ -26,6 +28,7 @@ final class VoiceEditModel {
         self.original = selection?.text ?? ""
         self.message = message
         self.editGate = editGate
+        self.previewRequest = HostedEditSlot(gate: editGate)
     }
 
     var providerName: String { settings.cleanupProvider.displayName }
@@ -34,6 +37,7 @@ final class VoiceEditModel {
 
     private func invalidate() {
         work?.cancel()
+        previewRequest.cancel()
         busy = false
         review = nil
         diff = nil
@@ -43,6 +47,7 @@ final class VoiceEditModel {
 
     func preview() {
         work?.cancel()
+        previewRequest.cancel()
         let request = VoiceEditRequest(original: original, instruction: instruction)
         do {
             try editGate.check()
@@ -53,25 +58,19 @@ final class VoiceEditModel {
             review = nil
             diff = nil
             detailsReviewed = false
-            let gate = editGate
-            work = gate.track(Task { [weak self] in
-                do {
-                    let replacement = try await gate.send(request, to: editor)
-                    try Task.checkCancellation()
-                    guard replacement.count <= 24_000 else { throw CleanupError.truncated }
-                    let review = VoiceEditReview(original: request.original, replacement: replacement)
-                    guard !review.replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                        throw CleanupError.emptyResponse
-                    }
-                    self?.review = review
-                    self?.diff = VoiceEditDiff(original: request.original, replacement: review.replacement)
-                    self?.busy = false
-                } catch {
-                    // Arming private mid-request cancels it; say why rather than going quiet.
-                    guard !Task.isCancelled || error is HostedEditRefused else { return }
-                    self?.message = error.localizedDescription
-                    self?.busy = false
+            // Arming private mid-request settles it with the refusal, not silence.
+            previewRequest.start(request, to: editor, onReply: { [weak self] replacement in
+                guard replacement.count <= 24_000 else { throw CleanupError.truncated }
+                let review = VoiceEditReview(original: request.original, replacement: replacement)
+                guard !review.replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    throw CleanupError.emptyResponse
                 }
+                self?.review = review
+                self?.diff = VoiceEditDiff(original: request.original, replacement: review.replacement)
+                self?.busy = false
+            }, onFailure: { [weak self] error in
+                self?.message = error.localizedDescription
+                self?.busy = false
             })
         } catch { message = error.localizedDescription }
     }
@@ -102,6 +101,7 @@ final class VoiceEditModel {
 
     func cancel() {
         work?.cancel()
+        previewRequest.cancel()
         busy = false
     }
 }

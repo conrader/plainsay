@@ -18,6 +18,9 @@ public final class HostedEditGate {
     /// `editingRefusal` here; a standalone gate (previews, tests) is open.
     var refusal: @MainActor () -> String? = { nil }
     private var running: [UUID: Task<Void, Never>] = [:]
+    /// Why arming cancelled a request, kept until that request settles, so a
+    /// disarm before the late reply cannot turn the cancellation into silence.
+    private var armCancelled: [UUID: String] = [:]
 
     public init() {}
 
@@ -44,21 +47,29 @@ public final class HostedEditGate {
 
     /// Remembers a running request so arming private dictation can cancel it.
     @discardableResult
-    public func track(_ task: Task<Void, Never>) -> Task<Void, Never> {
-        let id = UUID()
+    public func track(_ task: Task<Void, Never>, id: UUID = UUID()) -> Task<Void, Never> {
         running[id] = task
         Task { [weak self] in
             await task.value
             self?.running[id] = nil
+            self?.armCancelled[id] = nil
         }
         return task
     }
 
+    /// The refusal message when arming cancelled the request tracked as `id`,
+    /// even if private dictation has been turned off again since.
+    public func armCancellation(of id: UUID) -> String? { armCancelled[id] }
+
     /// Cancels every running request. Called when private dictation is armed.
     func cancelAll() {
-        let tasks = running.values
+        let tasks = running
         running.removeAll()
-        for task in tasks { task.cancel() }
+        let reason = refusal() ?? PrivateDictationState.blocksEditingMessage
+        for (id, task) in tasks {
+            armCancelled[id] = reason
+            task.cancel()
+        }
     }
 
     var runningCount: Int { running.count }
