@@ -27,6 +27,21 @@ struct DictationSessionPolicyTests {
         #expect(!policy.honorsKeepOnClipboard && policy.concealsPasteboard)
     }
 
+    @Test("3.3. Replacement rules are frozen into the policy, private included")
+    func replacementRulesSnapshot() {
+        var defaults = DictationDefaults(replacementRules: ReplacementRuleSet(rules: [
+            ReplacementRule(from: "jason", to: "JSON"),
+        ]))
+        let standard = DictationSessionPolicy.make(defaults: defaults)
+        let local = DictationSessionPolicy.make(privacy: .privateLocal, defaults: defaults)
+        defaults.replacementRules.rules.removeAll()
+        defaults.replacementRules.upsert(ReplacementRule(from: "gogle", to: "Google"))
+        #expect(standard.replacementRules.rules.map(\.to) == ["JSON"])
+        // Local and exact: privacy keeps the rules, as it keeps the dictionary.
+        #expect(local.replacementRules.rules.map(\.to) == ["JSON"])
+        #expect(DictationSessionPolicy.standard.replacementRules.rules.isEmpty)
+    }
+
     @Test("Refusal depends on the prepared engine, the configured source and readiness")
     func refusal() {
         func refusal(_ prepared: TranscriptionSource?, _ configured: TranscriptionSource = .onDevice,

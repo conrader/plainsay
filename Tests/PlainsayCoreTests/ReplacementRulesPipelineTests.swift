@@ -13,12 +13,13 @@ private struct RulesHarness {
     let recorder = FakeRecorder()
     let engine = FakeEngine()
     let cleaner = FakeCleaner()
+    let editingCleaner = EditingCleaner()
     let inserter = FakeInserter()
     let history: TranscriptHistory
     let pending: PendingAudioStore
     let coordinator: DictationCoordinator
 
-    init(rules: [ReplacementRule], polishing: Bool) {
+    init(rules: [ReplacementRule], polishing: Bool, editsDuringPolishing: Bool = false) {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("rules-pipeline-\(UUID())")
         history = TranscriptHistory(directory: root.appendingPathComponent("history"))
         pending = PendingAudioStore(directory: root.appendingPathComponent("audio"))
@@ -30,16 +31,19 @@ private struct RulesHarness {
         settings.replacementRules = ReplacementRuleSet(rules: rules)
         self.settings = settings
         let engine = self.engine
-        let cleaner = self.cleaner
+        let cleaner: any TextCleaning = editsDuringPolishing ? editingCleaner : self.cleaner
         coordinator = DictationCoordinator(settings: settings, history: history, pendingAudio: pending,
             recorder: recorder, inserter: inserter, makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in cleaner }, microphoneAuthorized: { true },
             capturePasteTarget: { FakePasteTarget() }, usesInjectedEngine: true)
     }
 
-    func dictate() async throws {
+    /// `whileRecording` runs between key down and key up, with the
+    /// recording already started.
+    func dictate(whileRecording: () -> Void = {}) async throws {
         let before = inserter.inserted.count
         coordinator.handleHotkeyEdge(.down(at: 0))
+        whileRecording()
         coordinator.handleHotkeyEdge(.up(at: 1))
         try await waitUntil { inserter.inserted.count > before && !coordinator.phase.isBusy }
     }
@@ -53,7 +57,33 @@ private struct RulesHarness {
     }
 }
 
+/// Polishing that returns the transcript unchanged, after running `edit` on
+/// the main actor: a Settings change made while the dictation awaits Polishing.
+final class EditingCleaner: TextCleaning, @unchecked Sendable {
+    var edit: (@MainActor @Sendable () -> Void)?
+
+    func clean(_ transcript: String, dictionary: TermDictionary, style: CleanupStyle) async throws -> String {
+        if let edit { await edit() }
+        return transcript
+    }
+}
+
 private let jason = ReplacementRule(from: "jason", to: "JSON")
+private let kowalsky = ReplacementRule(from: "kowalsky", to: "Kowalski")
+private let acme = ReplacementRule(from: "acme", to: "ACME")
+
+/// Every kind of mid-session edit at once: disable, delete, change, add.
+@MainActor
+private func editEveryWay(_ settings: PlainsaySettings) {
+    settings.replacementRules.setEnabled(false, id: jason.id)
+    settings.replacementRules.remove(id: kowalsky.id)
+    settings.replacementRules.upsert(ReplacementRule(from: "acme", to: "Acme Corp"))
+    settings.replacementRules.upsert(ReplacementRule(from: "gogle", to: "Google"))
+}
+
+private let sessionTranscript = "jason met kowalsky at acme on gogle"
+private let frozenOutput = "JSON met Kowalski at ACME on gogle"
+private let editedOutput = "jason met kowalsky at Acme Corp on Google"
 
 @Suite("Replacement rules in the pipeline", .serialized)
 @MainActor
@@ -102,6 +132,49 @@ struct ReplacementRulesPipelineTests {
 
         h.settings.replacementRules.isEnabled = true
         h.settings.replacementRules.setEnabled(false, id: jason.id)
+        try await h.dictate()
+        #expect(h.inserter.inserted.last == "open the jason file")
+    }
+
+    @Test("3.3. Rules edited while recording apply from the next dictation, not this one")
+    func frozenWhileRecording() async throws {
+        let h = RulesHarness(rules: [jason, kowalsky, acme], polishing: false)
+        h.engine.transcript = sessionTranscript
+        await h.coordinator.reloadModel()
+        try await h.dictate {
+            #expect(h.coordinator.phase == .recording)
+            editEveryWay(h.settings)
+        }
+        #expect(h.inserter.inserted == [frozenOutput])
+        #expect(h.history.records.first?.text == frozenOutput)
+
+        try await h.dictate()
+        #expect(h.inserter.inserted.last == editedOutput)
+    }
+
+    @Test("3.3. Rules edited while awaiting Polishing apply from the next dictation, not this one")
+    func frozenWhilePolishing() async throws {
+        let h = RulesHarness(rules: [jason, kowalsky, acme], polishing: true, editsDuringPolishing: true)
+        let settings = h.settings
+        h.editingCleaner.edit = { editEveryWay(settings) }
+        h.engine.transcript = sessionTranscript
+        await h.coordinator.reloadModel()
+        try await h.dictate()
+        #expect(h.inserter.inserted == [frozenOutput])
+        #expect(settings.replacementRules.rule(forFrom: "gogle") != nil)
+
+        h.editingCleaner.edit = nil
+        try await h.dictate()
+        #expect(h.inserter.inserted.last == editedOutput)
+    }
+
+    @Test("3.3. Turning the master switch off mid-recording does not affect that dictation")
+    func masterSwitchFrozen() async throws {
+        let h = RulesHarness(rules: [jason], polishing: false)
+        h.engine.transcript = "open the jason file"
+        await h.coordinator.reloadModel()
+        try await h.dictate { h.settings.replacementRules.isEnabled = false }
+        #expect(h.inserter.inserted == ["open the JSON file"])
         try await h.dictate()
         #expect(h.inserter.inserted.last == "open the jason file")
     }

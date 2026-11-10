@@ -293,7 +293,7 @@ public final class DictationCoordinator {
             // long gone — so there is nothing to detect email shape from.
             let polished = (try? await makeCleaner(settings)
                 .clean(raw, dictionary: settings.dictionary, style: .plain)) ?? raw
-            let cleaned = applyReplacementRules(to: polished)
+            let cleaned = applyReplacementRules(settings.replacementRules, to: polished)
             history.add(TranscriptRecord(
                 text: cleaned, rawText: raw, outcome: .recovered,
                 durationSeconds: duration, targetApp: nil
@@ -1091,8 +1091,9 @@ public final class DictationCoordinator {
         }
 
         // Replacement rules: local and exact, after Polishing so the provider
-        // saw the text before them, on the stage the user corrects.
-        finalText = applyReplacementRules(to: finalText)
+        // saw the text before them, on the stage the user corrects. The set
+        // frozen at recording start, not the live one.
+        finalText = applyReplacementRules(policy.replacementRules, to: finalText)
 
         // Polishing is a remote LLM's output, not a fixed local transform —
         // unlike the ASR engines' own normalizeTranscript pass, nothing

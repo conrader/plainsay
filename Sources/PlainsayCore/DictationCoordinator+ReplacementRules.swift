@@ -6,10 +6,12 @@ import Foundation
 /// `runPipeline`, and after `clean` in crash recovery. Correction-command
 /// capture, voice-edit rewrites and live preview never come through here.
 extension DictationCoordinator {
-    /// Read live from settings. Snapshotting rules into the session policy at
-    /// recording start is app-profiles follow-up work, not part of v1.
-    func applyReplacementRules(to text: String) -> String {
-        let ruled = settings.replacementRules.apply(to: text)
+    /// A dictation passes `sessionPolicy.replacementRules`, the set frozen at
+    /// recording start (SPEC.fixed.md §3.3), so a Settings edit made while
+    /// recording or Polishing applies from the next dictation. Crash recovery
+    /// has no session and passes the live settings.
+    func applyReplacementRules(_ rules: ReplacementRuleSet, to text: String) -> String {
+        let ruled = rules.apply(to: text)
         if ruled.count > 0 {
             // A count only: never the phrases or the text.
             Log.pipeline.info("applied \(ruled.count, privacy: .public) replacement rule(s)")
