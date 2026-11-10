@@ -53,8 +53,8 @@ public enum ReplacementRuleValidator {
         let caseOnly = from.lowercased() == to.lowercased()
         if !caseOnly, contains(to, phrase: from) { return .reject(.containsFrom) }
         let fromWords = words(from), toWords = words(to)
-        if fromWords.count > 4 || from.count > 60 { return .reject(.fromTooLong) }
-        if toWords.count > 8 || to.count > 80 { return .reject(.toTooLong) }
+        if fromWords.count > maxFromWords || from.count > maxFromLength { return .reject(.fromTooLong) }
+        if toWords.count > maxToWords || to.count > maxToLength { return .reject(.toTooLong) }
         let fromSignificant = from.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.count
         if fromWords.count == 1, fromSignificant < 3 { return .reject(.tooShort) }
         let fromKey = TermDictionary.foldedKey(from)
@@ -75,6 +75,22 @@ public enum ReplacementRuleValidator {
         if !fromTokens.isEmpty, fromTokens.allSatisfy(ReplacementWordLists.functionWords.contains) { return .suppressOffer(.commonWord) }
         if fromWords.count == 1, fromSignificant <= 4 { return .offerWithWarning(.shortWord) }
         return .offer
+    }
+
+    // MARK: Bounds
+
+    static let maxFromWords = 4, maxFromLength = 60
+    static let maxToWords = 8, maxToLength = 80
+
+    /// The structural part of `assess` only: both phrases non-blank, free of
+    /// control characters and within the word and character limits. Loading
+    /// saved rules enforces this; the offer-level checks stay with `assess`.
+    static func withinBounds(from rawFrom: String, to rawTo: String) -> Bool {
+        let from = normalized(rawFrom), to = normalized(rawTo)
+        guard !from.isEmpty, !to.isEmpty,
+              !rawFrom.contains(where: isControl), !rawTo.contains(where: isControl) else { return false }
+        return words(from).count <= maxFromWords && from.count <= maxFromLength
+            && words(to).count <= maxToWords && to.count <= maxToLength
     }
 
     // MARK: Helpers

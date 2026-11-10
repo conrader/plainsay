@@ -177,4 +177,58 @@ struct ReplacementRuleDecodingTests {
         #expect(wrongRules.rules.isEmpty)
         #expect(try decode(#"{"isEnabled": "yes", "rules": []}"#).isEnabled)
     }
+
+    private func reload(_ rules: [ReplacementRule]) throws -> [ReplacementRule] {
+        let data = try JSONEncoder().encode(ReplacementRuleSet(rules: rules))
+        return try JSONDecoder().decode(ReplacementRuleSet.self, from: data).rules
+    }
+
+    @Test("Loading keeps at most the first 200 rules")
+    func oversizedSet() throws {
+        let stored = (0..<(ReplacementRuleSet.limit + 50)).map { ReplacementRule(from: "word\($0)x", to: "Word\($0)X") }
+        let loaded = try reload(stored)
+        #expect(loaded.count == ReplacementRuleSet.limit)
+        #expect(loaded.map(\.id) == stored.prefix(ReplacementRuleSet.limit).map(\.id))
+        // A rule dropped for its bounds does not count towards the limit.
+        let withBad = [ReplacementRule(from: String(repeating: "a", count: 61), to: "A")] + stored
+        #expect(try reload(withBad).map(\.id) == stored.prefix(ReplacementRuleSet.limit).map(\.id))
+    }
+
+    @Test("Loading drops phrases past the validator's limits and control characters")
+    func oversizedPhrases() throws {
+        let fromAtLimit = ReplacementRule(from: "one two three four", to: "1234")
+        let fromChars = ReplacementRule(from: String(repeating: "k", count: 60), to: "K")
+        let toAtLimit = ReplacementRule(from: "acme", to: "a b c d e f g h")
+        let toChars = ReplacementRule(from: "acmee", to: String(repeating: "x", count: 80))
+        let loaded = try reload([
+            fromAtLimit, fromChars, toAtLimit, toChars,
+            ReplacementRule(from: "one two three four five", to: "12345"),
+            ReplacementRule(from: String(repeating: "k", count: 61), to: "K"),
+            ReplacementRule(from: "acmeee", to: "a b c d e f g h i"),
+            ReplacementRule(from: "acmeeee", to: String(repeating: "x", count: 81)),
+            ReplacementRule(from: "ja\u{07}son", to: "JSON"),
+            ReplacementRule(from: "pyton", to: "Py\u{0}thon"),
+            ReplacementRule(from: "tab", to: "T\tB"),
+        ])
+        #expect(loaded.map(\.id) == [fromAtLimit, fromChars, toAtLimit, toChars].map(\.id))
+    }
+
+    @Test("Loading gives a reused id a fresh one and keeps the first rule for a phrase")
+    func duplicateIDs() throws {
+        let id = UUID()
+        let first = ReplacementRule(id: id, from: "jason", to: "JSON")
+        let sameID = ReplacementRule(id: id, from: "Kowalsky", to: "Kowalski")
+        let samePhrase = ReplacementRule(from: "Jason", to: "Jayson")
+        let loaded = try reload([first, sameID, samePhrase, ReplacementRule(id: id, from: "pyton", to: "Python")])
+        #expect(loaded.map(\.from) == ["jason", "Kowalsky", "pyton"])
+        #expect(loaded[0].id == first.id && loaded[0].to == "JSON")
+        #expect(Set(loaded.map(\.id)).count == 3)
+        #expect(loaded[1].to == "Kowalski" && loaded[1].id != id)
+
+        var set = ReplacementRuleSet(rules: loaded)
+        set.setEnabled(false, id: id)
+        #expect(set.rules.map(\.isEnabled) == [false, true, true])
+        set.remove(id: id)
+        #expect(set.rules.map(\.from) == ["Kowalsky", "pyton"])
+    }
 }

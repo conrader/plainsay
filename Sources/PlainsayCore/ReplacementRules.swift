@@ -61,12 +61,33 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
 
     /// Lossy on purpose. `PlainsaySettings.decode` falls back to an empty value
     /// on any error, and the next save would then erase every rule the user
-    /// curated. Here one malformed rule is dropped and the rest survive.
+    /// curated. Here one malformed rule is dropped and the rest survive, and
+    /// the save-time invariants are enforced (`loadable`).
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         isEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
         let lossy = (try? c.decodeIfPresent([LossyRule].self, forKey: .rules)) ?? []
-        rules = lossy.compactMap(\.rule)
+        rules = Self.loadable(lossy.compactMap(\.rule))
+    }
+
+    /// Persisted data is not trusted to have gone through `save`. In stored
+    /// order: a rule outside the validator's length limits or with a control
+    /// character is dropped; a second rule for the same `from` phrase is
+    /// dropped (the first wins, as in `rule(forFrom:)`); a rule reusing an
+    /// earlier rule's id gets a fresh one, so the Settings list and
+    /// `remove`/`setEnabled` address exactly one rule; rules past `limit`
+    /// are dropped.
+    static func loadable(_ decoded: [ReplacementRule]) -> [ReplacementRule] {
+        var kept: [ReplacementRule] = []
+        var ids = Set<UUID>(), phrases = Set<String>()
+        for var rule in decoded {
+            guard kept.count < limit else { break }
+            guard ReplacementRuleValidator.withinBounds(from: rule.from, to: rule.to),
+                  phrases.insert(key(rule.from)).inserted else { continue }
+            while !ids.insert(rule.id).inserted { rule.id = UUID() }
+            kept.append(rule)
+        }
+        return kept
     }
 
     private struct LossyRule: Decodable {
