@@ -190,3 +190,16 @@ private struct HistoryRow: View {
         .padding(.vertical, 3)
     }
 }
+
+extension HistoryView {
+    /// The Settings tab's wiring, kept here so SettingsView.swift does not grow.
+    init(coordinator: DictationCoordinator, settings: PlainsaySettings) {
+        self.init(
+            history: coordinator.history,
+            settings: settings,
+            onClearAll: { coordinator.clearAllStoredDictations() },
+            onPolicyChange: { coordinator.applyHistoryPolicy() },
+            coordinator: coordinator
+        )
+    }
+}

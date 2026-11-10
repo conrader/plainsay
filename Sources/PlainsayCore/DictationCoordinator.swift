@@ -519,44 +519,6 @@ public final class DictationCoordinator {
         await loadModel(generation: generation)
     }
 
-    /// Confirms the hosted plan is actually active and puts the session token
-    /// where `CloudTranscriptionEngine` and `CloudCleanupService` can find it.
-    ///
-    /// Called whenever something actually needs Cloud: Cloud transcription,
-    /// Plainsay picked as the Polishing provider, or either of the two
-    /// features `resolvedDictationStyle()` gates on the entitlement alone
-    /// (email layout, translation) rather than on which engine runs — so
-    /// someone using on-device speech with a BYOK editing provider never
-    /// causes a network call to the subscription service unless they also
-    /// turned one of those on. Without this, `cloud.account` stays nil for
-    /// that combination after a fresh launch, so an active subscriber's
-    /// "Format dictation as an email" toggle silently produced plain text —
-    /// see PROJECT_REVIEW.md P1 / T-238.
-    private func refreshCloudCredentialsIfNeeded() async {
-        let needsCloud = settings.transcriptionSource == .cloud
-            || settings.cleanupProvider == .plainsay
-            || settings.emailModeEnabled
-            || settings.translationTargetLanguage != nil
-        guard needsCloud, cloud.isSignedIn else {
-            ProviderFactory.cloudSessionToken = nil
-            return
-        }
-
-        do {
-            let account = try await cloud.refreshAccount()
-            guard account.isActive else {
-                ProviderFactory.cloudSessionToken = nil
-                Log.model.info("Plainsay Cloud subscription is \(account.status, privacy: .public)")
-                return
-            }
-            ProviderFactory.cloudSessionToken = cloud.sessionToken
-            Log.model.info("Plainsay Cloud session token loaded into memory")
-        } catch {
-            ProviderFactory.cloudSessionToken = nil
-            Log.model.error("Plainsay Cloud unavailable: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
     private func loadModel(generation: UInt64) async {
         let onState: @Sendable (SpeechModelLoadState) -> Void = { [weak self] state in
             Task { @MainActor in
@@ -642,33 +604,6 @@ public final class DictationCoordinator {
             return
         case .idle, .downloading, .loading:
             applyModelState(state)
-        }
-    }
-
-    /// What to say when someone presses the hotkey before the model is up.
-    private var modelStatusMessage: String {
-        switch modelState {
-        case .idle:
-            Localization.coreString("coordinator.modelStatus.starting", fallback: "Starting the speech model…")
-        case .downloading:
-            Localization.coreFormat(
-                "coordinator.modelStatus.downloading",
-                fallback: "Downloading the speech model (%@). This happens once.",
-                settings.model.approximateSize
-            )
-        case .loading:
-            // The Neural Engine compile runs once per model and takes minutes.
-            // Quitting restarts it from scratch, so say not to.
-            Localization.coreString(
-                "coordinator.modelStatus.preparing",
-                fallback: "Preparing the speech model for the Neural Engine. This takes a few minutes the first time — leave Plainsay running."
-            )
-        case .ready:
-            Localization.coreString("coordinator.modelStatus.ready", fallback: "Ready")
-        case .failed(let message):
-            Localization.coreFormat(
-                "coordinator.modelStatus.failed", fallback: "Speech model failed to load: %@", message
-            )
         }
     }
 
