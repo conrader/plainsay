@@ -16,11 +16,11 @@ struct LocalizationPluralTests {
     private static let key = "profiles.vocabulary.overflow"
 
     /// `language → (plural category → template)` for `key`.
-    private func variations() throws -> [String: [String: String]] {
+    private func variations(_ key: String = key) throws -> [String: [String: String]] {
         let url = Self.repoRoot.appendingPathComponent("Sources/PlainsayApp/Resources/Localizable.xcstrings")
         let root = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
         let strings = try #require(root["strings"] as? [String: Any])
-        let entry = try #require(strings[Self.key] as? [String: Any])
+        let entry = try #require(strings[key] as? [String: Any])
         let localizations = try #require(entry["localizations"] as? [String: Any])
         var result: [String: [String: String]] = [:]
         for (language, value) in localizations {
@@ -35,10 +35,13 @@ struct LocalizationPluralTests {
         return result
     }
 
-    private func fixtureBundle() throws -> Bundle {
+    /// Ships `key`'s catalog variations for `only` (every catalog language
+    /// when nil), so a test can leave a language out and exercise fallback.
+    private func fixtureBundle(_ key: String = key, only: Set<String>? = nil) throws -> Bundle {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("plainsay-plural-\(UUID().uuidString)")
-        for (language, forms) in try variations() {
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for (language, forms) in try variations(key) where only?.contains(language) ?? true {
             let lproj = dir.appendingPathComponent("\(language).lproj")
             try FileManager.default.createDirectory(at: lproj, withIntermediateDirectories: true)
             var rule: [String: Any] = [
@@ -46,7 +49,7 @@ struct LocalizationPluralTests {
                 "NSStringFormatValueTypeKey": "d",
             ]
             for (category, template) in forms { rule[category] = template }
-            let dict: [String: Any] = [Self.key: ["NSStringLocalizedFormatKey": "%#@count@", "count": rule]]
+            let dict: [String: Any] = [key: ["NSStringLocalizedFormatKey": "%#@count@", "count": rule]]
             let data = try PropertyListSerialization.data(fromPropertyList: dict, format: .xml, options: 0)
             try data.write(to: lproj.appendingPathComponent("Localizable.stringsdict"))
             try Data("\"unused\" = \"unused\";\n".utf8).write(to: lproj.appendingPathComponent("Localizable.strings"))
@@ -54,8 +57,8 @@ struct LocalizationPluralTests {
         return try #require(Bundle(path: dir.path))
     }
 
-    private func render(_ count: Int, _ language: String, _ bundle: Bundle) -> String {
-        Localization.plural(Self.key, table: "Localizable", fallback: "FALLBACK", count: count, language: language, root: bundle)
+    private func render(_ count: Int, _ language: String, _ bundle: Bundle, key: String = key) -> String {
+        Localization.plural(key, table: "Localizable", fallback: "FALLBACK", count: count, language: language, root: bundle)
     }
 
     @Test("Polish picks one / few / many for 0, 1, 2, 5, 22")
@@ -83,6 +86,36 @@ struct LocalizationPluralTests {
         for count in [0, 2, 5, 22] {
             #expect(render(count, "en", bundle) == "\(count) terms may not fit in the speech hint; they still get local corrections.")
         }
+    }
+
+    @Test("Polish also covers 12, 25 and 112")
+    func polishTeens() throws {
+        let bundle = try fixtureBundle()
+        for (count, prefix) in [12: "12 terminów może", 25: "25 terminów może", 112: "112 terminów może"] {
+            #expect(render(count, "pl", bundle).hasPrefix(prefix), "\(count)")
+        }
+    }
+
+    @Test("An English template falling in for ru/uk keeps English plural rules")
+    func englishFallbackUsesEnglishRules() throws {
+        // Overflow ships only en/pl; under Russian rules 21, 31 and 101 are `one`.
+        let bundle = try fixtureBundle(only: ["en"])
+        for language in ["ru", "uk", "pl"] {
+            #expect(render(1, language, bundle) == "1 term may not fit in the speech hint; it still gets local corrections.")
+            for count in [2, 11, 21, 31, 101] {
+                #expect(
+                    render(count, language, bundle)
+                        == "\(count) terms may not fit in the speech hint; they still get local corrections.",
+                    "\(language) \(count)"
+                )
+            }
+        }
+    }
+
+    @Test("No table at all returns the caller's filled-in fallback untouched")
+    func missingEverywhere() throws {
+        let bundle = try fixtureBundle(only: [])
+        #expect(render(21, "ru", bundle) == "FALLBACK")
     }
 
     @Test("Polish catalog has every integer plural category")

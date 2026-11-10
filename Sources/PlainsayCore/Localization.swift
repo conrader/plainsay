@@ -59,15 +59,24 @@ public enum Localization {
     /// folders passed in, so tests can point it at a fixture bundle without
     /// touching the shared override.
     static func string(_ key: String, table: String, fallback: String, language: String, root: Bundle) -> String {
+        lookup(key, table: table, language: language, root: root)?.value ?? fallback
+    }
+
+    /// The table value for `key` together with the language whose table
+    /// supplied it — `language` itself, or English when that language does
+    /// not ship the key. `nil` when neither does.
+    private static func lookup(
+        _ key: String, table: String, language: String, root: Bundle
+    ) -> (value: String, language: String)? {
         for candidate in [language, "en"] {
             guard let path = root.path(forResource: candidate, ofType: "lproj"),
                   let bundle = Bundle(path: path)
             else { continue }
             let sentinel = "\u{0}"
             let value = bundle.localizedString(forKey: key, value: sentinel, table: table)
-            if value != sentinel { return value }
+            if value != sentinel { return (value, candidate) }
         }
-        return fallback
+        return nil
     }
 
     /// `PlainsayApp`'s own strings, table "Localizable" — the same default
@@ -97,9 +106,12 @@ public enum Localization {
     /// variations (compiled by `xcstringstool` into a `.stringsdict`), and
     /// formatting it with an explicit locale is what makes Foundation pick
     /// the right variant ("1 termin", "2 terminy", "5 terminów"). The locale
-    /// is the in-app language, not the system one, so an override picks that
-    /// language's plural rules. `fallback` is used as-is when no table ships
-    /// the key, so callers pass it already filled in.
+    /// is the language whose table supplied the template — the in-app
+    /// language, or English when that language lacks the key — so an
+    /// override picks its own plural rules, and an English template is never
+    /// inflected by another language's rules (Russian `one` covers 21).
+    /// `fallback` is returned as-is when no table ships the key, so callers
+    /// pass it already filled in.
     public static func appPlural(_ key: String, fallback: String, count: Int) -> String {
         plural(key, table: "Localizable", fallback: fallback, count: count, language: resolvedCode, root: .main)
     }
@@ -107,8 +119,8 @@ public enum Localization {
     static func plural(
         _ key: String, table: String, fallback: String, count: Int, language: String, root: Bundle
     ) -> String {
-        let template = string(key, table: table, fallback: fallback, language: language, root: root)
-        return String(format: template, locale: Locale(identifier: language), count)
+        guard let found = lookup(key, table: table, language: language, root: root) else { return fallback }
+        return String(format: found.value, locale: Locale(identifier: found.language), count)
     }
 
     public static func coreFormat(_ key: String, fallback: String, _ args: CVarArg...) -> String {
