@@ -227,9 +227,14 @@ public final class DictationCoordinator {
     }
 
     /// Pushes the stored history preferences into `history`. Call after
-    /// changing either of them in Settings.
-    public func applyHistoryPolicy() {
-        history.applyPolicy(isEnabled: settings.historyEnabled, maxAge: settings.historyMaxAge)
+    /// changing either of them in Settings. Returns false if something that
+    /// should now be deleted is still on disk; `history.deletionFailed` keeps
+    /// saying so until `history.retryDeletion()` or a later change succeeds.
+    @discardableResult
+    public func applyHistoryPolicy() -> Bool {
+        let applied = history.applyPolicy(isEnabled: settings.historyEnabled, maxAge: settings.historyMaxAge)
+        if !applied { Log.history.error("history settings applied, but some stored dictations could not be deleted") }
+        return applied
     }
 
     // MARK: - Lifecycle
@@ -352,11 +357,16 @@ public final class DictationCoordinator {
     /// Clears the transcript history *and* any raw staged audio. "Clear
     /// history" in the UI should erase both — the recovery `.f32` files hold the
     /// same dictations as audio, and leaving them behind would defeat the point.
-    public func clearAllStoredDictations() {
+    ///
+    /// Returns false if some transcript could not be deleted; the History tab
+    /// shows that from `history.deletionFailed`, with a retry.
+    @discardableResult
+    public func clearAllStoredDictations() -> Bool {
         lastDictation = nil
         lastTranscript = nil
-        history.clear()
+        let cleared = history.clear()
         pendingAudio.purgeAll()
+        return cleared
     }
 
     /// What cleanup should do with this dictation, beyond cleaning it.

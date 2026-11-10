@@ -67,12 +67,23 @@ public final class TranscriptHistory {
     /// stay in memory and the next change retries.
     public private(set) var saveFailed = false
 
+    /// The part of `saveFailed` that matters most: the latest records never
+    /// reached disk at all (refused or unwritten, not merely unprotected), so
+    /// for now they exist only in memory and are gone if the app quits.
+    public private(set) var unsavedInMemory = false
+
     /// Something that should have been deleted — by Clear, the off switch, or
-    /// the age window — may still be on disk. Every later deletion retries:
-    /// Clear, turning history off again, a relaunch, or any retention pass.
-    public var deletionFailed: Bool { purgeFailed || retentionFailed }
+    /// the age window — may still be on disk. `retryDeletion()` retries it, as
+    /// do Clear, turning history off again, and every retention pass.
+    public var deletionFailed: Bool { purgeFailed || retentionFailed || expiredOnDisk }
+    /// Clear or the off switch did not remove everything.
     private var purgeFailed = false
+    /// The last pass over the backups and stages left something behind.
     private var retentionFailed = false
+    /// The age window dropped records the live file still holds: set when it
+    /// does, cleared once the file has been replaced. Still set after a save
+    /// means the save failed, and the next save or retention pass retries.
+    private var expiredOnDisk = false
 
     private let now: () -> Date
     private let backUp: (URL, Data, Date) -> URL?
@@ -157,7 +168,8 @@ public final class TranscriptHistory {
     @discardableResult
     public func applyPolicy(isEnabled: Bool, maxAge: TimeInterval?) -> Bool {
         self.maxAge = maxAge
-        return setEnabled(isEnabled)
+        let toggled = setEnabled(isEnabled)
+        return toggled && !deletionFailed
     }
 
     /// Turns recording on, or off *and deletes what is already stored*.
@@ -178,21 +190,26 @@ public final class TranscriptHistory {
     ///
     /// The window covers the `.damaged-*` backups too: they hold the same
     /// transcripts, and "Delete after" must not have an exception nobody sees.
+    /// Abandoned staging files are swept on every pass, window or not.
     @discardableResult
     private func pruneExpired() -> Bool {
-        guard let maxAge else { return false }
-        let cutoff = now().addingTimeInterval(-maxAge)
+        let cutoff = maxAge.map { now().addingTimeInterval(-$0) }
         let backups = HistoryFile.applyRetention(toBackupsOf: fileURL, cutoff: cutoff)
         retentionFailed = backups.failed
         if backups.failed {
-            Log.history.error("expired history backups could not all be deleted")
+            Log.history.error("expired or stray history copies could not all be deleted")
         }
-        let surviving = records.filter { $0.date >= cutoff }
-        let recordsChanged = surviving.count != records.count
-        records = surviving
-        // A damaged live file still holds what its backup just lost. Rewrite
-        // it from what survived; the backup keeps the unexpired rest.
-        return recordsChanged || (backups.changed && diskState == .backedUp)
+        if let cutoff {
+            let surviving = records.filter { $0.date >= cutoff }
+            // A damaged live file still holds what its backup just lost.
+            // Rewrite it from what survived; the backup keeps the unexpired
+            // rest, including whatever could not be dated.
+            if surviving.count != records.count || (backups.changed && diskState == .backedUp) {
+                expiredOnDisk = true
+            }
+            records = surviving
+        }
+        return expiredOnDisk
     }
 
     /// Explicit user intent — clear, or turn history off — so this removes
@@ -202,8 +219,16 @@ public final class TranscriptHistory {
     @discardableResult
     private func purgeFromDisk() -> Bool {
         let removed = HistoryFile.removeWithBackups(fileURL)
-        if HistoryFile.isAbsent(fileURL.path) { diskState = .owned }
+        // Whatever is left was deleted by the user: it is not protected, and
+        // must never be read back and merged. The next save replaces it.
+        diskState = .owned
         purgeFailed = !removed
+        // A purge supersedes every narrower failure: it covers all of it, and
+        // there is nothing left in memory waiting to be saved.
+        retentionFailed = false
+        expiredOnDisk = false
+        saveFailed = false
+        unsavedInMemory = false
         if !removed {
             Log.history.error("history could not be fully deleted; it will be retried")
         }
@@ -282,6 +307,27 @@ public final class TranscriptHistory {
         return purgeFromDisk()
     }
 
+    /// Retries whatever deletion `deletionFailed` reports. Returns whether
+    /// nothing that should be gone is left.
+    ///
+    /// With history off, or nothing recorded since a failed Clear, that is
+    /// the whole purge again. Otherwise the live file now holds only what was
+    /// recorded since, so the copies are removed and the live file rewritten —
+    /// never deleting what the user has not.
+    @discardableResult
+    public func retryDeletion() -> Bool {
+        if !isEnabled || (purgeFailed && records.isEmpty) {
+            return purgeFromDisk()
+        }
+        if purgeFailed {
+            let copiesGone = HistoryFile.removeCopies(of: fileURL)
+            save()
+            purgeFailed = !copiesGone || saveFailed
+        }
+        if pruneExpired() { save() }
+        return !deletionFailed
+    }
+
     /// Puts a past dictation back on the clipboard so it can be pasted by hand.
     /// Copying is also a successful recovery action, so it acknowledges that
     /// record's persistent not-pasted reminder without changing its badge.
@@ -358,12 +404,14 @@ public final class TranscriptHistory {
     }
 
     private func save() {
-        // Never let an empty history stand in for a file this run could not
-        // read — that is exactly the wipe this guards against. (`clear()` and
-        // the off-switch delete on purpose, through `purgeFromDisk`.)
-        if records.isEmpty, diskState == .protected { return }
+        // Never let any history — an empty one least of all — stand in for a
+        // file this run could not read: that is exactly the wipe this guards
+        // against. `mayReplaceFile` only allows it once the file has been read
+        // and merged, or copied. (`clear()` and the off switch delete on
+        // purpose, through `purgeFromDisk`.)
         guard mayReplaceFile() else {
             saveFailed = true
+            unsavedInMemory = true
             Log.history.error("history not saved: the existing file could not be read or backed up")
             return
         }
@@ -375,21 +423,24 @@ public final class TranscriptHistory {
             data = try encoder.encode(records)
         } catch {
             saveFailed = true
+            unsavedInMemory = true
             Log.history.error("history not saved: encoding failed: \(error.localizedDescription, privacy: .public)")
             return
         }
-        // Atomic: a crash mid-write must not corrupt the whole history, and a
-        // failed write leaves the previous file as it was.
-        do {
-            try data.write(to: fileURL, options: .atomic)
-        } catch {
+        // All or nothing: a crash mid-write must not corrupt the whole
+        // history, a failed write leaves the previous file as it was, and the
+        // staging copy is one Clear and retention can find.
+        guard HistoryFile.replace(fileURL, with: data) else {
             saveFailed = true
-            Log.history.error("history save failed: \(error.localizedDescription, privacy: .public)")
+            unsavedInMemory = true
+            Log.history.error("history save failed: the file could not be written")
             return
         }
         diskState = .owned
-        // After the write, never before — the atomic rename above replaces
-        // the file, and with it any mode already set on the old one.
+        expiredOnDisk = false
+        unsavedInMemory = false
+        // Checked on the file now in place: the rename replaced the old one,
+        // and with it any mode or exclusion already set on it.
         saveFailed = !PrivateFiles.protectWrittenFile(fileURL)
         if saveFailed {
             Log.history.error("history saved, but could not be made owner-only and excluded from backups")

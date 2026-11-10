@@ -65,9 +65,10 @@ enum PrivateFiles {
 
     /// Applies owner-only permissions to a file that was just written.
     ///
-    /// Has to run *after* the write, not before: `Data.write(options: .atomic)`
-    /// writes a temporary file and renames it over the destination, so any
-    /// mode set on the old file is replaced by the temporary file's own.
+    /// Has to run *after* the write, not before: an atomic write (here
+    /// `Data.write(options: .atomic)` or `HistoryFile.replace`) renames a
+    /// temporary file over the destination, so any mode set on the old file
+    /// is replaced by the temporary file's own.
     ///
     /// Returns whether both took, so a caller holding transcripts can say so
     /// rather than assume it.

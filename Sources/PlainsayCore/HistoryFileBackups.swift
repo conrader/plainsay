@@ -14,16 +14,19 @@ import Foundation
 ///   owner-only, and on macOS excluded from backups. A candidate that is not
 ///   is never trusted to hold the only copy of a damaged file.
 /// - Clear and the off switch delete it, along with `history.json`.
-/// - The age window applies to it. A backup made before the cutoff goes whole
-///   (everything in it was written before it was made). In a newer one, every
-///   record whose date can still be read and is past the cutoff is cut out,
-///   and the rest is kept byte for byte.
+/// - The age window applies to it (see `HistoryFileRetention.swift`).
 ///
-/// Content with no readable date cannot be aged by its own date; it is gone at
-/// the latest one window after the backup was made.
+/// Every file that replaces one of these is first written in full to a
+/// staging file, `history.json.staging-<uuid>`, and renamed into place. A
+/// stage is a copy of transcripts too, so it is named where Clear, the off
+/// switch and every retention pass find it: one left by a crash is deleted,
+/// never adopted.
 extension HistoryFile {
     /// Suffix for damage backups: `history.json.damaged-<UTC timestamp>`.
     static let backupMarker = ".damaged-"
+
+    /// Suffix for staging files: `history.json.staging-<uuid>`.
+    static let stagingMarker = ".staging-"
 
     /// Owner-only, for files that hold transcripts.
     private static let privateMode: mode_t = 0o600
@@ -103,7 +106,7 @@ extension HistoryFile {
 
     /// Applies owner-only permissions and backup exclusion, then reads both
     /// back. A copy we cannot make private is not a copy we may rely on.
-    private static func makePrivate(_ url: URL) -> Bool {
+    static func makePrivate(_ url: URL) -> Bool {
         if let info = linkStatus(url.path), Int(info.st_mode) & 0o077 != 0 {
             _ = chmod(url.path, privateMode)
         }
@@ -117,8 +120,18 @@ extension HistoryFile {
     /// Every directory entry named as a backup of `url`, of whatever type.
     /// Nil if the directory exists but cannot be listed.
     static func backupEntries(of url: URL) -> [URL]? {
+        entries(of: url, marker: backupMarker)
+    }
+
+    /// Every staging file of `url`. Writes are synchronous and single-writer,
+    /// so any that exists between two operations was abandoned by a crash.
+    static func stagingEntries(of url: URL) -> [URL]? {
+        entries(of: url, marker: stagingMarker)
+    }
+
+    private static func entries(of url: URL, marker: String) -> [URL]? {
         let directory = url.deletingLastPathComponent()
-        let prefix = url.lastPathComponent + backupMarker
+        let prefix = url.lastPathComponent + marker
         do {
             return try FileManager.default.contentsOfDirectory(atPath: directory.path)
                 .filter { $0.hasPrefix(prefix) }.sorted()
@@ -140,92 +153,62 @@ extension HistoryFile {
         return isAbsent(url.path)
     }
 
-    /// Removes `url` and every backup of it. True only if all of them are gone.
+    /// Removes `url`, every backup of it and every abandoned stage. True only
+    /// if all of them are gone.
     static func removeWithBackups(_ url: URL) -> Bool {
         let liveGone = remove(url)
-        guard let backups = backupEntries(of: url) else { return false }
-        let backupsGone = backups.map { remove($0) }.allSatisfy { $0 }
-        return liveGone && backupsGone
+        return removeCopies(of: url) && liveGone
     }
 
-    // MARK: - Retention
-
-    struct RetentionOutcome: Equatable {
-        /// Some backup was deleted or rewritten.
-        var changed = false
-        /// Something past the cutoff is still on disk.
-        var failed = false
+    /// Removes every backup and staging file of `url`, leaving `url` itself.
+    static func removeCopies(of url: URL) -> Bool {
+        // Both, whatever the first one did.
+        let stagesGone = removeAbandonedStages(of: url)
+        let backupsGone = removeAll(backupEntries(of: url))
+        return stagesGone && backupsGone
     }
 
-    /// Applies the age window to every backup of `url`.
-    static func applyRetention(toBackupsOf url: URL, cutoff: Date) -> RetentionOutcome {
-        var outcome = RetentionOutcome()
-        guard let backups = backupEntries(of: url) else {
-            outcome.failed = true
-            return outcome
-        }
-        for backup in backups {
-            let made = backupDate(backup)
-            if made.map({ $0 < cutoff }) ?? true {
-                outcome.changed = true
-                if !remove(backup) { outcome.failed = true }
-                continue
-            }
-            guard let info = linkStatus(backup.path),
-                  Int(info.st_mode) & Int(S_IFMT) == Int(S_IFREG),
-                  let data = try? Data(contentsOf: backup) else { continue }
-            let objects = topLevelObjects(in: data)
-            let kept = objects.filter { object in recordDate(object).map { $0 >= cutoff } ?? true }
-            guard kept.count != objects.count else { continue }
-            outcome.changed = true
-            if kept.isEmpty || !rewrite(backup, keeping: kept) {
-                if !remove(backup) { outcome.failed = true }
-            }
-        }
-        return outcome
+    /// Removes every staging file of `url`. True only if none is left.
+    static func removeAbandonedStages(of url: URL) -> Bool {
+        removeAll(stagingEntries(of: url))
     }
 
-    /// When the backup was made: its name's stamp, else its own mtime.
-    private static func backupDate(_ url: URL) -> Date? {
-        let name = url.lastPathComponent
-        if let range = name.range(of: backupMarker) {
-            let stamp = String(name[range.upperBound...].prefix(16))
-            if let date = timestampFormatter().date(from: stamp) { return date }
-        }
-        guard let info = linkStatus(url.path) else { return nil }
-        #if canImport(Darwin)
-        let seconds = info.st_mtimespec.tv_sec
-        #else
-        let seconds = info.st_mtim.tv_sec
-        #endif
-        return Date(timeIntervalSince1970: TimeInterval(seconds))
+    private static func removeAll(_ entries: [URL]?) -> Bool {
+        guard let entries else { return false }
+        return entries.map { remove($0) }.allSatisfy { $0 }
     }
 
-    /// A record's `date`, read without requiring the record to decode.
-    private static func recordDate(_ object: Data) -> Date? {
-        guard let fields = (try? JSONSerialization.jsonObject(with: object)) as? [String: Any],
-              let value = fields["date"] as? String else { return nil }
-        return ISO8601DateFormatter().date(from: value)
-    }
+    // MARK: - Replacing
 
-    /// Replaces `backup` with an array of just `objects`, raw bytes unchanged.
-    private static func rewrite(_ backup: URL, keeping objects: [Data]) -> Bool {
-        var data = Data("[".utf8)
-        for (index, object) in objects.enumerated() {
-            if index > 0 { data.append(Data(",\n".utf8)) }
-            data.append(object)
-        }
-        data.append(Data("]".utf8))
-        // Not named like a backup, so a crash cannot leave it treated as one.
-        let temporary = backup.deletingLastPathComponent()
-            .appendingPathComponent(".rewrite-\(UUID().uuidString)")
-        guard createExclusively(temporary, with: data) == .created else { return false }
-        guard rename(temporary.path, backup.path) == 0 else {
-            remove(temporary)
+    /// Replaces `url` with `data`, all or nothing: the bytes are written in
+    /// full to an owner-only staging file beside it, flushed, and renamed over
+    /// `url`. On failure `url` is as it was and no stage is left behind (and
+    /// one left by a crash is swept by the next Clear or retention pass).
+    ///
+    /// Takes the place of `Data.write(options: .atomic)`, whose temporary file
+    /// is named and placed where nothing here could find it again.
+    static func replace(_ url: URL, with data: Data) -> Bool {
+        let directory = url.deletingLastPathComponent()
+        let stage = directory.appendingPathComponent(
+            url.lastPathComponent + stagingMarker + UUID().uuidString)
+        guard createExclusively(stage, with: data) == .created else { return false }
+        // Set on the stage so the replacement is never, even briefly, an
+        // unexcluded transcript; checked again on the result by the caller.
+        PrivateFiles.excludeFromBackup(stage)
+        guard rename(stage.path, url.path) == 0 else {
+            remove(stage)
             return false
         }
-        PrivateFiles.excludeFromBackup(backup)
+        syncDirectory(directory)
         return true
+    }
+
+    /// Makes a rename durable. Best effort: the data itself is already synced.
+    private static func syncDirectory(_ directory: URL) {
+        let descriptor = open(directory.path, O_RDONLY | O_CLOEXEC)
+        guard descriptor >= 0 else { return }
+        _ = fsync(descriptor)
+        _ = close(descriptor)
     }
 
     // MARK: - Low level
@@ -246,6 +229,8 @@ extension HistoryFile {
                     if errno == EINTR { continue }
                     return false
                 }
+                // No progress and no error: give up rather than spin.
+                if count == 0 { return false }
                 written += count
             }
             return true
@@ -259,7 +244,7 @@ extension HistoryFile {
         return .created
     }
 
-    private static func linkStatus(_ path: String) -> stat? {
+    static func linkStatus(_ path: String) -> stat? {
         var info = stat()
         return lstat(path, &info) == 0 ? info : nil
     }
@@ -275,7 +260,7 @@ extension HistoryFile {
         return lstat(path, &info) != 0 && errno == ENOENT
     }
 
-    private static func timestampFormatter() -> DateFormatter {
+    static func timestampFormatter() -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(identifier: "UTC")

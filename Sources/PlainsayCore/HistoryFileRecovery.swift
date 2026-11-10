@@ -57,11 +57,19 @@ enum HistoryFile {
     /// own. Tolerates a truncated tail and junk between elements; an element
     /// that never closes is dropped. Returns nothing if the data does not start
     /// with an array.
-    ///
-    /// This is a scanner, not a parser: it only tracks nesting and strings,
-    /// which is all it takes to find where each record begins and ends.
     static func topLevelObjects(in data: Data) -> [Data] {
         let bytes = [UInt8](data)
+        return topLevelObjectRanges(in: bytes).map { Data(bytes[$0]) }
+    }
+
+    /// Where each complete top-level object sits in `bytes`.
+    ///
+    /// This is a scanner, not a parser: it only tracks nesting and strings,
+    /// which is all it takes to find where each record begins and ends. The
+    /// scan is in the same state (inside the array, outside any string) at the
+    /// start and end of every range, so cutting a range out leaves every other
+    /// range exactly where the scanner finds it.
+    static func topLevelObjectRanges(in bytes: [UInt8]) -> [Range<Int>] {
         var index = 0
         // Skip a UTF-8 byte-order mark and leading whitespace.
         if bytes.starts(with: [0xEF, 0xBB, 0xBF]) { index = 3 }
@@ -69,7 +77,7 @@ enum HistoryFile {
         guard index < bytes.count, bytes[index] == UInt8(ascii: "[") else { return [] }
         index += 1
 
-        var objects: [Data] = []
+        var ranges: [Range<Int>] = []
         var depth = 1          // inside the top-level array
         var inString = false
         var escaped = false
@@ -95,20 +103,20 @@ enum HistoryFile {
                 case UInt8(ascii: "}"), UInt8(ascii: "]"):
                     depth -= 1
                     if depth == 1, byte == UInt8(ascii: "}"), let start = objectStart {
-                        objects.append(Data(bytes[start...index]))
+                        ranges.append(start..<(index + 1))
                         objectStart = nil
                     }
-                    if depth == 0 { return objects }
+                    if depth == 0 { return ranges }
                 default:
                     break
                 }
             }
             index += 1
         }
-        return objects
+        return ranges
     }
 
-    private static func isWhitespace(_ byte: UInt8) -> Bool {
+    static func isWhitespace(_ byte: UInt8) -> Bool {
         byte == 0x20 || byte == 0x09 || byte == 0x0A || byte == 0x0D
     }
 }
