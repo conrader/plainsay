@@ -129,7 +129,8 @@ struct ProfileHarness {
     }
 
     /// Settled: not recording, not busy, and the work unit ended (the policy
-    /// is back to `.standard` exactly then).
+    /// is back to `.standard` exactly then). A timeout fails the test instead
+    /// of letting the assertions after it run against a half-finished pipeline.
     func settle(timeout: Duration = .seconds(2)) async throws {
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
@@ -139,7 +140,13 @@ struct ProfileHarness {
             }
             try await Task.sleep(for: .milliseconds(5))
         }
+        throw SettleTimeout(timeout: timeout)
     }
+}
+
+struct SettleTimeout: Error, CustomStringConvertible {
+    let timeout: Duration
+    var description: String { "pipeline did not settle within \(timeout)" }
 }
 
 private let vscode = "com.microsoft.VSCode"
