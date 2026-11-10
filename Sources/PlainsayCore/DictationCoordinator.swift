@@ -190,6 +190,7 @@ public final class DictationCoordinator {
         // it here — otherwise a user who turned history off would have it
         // silently recording again after every launch.
         applyHistoryPolicy()
+        privateDictation.hostedEdits.refusal = { [weak self] in self?.editingRefusal }
     }
 
     /// Pushes the stored history preferences into `history`. Call after
@@ -788,8 +789,9 @@ public final class DictationCoordinator {
             correctionGeneration += 1
             finishCorrection(.failure(DictationCorrectionError.cancelled))
         }
+        let stillArmed = showsStillArmed
         finishEngineWork()
-        scheduleReset(after: .milliseconds(900))
+        if stillArmed { flashError(PrivateDictationState.stillArmedMessage) } else { scheduleReset(after: .milliseconds(900)) }
         Log.pipeline.info("dictation cancelled")
     }
 
@@ -968,12 +970,12 @@ public final class DictationCoordinator {
             )
         }
         guard duration >= Self.minimumDuration else {
-            // A stray tap. Say nothing, do nothing — but leave a trace, because
+            // A stray tap. Say nothing (but P10 if still armed) — leave a trace, because
             // "I definitely spoke and nothing happened" and "the key barely
             // registered" look identical from the outside.
             Log.pipeline.info("discarded \(duration, format: .fixed(precision: 2), privacy: .public)s — below minimum")
             record(text: "", raw: "", outcome: .tooShort, duration: duration)
-            phase = .idle
+            if showsStillArmed { flashError(PrivateDictationState.stillArmedMessage) } else { phase = .idle }
             finishEngineWork()
             return
         }
@@ -1083,7 +1085,7 @@ public final class DictationCoordinator {
         } catch {
             Log.pipeline.error("transcription failed: \(error.localizedDescription, privacy: .public)")
             record(text: "", raw: "", outcome: .transcriptionFailed, duration: duration)
-            flashError(PrivateDictationState.notice(error.localizedDescription, stillArmed: sessionPolicy.privacy == .privateLocal))
+            flashError(PrivateDictationState.notice(error.localizedDescription, stillArmed: showsStillArmed))
             return
         }
         Log.pipeline.info("""
@@ -1096,7 +1098,7 @@ public final class DictationCoordinator {
             // Whisper heard nothing worth inserting.
             Log.pipeline.info("empty transcript — nothing inserted")
             record(text: "", raw: "", outcome: .silence, duration: duration)
-            if sessionPolicy.privacy == .privateLocal { flashError(PrivateDictationState.stillArmedMessage) } else { phase = .idle }
+            if showsStillArmed { flashError(PrivateDictationState.stillArmedMessage) } else { phase = .idle }
             return
         }
 

@@ -17,6 +17,8 @@ final class PrivateProbeEngine: TranscriptionEngine, @unchecked Sendable {
     var error: Error?
     var prepareError: Error?
     var pendingDirectory: URL?
+    /// When set, `transcribe` suspends here until the test releases it.
+    var hold: TestHold?
     private(set) var pendingFilesDuringTranscribe: [Int] = []
 
     func prepare() async throws {
@@ -28,12 +30,13 @@ final class PrivateProbeEngine: TranscriptionEngine, @unchecked Sendable {
             let files = (try? FileManager.default.contentsOfDirectory(atPath: pendingDirectory.path)) ?? []
             pendingFilesDuringTranscribe.append(files.filter { $0.hasSuffix(".f32") }.count)
         }
+        await hold?.wait()
         if let error { throw error }
         return normalizeTranscript(transcript)
     }
 }
 
-private struct ProbeError: LocalizedError {
+struct ProbeError: LocalizedError {
     var errorDescription: String? { "probe failure" }
 }
 
@@ -43,7 +46,7 @@ final class PrivateTestClock {
 }
 
 @MainActor
-private struct PrivateHarness {
+struct PrivateHarness {
     let settings: PlainsaySettings
     let recorder = FakeRecorder()
     let engine = PrivateProbeEngine()

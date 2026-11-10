@@ -24,6 +24,14 @@ extension DictationCoordinator {
         privateDictation.disarm(sessionInFlight: sessionPolicy.privacy == .privateLocal)
     }
 
+    /// P10 for a session that ends without consuming the arm (cancel, too
+    /// short, silence, transcription error). The in-flight policy says the
+    /// session was private; the claim about the *next* dictation comes from
+    /// the live arm, so a disarm during the session drops the notice.
+    var showsStillArmed: Bool {
+        sessionPolicy.privacy == .privateLocal && privateDictation.isArmed
+    }
+
     /// Voice Edit and corrections may call a hosted editor, so they refuse
     /// while private is armed or in flight. Nil when they may run.
     public var editingRefusal: String? {

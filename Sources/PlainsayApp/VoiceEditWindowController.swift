@@ -16,13 +16,16 @@ final class VoiceEditModel {
     var applied = false
     private let selection: SelectedText?
     private let settings: PlainsaySettings
+    /// Asked right before every hosted request: the window may have opened before private was armed.
+    private let editGate: HostedEditGate
     private var work: Task<Void, Never>?
 
-    init(selection: SelectedText?, settings: PlainsaySettings, message: String?) {
+    init(selection: SelectedText?, settings: PlainsaySettings, message: String?, editGate: HostedEditGate = HostedEditGate()) {
         self.selection = selection
         self.settings = settings
         self.original = selection?.text ?? ""
         self.message = message
+        self.editGate = editGate
     }
 
     var providerName: String { settings.cleanupProvider.displayName }
@@ -42,6 +45,7 @@ final class VoiceEditModel {
         work?.cancel()
         let request = VoiceEditRequest(original: original, instruction: instruction)
         do {
+            try editGate.check()
             try request.validate()
             let editor = try ProviderFactory.makeEditor(settings)
             busy = true
@@ -49,9 +53,10 @@ final class VoiceEditModel {
             review = nil
             diff = nil
             detailsReviewed = false
-            work = Task { [weak self] in
+            let gate = editGate
+            work = gate.track(Task { [weak self] in
                 do {
-                    let replacement = try await editor.edit(request)
+                    let replacement = try await gate.send(request, to: editor)
                     try Task.checkCancellation()
                     guard replacement.count <= 24_000 else { throw CleanupError.truncated }
                     let review = VoiceEditReview(original: request.original, replacement: replacement)
@@ -62,11 +67,12 @@ final class VoiceEditModel {
                     self?.diff = VoiceEditDiff(original: request.original, replacement: review.replacement)
                     self?.busy = false
                 } catch {
-                    guard !Task.isCancelled else { return }
+                    // Arming private mid-request cancels it; say why rather than going quiet.
+                    guard !Task.isCancelled || error is HostedEditRefused else { return }
                     self?.message = error.localizedDescription
                     self?.busy = false
                 }
-            }
+            })
         } catch { message = error.localizedDescription }
     }
 
@@ -108,9 +114,13 @@ final class VoiceEditWindowController: NSObject, NSWindowDelegate {
     /// True while private dictation is armed or in flight: Voice Edit may call
     /// a hosted editor, so it must not open then (the closure shows why).
     private let refusesEditing: @MainActor () -> Bool
+    /// Re-checked by an already-open window before each Preview.
+    private let editGate: HostedEditGate
 
-    init(settings: PlainsaySettings, refusesEditing: @escaping @MainActor () -> Bool = { false }) {
+    init(settings: PlainsaySettings, editGate: HostedEditGate = HostedEditGate(),
+         refusesEditing: @escaping @MainActor () -> Bool = { false }) {
         self.settings = settings
+        self.editGate = editGate
         self.refusesEditing = refusesEditing
     }
 
@@ -125,7 +135,7 @@ final class VoiceEditWindowController: NSObject, NSWindowDelegate {
         var message: String?
         do { selection = try SelectedText.capture() }
         catch { message = error.localizedDescription }
-        let model = VoiceEditModel(selection: selection, settings: settings, message: message)
+        let model = VoiceEditModel(selection: selection, settings: settings, message: message, editGate: editGate)
         self.model = model
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 860, height: 700),
             styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)

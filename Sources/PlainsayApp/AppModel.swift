@@ -22,6 +22,7 @@ final class AppModel {
     let settingsWindow: SettingsWindowController
     lazy var voiceEditWindow = VoiceEditWindowController(
         settings: settings,
+        editGate: coordinator.privateDictation.hostedEdits,
         refusesEditing: { [weak self] in self?.coordinator.refuseEditingIfPrivate() ?? false }
     )
     lazy var correctionWindow = DictationCorrectionWindow(coordinator: coordinator, settings: settings)

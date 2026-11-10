@@ -16,9 +16,13 @@ public final class PrivateDictationState {
     /// only a finished private dictation or "turn off" clears it.
     public internal(set) var isArmed = false
     public let ephemeral: EphemeralDictation
+    /// Voice Edit and correction Previews ask this gate right before each
+    /// hosted request; arming cancels the ones still running.
+    public let hostedEdits: HostedEditGate
 
     public init(ephemeral: EphemeralDictation = EphemeralDictation()) {
         self.ephemeral = ephemeral
+        self.hostedEdits = HostedEditGate()
     }
 
     /// Arms unless `refusal` says the private path cannot run. A refused arm
@@ -26,6 +30,7 @@ public final class PrivateDictationState {
     func arm(unless refusal: PrivateDictationRefusal?) -> PrivateDictationRefusal? {
         if let refusal { return refusal }
         isArmed = true
+        hostedEdits.cancelAll()
         return nil
     }
 
@@ -55,7 +60,7 @@ public final class PrivateDictationState {
         )
     }
 
-    /// `message`, followed by P10 when the failed session was private.
+    /// `message`, followed by P10 when the arm is still on.
     nonisolated static func notice(_ message: String, stillArmed: Bool) -> String {
         stillArmed ? "\(message) \(stillArmedMessage)" : message
     }

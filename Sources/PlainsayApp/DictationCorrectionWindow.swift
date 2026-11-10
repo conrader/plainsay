@@ -72,7 +72,8 @@ final class DictationCorrectionModel {
         }
         if !started {
             ownsCapture = false
-            message = coordinator.lastErrorMessage ?? "Speech is not ready. Finish setup or type your correction below."
+            message = coordinator.editingRefusal ?? coordinator.lastErrorMessage
+                ?? "Speech is not ready. Finish setup or type your correction below."
         }
     }
 
@@ -82,7 +83,10 @@ final class DictationCorrectionModel {
             return
         }
         clearPreview()
+        // Live arm, not the state when this window opened: it may predate arming.
+        let gate = coordinator.privateDictation.hostedEdits
         do {
+            try gate.check()
             let command = try DictationCorrectionCommand.parse(instruction)
             let isUndo = command == .undo
             if let replacement = try command.localReplacement(in: dictation.text, undoText: dictation.undoText) {
@@ -94,9 +98,9 @@ final class DictationCorrectionModel {
             try request.validate()
             let revision = dictation.revision
             busy = true
-            work = Task { [weak self] in
+            work = gate.track(Task { [weak self] in
                 do {
-                    let replacement = try await editor.edit(request)
+                    let replacement = try await gate.send(request, to: editor)
                     try Task.checkCancellation()
                     guard let self else { return }
                     guard self.coordinator.lastDictation === self.dictation, self.dictation.revision == revision else {
@@ -107,11 +111,12 @@ final class DictationCorrectionModel {
                     self.show(replacement, isUndo: false)
                     self.busy = false
                 } catch {
-                    guard !Task.isCancelled else { return }
+                    // Arming private mid-request cancels it; say why rather than going quiet.
+                    guard !Task.isCancelled || error is HostedEditRefused else { return }
                     self?.message = error.localizedDescription
                     self?.busy = false
                 }
-            }
+            })
         } catch { message = error.localizedDescription }
     }
 
