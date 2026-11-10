@@ -9556,13 +9556,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Использовано %d из %d минут за последние 30 дней"
+            "value": "Использовано за последние 30 дней: %d из %d мин"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Використано %d із %d хвилин за останні 30 днів"
+            "value": "Використано за останні 30 днів: %d із %d хв"
           }
         },
         "zh-Hans": {
@@ -10557,6 +10557,286 @@
         }
       }
     },
+    "history.retention.days": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d Tag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d Tage"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d days"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d día"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d días"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d días"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jour"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jours"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jours"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorno"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorni"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorni"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d日"
+                }
+              }
+            }
+          }
+        },
+        "ko": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d일"
+                }
+              }
+            }
+          }
+        },
+        "nl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dagen"
+                }
+              }
+            }
+          }
+        },
+        "pl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dzień"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dni"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dni"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dnia"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dia"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dias"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dias"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d день"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дней"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d день"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дні"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d днів"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d 天"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "history.savedCount": {
       "localizations": {
         "de": {
@@ -11118,7 +11398,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Słucham, %d sekund"
+            "value": "Słucham, %d s"
           }
         },
         "pt": {
@@ -11130,13 +11410,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд"
+            "value": "Слушаю, секунд: %d"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд"
+            "value": "Слухаю, секунд: %d"
           }
         },
         "zh-Hans": {
@@ -11212,13 +11492,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Escape отменяет."
+            "value": "Слушаю, секунд: %d. Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Escape скасовує."
+            "value": "Слухаю, секунд: %d. Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11294,13 +11574,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Отпустите, чтобы завершить; Escape отменяет."
+            "value": "Слушаю, секунд: %d. Отпустите, чтобы завершить; Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Відпустіть, щоб завершити; Escape скасовує."
+            "value": "Слухаю, секунд: %d. Відпустіть, щоб завершити; Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11376,13 +11656,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Нажмите ещё раз, чтобы завершить; Escape отменяет."
+            "value": "Слушаю, секунд: %d. Нажмите ещё раз, чтобы завершить; Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Натисніть ще раз, щоб завершити; Escape скасовує."
+            "value": "Слухаю, секунд: %d. Натисніть ще раз, щоб завершити; Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11458,13 +11738,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Загрузка речевой модели, %d процентов"
+            "value": "Загрузка речевой модели, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Завантаження мовленнєвої моделі, %d відсотків"
+            "value": "Завантаження мовленнєвої моделі, %d%%"
           }
         },
         "zh-Hans": {
@@ -11704,13 +11984,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подготовка речевой модели, %d процентов"
+            "value": "Подготовка речевой модели, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Підготовка мовленнєвої моделі, %d відсотків"
+            "value": "Підготовка мовленнєвої моделі, %d%%"
           }
         },
         "zh-Hans": {
@@ -14622,13 +14902,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay загружает речевую модель, %d процентов"
+            "value": "Plainsay загружает речевую модель, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay завантажує мовленнєву модель, %d відсотків"
+            "value": "Plainsay завантажує мовленнєву модель, %d%%"
           }
         },
         "zh-Hans": {
@@ -15442,13 +15722,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay готовит речевую модель, %d процентов"
+            "value": "Plainsay готовит речевую модель, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay готує мовленнєву модель, %d відсотків"
+            "value": "Plainsay готує мовленнєву модель, %d%%"
           }
         },
         "zh-Hans": {
@@ -20048,13 +20328,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d процентов"
+            "value": "%d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d відсотків"
+            "value": "%d%%"
           }
         },
         "zh-Hans": {
@@ -20130,13 +20410,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d процентов, прошло %d с"
+            "value": "%d%%, прошло %d с"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d відсотків, минуло %d с"
+            "value": "%d%%, минуло %d с"
           }
         },
         "zh-Hans": {
@@ -23779,6 +24059,286 @@
         }
       }
     },
+    "settings.vocabulary.dictationCount": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d Diktat"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d Diktaten"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictation"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictations"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictado"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictados"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictados"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictée"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictées"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictées"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettato"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettati"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettati"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d 件の口述筆記で"
+                }
+              }
+            }
+          }
+        },
+        "ko": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "받아쓰기 %d회"
+                }
+              }
+            }
+          }
+        },
+        "nl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictatie"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictaties"
+                }
+              }
+            }
+          }
+        },
+        "pl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniu"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditado"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditados"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditados"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записи"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записі"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "出现在 %d 次听写中"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "settings.vocabulary.dismiss": {
       "localizations": {
         "de": {
@@ -24021,170 +24581,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "添加容易被识别错的姓名、专业术语和产品名称。Parakeet 不接受解码器提示，因此 Plainsay 会在转录完成后立即自行纠正这些拼写——无论是否启用了编辑功能。"
-          }
-        }
-      }
-    },
-    "settings.vocabulary.manyDictations": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in %d Diktaten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in %d dictations"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "en %d dictados"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "dans %d dictées"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in %d dettati"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%d 件の口述筆記で"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "받아쓰기 %d회"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in %d dictaties"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "w %d dyktowaniach"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "em %d ditados"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "в %d записях"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "у %d записах"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "出现在 %d 次听写中"
-          }
-        }
-      }
-    },
-    "settings.vocabulary.oneDictation": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in 1 Diktat"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in 1 dictation"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "en 1 dictado"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "dans 1 dictée"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in 1 dettato"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 件の口述筆記で"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "받아쓰기 1회"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "in 1 dictatie"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "w 1 dyktowaniu"
-          }
-        },
-        "pt": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "em 1 ditado"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "в 1 записи"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "в 1 записі"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "出现在 1 次听写中"
           }
         }
       }

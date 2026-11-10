@@ -106,9 +106,11 @@ extension SpeechSettings {
     }
 
     private static func occurrenceSummary(_ count: Int) -> String {
-        count == 1
-            ? Localization.appString("settings.vocabulary.oneDictation", fallback: "in 1 dictation")
-            : Localization.appFormat("settings.vocabulary.manyDictations", fallback: "in %d dictations", count)
+        Localization.appPlural(
+            "settings.vocabulary.dictationCount",
+            fallback: count == 1 ? "in 1 dictation" : "in \(count) dictations",
+            count: count
+        )
     }
 
     private func accept(_ proposal: DictionaryProposal) {

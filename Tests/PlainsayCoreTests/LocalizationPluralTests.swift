@@ -14,6 +14,8 @@ struct LocalizationPluralTests {
     private static let repoRoot = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
     private static let key = "profiles.vocabulary.overflow"
+    private static let dictationCount = "settings.vocabulary.dictationCount"
+    private static let retentionDays = "history.retention.days"
 
     /// `language → (plural category → template)` for `key`.
     private func variations(_ key: String = key) throws -> [String: [String: String]] {
@@ -118,6 +120,40 @@ struct LocalizationPluralTests {
         #expect(render(21, "ru", bundle) == "FALLBACK")
     }
 
+    @Test("Occurrence label follows ru/uk/pl plural rules (21 and 101 are singular)")
+    func occurrences() throws {
+        let bundle = try fixtureBundle(Self.dictationCount)
+        let expected: [String: [Int: String]] = [
+            "ru": [1: "в 1 записи", 2: "в 2 записях", 5: "в 5 записях", 11: "в 11 записях",
+                   21: "в 21 записи", 22: "в 22 записях", 31: "в 31 записи", 101: "в 101 записи", 111: "в 111 записях"],
+            "uk": [1: "у 1 записі", 2: "у 2 записах", 5: "у 5 записах", 11: "у 11 записах",
+                   21: "у 21 записі", 22: "у 22 записах", 31: "у 31 записі", 101: "у 101 записі", 111: "у 111 записах"],
+            "pl": [1: "w 1 dyktowaniu", 2: "w 2 dyktowaniach", 21: "w 21 dyktowaniach", 22: "w 22 dyktowaniach"],
+            "en": [1: "in 1 dictation", 2: "in 2 dictations", 21: "in 21 dictations"],
+        ]
+        for (language, cases) in expected {
+            for (count, text) in cases {
+                #expect(render(count, language, bundle, key: Self.dictationCount) == text, "\(language) \(count)")
+            }
+        }
+    }
+
+    @Test("Retention days follow ru/uk/pl plural rules")
+    func retentionDays() throws {
+        let bundle = try fixtureBundle(Self.retentionDays)
+        let expected: [String: [Int: String]] = [
+            "ru": [1: "1 день", 2: "2 дня", 7: "7 дней", 21: "21 день", 30: "30 дней", 90: "90 дней"],
+            "uk": [1: "1 день", 2: "2 дні", 7: "7 днів", 21: "21 день", 30: "30 днів", 90: "90 днів"],
+            "pl": [1: "1 dzień", 2: "2 dni", 7: "7 dni", 30: "30 dni"],
+            "en": [1: "1 day", 7: "7 days", 90: "90 days"],
+        ]
+        for (language, cases) in expected {
+            for (count, text) in cases {
+                #expect(render(count, language, bundle, key: Self.retentionDays) == text, "\(language) \(count)")
+            }
+        }
+    }
+
     @Test("Polish catalog has every integer plural category")
     func categories() throws {
         let pl = try #require(try variations()["pl"])
@@ -141,7 +177,7 @@ struct LocalizationPluralTests {
             "menu.status.hold", "menu.status.holdOrTap", "menu.status.tap",
             "menu.translate.active", "menu.translate.idle", "menu.translate.locked", "menu.translate.off",
             "menu.translate.shortcut", "settings.vocabulary.accept", "settings.vocabulary.dismiss",
-            "settings.vocabulary.manyDictations", "settings.vocabulary.oneDictation", "settings.vocabulary.suggested",
+            "settings.vocabulary.suggested",
         ]
         for key in keys {
             #expect(value(key, "en")?.isEmpty == false, "\(key) en")
