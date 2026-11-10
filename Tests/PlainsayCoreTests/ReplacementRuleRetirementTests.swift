@@ -188,6 +188,49 @@ struct ReplacementRuleRetirementTests {
         #expect(offered(old, rules.pruningRetiredTargets(history: old, workInFlight: false)).isEmpty)
     }
 
+    @Test("Overflow alone settles on record ids without reading History text")
+    func overflowOnlyFastPath() {
+        var rules = overflowed()
+        rules.retiredTargets = []
+        let index = RetiredTargetHistoryIndex()
+        let history = ruledHistory()
+        let pruned = rules.pruningRetiredTargets(history: history, workInFlight: false, index: index)
+        #expect(pruned.retiredOverflow == RetiredOverflow(pendingRecords: history.map(\.id)))
+        #expect(index.folds == 0)
+        #expect(pruned.pruningRetiredTargets(history: [], workInFlight: false, index: index).retiredOverflow == nil)
+        #expect(index.folds == 0)
+    }
+
+    @Test("The History index folds each record once and refolds an edited one")
+    func historyIndex() {
+        var rules = ReplacementRuleSet(rules: [lumenta])
+        rules.remove(id: lumenta.id, now: t0)
+        let index = RetiredTargetHistoryIndex()
+        let holds = record("We ship Lumenta Studio", at: t0)
+        let other = record("Plainsay", at: t0)
+        #expect(rules.pruningRetiredTargets(history: [holds, other], workInFlight: false, index: index) == rules)
+        let folded = index.folds
+        #expect(folded > 0)
+        // Same records again: answered from the cache, nothing folded.
+        #expect(rules.pruningRetiredTargets(history: [holds, other], workInFlight: false, index: index) == rules)
+        #expect(index.folds == folded)
+        // The record holding the target edited in place (same id): refolded, then pruned.
+        let edited = TranscriptRecord(id: holds.id, date: t0, text: "We ship Plainsay", rawText: "x",
+                                      outcome: .inserted, durationSeconds: 4, targetApp: nil)
+        #expect(rules.pruningRetiredTargets(history: [edited, other], workInFlight: false, index: index)
+            .retiredTargets.isEmpty)
+        #expect(index.folds > folded)
+        // And edited back: the cache must not answer with the edited text.
+        let back = TranscriptRecord(id: other.id, date: t0, text: "lumentá", rawText: "x",
+                                    outcome: .inserted, durationSeconds: 4, targetApp: nil)
+        #expect(rules.pruningRetiredTargets(history: [edited, back], workInFlight: false, index: index) == rules)
+        // With and without the index the answer is the same.
+        for history in [[holds], [other], [edited, back], [], [holds, holds]] {
+            #expect(rules.pruningRetiredTargets(history: history, workInFlight: false, index: index)
+                == rules.pruningRetiredTargets(history: history, workInFlight: false))
+        }
+    }
+
     @Test("Stored lists longer than the limit, or a bad overflow marker, load as an unsettled overflow")
     func overflowOnLoad() throws {
         let limit = ReplacementRuleSet.retiredLimit

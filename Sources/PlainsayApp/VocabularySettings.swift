@@ -79,9 +79,17 @@ extension SpeechSettings {
         .onAppear(perform: pruneRetiredRuleTargets)
         // Retried while open: a prune refused during work, or History
         // retention dropping records, must not leave the overflow fallback
-        // hiding every suggestion until Vocabulary is reopened.
-        .onChange(of: coordinator.mayStillWriteHistory) { pruneRetiredRuleTargets() }
-        .onChange(of: coordinator.history.records.map(\.id)) { pruneRetiredRuleTargets() }
+        // hiding every suggestion until Vocabulary is reopened. One key, so
+        // a dictation ending (flag and ids change together) prunes once.
+        .onChange(of: PruneTrigger(
+            workInFlight: coordinator.mayStillWriteHistory,
+            recordIDs: coordinator.history.records.map(\.id)
+        )) { pruneRetiredRuleTargets() }
+    }
+
+    private struct PruneTrigger: Equatable {
+        let workInFlight: Bool
+        let recordIDs: [UUID]
     }
 
     /// Storage hygiene only: a retired target stays excluded until History
@@ -91,7 +99,8 @@ extension SpeechSettings {
     /// and the result stored with no suspension in between.
     private func pruneRetiredRuleTargets() {
         let pruned = settings.replacementRules.pruningRetiredTargets(
-            history: coordinator.history.records, workInFlight: coordinator.mayStillWriteHistory)
+            history: coordinator.history.records, workInFlight: coordinator.mayStillWriteHistory,
+            index: retiredTargetIndex)
         if pruned != settings.replacementRules { settings.replacementRules = pruned }
     }
 

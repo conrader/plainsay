@@ -102,17 +102,18 @@ extension ReplacementRuleSet {
     /// the same split and folding as `hasTarget`, and pruned once retention
     /// has removed them all. No time bound is assumed. Over-keeping only
     /// hides a proposal; every doubt keeps the entry.
-    public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool) -> ReplacementRuleSet {
+    ///
+    /// `index` caches each record's folded words between calls (Vocabulary
+    /// prunes on every History change); the result is the same without it.
+    public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool,
+                                      index: RetiredTargetHistoryIndex? = nil) -> ReplacementRuleSet {
         guard !workInFlight, !retiredTargets.isEmpty || retiredOverflow != nil else { return self }
-        // Folding is the cost, so each distinct text and word is folded once.
-        var raw = Set<String>()
-        for record in history {
-            raw.insert(record.text)
-            raw.formUnion(DictionaryProposer.words(in: record.text))
-        }
-        let present = Set(raw.map(TermDictionary.foldedKey))
         var copy = self
-        copy.retiredTargets.removeAll { Self.targetKeys($0.to).isDisjoint(with: present) }
+        // Overflow alone needs only record ids: History text is not read.
+        if !copy.retiredTargets.isEmpty {
+            let present = (index ?? RetiredTargetHistoryIndex()).presentKeys(in: history)
+            copy.retiredTargets.removeAll { Self.targetKeys($0.to).isDisjoint(with: present) }
+        }
         if copy.retiredOverflow != nil {
             let retained = Set(history.map(\.id))
             let pending = copy.retiredOverflow?.pendingRecords?.filter(retained.contains) ?? history.map(\.id)
@@ -127,5 +128,50 @@ extension ReplacementRuleSet {
         keys.insert(TermDictionary.foldedKey(target))
         keys.remove("")
         return keys
+    }
+}
+
+/// Folded History words for `pruningRetiredTargets`, cached per record. An
+/// entry is reused only for the same record id with the same text, so an
+/// edited record is folded again; records no longer in History are dropped
+/// at each call. Every entry holds exactly its text's keys, so a hit gives
+/// the uncached answer. Not thread-safe: Vocabulary keeps one on the main actor.
+public final class RetiredTargetHistoryIndex {
+    private var cache: [UUID: (text: String, keys: Set<String>)] = [:]
+    /// Texts and words folded so far; tests check the cache and fast path.
+    private(set) var folds = 0
+
+    public init() {}
+
+    /// Every folded whole text and folded word of `history`, split and folded
+    /// as `hasTarget` matches. Folding is the cost, so a word new to this call
+    /// is folded once however many records repeat it.
+    func presentKeys(in history: [TranscriptRecord]) -> Set<String> {
+        var next: [UUID: (text: String, keys: Set<String>)] = [:]
+        next.reserveCapacity(history.count)
+        var folded: [String: String] = [:]
+        var present = Set<String>()
+        for record in history {
+            var keys: Set<String>
+            if let hit = next[record.id] ?? cache[record.id], hit.text == record.text {
+                keys = hit.keys
+            } else {
+                keys = []
+                for raw in [record.text] + DictionaryProposer.words(in: record.text) {
+                    if let key = folded[raw] {
+                        keys.insert(key)
+                    } else {
+                        let key = TermDictionary.foldedKey(raw)
+                        folds += 1
+                        folded[raw] = key
+                        keys.insert(key)
+                    }
+                }
+            }
+            next[record.id] = (record.text, keys)
+            present.formUnion(keys)
+        }
+        cache = next
+        return present
     }
 }

@@ -226,6 +226,8 @@ struct SpeechSettings: View {
     let coordinator: DictationCoordinator
     let voiceEnrollment: VoiceEnrollment
     @State var newTerm = ""
+    /// Folded History words reused by Vocabulary's retired-target prune.
+    @State var retiredTargetIndex = RetiredTargetHistoryIndex()
     @State private var asrKeyRevision = 0
     @State private var editingKeyRevision = 0
 
