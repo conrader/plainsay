@@ -16,11 +16,12 @@ import Foundation
 /// - Clear and the off switch delete it, along with `history.json`.
 /// - The age window applies to it (see `HistoryFileRetention.swift`).
 ///
-/// Every file that replaces one of these is first written in full to a
-/// staging file, `history.json.staging-<uuid>`, and renamed into place. A
-/// stage is a copy of transcripts too, so it is named where Clear, the off
-/// switch and every retention pass find it: one left by a crash is deleted,
-/// never adopted.
+/// Every file that replaces one of these, or the live file, is first written
+/// in full to a staging file and renamed into place. All stages share one
+/// namespace, `history.json.staging-<uuid>`, whatever they replace: a stage
+/// is a copy of transcripts too, so it is named where Clear, the off switch
+/// and every retention pass (with or without an age window) find it. One
+/// left by a crash is deleted, never adopted and never aged as a backup.
 extension HistoryFile {
     /// Suffix for damage backups: `history.json.damaged-<UTC timestamp>`.
     static let backupMarker = ".damaged-"
@@ -81,7 +82,7 @@ extension HistoryFile {
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else {
             return nil
         }
-        for name in names.sorted() where name.hasPrefix(prefix) {
+        for name in names.sorted() where name.hasPrefix(prefix) && !name.contains(stagingMarker) {
             let candidate = directory.appendingPathComponent(name)
             if isTrustedBackup(candidate, of: live, matching: original) { return candidate }
         }
@@ -117,24 +118,32 @@ extension HistoryFile {
 
     // MARK: - Deleting
 
-    /// Every directory entry named as a backup of `url`, of whatever type.
-    /// Nil if the directory exists but cannot be listed.
+    /// Every directory entry named as a backup of `url`, of whatever type —
+    /// not a stage, even one named after a backup. Nil if the directory
+    /// exists but cannot be listed.
     static func backupEntries(of url: URL) -> [URL]? {
-        entries(of: url, marker: backupMarker)
+        entries(of: url) { $0.hasPrefix(url.lastPathComponent + backupMarker) && !$0.contains(stagingMarker) }
     }
 
     /// Every staging file of `url`. Writes are synchronous and single-writer,
     /// so any that exists between two operations was abandoned by a crash.
+    ///
+    /// Includes `history.json.damaged-<stamp>.staging-<uuid>`, the name a
+    /// backup's stage had before all stages shared one namespace, so one left
+    /// by that build is swept too rather than aged as a backup.
     static func stagingEntries(of url: URL) -> [URL]? {
-        entries(of: url, marker: stagingMarker)
+        let name = url.lastPathComponent
+        return entries(of: url) {
+            $0.hasPrefix(name + stagingMarker)
+                || ($0.hasPrefix(name + backupMarker) && $0.contains(stagingMarker))
+        }
     }
 
-    private static func entries(of url: URL, marker: String) -> [URL]? {
+    private static func entries(of url: URL, where matches: (String) -> Bool) -> [URL]? {
         let directory = url.deletingLastPathComponent()
-        let prefix = url.lastPathComponent + marker
         do {
             return try FileManager.default.contentsOfDirectory(atPath: directory.path)
-                .filter { $0.hasPrefix(prefix) }.sorted()
+                .filter(matches).sorted()
                 .map { directory.appendingPathComponent($0) }
         } catch {
             return isAbsent(directory.path) ? [] : nil
@@ -183,17 +192,18 @@ extension HistoryFile {
     /// Replaces `url` with `data`, all or nothing: the bytes are written in
     /// full to an owner-only staging file beside it, flushed, and renamed over
     /// `url`. On failure `url` is as it was and no stage is left behind (and
-    /// one left by a crash is swept by the next Clear or retention pass).
+    /// one left by a crash is swept by the next launch, Clear or retention
+    /// pass, see `stagingURL(for:)`).
     ///
     /// Takes the place of `Data.write(options: .atomic)`, whose temporary file
     /// is named and placed where nothing here could find it again.
     static func replace(_ url: URL, with data: Data) -> Bool {
         let directory = url.deletingLastPathComponent()
-        let stage = directory.appendingPathComponent(
-            url.lastPathComponent + stagingMarker + UUID().uuidString)
+        let stage = stagingURL(for: url)
         guard createExclusively(stage, with: data) == .created else { return false }
-        // Set on the stage so the replacement is never, even briefly, an
-        // unexcluded transcript; checked again on the result by the caller.
+        // Attempted on the stage so the replacement normally arrives already
+        // excluded. Not required here: if it did not take, the result can be
+        // unexcluded until the caller's check on it, which reports a failure.
         PrivateFiles.excludeFromBackup(stage)
         guard rename(stage.path, url.path) == 0 else {
             remove(stage)
@@ -201,6 +211,16 @@ extension HistoryFile {
         }
         syncDirectory(directory)
         return true
+    }
+
+    /// Where a replacement of `destination` is staged: always
+    /// `history.json.staging-<uuid>`, the live file's own namespace, even when
+    /// the destination is one of its backups (`history.json.damaged-…`).
+    static func stagingURL(for destination: URL) -> URL {
+        var owner = destination.lastPathComponent
+        if let marker = owner.range(of: backupMarker) { owner = String(owner[..<marker.lowerBound]) }
+        return destination.deletingLastPathComponent()
+            .appendingPathComponent(owner + stagingMarker + UUID().uuidString)
     }
 
     /// Makes a rename durable. Best effort: the data itself is already synced.

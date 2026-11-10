@@ -19,50 +19,75 @@ import Foundation
 /// only once it is completely written, and if that fails the backup is left
 /// exactly as it was and the failure is reported. A backup is deleted only
 /// when what would remain holds nothing but array punctuation.
+///
+/// Privacy is checked, not remembered: every pass, window or not, every
+/// backup it keeps is made private again and verified. A protection failure
+/// is therefore reported on each pass until it is actually repaired; a retry
+/// that has nothing left to trim cannot clear it by skipping the check.
 extension HistoryFile {
     struct RetentionOutcome: Equatable {
         /// Some backup was deleted or rewritten.
         var changed = false
-        /// Something past the cutoff, an abandoned stage, or a backup that
-        /// could not be kept private is still on disk.
+        /// Something past the cutoff, an abandoned stage, or a backup that is
+        /// not verified private is still on disk.
         var failed = false
     }
 
-    /// Sweeps abandoned stages of `url` and, given a cutoff, applies the age
-    /// window to every backup of it. `replace` is a seam for tests, to make
-    /// the trimmed write fail while deleting would still succeed.
+    /// Sweeps abandoned stages of `url`, applies the age window (given a
+    /// cutoff) to every backup of it, and verifies that every backup it keeps
+    /// is private. `replace` and `protect` are seams for tests: to make the
+    /// trimmed write fail while deleting would still succeed, and to make
+    /// protection fail where the platform cannot (exclusion always succeeds
+    /// off macOS).
     static func applyRetention(
         toBackupsOf url: URL, cutoff: Date?,
-        replace: (URL, Data) -> Bool = { HistoryFile.replace($0, with: $1) }
+        replace: (URL, Data) -> Bool = { HistoryFile.replace($0, with: $1) },
+        protect: (URL) -> Bool = { HistoryFile.makePrivate($0) }
     ) -> RetentionOutcome {
         var outcome = RetentionOutcome()
         if !removeAbandonedStages(of: url) { outcome.failed = true }
-        guard let cutoff else { return outcome }
         guard let backups = backupEntries(of: url) else {
             outcome.failed = true
             return outcome
         }
         for backup in backups {
+            // Not ours to rewrite or re-protect (chmod would follow a link):
+            // Clear removes it, and the window by its name.
+            let isRegular = linkStatus(backup.path).map {
+                Int($0.st_mode) & Int(S_IFMT) == Int(S_IFREG)
+            } ?? false
+            guard let cutoff else {
+                if isRegular, !protect(backup) { outcome.failed = true }
+                continue
+            }
             if backupDate(backup).map({ $0 < cutoff }) ?? true {
                 outcome.changed = true
                 if !remove(backup) { outcome.failed = true }
                 continue
             }
-            // Not ours to rewrite: Clear removes it, and its age by name.
-            guard let info = linkStatus(backup.path),
-                  Int(info.st_mode) & Int(S_IFMT) == Int(S_IFREG) else { continue }
+            guard isRegular else { continue }
             guard let data = try? Data(contentsOf: backup) else {
                 outcome.failed = true   // cannot tell what in it has expired
+                if !protect(backup) { outcome.failed = true }
                 continue
             }
-            guard let trimmed = trimmed(data, cutoff: cutoff) else { continue }
+            guard let trimmed = trimmed(data, cutoff: cutoff) else {
+                // Nothing to trim, but kept: still has to be private. This is
+                // also what a retry after a failed protection lands on.
+                if !protect(backup) { outcome.failed = true }
+                continue
+            }
             outcome.changed = true
             if isPunctuationOnly(trimmed) {
                 if !remove(backup) { outcome.failed = true }
-            } else if !replace(backup, trimmed) || !makePrivate(backup) {
-                // Either the backup is untouched (expired bytes still in it),
-                // or it was replaced but is not provably private. Both are
-                // reported, and nothing unexpired has been lost.
+            } else if !replace(backup, trimmed) {
+                // Untouched, expired bytes still in it: reported, nothing
+                // unexpired lost. Whatever it holds must still be private.
+                outcome.failed = true
+                _ = protect(backup)
+            } else if !protect(backup) {
+                // Replaced but not provably private: reported now, and
+                // checked again by every later pass until it is.
                 outcome.failed = true
             }
         }

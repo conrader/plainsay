@@ -87,6 +87,7 @@ public final class TranscriptHistory {
 
     private let now: () -> Date
     private let backUp: (URL, Data, Date) -> URL?
+    private let protectBackup: (URL) -> Bool
 
     /// Default age ceiling. A transcript older than this has outlived the
     /// recovery it exists for: nobody re-pastes last month's dictation.
@@ -125,21 +126,24 @@ public final class TranscriptHistory {
                   now: { Date() }, backUp: { HistoryFile.backUp($0, original: $1, now: $2) })
     }
 
-    /// Seams for tests: the clock (backup names and the age window), and a
-    /// backup that can be made to fail.
+    /// Seams for tests: the clock (backup names and the age window), a
+    /// backup that can be made to fail, and protection of kept backups
+    /// during retention, which cannot fail off macOS.
     init(
         limit: Int,
         maxAge: TimeInterval?,
         isEnabled: Bool,
         directory: URL?,
         now: @escaping () -> Date,
-        backUp: @escaping (URL, Data, Date) -> URL?
+        backUp: @escaping (URL, Data, Date) -> URL?,
+        protectBackup: @escaping (URL) -> Bool = { HistoryFile.makePrivate($0) }
     ) {
         self.limit = limit
         self.maxAge = maxAge
         self.isEnabled = isEnabled
         self.now = now
         self.backUp = backUp
+        self.protectBackup = protectBackup
 
         let base = directory ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -190,11 +194,12 @@ public final class TranscriptHistory {
     ///
     /// The window covers the `.damaged-*` backups too: they hold the same
     /// transcripts, and "Delete after" must not have an exception nobody sees.
-    /// Abandoned staging files are swept on every pass, window or not.
+    /// Abandoned staging files are swept, and every kept backup's privacy is
+    /// re-verified, on every pass, window or not.
     @discardableResult
     private func pruneExpired() -> Bool {
         let cutoff = maxAge.map { now().addingTimeInterval(-$0) }
-        let backups = HistoryFile.applyRetention(toBackupsOf: fileURL, cutoff: cutoff)
+        let backups = HistoryFile.applyRetention(toBackupsOf: fileURL, cutoff: cutoff, protect: protectBackup)
         retentionFailed = backups.failed
         if backups.failed {
             Log.history.error("expired or stray history copies could not all be deleted")
