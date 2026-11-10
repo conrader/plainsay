@@ -103,12 +103,14 @@ extension ReplacementRuleSet {
     /// has removed them all. No time bound is assumed. Over-keeping only
     /// hides a proposal; every doubt keeps the entry.
     public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool) -> ReplacementRuleSet {
-        guard !workInFlight else { return self }
-        var present = Set<String>()
+        guard !workInFlight, !retiredTargets.isEmpty || retiredOverflow != nil else { return self }
+        // Folding is the cost, so each distinct text and word is folded once.
+        var raw = Set<String>()
         for record in history {
-            present.insert(TermDictionary.foldedKey(record.text))
-            for word in DictionaryProposer.words(in: record.text) { present.insert(TermDictionary.foldedKey(word)) }
+            raw.insert(record.text)
+            raw.formUnion(DictionaryProposer.words(in: record.text))
         }
+        let present = Set(raw.map(TermDictionary.foldedKey))
         var copy = self
         copy.retiredTargets.removeAll { Self.targetKeys($0.to).isDisjoint(with: present) }
         if copy.retiredOverflow != nil {
