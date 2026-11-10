@@ -832,6 +832,10 @@ public final class DictationCoordinator {
 
         lastErrorMessage = nil
         lastErrorCameFromModelLoad = false
+        // Recording boundary: drop cached key presence so a key added or
+        // removed outside Plainsay since the last read counts from here. No
+        // Keychain read happens now; the first chip render reads lazily.
+        settings.refreshCredentialPresence()
         // Frozen for the whole work unit: settings changed while recording
         // apply from the next dictation (entitlement, webmail title and the
         // Polishing provider/key stay live).
@@ -1075,6 +1079,9 @@ public final class DictationCoordinator {
         // A private session or Polishing-Off profile never builds a cleaner: no hosted object, no window-title read.
         if !stoppedAtRecordingLimit, policy.allowsCleanup { phase = .cleaning }
         let dictionary = policy.dictionary
+        // The factory reads the key itself; drop cached presence so the chip
+        // shown while cleaning agrees with what it just built.
+        if policy.allowsCleanup { settings.refreshCredentialPresence() }
         let cleaner = policy.allowsCleanup ? makeCleaner(settings) : NoCleanup()
         let style = policy.allowsCleanup ? resolvedDictationStyle(for: policy) : .plain
 

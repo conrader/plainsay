@@ -279,6 +279,8 @@ final class FakeInserter: TextInserting {
 
     /// Either path having run means the dictation reached the clipboard.
     var handledAnything: Bool { !inserted.isEmpty || !copied.isEmpty }
+    /// Inserts plus clipboard-only copies so far.
+    var handledCount: Int { inserted.count + copied.count }
 }
 
 @MainActor

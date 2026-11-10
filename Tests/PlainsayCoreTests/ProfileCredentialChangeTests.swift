@@ -22,6 +22,14 @@ final class KeyStoreBox {
             return self.keys[provider] ?? ""
         }
         settings.cleanupKeyStore = { key, provider in self.keys[provider] = key }
+        // Speech and legacy Gemini writes address a Keychain account; land
+        // them on the Polishing provider sharing that account, as the
+        // Keychain would.
+        settings.accountKeyStore = { key, account in
+            for provider in CleanupProvider.allCases where provider.keychainAccount == account {
+                self.keys[provider] = key
+            }
+        }
     }
 }
 
@@ -61,6 +69,72 @@ struct ProfileCredentialChangeTests {
         settings.setAPIKey("", for: .gemini)
         #expect(!settings.hasAPIKey(for: .gemini))
         #expect(store.lookups == 2)
+    }
+
+    @Test("Settings: a speech-key write to a shared account clears cached Polishing presence")
+    func asrWriteInvalidates() {
+        let settings = PlainsaySettings(defaults: UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!)
+        let store = KeyStoreBox([:])
+        store.install(in: settings)
+        #expect(!settings.hasAPIKey(for: .openAI))
+        settings.setAPIKey("sk", for: ASRProvider.openAI)
+        #expect(settings.hasAPIKey(for: .openAI), "the OpenAI account serves speech and Polishing")
+        #expect(store.lookups == 2)
+        // An unrelated speech account still clears the cache (reads again, same answer).
+        settings.setAPIKey("g", for: ASRProvider.groq)
+        #expect(settings.hasAPIKey(for: .openAI))
+        #expect(store.lookups == 3)
+    }
+
+    @Test("Settings: the legacy Gemini key setter clears cached Gemini presence")
+    func legacyGeminiWriteInvalidates() {
+        let settings = PlainsaySettings(defaults: UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!)
+        let store = KeyStoreBox([.gemini: "k"])
+        store.install(in: settings)
+        #expect(settings.hasAPIKey(for: .gemini))
+        settings.geminiAPIKey = ""
+        #expect(!settings.hasAPIKey(for: .gemini))
+        settings.geminiAPIKey = "k2"
+        #expect(settings.hasAPIKey(for: .gemini))
+        #expect(store.lookups == 3)
+    }
+
+    @Test("Key removed outside Plainsay: the next recording drops Polishing, matching the factory")
+    func keyRemovedExternally() async throws {
+        defer { ProviderFactory.cloudSessionToken = nil }
+        let (harness, store) = await makeHarness(keys: [.gemini: "k"], realCleaner: true)
+        #expect(harness.settings.hasAPIKey(for: .gemini)) // cached, e.g. by the profile editor
+        store.keys[.gemini] = nil // Keychain Access: no settings write, no invalidation
+        #expect(harness.settings.hasAPIKey(for: .gemini), "between recordings the cached answer stands")
+
+        harness.frontmost.bundleIdentifier = code
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(harness.coordinator.profileChip == "Code · \(localOnly) · \(noTranslation)")
+        #expect(ProviderFactory.makeCleaner(harness.settings) is NoCleanup)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+        #expect(harness.inserter.inserted.last == raw)
+    }
+
+    @Test("Key added outside Plainsay: the next recording claims Polishing and → PL, matching the factory")
+    func keyAddedExternally() async throws {
+        defer { ProviderFactory.cloudSessionToken = nil }
+        let (harness, store) = await makeHarness(keys: [:], realCleaner: false)
+        #expect(!harness.settings.hasAPIKey(for: .gemini))
+        store.keys[.gemini] = "k"
+
+        harness.frontmost.bundleIdentifier = code
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        #expect(harness.coordinator.profileChip == "Code · \(polishing(.gemini)) · → PL")
+        #expect(ProviderFactory.makeCleaner(harness.settings) is GeminiCleanupService)
+        let before = store.lookups
+        for _ in 0..<30 { _ = harness.coordinator.profileChip }
+        #expect(store.lookups == before, "one read per recording boundary, none per redraw")
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+        #expect(harness.cleaner.receivedStyle?.translateTo == "pl")
     }
 
     @Test("Removing the key before release: the chip drops Polishing and → PL, and the real factory pastes raw text")

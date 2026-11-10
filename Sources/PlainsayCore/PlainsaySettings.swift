@@ -153,8 +153,8 @@ public final class PlainsaySettings {
     public var geminiAPIKey: String {
         get { Keychain.get(account: Keychain.geminiKeyAccount) ?? "" }
         set {
-            Keychain.set(newValue, account: Keychain.geminiKeyAccount)
-            cleanupKeyPresence = [:]
+            accountKeyStore(newValue, Keychain.geminiKeyAccount)
+            refreshCredentialPresence()
         }
     }
 
@@ -176,6 +176,11 @@ public final class PlainsaySettings {
     @ObservationIgnored var cleanupKeyStore: (String, CleanupProvider) -> Void = {
         Keychain.set($0, account: $1.keychainAccount)
     }
+    /// Account-addressed key writes (the legacy Gemini setter and speech
+    /// keys). Swapped by tests for the same reason as `cleanupKeyStore`.
+    @ObservationIgnored var accountKeyStore: (String, String) -> Void = {
+        Keychain.set($0, account: $1)
+    }
 
     /// Whether a Polishing key is stored, for callers that poll (the HUD chip
     /// redraws 30 times a second, the profile editor on every render): the
@@ -183,7 +188,10 @@ public final class PlainsaySettings {
     /// the answer, so it agrees with `ProviderFactory.makeCleaner`, which reads
     /// the key itself. Cleared on every write, not per account, because
     /// accounts are shared (the OpenAI key serves speech and Polishing, the
-    /// legacy Gemini key is the Gemini Polishing key).
+    /// legacy Gemini key is the Gemini Polishing key). A key added or removed
+    /// outside Plainsay (Keychain Access) is picked up at the next recording
+    /// boundary: the coordinator calls `refreshCredentialPresence()` when a
+    /// recording starts and again just before it builds the cleaner.
     public func hasAPIKey(for provider: CleanupProvider) -> Bool {
         if let known = cleanupKeyPresence[provider] { return known }
         let present = !apiKey(for: provider).isEmpty
@@ -193,9 +201,16 @@ public final class PlainsaySettings {
 
     @ObservationIgnored private var cleanupKeyPresence: [CleanupProvider: Bool] = [:]
 
+    /// Forgets every cached presence answer; the next `hasAPIKey` reads the
+    /// Keychain again. Cheap (no read happens here), so it is safe to call at
+    /// recording boundaries to catch keys changed outside the app.
+    public func refreshCredentialPresence() {
+        cleanupKeyPresence = [:]
+    }
+
     public func setAPIKey(_ key: String, for provider: CleanupProvider) {
         cleanupKeyStore(key, provider)
-        cleanupKeyPresence = [:]
+        refreshCredentialPresence()
     }
 
     public func apiKey(for provider: ASRProvider) -> String {
@@ -203,8 +218,8 @@ public final class PlainsaySettings {
     }
 
     public func setAPIKey(_ key: String, for provider: ASRProvider) {
-        Keychain.set(key, account: provider.keychainAccount)
-        cleanupKeyPresence = [:]
+        accountKeyStore(key, provider.keychainAccount)
+        refreshCredentialPresence()
     }
 
     /// Resolved values, falling back to the provider's defaults.

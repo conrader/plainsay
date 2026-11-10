@@ -131,11 +131,16 @@ struct ProfileHarness {
     /// Settled: not recording, not busy, and the work unit ended (the policy
     /// is back to `.standard` exactly then). A timeout fails the test instead
     /// of letting the assertions after it run against a half-finished pipeline.
+    /// Output must be new since this call: an earlier dictation's insertion
+    /// cannot stand in for one that failed or was refused. The baseline is
+    /// taken before the first suspension, and the pipeline (and the
+    /// `@MainActor` inserter) cannot run before then.
     func settle(timeout: Duration = .seconds(2)) async throws {
+        let baseline = inserter.handledCount
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
             if !recorder.isRecording, !coordinator.phase.isBusy, coordinator.sessionPolicy == .standard,
-               inserter.handledAnything {
+               inserter.handledCount > baseline {
                 return
             }
             try await Task.sleep(for: .milliseconds(5))

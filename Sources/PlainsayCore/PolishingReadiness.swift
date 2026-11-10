@@ -47,7 +47,8 @@ extension ProviderFactory {
 
     /// The rule applied to live settings, exactly as `makeCleaner` applies it.
     /// Key presence comes from `PlainsaySettings.hasAPIKey(for:)`, which reads
-    /// the Keychain once per provider and is cleared by every key write, so
+    /// the Keychain once per provider and is cleared by every key write and
+    /// at each recording boundary (for keys changed outside Plainsay), so
     /// the callers that poll (the HUD chip, the profile editor) stay cheap and
     /// still follow a key added or removed mid-recording.
     public static func polishingReadiness(_ settings: PlainsaySettings) -> PolishingReadiness {

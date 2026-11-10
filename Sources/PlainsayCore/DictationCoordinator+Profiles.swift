@@ -136,7 +136,8 @@ extension DictationCoordinator {
     }
 
     /// Live readiness. Key presence is cached in `PlainsaySettings` and
-    /// cleared by key writes, so this stays off the Keychain at HUD cadence —
+    /// cleared by key writes and at recording boundaries (start, cleaner
+    /// build), so this stays off the Keychain at HUD cadence —
     /// including after a provider switch — and follows a key added or removed
     /// before the hotkey is released.
     func effectivePolishingReadiness() -> PolishingReadiness {
