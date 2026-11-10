@@ -218,4 +218,32 @@ struct DictationProfileEditorTests {
         #expect(profiles[0].bundleIdentifiers.isEmpty)
         #expect(profiles[1].bundleIdentifiers == ["com.apple.Mail"])
     }
+
+    // Editing the name (review finding 3) uses the creation rule.
+
+    @Test("Rename trims, rejects blank, whitespace-only and over-40 names, and keeps the last valid name")
+    func renameValidation() throws {
+        var profiles: [DictationProfile] = []
+        let profile = try profiles.addProfile(named: "Code")
+
+        try profiles.rename(profile.id, to: "  Mail  ")
+        #expect(profiles[0].name == "Mail")
+
+        for invalid in ["", "   ", "\n\t", String(repeating: "x", count: 41)] {
+            #expect(throws: DictationProfileEditError.invalidName) { try profiles.rename(profile.id, to: invalid) }
+            #expect(profiles[0].name == "Mail")
+        }
+
+        let forty = String(repeating: "y", count: 40)
+        try profiles.rename(profile.id, to: " \(forty) ")
+        #expect(profiles[0].name == forty)
+    }
+
+    @Test("Create and rename share one name rule")
+    func oneNameRule() {
+        for name in ["", "  ", "A", " Mail ", String(repeating: "z", count: 40), String(repeating: "z", count: 41)] {
+            let created = try? DictationProfile.validated(name: name).name
+            #expect(created == DictationProfile.validName(name))
+        }
+    }
 }

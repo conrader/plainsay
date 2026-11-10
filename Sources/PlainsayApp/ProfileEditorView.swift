@@ -13,6 +13,11 @@ struct ProfileEditor: View {
     let onDelete: () -> Void
 
     @State private var newTerm = ""
+    /// What is typed in the name field. Only a valid name (trimmed, 1–40) is
+    /// stored; while the draft is invalid the stored name stays, and the field
+    /// goes back to it when editing ends. nil = show the stored name.
+    @State private var nameDraft: String?
+    @FocusState private var nameFocused: Bool
     @State private var pendingMove: PendingMove?
 
     private struct PendingMove: Identifiable {
@@ -42,9 +47,38 @@ struct ProfileEditor: View {
         if case .missingKey(let provider) = readiness { provider } else { nil }
     }
 
+    private var nameBinding: Binding<String> {
+        Binding(
+            get: { nameDraft ?? profile.wrappedValue.name },
+            set: { typed in
+                nameDraft = typed
+                try? settings.appProfiles.rename(profileID, to: typed)
+            }
+        )
+    }
+
+    private var nameDraftInvalid: Bool {
+        nameDraft.map { DictationProfile.validName($0) == nil } ?? false
+    }
+
+    /// Editing ended: an invalid draft gives way to the last valid name.
+    private func commitName() {
+        nameDraft = nil
+    }
+
     var body: some View {
         Section {
-            TextField(Localization.appString("profiles.name", fallback: "Name"), text: profile.name)
+            TextField(Localization.appString("profiles.name", fallback: "Name"), text: nameBinding)
+                .focused($nameFocused)
+                .onSubmit(commitName)
+                .onChange(of: nameFocused) { _, focused in if !focused { commitName() } }
+                .onDisappear(perform: commitName)
+        } footer: {
+            if nameDraftInvalid {
+                Text(Localization.appString("profiles.nameInvalid", fallback: "A profile name needs 1–40 characters."))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
         }
         appsSection
         vocabularySection

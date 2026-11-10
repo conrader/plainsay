@@ -20665,6 +20665,22 @@
         }
       }
     },
+    "profiles.nameInvalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A profile name needs 1–40 characters."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwa profilu musi mieć od 1 do 40 znaków."
+          }
+        }
+      }
+    },
     "profiles.needsKey": {
       "localizations": {
         "en": {

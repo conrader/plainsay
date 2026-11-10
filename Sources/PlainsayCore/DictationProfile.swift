@@ -209,6 +209,15 @@ extension Array where Element == DictationProfile {
         self[index].bundleIdentifiers.append(bundleIdentifier)
     }
 
+    /// Renames a profile with the same rule as creating one (trimmed, 1–40
+    /// characters). An invalid name is not stored: the editor keeps the last
+    /// valid one and puts it back when editing ends.
+    public mutating func rename(_ profileID: UUID, to name: String) throws {
+        guard let index = firstIndex(where: { $0.id == profileID }) else { return }
+        guard let valid = DictationProfile.validName(name) else { throw DictationProfileEditError.invalidName }
+        self[index].name = valid
+    }
+
     public mutating func addTerm(_ term: String, to profileID: UUID) throws {
         guard let index = firstIndex(where: { $0.id == profileID }) else { return }
         let trimmed = term.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -223,9 +232,16 @@ extension Array where Element == DictationProfile {
 
 extension DictationProfile {
     public static func validated(name: String) throws -> DictationProfile {
+        guard let valid = validName(name) else { throw DictationProfileEditError.invalidName }
+        return DictationProfile(name: valid)
+    }
+
+    /// The one profile-name rule, for creating and renaming: trimmed, 1–40
+    /// characters, or nil.
+    public static func validName(_ name: String) -> String? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.count <= maxNameLength else { throw DictationProfileEditError.invalidName }
-        return DictationProfile(name: trimmed)
+        guard !trimmed.isEmpty, trimmed.count <= maxNameLength else { return nil }
+        return trimmed
     }
 
     /// How many Default terms the 800-char speech hint will cut because this
