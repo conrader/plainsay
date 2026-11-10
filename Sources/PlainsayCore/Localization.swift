@@ -52,8 +52,15 @@ public enum Localization {
     /// English, then to `fallback` if neither ships that key — a missing
     /// translation degrades to readable English, never a raw key or crash.
     public static func string(_ key: String, table: String, fallback: String) -> String {
-        for candidate in [resolvedCode, "en"] {
-            guard let path = Bundle.main.path(forResource: candidate, ofType: "lproj"),
+        string(key, table: table, fallback: fallback, language: resolvedCode, root: .main)
+    }
+
+    /// Same lookup with the language and the bundle holding the `.lproj`
+    /// folders passed in, so tests can point it at a fixture bundle without
+    /// touching the shared override.
+    static func string(_ key: String, table: String, fallback: String, language: String, root: Bundle) -> String {
+        for candidate in [language, "en"] {
+            guard let path = root.path(forResource: candidate, ofType: "lproj"),
                   let bundle = Bundle(path: path)
             else { continue }
             let sentinel = "\u{0}"
@@ -84,6 +91,24 @@ public enum Localization {
     /// English word order into the key itself.
     public static func appFormat(_ key: String, fallback: String, _ args: CVarArg...) -> String {
         String(format: appString(key, fallback: fallback), arguments: args)
+    }
+
+    /// A count-dependent `appString`: the catalog entry carries plural
+    /// variations (compiled by `xcstringstool` into a `.stringsdict`), and
+    /// formatting it with an explicit locale is what makes Foundation pick
+    /// the right variant ("1 termin", "2 terminy", "5 terminów"). The locale
+    /// is the in-app language, not the system one, so an override picks that
+    /// language's plural rules. `fallback` is used as-is when no table ships
+    /// the key, so callers pass it already filled in.
+    public static func appPlural(_ key: String, fallback: String, count: Int) -> String {
+        plural(key, table: "Localizable", fallback: fallback, count: count, language: resolvedCode, root: .main)
+    }
+
+    static func plural(
+        _ key: String, table: String, fallback: String, count: Int, language: String, root: Bundle
+    ) -> String {
+        let template = string(key, table: table, fallback: fallback, language: language, root: root)
+        return String(format: template, locale: Locale(identifier: language), count)
     }
 
     public static func coreFormat(_ key: String, fallback: String, _ args: CVarArg...) -> String {
