@@ -1,3 +1,6 @@
+#if canImport(Glibc)
+import Glibc
+#endif
 import Foundation
 import Testing
 @testable import PlainsayCore
@@ -26,7 +29,7 @@ struct HistoryRecoveryTests {
 
     private func record(_ text: String, age: TimeInterval = 0) -> TranscriptRecord {
         TranscriptRecord(
-            date: Date().addingTimeInterval(-age),
+            date: fixedNow.addingTimeInterval(-age),
             text: text, rawText: text, outcome: .inserted,
             durationSeconds: 1, targetApp: "com.example.app"
         )
@@ -131,14 +134,15 @@ struct HistoryRecoveryTests {
 
     // MARK: - Empty never overwrites
 
-    @Test("An empty history does not overwrite a file that did not fully decode")
+    @Test("An empty history does not overwrite a damaged file that could not be backed up")
     func emptyDoesNotOverwriteDamaged() throws {
         let dir = makeDirectory()
         let original = try write(
             "[\(try json(record("old", age: 400 * day))),\(try undecodable("bad"))]", to: dir
         )
-        let loaded = history(dir, maxAge: nil)
+        let loaded = history(dir, maxAge: nil, backUp: { _, _, _ in nil })
         #expect(loaded.records.count == 1)
+        #expect(loaded.diskState == .protected)
 
         // Pruning empties the in-memory history and asks for a save.
         loaded.maxAge = 30 * day
@@ -170,6 +174,7 @@ struct HistoryRecoveryTests {
         #expect(loaded.diskState == .protected)
         loaded.add(record("in memory only"))
 
+        #expect(loaded.saveFailed)
         #expect(loaded.records.map(\.text) == ["in memory only", "keep"])
         #expect(onDisk(dir) == original)
         #expect(backups(in: dir).isEmpty)
@@ -187,27 +192,30 @@ struct HistoryRecoveryTests {
         })
         loaded.add(record("first try"))
         #expect(onDisk(dir) == original)
+        #expect(loaded.saveFailed)
 
         backupWorks.on = true
         loaded.add(record("second try"))
+        #expect(!loaded.saveFailed)
 
         #expect(try backups(in: dir).map { try Data(contentsOf: $0) } == [original])
         #expect(history(dir).records.map(\.text) == ["second try", "first try"])
     }
 
-    @Test("A file that exists but cannot be read is never replaced")
+    @Test("A file that exists but cannot be read is never replaced",
+          .enabled(if: getuid() != 0, "root ignores file modes"))
     func unreadableFileIsProtected() throws {
         let dir = makeDirectory()
         let original = try write("[\(try json(record("secret")))]", to: dir)
         let url = historyURL(dir)
         try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: url.path)
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path) }
-        // Running as root ignores the mode; there is nothing to test then.
-        guard !FileManager.default.isReadableFile(atPath: url.path) else { return }
+        try #require(!FileManager.default.isReadableFile(atPath: url.path))
 
         let loaded = history(dir)
         #expect(loaded.diskState == .protected)
         loaded.add(record("new"))
+        #expect(loaded.saveFailed)
 
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
         #expect(onDisk(dir) == original)
@@ -275,16 +283,18 @@ struct HistoryRecoveryTests {
         #expect(try Data(contentsOf: fresh) == original)
     }
 
-    @Test("Clearing after a damaged load removes the live file but keeps the backup")
-    func clearKeepsBackup() throws {
+    @Test("Clearing after a damaged load deletes the live file and its backups")
+    func clearDeletesBackups() throws {
         let dir = makeDirectory()
-        let original = try write("garbage", to: dir)
+        _ = try write("garbage", to: dir)
         let loaded = history(dir)
+        #expect(backups(in: dir).count == 1)
 
-        loaded.clear()
+        #expect(loaded.clear())
 
         #expect(onDisk(dir) == nil)
-        #expect(try backups(in: dir).map { try Data(contentsOf: $0) } == [original])
+        #expect(backups(in: dir).isEmpty, "Clear says it deleted what was saved; a copy must not survive")
+        #expect(!loaded.deletionFailed)
         loaded.add(record("after clear"))
         #expect(history(dir).records.map(\.text) == ["after clear"])
     }

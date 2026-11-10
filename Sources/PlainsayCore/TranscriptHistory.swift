@@ -51,13 +51,28 @@ public final class TranscriptHistory {
     /// How far `save()` may trust the file it is about to replace.
     ///
     /// - `owned`: absent, read in full, or written by us. Normal behaviour.
-    /// - `backedUp`: it did not fully decode, and a verified copy sits beside
-    ///   it. A non-empty history may replace it; an empty one may not.
+    /// - `backedUp`: it did not fully decode, and a verified, private copy
+    ///   sits beside it. The copy holds everything, so the live file may be
+    ///   replaced — including by an empty history once retention empties it.
     /// - `protected`: it could not be read, or could not be copied. Nothing
-    ///   replaces it until a copy succeeds — the dictations stay in memory
-    ///   for this run rather than costing what is on disk.
+    ///   replaces it until it reads again (and is merged) or a copy succeeds —
+    ///   the dictations stay in memory for this run rather than costing what
+    ///   is on disk.
     enum DiskState: Equatable { case owned, backedUp, protected }
     private(set) var diskState: DiskState = .owned
+
+    /// The last save did not reach disk as promised: it was refused to protect
+    /// a file that could not be backed up, or the write or its owner-only
+    /// protection failed. Cleared by the next save that succeeds. The records
+    /// stay in memory and the next change retries.
+    public private(set) var saveFailed = false
+
+    /// Something that should have been deleted — by Clear, the off switch, or
+    /// the age window — may still be on disk. Every later deletion retries:
+    /// Clear, turning history off again, a relaunch, or any retention pass.
+    public var deletionFailed: Bool { purgeFailed || retentionFailed }
+    private var purgeFailed = false
+    private var retentionFailed = false
 
     private let now: () -> Date
     private let backUp: (URL, Data, Date) -> URL?
@@ -99,7 +114,8 @@ public final class TranscriptHistory {
                   now: { Date() }, backUp: { HistoryFile.backUp($0, original: $1, now: $2) })
     }
 
-    /// Seams for tests: the backup clock, and a backup that can be made to fail.
+    /// Seams for tests: the clock (backup names and the age window), and a
+    /// backup that can be made to fail.
     init(
         limit: Int,
         maxAge: TimeInterval?,
@@ -138,38 +154,60 @@ public final class TranscriptHistory {
     /// Order matters: the age window is set first so that turning history
     /// *on* does not briefly expose records the window should already have
     /// dropped.
-    public func applyPolicy(isEnabled: Bool, maxAge: TimeInterval?) {
+    @discardableResult
+    public func applyPolicy(isEnabled: Bool, maxAge: TimeInterval?) -> Bool {
         self.maxAge = maxAge
-        setEnabled(isEnabled)
+        return setEnabled(isEnabled)
     }
 
     /// Turns recording on, or off *and deletes what is already stored*.
-    public func setEnabled(_ enabled: Bool) {
-        guard enabled != isEnabled else { return }
+    ///
+    /// Returns false if something stored could not be deleted. Recording
+    /// stops regardless, and turning it off again retries the deletion.
+    @discardableResult
+    public func setEnabled(_ enabled: Bool) -> Bool {
+        guard enabled != isEnabled || (!enabled && purgeFailed) else { return true }
         isEnabled = enabled
-        guard !enabled else { return }
+        guard !enabled else { return true }
         records = []
-        purgeFromDisk()
+        return purgeFromDisk()
     }
 
     /// Removes records past `maxAge`. Returns whether anything went, so
     /// callers only pay for a write when there is something to write.
+    ///
+    /// The window covers the `.damaged-*` backups too: they hold the same
+    /// transcripts, and "Delete after" must not have an exception nobody sees.
     @discardableResult
     private func pruneExpired() -> Bool {
         guard let maxAge else { return false }
-        let cutoff = Date().addingTimeInterval(-maxAge)
+        let cutoff = now().addingTimeInterval(-maxAge)
+        let backups = HistoryFile.applyRetention(toBackupsOf: fileURL, cutoff: cutoff)
+        retentionFailed = backups.failed
+        if backups.failed {
+            Log.history.error("expired history backups could not all be deleted")
+        }
         let surviving = records.filter { $0.date >= cutoff }
-        guard surviving.count != records.count else { return false }
+        let recordsChanged = surviving.count != records.count
         records = surviving
-        return true
+        // A damaged live file still holds what its backup just lost. Rewrite
+        // it from what survived; the backup keeps the unexpired rest.
+        return recordsChanged || (backups.changed && diskState == .backedUp)
     }
 
     /// Explicit user intent — clear, or turn history off — so this removes
-    /// `history.json` whatever state it is in. It never touches the
-    /// `.damaged-*` copies beside it.
-    private func purgeFromDisk() {
-        try? FileManager.default.removeItem(at: fileURL)
-        if !FileManager.default.fileExists(atPath: fileURL.path) { diskState = .owned }
+    /// `history.json` whatever state it is in, and every `.damaged-*` backup
+    /// with it: the UI says what was saved has been deleted, and a copy left
+    /// beside it would make that untrue. Returns whether all of it is gone.
+    @discardableResult
+    private func purgeFromDisk() -> Bool {
+        let removed = HistoryFile.removeWithBackups(fileURL)
+        if HistoryFile.isAbsent(fileURL.path) { diskState = .owned }
+        purgeFailed = !removed
+        if !removed {
+            Log.history.error("history could not be fully deleted; it will be retried")
+        }
+        return removed
     }
 
     public var mostRecent: TranscriptRecord? { records.first }
@@ -234,11 +272,14 @@ public final class TranscriptHistory {
         )
     }
 
-    public func clear() {
+    /// Returns false if something stored could not be deleted; calling it
+    /// again retries.
+    @discardableResult
+    public func clear() -> Bool {
         records = []
         // Not `save()`: writing an empty array leaves a file on disk that
         // still says "history lives here". Clearing should remove it.
-        purgeFromDisk()
+        return purgeFromDisk()
     }
 
     /// Puts a past dictation back on the clipboard so it can be pasted by hand.
@@ -285,43 +326,74 @@ public final class TranscriptHistory {
             diskState = .owned
         case .unreadable:
             return false
-        case .clean:
-            // Readable now, but still not what this run loaded: copy it first.
-            guard let data = try? Data(contentsOf: fileURL),
-                  backUp(fileURL, data, now()) != nil else { return false }
-            diskState = .backedUp
-        case .damaged(_, let original):
+        case .clean(let stored):
+            // Readable now: what is in it joins this run's records, so
+            // replacing the file costs nothing that decodes.
+            adopt(stored)
+            diskState = .owned
+        case .damaged(let recovered, let original):
             guard backUp(fileURL, original, now()) != nil else { return false }
+            adopt(recovered)
             diskState = .backedUp
         }
         return true
     }
 
+    /// Folds records read late — the file could not be read at launch — into
+    /// this run's, by id. This run's version of a record wins (it may have
+    /// been updated since), the order is newest first, and the age and count
+    /// limits apply as they would have at launch.
+    private func adopt(_ stored: [TranscriptRecord]) {
+        let known = Set(records.map(\.id))
+        var merged = records + stored.filter { !known.contains($0.id) }
+        merged = merged.enumerated()
+            .sorted { $0.element.date != $1.element.date ? $0.element.date > $1.element.date : $0.offset < $1.offset }
+            .map(\.element)
+        if let maxAge {
+            let cutoff = now().addingTimeInterval(-maxAge)
+            merged.removeAll { $0.date < cutoff }
+        }
+        if merged.count > limit { merged.removeLast(merged.count - limit) }
+        records = merged
+    }
+
     private func save() {
-        // Never let an empty history stand in for a file this run did not
-        // fully read — that is exactly the wipe this guards against. (`clear()`
-        // and the off-switch delete on purpose, through `purgeFromDisk`.)
-        if records.isEmpty, diskState != .owned { return }
+        // Never let an empty history stand in for a file this run could not
+        // read — that is exactly the wipe this guards against. (`clear()` and
+        // the off-switch delete on purpose, through `purgeFromDisk`.)
+        if records.isEmpty, diskState == .protected { return }
         guard mayReplaceFile() else {
-            Log.history.error("history not saved: the existing file could not be backed up")
+            saveFailed = true
+            Log.history.error("history not saved: the existing file could not be read or backed up")
             return
         }
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(records) else { return }
+        let data: Data
+        do {
+            data = try encoder.encode(records)
+        } catch {
+            saveFailed = true
+            Log.history.error("history not saved: encoding failed: \(error.localizedDescription, privacy: .public)")
+            return
+        }
         // Atomic: a crash mid-write must not corrupt the whole history, and a
         // failed write leaves the previous file as it was.
         do {
             try data.write(to: fileURL, options: .atomic)
         } catch {
+            saveFailed = true
             Log.history.error("history save failed: \(error.localizedDescription, privacy: .public)")
             return
         }
+        diskState = .owned
         // After the write, never before — the atomic rename above replaces
         // the file, and with it any mode already set on the old one.
-        PrivateFiles.protectWrittenFile(fileURL)
-        diskState = .owned
+        saveFailed = !PrivateFiles.protectWrittenFile(fileURL)
+        if saveFailed {
+            Log.history.error("history saved, but could not be made owner-only and excluded from backups")
+        }
     }
 }
 

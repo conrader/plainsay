@@ -27,9 +27,6 @@ enum HistoryFile {
         case unreadable
     }
 
-    /// Suffix for damage backups: `history.json.damaged-<UTC timestamp>`.
-    static let backupMarker = ".damaged-"
-
     static func load(from url: URL) -> LoadResult {
         let path = url.path
         // `fileExists` is false for a dangling symlink; `attributesOfItem`
@@ -113,66 +110,5 @@ enum HistoryFile {
 
     private static func isWhitespace(_ byte: UInt8) -> Bool {
         byte == 0x20 || byte == 0x09 || byte == 0x0A || byte == 0x0D
-    }
-
-    /// Copies `original` beside `url` as `<name>.damaged-<timestamp>[-n]`, and
-    /// returns where it went — or nil if no verified copy could be made.
-    ///
-    /// Never overwrites anything: `copyItem` refuses an existing destination,
-    /// and a clash moves on to the next suffix. The copy is read back and
-    /// compared, so a short or failed write is not mistaken for a backup. If a
-    /// backup with identical bytes already exists — the same damaged file seen
-    /// on an earlier launch — that one is reused rather than piling up copies.
-    static func backUp(_ url: URL, original: Data, now: Date) -> URL? {
-        let directory = url.deletingLastPathComponent()
-        let prefix = url.lastPathComponent + backupMarker
-
-        if let existing = existingBackup(in: directory, prefix: prefix, matching: original) {
-            return existing
-        }
-
-        let stamp = timestamp(now)
-        for attempt in 0..<100 {
-            let name = prefix + stamp + (attempt == 0 ? "" : "-\(attempt)")
-            let destination = directory.appendingPathComponent(name)
-            guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
-            do {
-                try FileManager.default.copyItem(at: url, to: destination)
-            } catch {
-                // A clash raced in between the check and the copy: try the
-                // next name. Anything else will not get better by retrying.
-                if FileManager.default.fileExists(atPath: destination.path) { continue }
-                return nil
-            }
-            PrivateFiles.protectWrittenFile(destination)
-            // The file may have changed between our read and the copy; only a
-            // copy of exactly what we failed to decode counts.
-            guard (try? Data(contentsOf: destination)) == original else { return nil }
-            return destination
-        }
-        return nil
-    }
-
-    private static func existingBackup(in directory: URL, prefix: String, matching original: Data) -> URL? {
-        guard let names = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else {
-            return nil
-        }
-        for name in names.sorted() where name.hasPrefix(prefix) {
-            let candidate = directory.appendingPathComponent(name)
-            if let size = (try? FileManager.default.attributesOfItem(atPath: candidate.path))?[.size] as? NSNumber,
-               size.intValue != original.count {
-                continue
-            }
-            if (try? Data(contentsOf: candidate)) == original { return candidate }
-        }
-        return nil
-    }
-
-    static func timestamp(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        formatter.dateFormat = "yyyyMMdd'T'HHmmss'Z'"
-        return formatter.string(from: date)
     }
 }

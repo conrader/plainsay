@@ -10,19 +10,43 @@ import Foundation
 /// backup. Raised in an external review (#1).
 enum PrivateFiles {
     /// 0700 for a directory, 0600 for a file — owner only, no group, no other.
-    static func restrictToOwner(_ url: URL, isDirectory: Bool) {
+    /// Returns whether the mode was set.
+    @discardableResult
+    static func restrictToOwner(_ url: URL, isDirectory: Bool) -> Bool {
         let perms: NSNumber = isDirectory ? 0o700 : 0o600
-        try? FileManager.default.setAttributes(
+        return (try? FileManager.default.setAttributes(
             [.posixPermissions: perms], ofItemAtPath: url.path
-        )
+        )) != nil
     }
 
-    /// Marks the item so Time Machine and iCloud skip it.
-    static func excludeFromBackup(_ url: URL) {
+    /// Marks the item so Time Machine and iCloud skip it. Returns whether that
+    /// took; trivially true where there is no such backup to skip.
+    @discardableResult
+    static func excludeFromBackup(_ url: URL) -> Bool {
+        #if canImport(Darwin)
         var url = url
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
-        try? url.setResourceValues(values)
+        guard (try? url.setResourceValues(values)) != nil else { return false }
+        return isExcludedFromBackup(url)
+        #else
+        // Time Machine and iCloud backup exclusion are Apple-only concepts.
+        return true
+        #endif
+    }
+
+    /// Whether Time Machine and iCloud skip the item, itself or via its folder.
+    static func isExcludedFromBackup(_ url: URL) -> Bool {
+        #if canImport(Darwin)
+        func excluded(_ url: URL) -> Bool {
+            var url = url
+            url.removeCachedResourceValue(forKey: .isExcludedFromBackupKey)
+            return (try? url.resourceValues(forKeys: [.isExcludedFromBackupKey]))?.isExcludedFromBackup == true
+        }
+        return excluded(url) || excluded(url.deletingLastPathComponent())
+        #else
+        return true
+        #endif
     }
 
     /// Creates a directory that only the owner can enter, and that backups skip.
@@ -44,8 +68,13 @@ enum PrivateFiles {
     /// Has to run *after* the write, not before: `Data.write(options: .atomic)`
     /// writes a temporary file and renames it over the destination, so any
     /// mode set on the old file is replaced by the temporary file's own.
-    static func protectWrittenFile(_ url: URL) {
-        restrictToOwner(url, isDirectory: false)
-        excludeFromBackup(url)
+    ///
+    /// Returns whether both took, so a caller holding transcripts can say so
+    /// rather than assume it.
+    @discardableResult
+    static func protectWrittenFile(_ url: URL) -> Bool {
+        let restricted = restrictToOwner(url, isDirectory: false)
+        let excluded = excludeFromBackup(url)
+        return restricted && excluded
     }
 }
