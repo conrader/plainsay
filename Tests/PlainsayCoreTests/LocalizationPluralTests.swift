@@ -18,7 +18,7 @@ struct LocalizationPluralTests {
     private static let retentionDays = "history.retention.days"
 
     /// `language → (plural category → template)` for `key`.
-    private func variations(_ key: String = key) throws -> [String: [String: String]] {
+    private func variations(_ key: String = LocalizationPluralTests.key) throws -> [String: [String: String]] {
         let url = Self.repoRoot.appendingPathComponent("Sources/PlainsayApp/Resources/Localizable.xcstrings")
         let root = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
         let strings = try #require(root["strings"] as? [String: Any])
@@ -39,7 +39,7 @@ struct LocalizationPluralTests {
 
     /// Ships `key`'s catalog variations for `only` (every catalog language
     /// when nil), so a test can leave a language out and exercise fallback.
-    private func fixtureBundle(_ key: String = key, only: Set<String>? = nil) throws -> Bundle {
+    private func fixtureBundle(_ key: String = LocalizationPluralTests.key, only: Set<String>? = nil) throws -> Bundle {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("plainsay-plural-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -59,7 +59,7 @@ struct LocalizationPluralTests {
         return try #require(Bundle(path: dir.path))
     }
 
-    private func render(_ count: Int, _ language: String, _ bundle: Bundle, key: String = key) -> String {
+    private func render(_ count: Int, _ language: String, _ bundle: Bundle, key: String = LocalizationPluralTests.key) -> String {
         Localization.plural(key, table: "Localizable", fallback: "FALLBACK", count: count, language: language, root: bundle)
     }
 
