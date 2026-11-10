@@ -305,10 +305,13 @@ struct PrivateDictationSourceGuards {
         for path in ["Sources/PlainsayApp/VoiceEditWindowController.swift", "Sources/PlainsayApp/DictationCorrectionWindow.swift"] {
             let text = try source(path)
             #expect(!text.contains("editor.edit("), "\(path) calls the editor directly")
-            #expect(text.contains("gate.send(request, to: editor)"), "\(path) does not send through the gate")
+            #expect(text.contains("previewRequest.start(request, to: editor"), "\(path) does not send through the slot")
             #expect(text.contains(".check()"), "\(path) does not check the gate before building an editor")
-            #expect(text.contains("gate.track(Task"), "\(path) does not let arming cancel its request")
+            #expect(text.contains("previewRequest.cancel()"), "\(path) does not drop a cancelled Preview")
+            #expect(!text.contains("Task.checkCancellation()"), "\(path) can exit a Preview without settling busy")
         }
+        let slot = try source("Sources/PlainsayCore/HostedEditSlot.swift")
+        #expect(slot.contains("gate.send(request, to: editor)") && slot.contains("gate.track(Task"))
         #expect(try source("Sources/PlainsayApp/AppModel.swift").contains("editGate: coordinator.privateDictation.hostedEdits"))
     }
 
@@ -322,6 +325,7 @@ struct PrivateDictationSourceGuards {
             "Sources/PlainsayCore/DictationCoordinator+ModelStatus.swift",
             "Sources/PlainsayCore/DictationCoordinator+Private.swift",
             "Sources/PlainsayCore/HostedEditGate.swift",
+            "Sources/PlainsayCore/HostedEditSlot.swift",
             "Sources/PlainsayCore/PrivateDictation.swift",
             "Sources/PlainsayApp/HistoryView.swift",
             "Sources/PlainsayApp/VoiceEditWindowController.swift",

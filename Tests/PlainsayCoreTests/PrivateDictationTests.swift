@@ -113,7 +113,7 @@ struct PrivateHarness {
     }
 
     /// Settled = not recording, not busy, and the work unit has ended (the
-    /// frozen policy resets to `.standard` exactly then).
+    /// frozen policy resets to `.standard` exactly then). Fails the test on timeout.
     func settle(timeout: Duration = .seconds(2)) async throws {
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
@@ -123,6 +123,7 @@ struct PrivateHarness {
             }
             try await Task.sleep(for: .milliseconds(5))
         }
+        Issue.record("the coordinator did not settle within \(timeout): phase \(coordinator.phase), policy \(coordinator.sessionPolicy)")
     }
 
     func seedHistory() {
