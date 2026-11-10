@@ -97,4 +97,46 @@ struct ReplacementRuleLoadingTests {
         #expect(Set(loaded.map(\.id)).count == 3)
         #expect(loaded[2].id == ReplacementRuleSet.derivedID("duplicate\u{1F}\(shared.uuidString)\u{1F}kowalsky\u{1F}2"))
     }
+    @Test("Save and load bound the same bytes: a rule that saves always reloads, multi-byte and combining marks included")
+    func unicodeParity() throws {
+        let maxTo = ReplacementRuleValidator.maxToLength, maxFrom = ReplacementRuleValidator.maxFromLength
+        let maxBytes = maxTo * ReplacementRuleValidator.maxBytesPerCharacter
+        /// Saves the pair; returns whether it saved and whether the stored rule survives a reload.
+        func roundTrip(_ from: String, _ to: String) throws -> (saved: Bool, reloaded: Bool) {
+            var rules = ReplacementRuleSet()
+            guard let saved = rules.save(from: from, to: to, source: .manual, vocabulary: []) else { return (false, false) }
+            let loaded = try JSONDecoder().decode(ReplacementRuleSet.self, from: JSONEncoder().encode(rules))
+            return (true, loaded.rules.map { [$0.id.uuidString, $0.from, $0.to] } == [[saved.id.uuidString, saved.from, saved.to]])
+        }
+        // Two characters (`x` and `y` plus combining acutes; `ý` has no precomposed
+        // form, so NFC keeps every mark): 2 + 2 bytes per mark.
+        func stacked(_ marks: Int) -> String { "x" + "y" + String(repeating: "\u{301}", count: marks) }
+        #expect(stacked((maxBytes - 2) / 2).utf8.count == maxBytes)
+        for marks in ((maxBytes - 2) / 2 - 2)...((maxBytes - 2) / 2 + 2) {
+            let result = try roundTrip("lumen tar", stacked(marks))
+            #expect(result.saved == result.reloaded, "marks \(marks)")
+            #expect(result.saved == (stacked(marks).utf8.count <= maxBytes), "marks \(marks)")
+        }
+        #expect(ReplacementRuleValidator.assess(from: "lumen tar", to: stacked((maxBytes - 2) / 2 + 1)) == .reject(.toTooLong))
+        // Two-byte letters at the character limit, both sides.
+        #expect(try roundTrip(String(repeating: "ż", count: maxFrom), "Zed") == (true, true))
+        #expect(try roundTrip(String(repeating: "ż", count: maxFrom + 1), "Zed") == (false, false))
+        #expect(try roundTrip("lumen tar", String(repeating: "ż", count: maxTo)) == (true, true))
+        #expect(try roundTrip("lumen tar", String(repeating: "ż", count: maxTo + 1)) == (false, false))
+        // Decomposed input is stored precomposed and reloads unchanged.
+        let decomposed = String(repeating: "e\u{301}", count: maxTo)
+        #expect(decomposed.unicodeScalars.count == 2 * maxTo)
+        var rules = ReplacementRuleSet()
+        let savedRule = rules.save(from: "lumen tar", to: decomposed, source: .manual, vocabulary: [])
+        let saved = try #require(savedRule)
+        #expect(saved.to.unicodeScalars.count == maxTo)
+        #expect(try roundTrip("lumen tar", decomposed) == (true, true))
+        // A retired copy of a saved target reloads too.
+        rules.remove(id: saved.id, now: Date(timeIntervalSinceReferenceDate: 1))
+        let stackedSaved = rules.save(from: "acme", to: stacked((maxBytes - 2) / 2), source: .manual, vocabulary: [])
+        let stackedRule = try #require(stackedSaved)
+        rules.remove(id: stackedRule.id, now: Date(timeIntervalSinceReferenceDate: 2))
+        let reloaded = try JSONDecoder().decode(ReplacementRuleSet.self, from: JSONEncoder().encode(rules))
+        #expect(reloaded.retiredTargets == rules.retiredTargets && reloaded.retiredTargets.count == 2)
+    }
 }

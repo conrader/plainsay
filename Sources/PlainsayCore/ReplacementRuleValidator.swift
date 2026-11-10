@@ -53,8 +53,10 @@ public enum ReplacementRuleValidator {
         let caseOnly = from.lowercased() == to.lowercased()
         if !caseOnly, contains(to, phrase: from) { return .reject(.containsFrom) }
         let fromWords = words(from), toWords = words(to)
-        if fromWords.count > maxFromWords || from.count > maxFromLength { return .reject(.fromTooLong) }
-        if toWords.count > maxToWords || to.count > maxToLength { return .reject(.toTooLong) }
+        // `rawWithinSize` on the normalized phrase, exactly what `save` stores
+        // and loading re-checks, so a pair that saves always reloads.
+        if fromWords.count > maxFromWords || !rawWithinSize(from, max: maxFromLength) { return .reject(.fromTooLong) }
+        if toWords.count > maxToWords || !rawWithinSize(to, max: maxToLength) { return .reject(.toTooLong) }
         let fromSignificant = from.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) }.count
         if fromWords.count == 1, fromSignificant < 3 { return .reject(.tooShort) }
         let fromKey = TermDictionary.foldedKey(from)
@@ -97,7 +99,8 @@ public enum ReplacementRuleValidator {
     /// A stored phrase is at most `max` characters before normalization,
     /// padding included: `save` stores normalized text, so anything longer
     /// is not ours. The UTF-8 size is checked first (constant time for a
-    /// native string) so a huge value is refused without walking it.
+    /// native string) so a huge value is refused without walking it. `assess`
+    /// applies the same check to the normalized phrase `save` writes.
     static func rawWithinSize(_ raw: String, max: Int) -> Bool {
         raw.utf8.count <= max * maxBytesPerCharacter && raw.count <= max
     }
