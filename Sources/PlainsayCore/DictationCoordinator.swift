@@ -89,6 +89,14 @@ public final class DictationCoordinator {
     /// Recording, transcription, and crash recovery all retain the current
     /// engine. A model change waits until every such use has finished.
     private var activeEngineWork = 0
+    /// Whether a work unit or correction may still write History, possibly
+    /// from a rule set frozen before the last rule edit. Retired rule targets
+    /// are not pruned meanwhile (`pruningRetiredTargets`). The frozen policy
+    /// lives exactly as long as `activeEngineWork > 0`, and every History
+    /// write happens before it ends.
+    public var mayStillWriteHistory: Bool {
+        activeEngineWork > 0 || isCapturingCorrection || isApplyingCorrection
+    }
     private var engineIdleWaiters: [CheckedContinuation<Void, Never>] = []
     /// Reloads form a short serial queue. This prevents an old FluidAudio
     /// cleanup from racing a newer model load through its shared Core ML cache.

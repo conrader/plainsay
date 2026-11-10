@@ -61,15 +61,18 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
     /// Targets of deleted or retargeted rules that History may still hold
     /// (`ReplacementRuleRetirement.swift`).
     public var retiredTargets: [RetiredRuleTarget]
+    /// Set while a forgotten retired target may still be in History.
+    public var retiredOverflow: RetiredOverflow?
 
     public init(isEnabled: Bool = true, rules: [ReplacementRule] = [],
-                retiredTargets: [RetiredRuleTarget] = []) {
+                retiredTargets: [RetiredRuleTarget] = [], retiredOverflow: RetiredOverflow? = nil) {
         self.isEnabled = isEnabled
         self.rules = rules
         self.retiredTargets = retiredTargets
+        self.retiredOverflow = retiredOverflow
     }
 
-    private enum CodingKeys: String, CodingKey { case isEnabled, rules, retiredTargets }
+    private enum CodingKeys: String, CodingKey { case isEnabled, rules, retiredTargets, retiredOverflow }
 
     /// Lossy on purpose. `PlainsaySettings.decode` falls back to an empty value
     /// on any error, and the next save would then erase every rule the user
@@ -77,24 +80,34 @@ public struct ReplacementRuleSet: Codable, Sendable, Equatable {
     /// Only the structural bounds are re-checked (`loadable`); the offer-level
     /// checks `save` runs (identical, contained, vocabulary...) are not.
     /// At most `rawElementLimit` stored elements of each list are decoded.
+    /// Retired targets that cannot all be kept, or an unreadable overflow
+    /// marker, load as an unsettled `retiredOverflow` (conservative).
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         isEnabled = (try? c.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
-        rules = Self.loadable(Self.decodeBounded(LossyReplacementRule.self, c, .rules).compactMap(\.rule))
-        retiredTargets = Self.loadableRetired(Self.decodeBounded(LossyRetiredTarget.self, c, .retiredTargets)
-            .compactMap(\.target))
+        rules = Self.loadable(Self.decodeBounded(LossyReplacementRule.self, c, .rules).items.compactMap(\.rule))
+        let stored = Self.decodeBounded(LossyRetiredTarget.self, c, .retiredTargets)
+        let retired = Self.loadableRetired(stored.items.compactMap(\.target))
+        retiredTargets = retired.kept
+        if c.contains(.retiredOverflow) {
+            retiredOverflow = (try? c.decode(RetiredOverflow.self, forKey: .retiredOverflow)) ?? RetiredOverflow()
+        } else {
+            retiredOverflow = nil
+        }
+        if stored.truncated || retired.dropped { retiredOverflow = RetiredOverflow() }
     }
 
     /// Up to `rawElementLimit` elements of the list under `key`; elements
-    /// past it are never decoded. A missing or non-list value is empty.
+    /// past it are never decoded (`truncated`). A missing or non-list value
+    /// is empty.
     private static func decodeBounded<T: Decodable>(_ type: T.Type, _ c: KeyedDecodingContainer<CodingKeys>,
-                                                    _ key: CodingKeys) -> [T] {
-        guard var list = try? c.nestedUnkeyedContainer(forKey: key) else { return [] }
+                                                    _ key: CodingKeys) -> (items: [T], truncated: Bool) {
+        guard var list = try? c.nestedUnkeyedContainer(forKey: key) else { return ([], false) }
         var items: [T] = []
         while !list.isAtEnd, items.count < rawElementLimit, let item = try? list.decode(T.self) {
             items.append(item)
         }
-        return items
+        return (items, !list.isAtEnd)
     }
 
     // MARK: Lookup and editing

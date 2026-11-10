@@ -190,13 +190,19 @@ struct ReplacementRulesPipelineTests {
         try await h.dictate {
             h.settings.replacementRules.setEnabled(false, id: kube.id)
             h.settings.replacementRules.remove(id: lumenta.id)
+            // Mid-recording the frozen set may still write: pruning changes nothing.
+            #expect(h.coordinator.mayStillWriteHistory)
+            let early = h.settings.replacementRules
+            #expect(early.pruningRetiredTargets(history: [], workInFlight: h.coordinator.mayStillWriteHistory) == early)
         }
+        try await h.waitUntil { !h.coordinator.mayStillWriteHistory }
         #expect(h.history.records.map(\.text) == Array(repeating: "we run Kubernetes and Lumenta daily", count: 2))
         let proposed = DictionaryProposer.propose(from: h.history.records).map(\.term)
         #expect(Set(proposed) == ["Kubernetes", "Lumenta"])
         #expect(h.settings.replacementRules.excludingTargets(from: DictionaryProposer.propose(from: h.history.records)).isEmpty)
-        let pruned = h.settings.replacementRules.pruningRetiredTargets(history: h.history.records)
-        #expect(pruned.retiredTargets.map(\.to) == ["Lumenta"])
+        let pruned = h.settings.replacementRules.pruningRetiredTargets(
+            history: h.history.records, workInFlight: h.coordinator.mayStillWriteHistory)
+        #expect(pruned.retiredTargets.map(\.to) == ["Lumenta"])   // History still holds it
     }
 
     @Test("21. The correction-command transcript is returned without rules")

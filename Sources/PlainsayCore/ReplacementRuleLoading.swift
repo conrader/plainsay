@@ -36,16 +36,17 @@ extension ReplacementRuleSet {
 
     /// Retired targets within the `to` length limit, one per folded target
     /// (the last stored wins, as `retire` keeps the newest), at most
-    /// `retiredLimit`, newest kept.
-    static func loadableRetired(_ decoded: [RetiredRuleTarget]) -> [RetiredRuleTarget] {
+    /// `retiredLimit`, newest kept; `dropped` when a distinct target did not
+    /// fit, so the caller marks `retiredOverflow`.
+    static func loadableRetired(_ decoded: [RetiredRuleTarget]) -> (kept: [RetiredRuleTarget], dropped: Bool) {
         var seen = Set<String>(), kept: [RetiredRuleTarget] = []
         for entry in decoded.reversed() {
             let key = TermDictionary.foldedKey(entry.to)
             guard !key.isEmpty, seen.insert(key).inserted else { continue }
+            guard kept.count < retiredLimit else { return (kept.reversed(), true) }
             kept.append(entry)
-            if kept.count == retiredLimit { break }
         }
-        return kept.reversed()
+        return (kept.reversed(), false)
     }
 
     /// A UUID that depends only on `seed` (two FNV-1a 64-bit hashes, version

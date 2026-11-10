@@ -15,23 +15,33 @@ public struct RetiredRuleTarget: Codable, Sendable, Equatable {
     }
 }
 
+/// Set when a retired target had to be forgotten (the list was full, or a
+/// stored list was longer than `retiredLimit`). The forgotten target may
+/// still be in History, so while this is set no History-derived Vocabulary
+/// proposal is offered at all. `settledAt` is the first prune at which no
+/// dictation could still write History: every record a forgotten rule wrote
+/// is then dated at or before it, so the flag clears once History holds no
+/// record that old.
+public struct RetiredOverflow: Codable, Sendable, Equatable {
+    public var settledAt: Date?
+
+    public init(settledAt: Date? = nil) { self.settledAt = settledAt }
+}
+
 extension ReplacementRuleSet {
-    /// At most this many retired targets are kept, oldest dropped first.
+    /// At most this many retired targets are kept. Forgetting one more sets
+    /// `retiredOverflow` instead of silently reopening its exclusion.
     public static let retiredLimit = 200
 
-    /// How long after retirement a dictation that froze the old rule set
-    /// (SPEC.fixed.md §3.3) can still write to History: the 10-minute
-    /// recording cap plus transcription and Polishing, rounded up generously.
-    public static let retirementGrace: TimeInterval = 60 * 60
-
     /// Records `target` as retired now; an earlier entry for the same folded
-    /// target is replaced, so the newest (longest-lived) date wins.
+    /// target is replaced, so the newest date wins.
     mutating func retire(_ target: String, now: Date) {
         let key = TermDictionary.foldedKey(target)
         retiredTargets.removeAll { TermDictionary.foldedKey($0.to) == key }
         retiredTargets.append(RetiredRuleTarget(to: target, retiredAt: now))
         if retiredTargets.count > Self.retiredLimit {
             retiredTargets.removeFirst(retiredTargets.count - Self.retiredLimit)
+            retiredOverflow = RetiredOverflow()   // a new unknown; any earlier settling no longer holds
         }
     }
 
@@ -47,30 +57,51 @@ extension ReplacementRuleSet {
     public func hasTarget(matching term: String) -> Bool {
         let key = TermDictionary.foldedKey(term)
         guard !key.isEmpty else { return false }
-        func writes(_ target: String) -> Bool {
-            TermDictionary.foldedKey(target) == key
-                || DictionaryProposer.words(in: target).contains { TermDictionary.foldedKey($0) == key }
-        }
-        return rules.contains { writes($0.to) } || retiredTargets.contains { writes($0.to) }
+        return rules.contains { Self.targetKeys($0.to).contains(key) }
+            || retiredTargets.contains { Self.targetKeys($0.to).contains(key) }
     }
 
-    /// `proposals` without any term a rule wrote or may have written.
+    /// `proposals` without any term a rule wrote or may have written. Empty
+    /// while `retiredOverflow` is set: a forgotten target cannot be named.
     public func excludingTargets(from proposals: [DictionaryProposal]) -> [DictionaryProposal] {
-        proposals.filter { !hasTarget(matching: $0.term) }
+        guard retiredOverflow == nil else { return [] }
+        return proposals.filter { !hasTarget(matching: $0.term) }
     }
 
-    /// A copy without retired targets whose text can no longer be in
-    /// History: the grace for in-flight dictations has passed and no
-    /// retained record is old enough to have been written by the rule.
-    /// Over-keeping only hides a proposal; under-keeping could leak a rule
-    /// target into Vocabulary, so every doubt keeps the entry.
-    public func pruningRetiredTargets(history: [TranscriptRecord], now: Date = Date()) -> ReplacementRuleSet {
+    /// A copy without retired targets whose text can no longer reach the
+    /// proposer. Nothing changes while `workInFlight` (a dictation or
+    /// correction that may still write History from a rule set frozen before
+    /// the retirement; `DictationCoordinator.mayStillWriteHistory`). Otherwise
+    /// every rule snapshot that held the retired rule has finished writing,
+    /// later dictations froze sets without it, and recovery uses the live set,
+    /// so History is the only place its output can be: an entry is kept while
+    /// any retained record contains its whole target or one of its words, by
+    /// the same split and folding as `hasTarget`, and pruned once retention
+    /// has removed them all. No time bound is assumed. Over-keeping only
+    /// hides a proposal; every doubt keeps the entry.
+    public func pruningRetiredTargets(history: [TranscriptRecord], workInFlight: Bool,
+                                      now: Date = Date()) -> ReplacementRuleSet {
+        guard !workInFlight else { return self }
+        var present = Set<String>()
+        for record in history {
+            present.insert(TermDictionary.foldedKey(record.text))
+            for word in DictionaryProposer.words(in: record.text) { present.insert(TermDictionary.foldedKey(word)) }
+        }
         var copy = self
-        copy.retiredTargets.removeAll { entry in
-            let lastWrite = entry.retiredAt.addingTimeInterval(Self.retirementGrace)
-            guard now > lastWrite else { return false }
-            return !history.contains { $0.date <= lastWrite }
+        copy.retiredTargets.removeAll { Self.targetKeys($0.to).isDisjoint(with: present) }
+        if var overflow = copy.retiredOverflow {
+            let settledAt = overflow.settledAt ?? now
+            overflow.settledAt = settledAt
+            copy.retiredOverflow = history.contains { $0.date <= settledAt } ? overflow : nil
         }
         return copy
+    }
+
+    /// The folded whole target and its folded words, as `hasTarget` matches.
+    static func targetKeys(_ target: String) -> Set<String> {
+        var keys = Set(DictionaryProposer.words(in: target).map(TermDictionary.foldedKey))
+        keys.insert(TermDictionary.foldedKey(target))
+        keys.remove("")
+        return keys
     }
 }

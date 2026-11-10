@@ -80,10 +80,11 @@ extension SpeechSettings {
     }
 
     /// Storage hygiene only: a retired target stays excluded until History
-    /// can no longer hold text its rule wrote. Assigns only on a change, so
-    /// opening Settings does not rewrite the rules.
+    /// no longer holds its text and no dictation is still writing. Assigns
+    /// only on a change, so opening Settings does not rewrite the rules.
     private func pruneRetiredRuleTargets() {
-        let pruned = settings.replacementRules.pruningRetiredTargets(history: coordinator.history.records)
+        let pruned = settings.replacementRules.pruningRetiredTargets(
+            history: coordinator.history.records, workInFlight: coordinator.mayStillWriteHistory)
         if pruned != settings.replacementRules { settings.replacementRules = pruned }
     }
 
