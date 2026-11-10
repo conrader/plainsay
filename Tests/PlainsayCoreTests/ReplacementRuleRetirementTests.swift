@@ -172,10 +172,13 @@ struct ReplacementRuleRetirementTests {
     @Test("Clock rollback: History dated after the prune still holds the overflow (reviewer counterexample)")
     func overflowClockRollback() {
         let rules = overflowed()
-        // Records written at t0 + 1000; the clock is then set back and the prune runs "at" t0.
-        let history = ruledHistory(at: t0 + 1_000)
+        // The clock was set back after these were written: they are dated a
+        // year after the real now at which this prune runs. Settling on a
+        // wall-clock date (keep while a record is dated at or before now)
+        // would clear the overflow here and offer the forgotten target.
+        let history = ruledHistory(at: Date() + 365 * 86_400)
         let pruned = rules.pruningRetiredTargets(history: history, workInFlight: false)
-        #expect(pruned.retiredOverflow != nil)
+        #expect(pruned.retiredOverflow == RetiredOverflow(pendingRecords: history.map(\.id)))
         #expect(!pruned.retiredTargets.contains { $0.to == "Lumenta Studio" })
         #expect(offered(history, pruned).isEmpty)
         // A second prune, and a reload, keep it while either record remains.
@@ -184,7 +187,7 @@ struct ReplacementRuleRetirementTests {
         let reloaded = try? JSONDecoder().decode(ReplacementRuleSet.self, from: JSONEncoder().encode(again))
         #expect(reloaded == again)
         // Clock jumped forward instead: records dated in the far past still hold it.
-        let old = ruledHistory(at: t0 - 1_000_000)
+        let old = ruledHistory(at: Date() - 10 * 365 * 86_400)
         #expect(offered(old, rules.pruningRetiredTargets(history: old, workInFlight: false)).isEmpty)
     }
 
