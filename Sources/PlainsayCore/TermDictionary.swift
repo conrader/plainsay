@@ -257,7 +257,9 @@ public struct TermDictionary: Codable, Sendable, Equatable {
                     previous[j - 1] + cost
                 )
             }
-            previous = current
+            // Reuse both row buffers. Assignment would share their storage
+            // and force a copy when current[0] is written on the next row.
+            swap(&previous, &current)
         }
         return previous[b.count]
     }
