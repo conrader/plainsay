@@ -76,6 +76,15 @@ public final class TranscriptHistory {
     /// the age window — may still be on disk. `retryDeletion()` retries it, as
     /// do Clear, turning history off again, and every retention pass.
     public var deletionFailed: Bool { purgeFailed || retentionFailed || expiredOnDisk }
+
+    /// Absence from `records` does not prove absence from disk while a read,
+    /// backup, save or deletion is unresolved. A later recovery (or relaunch)
+    /// can expose older text. Consumers must not forget exclusions based on
+    /// the in-memory records alone until this is false.
+    public var hasUnresolvedDiskContents: Bool {
+        diskState != .owned || saveFailed || deletionFailed
+    }
+
     /// Clear or the off switch did not remove everything.
     private var purgeFailed = false
     /// The last pass over the backups and stages left something behind.

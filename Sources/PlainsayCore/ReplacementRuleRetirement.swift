@@ -91,6 +91,18 @@ extension ReplacementRuleSet {
         return proposals.filter { !hasTarget(matching: $0.term) }
     }
 
+    /// The live-store entry point: missing in-memory records cannot justify
+    /// forgetting a target while recovery or a failed deletion/save could
+    /// bring its text back. Keep overflow markers unsettled for the same reason.
+    @MainActor
+    public func pruningRetiredTargets(history: TranscriptHistory, workInFlight: Bool,
+                                      index: RetiredTargetHistoryIndex? = nil) -> ReplacementRuleSet {
+        guard !history.hasUnresolvedDiskContents else { return self }
+        return pruningRetiredTargets(history: history.records, workInFlight: workInFlight, index: index)
+    }
+
+    /// For a resolved snapshot only; live-store callers must use the overload
+    /// taking `TranscriptHistory` so disk uncertainty is checked as well.
     /// A copy without retired targets whose text can no longer reach the
     /// proposer. Nothing changes while `workInFlight` (a dictation or
     /// correction that may still write History from a rule set frozen before

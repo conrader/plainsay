@@ -83,23 +83,26 @@ extension SpeechSettings {
         // a dictation ending (flag and ids change together) prunes once.
         .onChange(of: PruneTrigger(
             workInFlight: coordinator.mayStillWriteHistory,
+            unresolvedDiskContents: coordinator.history.hasUnresolvedDiskContents,
             recordIDs: coordinator.history.records.map(\.id)
         )) { pruneRetiredRuleTargets() }
     }
 
     private struct PruneTrigger: Equatable {
         let workInFlight: Bool
+        let unresolvedDiskContents: Bool
         let recordIDs: [UUID]
     }
 
     /// Storage hygiene only: a retired target stays excluded until History
-    /// no longer holds its text and no dictation is still writing. Assigns
+    /// no longer holds its text, disk contents are resolved, and no dictation
+    /// is still writing. Assigns
     /// only on a change, so opening Settings does not rewrite the rules.
     /// Synchronous on the main actor: History and the in-flight flag are read
     /// and the result stored with no suspension in between.
     private func pruneRetiredRuleTargets() {
         let pruned = settings.replacementRules.pruningRetiredTargets(
-            history: coordinator.history.records, workInFlight: coordinator.mayStillWriteHistory,
+            history: coordinator.history, workInFlight: coordinator.mayStillWriteHistory,
             index: retiredTargetIndex)
         if pruned != settings.replacementRules { settings.replacementRules = pruned }
     }
