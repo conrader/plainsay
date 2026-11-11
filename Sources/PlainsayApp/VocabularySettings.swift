@@ -76,6 +76,32 @@ extension SpeechSettings {
                 }
             }
         }
+        .onAppear(perform: pruneRetiredRuleTargets)
+        // Retried while open: a prune refused during work, or History
+        // retention dropping records, must not leave the overflow fallback
+        // hiding every suggestion until Vocabulary is reopened. One key, so
+        // a dictation ending (flag and ids change together) prunes once.
+        .onChange(of: PruneTrigger(
+            workInFlight: coordinator.mayStillWriteHistory,
+            recordIDs: coordinator.history.records.map(\.id)
+        )) { pruneRetiredRuleTargets() }
+    }
+
+    private struct PruneTrigger: Equatable {
+        let workInFlight: Bool
+        let recordIDs: [UUID]
+    }
+
+    /// Storage hygiene only: a retired target stays excluded until History
+    /// no longer holds its text and no dictation is still writing. Assigns
+    /// only on a change, so opening Settings does not rewrite the rules.
+    /// Synchronous on the main actor: History and the in-flight flag are read
+    /// and the result stored with no suspension in between.
+    private func pruneRetiredRuleTargets() {
+        let pruned = settings.replacementRules.pruningRetiredTargets(
+            history: coordinator.history.records, workInFlight: coordinator.mayStillWriteHistory,
+            index: retiredTargetIndex)
+        if pruned != settings.replacementRules { settings.replacementRules = pruned }
     }
 
     private var vocabularyExplanation: String {
@@ -92,20 +118,25 @@ extension SpeechSettings {
     }
 
     /// Terms worth offering: recurring in the speaker's own dictations, not
-    /// already in the vocabulary, and not previously turned down.
+    /// already in the vocabulary, not previously turned down, and not written
+    /// by a replacement rule (enabled, disabled or retired).
     private var termProposals: [DictionaryProposal] {
         let dismissed = Set(settings.dismissedTermProposals.map { $0.lowercased() })
-        return DictionaryProposer.propose(
+        let proposals = DictionaryProposer.propose(
             from: coordinator.history.records,
             existing: settings.dictionary
         )
         .filter { !dismissed.contains($0.term.lowercased()) }
+        // History holds post-rule text: a rule target is not a new term.
+        return settings.replacementRules.excludingTargets(from: proposals)
     }
 
     private static func occurrenceSummary(_ count: Int) -> String {
-        count == 1
-            ? Localization.appString("settings.vocabulary.oneDictation", fallback: "in 1 dictation")
-            : Localization.appFormat("settings.vocabulary.manyDictations", fallback: "in %d dictations", count)
+        Localization.appPlural(
+            "settings.vocabulary.dictationCount",
+            fallback: count == 1 ? "in 1 dictation" : "in \(count) dictations",
+            count: count
+        )
     }
 
     private func accept(_ proposal: DictionaryProposal) {

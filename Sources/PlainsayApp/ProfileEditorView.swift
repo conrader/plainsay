@@ -183,10 +183,12 @@ struct ProfileEditor: View {
             let overflow = profile.wrappedValue.overflowCount(defaultDictionary: settings.dictionary)
             if overflow > 0 {
                 Text(
-                    Localization.appFormat(
+                    Localization.appPlural(
                         "profiles.vocabulary.overflow",
-                        fallback: "%d terms may not fit in the speech hint; they still get local corrections.",
-                        overflow
+                        fallback: overflow == 1
+                            ? "1 term may not fit in the speech hint; it still gets local corrections."
+                            : "\(overflow) terms may not fit in the speech hint; they still get local corrections.",
+                        count: overflow
                     )
                 )
                 .font(.caption)
@@ -218,12 +220,12 @@ struct ProfileEditor: View {
                     Text(inherit).tag(DictationProfile.LayoutOverride.inherit)
                     Text(Localization.appString("profiles.email.composers", fallback: "In mail composers"))
                         .tag(DictationProfile.LayoutOverride.composers)
-                    Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.LayoutOverride.off)
+                    Text(Localization.appString("profiles.email.off", fallback: "Off")).tag(DictationProfile.LayoutOverride.off)
                 }
                 .disabled(polishingOff)
                 Picker(Localization.appString("profiles.translation", fallback: "Translation"), selection: profile.translation) {
                     Text(inherit).tag(DictationProfile.TranslationOverride.inherit)
-                    Text(Localization.appString("profiles.off", fallback: "Off")).tag(DictationProfile.TranslationOverride.off)
+                    Text(Localization.appString("profiles.translation.off", fallback: "Off")).tag(DictationProfile.TranslationOverride.off)
                     ForEach(translationTargets, id: \.self) { code in
                         Text(verbatim: "→ \(SupportedLanguage.named(code))").tag(DictationProfile.TranslationOverride.target(code))
                     }

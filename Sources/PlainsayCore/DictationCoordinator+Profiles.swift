@@ -12,7 +12,8 @@ extension DictationCoordinator {
             dictionary: settings.dictionary,
             cleanupEnabled: settings.cleanupEnabled,
             emailModeEnabled: settings.emailModeEnabled,
-            translationTargetLanguage: settings.translationTargetLanguage
+            translationTargetLanguage: settings.translationTargetLanguage,
+            replacementRules: settings.replacementRules
         )
     }
 

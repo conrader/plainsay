@@ -78,6 +78,11 @@ public struct DictationSessionPolicy: Sendable, Equatable {
     /// HUD chip says so, because the chord/menu change only the global value.
     public let translationSuppressedByProfile: Bool
     public let output: DictationOutput
+    /// Remember-correction rules (SPEC.fixed.md §3.3), frozen like
+    /// `dictionary`: a rule added, changed, disabled or deleted while
+    /// recording or Polishing applies from the next dictation. Local, so
+    /// privacy keeps them.
+    public let replacementRules: ReplacementRuleSet
 
     private init(privacy: DictationPrivacy, defaults: DictationDefaults, profile: DictationProfile?) {
         let standard = privacy == .standard
@@ -93,6 +98,7 @@ public struct DictationSessionPolicy: Sendable, Equatable {
         profileID = profile?.id
         profileName = profile?.name
         dictionary = TermDictionary(terms: (profile?.extraTerms ?? []) + defaults.dictionary.terms)
+        replacementRules = defaults.replacementRules
 
         // Polishing: privacy, then the profile (Off only, Q3), then the
         // Default switch frozen here. Provider/key stay live in `makeCleaner`,
@@ -164,17 +170,20 @@ public struct DictationDefaults: Sendable, Equatable {
     public var cleanupEnabled: Bool
     public var emailModeEnabled: Bool
     public var translationTargetLanguage: String?
+    public var replacementRules: ReplacementRuleSet
 
     public init(
         dictionary: TermDictionary = TermDictionary(),
         cleanupEnabled: Bool = true,
         emailModeEnabled: Bool = false,
-        translationTargetLanguage: String? = nil
+        translationTargetLanguage: String? = nil,
+        replacementRules: ReplacementRuleSet = ReplacementRuleSet()
     ) {
         self.dictionary = dictionary
         self.cleanupEnabled = cleanupEnabled
         self.emailModeEnabled = emailModeEnabled
         self.translationTargetLanguage = translationTargetLanguage
+        self.replacementRules = replacementRules
     }
 
     /// Outside a session: nothing requested.

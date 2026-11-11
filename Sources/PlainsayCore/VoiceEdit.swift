@@ -70,11 +70,7 @@ public struct VoiceEditReview: Sendable {
     public var needsAttention: Bool { !removedDetails.isEmpty || !addedDetails.isEmpty }
 
     static func details(in text: String) -> Set<String> {
-        let regex = try! NSRegularExpression(pattern: #"https?://[^\s<>]+|[\w.+-]+@[\w.-]+\.[\p{L}]{2,}|[\p{Sc}]?\d+(?:[.,:/-]\d+)*(?:\s?%|[\p{Sc}])?"#)
-        let ns = text as NSString
-        var values = Set(regex.matches(in: text, range: NSRange(location: 0, length: ns.length)).map {
-            ns.substring(with: $0.range).trimmingCharacters(in: CharacterSet(charactersIn: ".,;!?"))
-        })
+        var values = StructuredDetails.values(in: text)
         let tagger = NLTagger(tagSchemes: [.nameType])
         tagger.string = text
         tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .nameType,

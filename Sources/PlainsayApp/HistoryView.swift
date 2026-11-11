@@ -188,7 +188,7 @@ struct HistoryView: View {
     private func label(forDays days: Int) -> String {
         days == 365
             ? Localization.appString("history.retention.year", fallback: "1 year")
-            : Localization.appFormat("history.retention.days", fallback: "%d days", days)
+            : Localization.appPlural("history.retention.days", fallback: "\(days) days", count: days)
     }
 }
 

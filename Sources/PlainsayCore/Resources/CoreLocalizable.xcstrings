@@ -2898,7 +2898,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prywatne dyktowanie jest w schowku. Nie ma go w Historii."
+            "value": "Dyktowanie prywatne jest w schowku. Nie ma go w Historii."
           }
         }
       }
@@ -2930,7 +2930,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nadal włączone: następne dyktowanie będzie prywatne."
+            "value": "Następne dyktowanie nadal będzie prywatne."
           }
         }
       }
@@ -5470,7 +5470,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zdalna mowa"
+            "value": "Mowa zdalna"
           }
         }
       }

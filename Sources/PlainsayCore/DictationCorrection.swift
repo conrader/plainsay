@@ -64,19 +64,35 @@ public enum DictationCorrectionCommand: Equatable, Sendable {
             return undoText
         case .rewrite: return nil
         case .replace(let from, let to):
-            // A bare number must not match one component of a time, decimal,
-            // date, or version ("change 10" must not silently edit "10:30").
-            let numeric = from.range(of: #"^[\p{Sc}]?\d+(?:[.,:/-]\d+)*%?$"#, options: .regularExpression) != nil
-            let prefix = numeric ? #"(?<![\p{N}][.,:/-])"# : ""
-            let suffix = numeric ? #"(?![.,:/-][\p{N}])"# : ""
-            let pattern = prefix + #"(?<![\p{L}\p{N}_])"# + NSRegularExpression.escapedPattern(for: from) + #"(?![\p{L}\p{N}_])"# + suffix
-            let regex = try NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
-            let source = original as NSString
-            let matches = regex.matches(in: original, range: NSRange(location: 0, length: source.length))
-            guard !matches.isEmpty else { throw DictationCorrectionError.noMatch }
-            guard matches.count == 1 else { throw DictationCorrectionError.ambiguousMatch }
-            return source.replacingCharacters(in: matches[0].range, with: to)
+            let range = try Self.singleMatch(of: from, in: original)
+            return (original as NSString).replacingCharacters(in: range, with: to)
         }
+    }
+
+    /// The surface text a `.replace` command matched in `original` ("Plain
+    /// Say" for "change plain say to Plainsay"), with the same matching and
+    /// errors as `localReplacement`. Nil for undo and rewrite.
+    public func matchedPhrase(in original: String) throws -> String? {
+        guard case .replace(let from, _) = self else { return nil }
+        return (original as NSString).substring(with: try Self.singleMatch(of: from, in: original))
+    }
+
+    /// Case-insensitive Unicode word boundaries. A bare number must not match
+    /// one component of a time, decimal, date, or version ("change 10" must
+    /// not silently edit "10:30").
+    static func boundedPattern(for from: String) -> String {
+        let numeric = from.range(of: #"^[\p{Sc}]?\d+(?:[.,:/-]\d+)*%?$"#, options: .regularExpression) != nil
+        let prefix = numeric ? #"(?<![\p{N}][.,:/-])"# : ""
+        let suffix = numeric ? #"(?![.,:/-][\p{N}])"# : ""
+        return prefix + #"(?<![\p{L}\p{N}_])"# + NSRegularExpression.escapedPattern(for: from) + #"(?![\p{L}\p{N}_])"# + suffix
+    }
+
+    private static func singleMatch(of from: String, in original: String) throws -> NSRange {
+        let regex = try NSRegularExpression(pattern: boundedPattern(for: from), options: [.caseInsensitive])
+        let matches = regex.matches(in: original, range: NSRange(location: 0, length: (original as NSString).length))
+        guard !matches.isEmpty else { throw DictationCorrectionError.noMatch }
+        guard matches.count == 1 else { throw DictationCorrectionError.ambiguousMatch }
+        return matches[0].range
     }
 }
 

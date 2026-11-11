@@ -89,6 +89,14 @@ public final class DictationCoordinator {
     /// Recording, transcription, and crash recovery all retain the current
     /// engine. A model change waits until every such use has finished.
     private var activeEngineWork = 0
+    /// Whether a work unit or correction may still write History, possibly
+    /// from a rule set frozen before the last rule edit. Retired rule targets
+    /// are not pruned meanwhile (`pruningRetiredTargets`). The frozen policy
+    /// lives exactly as long as `activeEngineWork > 0`, and every History
+    /// write happens before it ends.
+    public var mayStillWriteHistory: Bool {
+        activeEngineWork > 0 || isCapturingCorrection || isApplyingCorrection
+    }
     private var engineIdleWaiters: [CheckedContinuation<Void, Never>] = []
     /// Reloads form a short serial queue. This prevents an old FluidAudio
     /// cleanup from racing a newer model load through its shared Core ML cache.
@@ -256,7 +264,7 @@ public final class DictationCoordinator {
     /// Deliberately does not paste: by now the focus is somewhere else entirely,
     /// and a surprise paste minutes later is worse than none. The text lands in
     /// history, where it can be copied.
-    private func recoverInterruptedAudio() async {
+    func recoverInterruptedAudio() async {
         let pending = pendingAudio.recoverable()
         guard !pending.isEmpty,
               case .ready = modelState,
@@ -297,8 +305,9 @@ public final class DictationCoordinator {
 
             // Recovered audio has no target app — the window it was aimed at is
             // long gone — so there is nothing to detect email shape from.
-            let cleaned = (try? await makeCleaner(settings)
+            let polished = (try? await makeCleaner(settings)
                 .clean(raw, dictionary: settings.dictionary, style: .plain)) ?? raw
+            let cleaned = applyReplacementRules(settings.replacementRules, to: polished)
             history.add(TranscriptRecord(
                 text: cleaned, rawText: raw, outcome: .recovered,
                 durationSeconds: duration, targetApp: nil
@@ -1080,6 +1089,11 @@ public final class DictationCoordinator {
             usedRaw = true
             finalText = transcript
         }
+
+        // Replacement rules: local and exact, after Polishing so the provider
+        // saw the text before them, on the stage the user corrects. The set
+        // frozen at recording start, not the live one.
+        finalText = applyReplacementRules(policy.replacementRules, to: finalText)
 
         // Polishing is a remote LLM's output, not a fixed local transform —
         // unlike the ASR engines' own normalizeTranscript pass, nothing

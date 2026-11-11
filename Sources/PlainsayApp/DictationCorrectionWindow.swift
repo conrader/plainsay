@@ -16,6 +16,11 @@ final class DictationCorrectionModel {
     var ownsCapture = false
     var detailsReviewed = false
     var message: String?
+    /// "Remember this correction?" (remember-correction v1).
+    let remember: RememberCorrectionModel
+    /// The local `.replace` behind the current preview and the surface text it
+    /// matched, read before apply changes `dictation.text`.
+    private var pendingReplace: (command: DictationCorrectionCommand, matched: String?)?
     private var work: Task<Void, Never>?
     /// The running hosted Preview, on the live gate (the window may predate arming).
     private let previewRequest: HostedEditSlot
@@ -25,6 +30,7 @@ final class DictationCorrectionModel {
         self.coordinator = coordinator
         self.settings = settings
         self.previewRequest = HostedEditSlot(gate: coordinator.privateDictation.hostedEdits)
+        remember = RememberCorrectionModel(settings: settings)
     }
 
     var recording: Bool { ownsCapture && coordinator.phase == .recording }
@@ -42,6 +48,8 @@ final class DictationCorrectionModel {
         review = nil
         detailsReviewed = false
         message = nil
+        pendingReplace = nil
+        remember.dismissOffer()
     }
 
     func toggleRecording() {
@@ -93,6 +101,8 @@ final class DictationCorrectionModel {
             try gate.check()
             let command = try DictationCorrectionCommand.parse(instruction)
             let isUndo = command == .undo
+            if !isUndo { remember.reset() }
+            if case .replace = command { pendingReplace = (command, try? command.matchedPhrase(in: dictation.text)) }
             if let replacement = try command.localReplacement(in: dictation.text, undoText: dictation.undoText) {
                 show(replacement, isUndo: isUndo)
                 return
@@ -135,6 +145,14 @@ final class DictationCorrectionModel {
             do {
                 try await self.coordinator.applyCorrection(proposal, to: self.dictation)
                 self.message = proposal.isUndo ? "Undone in the original app." : "Corrected in the original app."
+                // Only here, after a verified apply: Copy correction and every
+                // thrown error never reach this line (SPEC §2.1, Q4).
+                if !proposal.isUndo, let pending = self.pendingReplace {
+                    self.remember.present(RememberCorrectionOffer.make(
+                        command: pending.command, matched: pending.matched, applied: true, isUndo: false,
+                        rules: self.settings.replacementRules, vocabulary: self.remember.vocabulary))
+                }
+                self.pendingReplace = nil
                 self.proposal = nil
                 self.review = nil
                 self.busy = false
@@ -273,6 +291,7 @@ private struct DictationCorrectionView: View {
             if let message = model.message {
                 Text(message).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
             }
+            RememberCorrectionCard(model: model.remember)
             Spacer(minLength: 0)
             Divider()
             Text(model.settings.cleanupProvider == .plainsay

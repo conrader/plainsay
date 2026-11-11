@@ -74,7 +74,10 @@ private struct GeneralSettings: View {
         let explanation = Localization.appString(
             "settings.emailMode.explanation",
             fallback: """
-                When you dictate into a mail app, or a webmail compose window, Plainsay lays the                 result out as an email: the greeting on its own line, paragraphs in the body, and                 the sign-off separated from it. It never adds a greeting or a sign-off you did not                 say. Everywhere else, dictation is unchanged.
+                When you dictate into a mail app, or a webmail compose window, Plainsay lays the \
+                result out as an email: the greeting on its own line, paragraphs in the body, and \
+                the sign-off separated from it. It never adds a greeting or a sign-off you did not \
+                say. Everywhere else, dictation is unchanged.
                 """
         )
         guard coordinator.cloud.account?.isActive == true else {
@@ -217,6 +220,8 @@ struct SpeechSettings: View {
     let coordinator: DictationCoordinator
     let voiceEnrollment: VoiceEnrollment
     @State var newTerm = ""
+    /// Folded History words reused by Vocabulary's retired-target prune.
+    @State var retiredTargetIndex = RetiredTargetHistoryIndex()
     @State private var asrKeyRevision = 0
     @State private var editingKeyRevision = 0
 
@@ -456,6 +461,7 @@ struct SpeechSettings: View {
             }
 
             vocabularySection
+            ReplacementRulesSection(settings: settings)
         }
         .formStyle(.grouped)
         .onChange(of: settings.model) {
