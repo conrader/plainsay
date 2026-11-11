@@ -70,6 +70,31 @@ struct LocalizationCatalogTests {
         #expect(forms(strings, "settings.emailMode.explanation", "en")[""]?.contains("  ") == false)
     }
 
+    @Test("History deletion and save warnings ship English and Polish without fallback")
+    func historyFailureKeys() throws {
+        let strings = try strings()
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Sources/PlainsayApp/HistoryView.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let keys = [
+            "history.deletionFailed", "history.disabledDescriptionNotDeleted", "history.retryDeletion",
+            "history.saveFailed", "history.saveUnprotected",
+        ]
+        for key in keys {
+            let english = try #require(forms(strings, key, "en")[""])
+            let polish = try #require(forms(strings, key, "pl")[""])
+            #expect(!english.isEmpty && !polish.isEmpty)
+            #expect(polish != english, "\(key) must be translated")
+            #expect(placeholders(polish) == placeholders(english), "\(key)")
+            // Match each key to its actual fallback, including multiline calls.
+            let pattern = NSRegularExpression.escapedPattern(for: "\"\(key)\",")
+                + "\\s*fallback: " + NSRegularExpression.escapedPattern(for: "\"\(english)\"")
+            #expect(source.range(of: pattern, options: .regularExpression) != nil, "\(key) fallback differs")
+        }
+        #expect(forms(strings, "history.saveFailed", "pl") != forms(strings, "history.saveUnprotected", "pl"))
+    }
+
     @Test("pl/ru/uk plural entries carry one, few, many and other")
     func slavicPluralCoverage() throws {
         let strings = try strings()

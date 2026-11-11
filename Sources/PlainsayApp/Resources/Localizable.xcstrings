@@ -10311,6 +10311,22 @@
         }
       }
     },
+    "history.deletionFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some dictations that should have been deleted are still on this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niektóre dyktowania, które powinny zostać usunięte, nadal znajdują się na tym Macu."
+          }
+        }
+      }
+    },
     "history.disabledDescription": {
       "localizations": {
         "de": {
@@ -10389,6 +10405,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "听写不会被保存，之前保存的内容也已删除。如果粘贴悄无声息地失败，Plainsay 将无法再找回这段听写，你需要重新说一遍。"
+          }
+        }
+      }
+    },
+    "history.disabledDescriptionNotDeleted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations are not being saved, but some saved before could not be deleted yet. Use Try again above."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania nie są zapisywane, ale nie udało się jeszcze usunąć niektórych wcześniej zapisanych. Użyj przycisku „Spróbuj ponownie” powyżej."
           }
         }
       }
@@ -11161,6 +11193,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "1 年"
+          }
+        }
+      }
+    },
+    "history.retryDeletion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spróbuj ponownie"
+          }
+        }
+      }
+    },
+    "history.saveFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent dictations could not be saved to disk. They are listed here only until Plainsay quits; the next dictation tries again."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie udało się zapisać ostatnich dyktowań na dysku. Są dostępne tutaj tylko do zamknięcia Plainsay; przy następnym dyktowaniu aplikacja ponowi próbę zapisu."
+          }
+        }
+      }
+    },
+    "history.saveUnprotected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations were saved, but could not be made readable by your account only and excluded from Time Machine. The next dictation tries again."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania zostały zapisane, ale nie udało się ograniczyć dostępu do nich wyłącznie do Twojego konta i wykluczyć ich z kopii Time Machine. Przy następnym dyktowaniu aplikacja ponowi próbę."
           }
         }
       }
