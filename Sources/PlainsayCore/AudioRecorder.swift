@@ -90,6 +90,8 @@ public protocol AudioRecording: AnyObject {
     /// Becomes true at the capture boundary, before another audio callback has
     /// to discard samples. The coordinator turns this into an automatic stop.
     var hasReachedMaximumDuration: Bool { get }
+    /// Whether the same tail-speech check used at stop still hears speech.
+    var isEndingMidSpeech: Bool { get }
 
     func start() throws
     /// Stops and returns the recording as 16kHz mono floats.
@@ -105,6 +107,10 @@ public extension AudioRecording {
     /// Custom recorders that are not duration-bounded remain compatible; the
     /// production `AudioRecorder` overrides this with its sample-buffer state.
     var hasReachedMaximumDuration: Bool { false }
+
+    /// Keeps custom recorders compatible; the production recorder reads only
+    /// the tail instead of copying the whole recording on each grace poll.
+    var isEndingMidSpeech: Bool { AudioRecorder.endedMidSpeech(peek()) }
 }
 
 /// Captures microphone audio as 16kHz mono float samples.
@@ -361,6 +367,12 @@ public final class AudioRecorder: AudioRecording {
 
     /// How much audio at the end is inspected for "still talking".
     nonisolated static let tailWindow: TimeInterval = 0.35
+
+    public var isEndingMidSpeech: Bool {
+        // Keep one extra sample: endedMidSpeech deliberately returns false
+        // for recordings no longer than the window (including exact equality).
+        Self.endedMidSpeech(sink.drain(last: Int(Self.tailWindow * whisperSampleRate) + 1))
+    }
 
     /// Whether the recording stops while speech is still going.
     ///

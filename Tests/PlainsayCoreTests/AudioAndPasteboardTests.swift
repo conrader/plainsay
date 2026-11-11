@@ -4,6 +4,29 @@ import Testing
 
 @Suite("Audio sample sink")
 struct AudioSampleSinkTests {
+    @Test("Tail snapshots are bounded, independent, and do not consume audio")
+    func tailSnapshots() {
+        let sink = AudioSampleSink(seconds: 1, sampleRate: 4)
+        #expect(sink.drain(last: 2).isEmpty)
+        let samples: [Float] = [1, 2, 3]
+        samples.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+        let tail = sink.drain(last: 2)
+        #expect(tail == [2, 3])
+        #expect(sink.drain(last: 10) == samples)
+        #expect(sink.drain(last: 0).isEmpty)
+        #expect(sink.drain(last: -1).isEmpty)
+        let extra: [Float] = [4, 5]
+        extra.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+        #expect(sink.drain(last: 2) == [3, 4])
+        #expect(sink.drain() == [1, 2, 3, 4])
+        #expect(sink.didOverflow)
+        sink.reset()
+        #expect(sink.drain(last: 2).isEmpty)
+        extra.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+        #expect(sink.drain(last: 2) == extra)
+        #expect(tail == [2, 3])
+    }
+
     @Test("Appended samples come back in order")
     func appendAndDrain() {
         let sink = AudioSampleSink(seconds: 1, sampleRate: 100)

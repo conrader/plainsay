@@ -881,7 +881,7 @@ public final class DictationCoordinator {
     /// before letting go, which is the normal case, and nothing changes.
     private func endRecordingAfterTail() {
         guard phase == .recording, recorder.isRecording,
-              AudioRecorder.endedMidSpeech(recorder.peek())
+              recorder.isEndingMidSpeech
         else {
             endRecording()
             return
@@ -898,7 +898,7 @@ public final class DictationCoordinator {
                 else { return }
                 // Stop the moment they stop, rather than serving out the whole
                 // grace period and pasting the silence with it.
-                if !AudioRecorder.endedMidSpeech(self.recorder.peek()) { break }
+                if !self.recorder.isEndingMidSpeech { break }
             }
             guard !Task.isCancelled, let self, self.phase == .recording else { return }
             self.endRecording()
