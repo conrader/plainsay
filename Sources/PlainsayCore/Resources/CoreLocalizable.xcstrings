@@ -2871,6 +2871,70 @@
         }
       }
     },
+    "coordinator.private.blocksEditing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off private dictation to use Voice Edit or corrections."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłącz dyktowanie prywatne, aby użyć Voice Edit lub poprawek."
+          }
+        }
+      }
+    },
+    "coordinator.private.onClipboard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation is on the clipboard. It is not in History."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prywatne dyktowanie jest w schowku. Nie ma go w Historii."
+          }
+        }
+      }
+    },
+    "coordinator.private.refused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation needs the on-device model. Nothing was recorded."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowanie prywatne wymaga modelu na tym Macu. Nic nie zostało nagrane."
+          }
+        }
+      }
+    },
+    "coordinator.private.stillArmed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still armed: the next dictation will be private."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nadal włączone: następne dyktowanie będzie prywatne."
+          }
+        }
+      }
+    },
     "engine.cloud.encodeFailed": {
       "localizations": {
         "de": {
@@ -5327,6 +5391,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "轻按切换"
+          }
+        }
+      }
+    },
+    "menu.private.modelNotReady": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available when the on-device model is ready"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dostępne, gdy model na tym Macu będzie gotowy"
+          }
+        }
+      }
+    },
+    "menu.private.needsOnDevice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs on-device speech (Settings › Speech)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wymaga rozpoznawania mowy na tym Macu (Ustawienia › Mowa)"
           }
         }
       }

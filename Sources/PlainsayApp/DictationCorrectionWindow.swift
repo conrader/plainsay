@@ -17,11 +17,14 @@ final class DictationCorrectionModel {
     var detailsReviewed = false
     var message: String?
     private var work: Task<Void, Never>?
+    /// The running hosted Preview, on the live gate (the window may predate arming).
+    private let previewRequest: HostedEditSlot
 
     init(dictation: LastDictation, coordinator: DictationCoordinator, settings: PlainsaySettings) {
         self.dictation = dictation
         self.coordinator = coordinator
         self.settings = settings
+        self.previewRequest = HostedEditSlot(gate: coordinator.privateDictation.hostedEdits)
     }
 
     var recording: Bool { ownsCapture && coordinator.phase == .recording }
@@ -33,6 +36,7 @@ final class DictationCorrectionModel {
 
     private func clearPreview() {
         work?.cancel()
+        previewRequest.cancel()
         busy = false
         proposal = nil
         review = nil
@@ -72,7 +76,8 @@ final class DictationCorrectionModel {
         }
         if !started {
             ownsCapture = false
-            message = coordinator.lastErrorMessage ?? "Speech is not ready. Finish setup or type your correction below."
+            message = coordinator.editingRefusal ?? coordinator.lastErrorMessage
+                ?? "Speech is not ready. Finish setup or type your correction below."
         }
     }
 
@@ -82,7 +87,10 @@ final class DictationCorrectionModel {
             return
         }
         clearPreview()
+        // Live arm, not the state when this window opened: it may predate arming.
+        let gate = coordinator.privateDictation.hostedEdits
         do {
+            try gate.check()
             let command = try DictationCorrectionCommand.parse(instruction)
             let isUndo = command == .undo
             if let replacement = try command.localReplacement(in: dictation.text, undoText: dictation.undoText) {
@@ -94,24 +102,20 @@ final class DictationCorrectionModel {
             try request.validate()
             let revision = dictation.revision
             busy = true
-            work = Task { [weak self] in
-                do {
-                    let replacement = try await editor.edit(request)
-                    try Task.checkCancellation()
-                    guard let self else { return }
-                    guard self.coordinator.lastDictation === self.dictation, self.dictation.revision == revision else {
-                        throw DictationCorrectionError.stale
-                    }
-                    guard !replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw CleanupError.emptyResponse }
-                    guard replacement.count <= 24_000 else { throw CleanupError.truncated }
-                    self.show(replacement, isUndo: false)
-                    self.busy = false
-                } catch {
-                    guard !Task.isCancelled else { return }
-                    self?.message = error.localizedDescription
-                    self?.busy = false
+            // Arming private mid-request settles it with the refusal, not silence.
+            previewRequest.start(request, to: editor, onReply: { [weak self] replacement in
+                guard let self else { return }
+                guard self.coordinator.lastDictation === self.dictation, self.dictation.revision == revision else {
+                    throw DictationCorrectionError.stale
                 }
-            }
+                guard !replacement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw CleanupError.emptyResponse }
+                guard replacement.count <= 24_000 else { throw CleanupError.truncated }
+                self.show(replacement, isUndo: false)
+                self.busy = false
+            }, onFailure: { [weak self] error in
+                self?.message = error.localizedDescription
+                self?.busy = false
+            })
         } catch { message = error.localizedDescription }
     }
 
@@ -156,6 +160,7 @@ final class DictationCorrectionModel {
 
     func cancel() {
         work?.cancel()
+        previewRequest.cancel()
         if ownsCapture { coordinator.cancelCorrectionCapture() }
         ownsCapture = false
         busy = false
@@ -175,6 +180,8 @@ final class DictationCorrectionWindow: NSObject, NSWindowDelegate {
     }
 
     func show(record: Bool = false) {
+        // Private armed or in flight: corrections may call a hosted editor.
+        guard !coordinator.refuseEditingIfPrivate() else { return }
         guard let dictation = coordinator.lastDictation, !coordinator.isApplyingCorrection else { return }
         if coordinator.phase.isBusy && model?.ownsCapture != true { return }
         if model?.dictation !== dictation {

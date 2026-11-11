@@ -11935,6 +11935,22 @@
         }
       }
     },
+    "hud.a11y.private": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation, on this Mac, not saved"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowanie prywatne, na tym Macu, bez zapisu"
+          }
+        }
+      }
+    },
     "hud.a11y.recordingLimitReached": {
       "localizations": {
         "de": {
@@ -13161,6 +13177,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在准备模型"
+          }
+        }
+      }
+    },
+    "hud.label.private": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRIVATE · ON THIS MAC · NOT SAVED"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRYWATNIE · NA TYM MACU · BEZ ZAPISU"
           }
         }
       }
@@ -15379,6 +15411,22 @@
         }
       }
     },
+    "menu.a11y.privateArmed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation armed"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowanie prywatne włączone"
+          }
+        }
+      }
+    },
     "menu.a11y.ready": {
       "localizations": {
         "de": {
@@ -15953,6 +16001,22 @@
         }
       }
     },
+    "menu.correctLast": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct last dictation…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popraw ostatnie dyktowanie…"
+          }
+        }
+      }
+    },
     "menu.dismissIssue": {
       "localizations": {
         "de": {
@@ -16195,6 +16259,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "缺少以下权限：%@"
+          }
+        }
+      }
+    },
+    "menu.private.arm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne"
+          }
+        }
+      }
+    },
+    "menu.private.armed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation armed — turn off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowanie prywatne włączone — wyłącz"
+          }
+        }
+      }
+    },
+    "menu.private.copy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy private dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiuj prywatne dyktowanie"
           }
         }
       }
@@ -21231,6 +21343,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "要求所选模型去除填充词和说错后重说的片段，同时保留原意、语气和语言。请检查重要文本；关闭 Polishing 可插入原始转录。"
+          }
+        }
+      }
+    },
+    "settings.private.armNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arm now"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Włącz teraz"
+          }
+        }
+      }
+    },
+    "settings.private.consumption": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One finished private dictation turns this off. If it is refused, cancelled, silent or fails, it stays on until you turn it off."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jedno ukończone dyktowanie prywatne wyłącza tę opcję. Jeśli zostanie odrzucone, anulowane, nic nie usłyszy albo się nie powiedzie, opcja pozostaje włączona, dopóki jej nie wyłączysz."
+          }
+        }
+      }
+    },
+    "settings.private.explainer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation uses only the on-device model. It skips Polishing, translation and email layout, and keeps the text and audio out of History and crash recovery. If Plainsay quits mid-dictation, that dictation is lost. \"Correct last dictation\" is unavailable afterwards, and after a confirmed paste the text is not kept on the clipboard. The app you dictate into, clipboard managers and macOS itself are outside Plainsay's control. Model downloads and update checks still use the network."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne korzysta tylko z modelu na tym Macu. Pomija Korektę tekstu, tłumaczenie i układ e-maila, a tekstu i dźwięku nie zapisuje w Historii ani w odzyskiwaniu po awarii. Jeśli Plainsay zamknie się w trakcie, to dyktowanie przepadnie. Potem nie da się użyć „Popraw ostatnie dyktowanie”, a po potwierdzonym wklejeniu tekst nie zostaje w schowku. Aplikacja docelowa, menedżery schowka i sam macOS są poza kontrolą Plainsay. Pobieranie modeli i sprawdzanie aktualizacji nadal korzysta z sieci."
+          }
+        }
+      }
+    },
+    "settings.private.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne"
           }
         }
       }

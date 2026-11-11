@@ -33,12 +33,7 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "keyboard") }
                 .tag(Tab.general)
 
-            HistoryView(
-                history: coordinator.history,
-                settings: settings,
-                onClearAll: { coordinator.clearAllStoredDictations() },
-                onPolicyChange: { coordinator.applyHistoryPolicy() }
-            )
+            HistoryView(coordinator: coordinator, settings: settings)
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)
 
@@ -213,11 +208,11 @@ private struct GeneralSettings: View {
 
 // MARK: - Speech
 
-private struct SpeechSettings: View {
+struct SpeechSettings: View {
     @Bindable var settings: PlainsaySettings
     let coordinator: DictationCoordinator
     let voiceEnrollment: VoiceEnrollment
-    @State private var newTerm = ""
+    @State var newTerm = ""
     @State private var asrKeyRevision = 0
     @State private var editingKeyRevision = 0
 
@@ -456,76 +451,7 @@ private struct SpeechSettings: View {
                 }
             }
 
-            Section("Vocabulary") {
-                HStack {
-                    TextField("Add a name or term", text: $newTerm)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit(addTerm)
-                    Button("Add", action: addTerm)
-                        .disabled(newTerm.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-
-                if !termProposals.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(
-                            Localization.appString(
-                                "settings.vocabulary.suggested",
-                                fallback: "Suggested from words you keep saying"
-                            )
-                        )
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-
-                        ForEach(termProposals) { proposal in
-                            HStack {
-                                Text(proposal.term)
-                                Text(Self.occurrenceSummary(proposal.occurrences))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Button(Localization.appString("settings.vocabulary.accept", fallback: "Add")) {
-                                    accept(proposal)
-                                }
-                                .buttonStyle(.borderless)
-                                Button {
-                                    dismissProposal(proposal)
-                                } label: {
-                                    Image(systemName: "xmark.circle")
-                                }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel(
-                                    Localization.appFormat(
-                                        "settings.vocabulary.dismiss",
-                                        fallback: "Dismiss %@", proposal.term
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if settings.dictionary.normalizedTerms.isEmpty {
-                    Text(vocabularyExplanation)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(settings.dictionary.normalizedTerms, id: \.self) { term in
-                        HStack {
-                            Text(term)
-                            Spacer()
-                            Button {
-                                remove(term)
-                            } label: {
-                                Image(systemName: "minus.circle")
-                            }
-                            .buttonStyle(.borderless)
-                            .accessibilityLabel(
-                                Localization.appFormat("settings.vocabulary.remove", fallback: "Remove %@", term)
-                            )
-                        }
-                    }
-                }
-            }
+            vocabularySection
         }
         .formStyle(.grouped)
         .onChange(of: settings.model) {
@@ -582,55 +508,6 @@ private struct SpeechSettings: View {
             fallback: "Editing runs through %@ using %@. A failure always falls back to the raw transcript.",
             settings.cleanupProvider.displayName, settings.resolvedCleanupModel
         )
-    }
-
-    private var vocabularyExplanation: String {
-        if settings.transcriptionSource == .onDevice && !settings.model.supportsDecoderPrompt {
-            return Localization.appString(
-                "settings.vocabulary.explanation.parakeet",
-                fallback: "Add names, jargon, and product names that come out garbled. Parakeet does not accept decoder hints, so Plainsay corrects these spellings itself right after transcribing, whether or not editing is on."
-            )
-        }
-        return Localization.appString(
-            "settings.vocabulary.explanation.other",
-            fallback: "Add names, jargon, and product names that come out garbled. Plainsay feeds them to the speech model, then corrects any spellings it still gets wrong."
-        )
-    }
-
-    /// Terms worth offering: recurring in the speaker's own dictations, not
-    /// already in the vocabulary, and not previously turned down.
-    private var termProposals: [DictionaryProposal] {
-        let dismissed = Set(settings.dismissedTermProposals.map { $0.lowercased() })
-        return DictionaryProposer.propose(
-            from: coordinator.history.records,
-            existing: settings.dictionary
-        )
-        .filter { !dismissed.contains($0.term.lowercased()) }
-    }
-
-    private static func occurrenceSummary(_ count: Int) -> String {
-        count == 1
-            ? Localization.appString("settings.vocabulary.oneDictation", fallback: "in 1 dictation")
-            : Localization.appFormat("settings.vocabulary.manyDictations", fallback: "in %d dictations", count)
-    }
-
-    private func accept(_ proposal: DictionaryProposal) {
-        settings.dictionary.terms.append(proposal.term)
-    }
-
-    private func dismissProposal(_ proposal: DictionaryProposal) {
-        settings.dismissedTermProposals.append(proposal.term)
-    }
-
-    private func addTerm() {
-        let term = newTerm.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !term.isEmpty else { return }
-        settings.dictionary.terms.append(term)
-        newTerm = ""
-    }
-
-    private func remove(_ term: String) {
-        settings.dictionary.terms.removeAll { $0.caseInsensitiveCompare(term) == .orderedSame }
     }
 }
 

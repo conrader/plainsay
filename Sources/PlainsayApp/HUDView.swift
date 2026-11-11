@@ -1,49 +1,6 @@
 import SwiftUI
 import PlainsayCore
 
-/// Everything the HUD draws, as a plain value.
-///
-/// The HUD takes this rather than the coordinator so it can be rendered — and
-/// looked at — without a microphone, a model, or any permissions.
-struct HUDState: Equatable {
-    var phase: DictationCoordinator.Phase = .idle
-    var modelState: SpeechModelLoadState = .idle
-    var modelLoadTiming: SpeechModelLoadTiming?
-    var levelHistory: [Float] = []
-    var elapsed: TimeInterval = 0
-    var livePreviewText: String = ""
-    var recordingStyle: HotkeyRecordingStyle?
-
-    init(
-        phase: DictationCoordinator.Phase = .idle,
-        modelState: SpeechModelLoadState = .idle,
-        modelLoadTiming: SpeechModelLoadTiming? = nil,
-        levelHistory: [Float] = [],
-        elapsed: TimeInterval = 0,
-        livePreviewText: String = "",
-        recordingStyle: HotkeyRecordingStyle? = nil
-    ) {
-        self.phase = phase
-        self.modelState = modelState
-        self.modelLoadTiming = modelLoadTiming
-        self.levelHistory = levelHistory
-        self.elapsed = elapsed
-        self.livePreviewText = livePreviewText
-        self.recordingStyle = recordingStyle
-    }
-
-    @MainActor
-    init(_ coordinator: DictationCoordinator) {
-        phase = coordinator.phase
-        modelState = coordinator.modelState
-        modelLoadTiming = coordinator.modelLoadTiming
-        levelHistory = coordinator.levelHistory
-        elapsed = coordinator.elapsed
-        livePreviewText = coordinator.livePreviewText
-        recordingStyle = coordinator.recordingStyle
-    }
-}
-
 /// The floating readout shown while a dictation is in flight.
 struct HUDView: View {
     let state: HUDState
@@ -76,13 +33,13 @@ struct HUDView: View {
                     .frame(height: 22)
                     .frame(maxWidth: .infinity)
 
-                    if state.phase == .recording {
+                    if let hint = secondaryLine {
                         VStack(alignment: .trailing, spacing: 1) {
                             Text(label)
                                 .font(.hudLabel)
                                 .instrumentTracking()
                                 .foregroundStyle(labelColor)
-                            Text(recordingHint)
+                            Text(hint)
                                 .font(.system(size: 7.5, weight: .medium, design: .monospaced))
                                 .foregroundStyle(Palette.slate)
                                 .fixedSize()
@@ -142,8 +99,25 @@ struct HUDView: View {
         }
     }
 
+    /// The small line under the label: the recording hint, or where a private
+    /// dictation that did not paste went.
+    private var secondaryLine: String? {
+        if state.phase == .recording { return recordingHint }
+        if state.isPrivate, case .savedToClipboard = state.phase { return PrivateDictationState.onClipboardMessage }
+        return nil
+    }
+
+    /// Replaces the ordinary state label for the whole private session.
+    private var privateBadge: String {
+        Localization.appString("hud.label.private", fallback: "PRIVATE · ON THIS MAC · NOT SAVED")
+    }
+
     private var label: String {
         switch state.phase {
+        case .idle, .cancelled, .error: break
+        default: if state.isPrivate { return privateBadge }
+        }
+        return switch state.phase {
         case .recording: Localization.appString("hud.label.listening", fallback: "LISTENING")
         case .recordingLimitReached:
             Localization.appString("hud.label.recordingLimitReached", fallback: "10-MINUTE LIMIT")
@@ -194,6 +168,13 @@ struct HUDView: View {
     }
 
     private func accessibilityLabel(now: Date) -> String {
+        guard state.isPrivate else { return standardAccessibilityLabel(now: now) }
+        let badge = Localization.appString("hud.a11y.private", fallback: "Private dictation, on this Mac, not saved")
+        if case .savedToClipboard = state.phase { return "\(badge). \(PrivateDictationState.onClipboardMessage)" }
+        return "\(badge). \(standardAccessibilityLabel(now: now))"
+    }
+
+    private func standardAccessibilityLabel(now: Date) -> String {
         switch state.phase {
         case .recording:
             recordingAccessibilityLabel
