@@ -30,22 +30,20 @@ public enum ProviderFactory {
     }
 
     public static func makeCleaner(_ settings: PlainsaySettings) -> any TextCleaning {
-        guard settings.cleanupEnabled else { return NoCleanup() }
-
+        // One rule with the profile editor and the HUD chip (PolishingReadiness):
+        // off, a missing key or no live subscription all mean no cleanup.
         // Polishing via Plainsay itself is independent of which transcription
         // source is active — someone dictating entirely on-device can still
-        // pick this as their editing provider. No stored key to check, only
-        // whether a subscription is active right now.
-        if settings.cleanupProvider == .plainsay {
-            guard let token = cloudSessionToken else { return NoCleanup() }
+        // pick this as their editing provider.
+        let provider = settings.cleanupProvider
+        let key = settings.cleanupEnabled && provider != .plainsay ? settings.apiKey(for: provider) : ""
+        let readiness = polishingReadiness(cleanupEnabled: settings.cleanupEnabled, provider: provider,
+                                           hasKey: !key.isEmpty, cloudSessionToken: cloudSessionToken)
+        guard readiness.runs else { return NoCleanup() }
+
+        if provider == .plainsay, let token = cloudSessionToken {
             return CloudCleanupService(baseURL: PlainsayCloudClient.defaultBaseURL, sessionToken: token)
         }
-
-        let provider = settings.cleanupProvider
-        let key = settings.apiKey(for: provider)
-        // No key means no cleanup, rather than a failing call on every
-        // dictation: the raw transcript is a fine outcome, an error is not.
-        guard !key.isEmpty else { return NoCleanup() }
 
         if provider.usesOpenAIDialect {
             return OpenAICompatibleCleanupService(

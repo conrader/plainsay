@@ -137,6 +137,13 @@ public final class DictationCoordinator {
     /// running application to steal focus from. Nil means "decide for
     /// yourself", which is what production and every existing test pass.
     private let capturePasteTarget: (@MainActor @Sendable () -> (any DictationPasteTargeting)?)?
+    /// The target app's bundle ID, captured with `targetApp`. Selects the app
+    /// profile and the mail-composer check. Injectable like the paste target.
+    private(set) var targetBundleIdentifier: String?
+    private let captureTargetBundleIdentifier: (@MainActor @Sendable () -> String?)?
+    /// The webmail window-title read, kept at pipeline time. Injectable so
+    /// email layout can be tested without reading a real window over AX.
+    private let readTargetWindowTitle: (@MainActor @Sendable () -> String?)?
 
     public init(
         settings: PlainsaySettings = .shared,
@@ -154,6 +161,8 @@ public final class DictationCoordinator {
         modelLoadNow: @escaping @MainActor @Sendable () -> Date = { Date() },
         microphoneAuthorized: @escaping @MainActor @Sendable () -> Bool = { AudioRecorder.microphoneAuthorized() },
         capturePasteTarget: (@MainActor @Sendable () -> (any DictationPasteTargeting)?)? = nil,
+        captureTargetBundleIdentifier: (@MainActor @Sendable () -> String?)? = nil,
+        readTargetWindowTitle: (@MainActor @Sendable () -> String?)? = nil,
         usesInjectedEngine: Bool = false,
         injectedSource: TranscriptionSource = .onDevice,
         privateDictation: PrivateDictationState = PrivateDictationState()
@@ -169,6 +178,8 @@ public final class DictationCoordinator {
         self.modelLoadNow = modelLoadNow
         self.microphoneAuthorized = microphoneAuthorized
         self.capturePasteTarget = capturePasteTarget
+        self.captureTargetBundleIdentifier = captureTargetBundleIdentifier
+        self.readTargetWindowTitle = readTargetWindowTitle
         self.usesInjectedEngine = usesInjectedEngine
         self.injectedSource = injectedSource
         self.privateDictation = privateDictation
@@ -337,36 +348,11 @@ public final class DictationCoordinator {
         return cleared
     }
 
-    /// What cleanup should do with this dictation, beyond cleaning it.
-    ///
-    /// Layout and translation are resolved independently — an email dictated
-    /// in Polish and sent in English is one dictation, not two features
-    /// fighting over a single setting.
-    ///
-    /// Both are paid, and both are gated on the entitlement rather than on
-    /// which engine runs: cleanup can happen on-device, so keying either off
-    /// the transcription source would hand it to every local user for free.
-    func resolvedDictationStyle() -> CleanupStyle {
-        guard cloud.account?.isActive == true else { return .plain }
-        return CleanupStyle(layout: resolvedLayout(), translateTo: settings.translationTargetLanguage)
-    }
-
-    /// Whether this dictation should be laid out as an email.
-    ///
-    /// Checked cheapest-first: the switch, then the target app's identity, and
-    /// only then its window title — reading another app's title over
-    /// Accessibility is the expensive step, and a browser is the only case
-    /// that needs it.
-    private func resolvedLayout() -> DictationLayout {
-        guard settings.emailModeEnabled, let targetApp else { return .plain }
-        let bundleIdentifier = targetApp.bundleIdentifier
-
-        if MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: nil) {
-            return .email
-        }
-        let title = FocusedWindow.title(of: targetApp)
-        return MailTarget.isComposer(bundleIdentifier: bundleIdentifier, windowTitle: title)
-            ? .email : .plain
+    /// AX read of the target window's title for the webmail check. Stays at
+    /// pipeline time, so it is not part of the frozen session policy.
+    func targetWindowTitle() -> String? {
+        if let readTargetWindowTitle { return readTargetWindowTitle() }
+        return targetApp.flatMap { FocusedWindow.title(of: $0) }
     }
 
     /// Turns translation on (to the last target used) or off.
@@ -714,6 +700,7 @@ public final class DictationCoordinator {
         stopLivePreview()
         machine.reset()
         targetApp = nil
+        targetBundleIdentifier = nil
         pasteTarget = nil
         elapsed = 0
         levelHistory = []
@@ -800,6 +787,11 @@ public final class DictationCoordinator {
         // Polishing in the path, the user may simply have moved on to another
         // window while waiting for it.
         targetApp = NSWorkspace.shared.frontmostApplication
+        if let captureTargetBundleIdentifier {
+            targetBundleIdentifier = captureTargetBundleIdentifier()
+        } else {
+            targetBundleIdentifier = targetApp?.bundleIdentifier
+        }
         // A test that wants to exercise the target policy supplies its own.
         // Otherwise nothing is captured under an injected engine, for the same
         // reason the insertion anchor is skipped there: a test process has no
@@ -814,6 +806,10 @@ public final class DictationCoordinator {
         do {
             try recorder.start()
         } catch {
+            // Nothing was recorded, so nothing captured for it may linger.
+            targetApp = nil
+            targetBundleIdentifier = nil
+            pasteTarget = nil
             flashError(error.localizedDescription)
             machine.reset()
             return
@@ -821,7 +817,18 @@ public final class DictationCoordinator {
 
         lastErrorMessage = nil
         lastErrorCameFromModelLoad = false
-        sessionPolicy = .make(privacy: privateDictation.isArmed ? .privateLocal : .standard)
+        // Recording boundary: drop cached key presence so a key added or
+        // removed outside Plainsay since the last read counts from here. No
+        // Keychain read happens now; the first chip render reads lazily.
+        settings.refreshCredentialPresence()
+        // Frozen for the whole work unit: settings changed while recording
+        // apply from the next dictation (entitlement, webmail title and the
+        // Polishing provider/key stay live).
+        sessionPolicy = .make(
+            privacy: privateDictation.isArmed ? .privateLocal : .standard,
+            defaults: sessionDefaults(),
+            profile: resolvedProfile(forCorrection: isCapturingCorrection)
+        )
         if !sessionPolicy.keepsLastDictation { lastTranscript = nil; lastDictation = nil }
         phase = .recording
         beginEngineWork()
@@ -991,6 +998,7 @@ public final class DictationCoordinator {
         activeEngineWork -= 1
         guard activeEngineWork == 0 else { return }
         sessionPolicy = .standard
+        targetBundleIdentifier = nil
 
         let waiters = engineIdleWaiters
         engineIdleWaiters.removeAll()
@@ -1017,7 +1025,7 @@ public final class DictationCoordinator {
         // is processed. The pipeline is otherwise identical, and any actual
         // error below still replaces the notice with the normal error state.
         if !stoppedAtRecordingLimit { phase = .transcribing }
-        let prompt = settings.dictionary.asrPrompt()
+        let prompt = sessionPolicy.dictionary.asrPrompt()
         // Filtering happens on the full recording, before transcription and
         // before anything leaves this Mac for a remote/Cloud engine — a
         // second voice in the room is removed here, not redacted afterward.
@@ -1050,14 +1058,17 @@ public final class DictationCoordinator {
         // Local, deterministic, and unconditional: engines that don't accept
         // decoder hints (Parakeet) otherwise have no path to vocabulary
         // corrections at all unless editing happens to catch them too.
-        transcript = settings.dictionary.applyCorrections(to: transcript)
-
-        // A private session never builds a cleaner: no hosted object, no window-title read.
         let policy = sessionPolicy
+        transcript = policy.dictionary.applyCorrections(to: transcript)
+
+        // A private session or Polishing-Off profile never builds a cleaner: no hosted object, no window-title read.
         if !stoppedAtRecordingLimit, policy.allowsCleanup { phase = .cleaning }
-        let dictionary = settings.dictionary
+        let dictionary = policy.dictionary
+        // The factory reads the key itself; drop cached presence so the chip
+        // shown while cleaning agrees with what it just built.
+        if policy.allowsCleanup { settings.refreshCredentialPresence() }
         let cleaner = policy.allowsCleanup ? makeCleaner(settings) : NoCleanup()
-        let style = policy.allowsCleanup ? resolvedDictationStyle() : .plain
+        let style = policy.allowsCleanup ? resolvedDictationStyle(for: policy) : .plain
 
         var finalText = transcript
         var usedRaw = false
@@ -1080,12 +1091,21 @@ public final class DictationCoordinator {
 
         // Written down *before* the paste is attempted. Insertion is the one
         // step we cannot verify, so the history has to survive its failure.
+        let copyOnly = policy.output == .copyOnly
         let historyID = record(
             text: finalText,
             raw: transcript,
-            outcome: usedRaw ? .insertedWithoutCleanup : .inserted,
+            // Copy only: "not pasted" is true, but nothing is left to remind about.
+            outcome: copyOnly ? .insertionUnverifiedAcknowledged : usedRaw ? .insertedWithoutCleanup : .inserted,
             duration: duration
         )
+        if copyOnly {
+            if policy.keepsLastDictation, !finalText.isEmpty {
+                lastDictation = LastDictation(text: finalText, target: nil, historyID: historyID)
+            }
+            copyOnlyToClipboard(finalText)
+            return
+        }
 
         let anchor = usesInjectedEngine ? nil : DictationInsertionAnchor.capture()
         let outcome = await insert(finalText)
@@ -1123,6 +1143,19 @@ public final class DictationCoordinator {
         // user to actually read and act on it before it fades.
         scheduleReset(after: .seconds(5))
         playSound("Funk")
+    }
+
+    /// Profile "Copy only": never reacquires the target, never sends ⌘V.
+    private func copyOnlyToClipboard(_ text: String) {
+        defer { targetApp = nil; pasteTarget = nil }
+        inserter.copyToClipboard(text, concealed: sessionPolicy.concealsPasteboard)
+        let line = PasteDecisionLog.copyOnlyMessage(
+            targetBundleIdentifier: sessionPolicy.logsBundleIdentifiers ? targetBundleIdentifier : nil
+        )
+        Log.insertion.notice("\(line, privacy: .public)")
+        phase = .copied
+        scheduleReset()
+        playSound("Pop")
     }
 
     @discardableResult
@@ -1237,7 +1270,7 @@ public final class DictationCoordinator {
                 let samples = self.recorder.peek()
                 guard Double(samples.count) / whisperSampleRate >= Self.minimumDuration else { continue }
 
-                let prompt = self.settings.dictionary.asrPrompt()
+                let prompt = self.sessionPolicy.dictionary.asrPrompt()
                 // A preview pass can outlive capture cancellation when the
                 // backend is inside non-cancellable model work. Retain engine
                 // ownership for the pass itself so a model reload cannot shut

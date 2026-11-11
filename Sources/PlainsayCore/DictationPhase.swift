@@ -21,6 +21,9 @@ extension DictationCoordinator {
         /// focused" and "the window you dictated into is gone" need different
         /// answers from the person reading it.
         case savedToClipboard(ClipboardFallbackReason)
+        /// An app profile set to "Copy only": the text is on the clipboard by
+        /// design, nothing was pasted, and there is nothing to recover.
+        case copied
         /// The user deliberately abandoned an active recording with Escape.
         case cancelled
         case error(String)
@@ -41,7 +44,7 @@ extension DictationCoordinator {
         public var isBusy: Bool {
             switch self {
             case .recording, .recordingLimitReached, .transcribing, .cleaning: true
-            case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error: false
+            case .idle, .modelLoading, .insertedRaw, .savedToClipboard, .copied, .cancelled, .error: false
             }
         }
     }

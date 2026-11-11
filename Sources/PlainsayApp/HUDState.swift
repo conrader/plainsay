@@ -15,6 +15,8 @@ struct HUDState: Equatable {
     var recordingStyle: HotkeyRecordingStyle?
     /// A private dictation is in flight, or its result is still on screen.
     var isPrivate = false
+    /// `<Name> · <route>` for a non-Default app profile; nil for Default.
+    var profileChip: String?
 
     init(
         phase: DictationCoordinator.Phase = .idle,
@@ -24,7 +26,8 @@ struct HUDState: Equatable {
         elapsed: TimeInterval = 0,
         livePreviewText: String = "",
         recordingStyle: HotkeyRecordingStyle? = nil,
-        isPrivate: Bool = false
+        isPrivate: Bool = false,
+        profileChip: String? = nil
     ) {
         self.phase = phase
         self.modelState = modelState
@@ -34,6 +37,7 @@ struct HUDState: Equatable {
         self.livePreviewText = livePreviewText
         self.recordingStyle = recordingStyle
         self.isPrivate = isPrivate
+        self.profileChip = profileChip
     }
 
     @MainActor
@@ -54,5 +58,6 @@ struct HUDState: Equatable {
             showsPrivateResult = false
         }
         isPrivate = coordinator.sessionPolicy.privacy == .privateLocal || showsPrivateResult
+        profileChip = coordinator.profileChip
     }
 }
