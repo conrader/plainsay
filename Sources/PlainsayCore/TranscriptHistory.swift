@@ -386,6 +386,10 @@ public final class TranscriptHistory {
             guard backUp(fileURL, original, now()) != nil else { return false }
             adopt(recovered)
             diskState = .backedUp
+            // This copy did not exist during the caller's retention pass.
+            // Sweep it before save can report success; a failed trim or
+            // protection check must survive the successful live-file write.
+            pruneExpired()
         }
         return true
     }

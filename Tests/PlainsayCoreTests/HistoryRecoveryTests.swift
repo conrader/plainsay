@@ -183,11 +183,16 @@ struct HistoryRecoveryTests {
     @Test("A backup that starts working later unblocks saving, copying first")
     func backupRetriedOnNextSave() throws {
         let dir = makeDirectory()
-        let original = try write("not json", to: dir)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let recentBad = try undecodable("recent damage")
+        let undated = #"{"text":"undated damage"}"#
+        let original = try write(
+            "[\(try json(record("expired", age: 400 * day))),\(recentBad),\(undated)]", to: dir
+        )
         final class Switch { var on = false }
         let backupWorks = Switch()
 
-        let loaded = history(dir, backUp: { url, data, now in
+        let loaded = history(dir, maxAge: 30 * day, backUp: { url, data, now in
             backupWorks.on ? HistoryFile.backUp(url, original: data, now: now) : nil
         })
         loaded.add(record("first try"))
@@ -198,8 +203,48 @@ struct HistoryRecoveryTests {
         loaded.add(record("second try"))
         #expect(!loaded.saveFailed)
 
-        #expect(try backups(in: dir).map { try Data(contentsOf: $0) } == [original])
+        // Inspect before reopening: launch would run retention and hide the bug.
+        #expect(try backups(in: dir).map { try Data(contentsOf: $0) }
+            == [Data("[\(recentBad),\(undated)]".utf8)])
+        #expect(!loaded.deletionFailed)
         #expect(history(dir).records.map(\.text) == ["second try", "first try"])
+    }
+
+    @Test("Retry applies retention to its new backup and preserves protection failures", arguments: [true, false])
+    func retrySweepsNewBackup(protectionWorksInitially: Bool) throws {
+        let dir = makeDirectory()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let recentBad = try undecodable("recent damage")
+        let undated = #"{"text":"undated damage"}"#
+        let original = try write(
+            "[\(try json(record("expired", age: 400 * day))),\(recentBad),\(undated)]", to: dir
+        )
+        var backupWorks = false
+        var protectionWorks = protectionWorksInitially
+        let loaded = TranscriptHistory(
+            limit: 100, maxAge: 30 * day, isEnabled: true, directory: dir,
+            now: { [fixedNow] in fixedNow },
+            backUp: { url, data, now in
+                backupWorks ? HistoryFile.backUp(url, original: data, now: now) : nil
+            },
+            protectBackup: { protectionWorks && HistoryFile.makePrivate($0) }
+        )
+        #expect(loaded.deletionFailed && loaded.unsavedInMemory)
+        #expect(onDisk(dir) == original)
+        #expect(backups(in: dir).isEmpty)
+
+        backupWorks = true
+        #expect(loaded.retryDeletion() == protectionWorksInitially)
+        #expect(loaded.deletionFailed == !protectionWorksInitially)
+        #expect(!loaded.saveFailed && !loaded.unsavedInMemory)
+        // The backup loses only dated expired bytes, before any later pass.
+        #expect(try backups(in: dir).map { try Data(contentsOf: $0) }
+            == [Data("[\(recentBad),\(undated)]".utf8)])
+        #expect(!String(decoding: onDisk(dir) ?? Data(), as: UTF8.self).contains("expired"))
+
+        protectionWorks = true
+        #expect(loaded.retryDeletion())
+        #expect(!loaded.deletionFailed)
     }
 
     @Test("A file that exists but cannot be read is never replaced",
