@@ -37,4 +37,12 @@ extension DictationCoordinator {
             Log.model.error("Plainsay Cloud unavailable: \(error.localizedDescription, privacy: .public)")
         }
     }
+
+    /// Refreshes Cloud credentials in memory to match `settings.cleanupProvider`
+    /// without touching the speech engine — picking Plainsay as the Polishing
+    /// provider doesn't warrant tearing down and reloading an unrelated
+    /// on-device model, the way changing the transcription source does.
+    public func refreshCloudCleanupIfNeeded() async {
+        await refreshCloudCredentialsIfNeeded()
+    }
 }

@@ -51,27 +51,10 @@ public final class DictationCoordinator {
     private var correctionGeneration = 0
     /// Survives the short HUD error so the menu remains a recovery surface.
     public private(set) var lastErrorMessage: String?
-    /// Persists after the HUD fades until a later insertion works or the user
-    /// copies/dismisses the unresolved record. Derived from history so relaunch
-    /// and History-window recovery cannot drift out of sync with the menu.
-    public var lastInsertionNeedsManualPaste: Bool {
-        history.hasUnacknowledgedInsertion
-    }
-
     /// In hybrid mode this changes after a quick release latches recording.
     public var recordingStyle: HotkeyRecordingStyle? {
         guard phase == .recording else { return nil }
         return machine.recordingStyle
-    }
-
-    /// The single technical answer to "will the hotkey work right now?" Setup
-    /// completion is deliberately not part of this: after the user confirms a
-    /// speech choice, the pipeline may already be usable while the assistant is
-    /// still open on its final page.
-    public var isReadyForDictation: Bool {
-        guard modelState == .ready, Permissions.allGranted else { return false }
-        if case .error = phase { return false }
-        return true
     }
 
     /// Every dictation, written down before insertion is attempted.
@@ -210,17 +193,6 @@ public final class DictationCoordinator {
         // silently recording again after every launch.
         applyHistoryPolicy()
         privateDictation.hostedEdits.refusal = { [weak self] in self?.editingRefusal }
-    }
-
-    /// Pushes the stored history preferences into `history`. Call after
-    /// changing either of them in Settings. Returns false if something that
-    /// should now be deleted is still on disk; `history.deletionFailed` keeps
-    /// saying so until `history.retryDeletion()` or a later change succeeds.
-    @discardableResult
-    public func applyHistoryPolicy() -> Bool {
-        let applied = history.applyPolicy(isEnabled: settings.historyEnabled, maxAge: settings.historyMaxAge)
-        if !applied { Log.history.error("history settings applied, but some stored dictations could not be deleted") }
-        return applied
     }
 
     // MARK: - Lifecycle
@@ -385,14 +357,6 @@ public final class DictationCoordinator {
         }
         lastErrorMessage = nil
         lastErrorCameFromModelLoad = false
-    }
-
-    /// Refreshes Cloud credentials in memory to match `settings.cleanupProvider`
-    /// without touching the speech engine — picking Plainsay as the Polishing
-    /// provider doesn't warrant tearing down and reloading an unrelated
-    /// on-device model, the way changing the transcription source does.
-    public func refreshCloudCleanupIfNeeded() async {
-        await refreshCloudCredentialsIfNeeded()
     }
 
     /// Loads or releases the voice filter to match `settings.voiceFilterEnabled`.

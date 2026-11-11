@@ -322,12 +322,14 @@ struct PrivateDictationSourceGuards {
         #expect(try lineCount("Sources/PlainsayApp/SettingsView.swift") <= 784)
         let helpers = [
             "Sources/PlainsayCore/DictationCoordinator+CloudCredentials.swift",
+            "Sources/PlainsayCore/DictationCoordinator+History.swift",
             "Sources/PlainsayCore/DictationCoordinator+ModelStatus.swift",
             "Sources/PlainsayCore/DictationCoordinator+Private.swift",
             "Sources/PlainsayCore/HostedEditGate.swift",
             "Sources/PlainsayCore/HostedEditSlot.swift",
             "Sources/PlainsayCore/PrivateDictation.swift",
             "Sources/PlainsayApp/HistoryView.swift",
+            "Sources/PlainsayApp/PermissionRow.swift",
             "Sources/PlainsayApp/VoiceEditWindowController.swift",
             "Sources/PlainsayApp/DictationCorrectionWindow.swift",
         ]

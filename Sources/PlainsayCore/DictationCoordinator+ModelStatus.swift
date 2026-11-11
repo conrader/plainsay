@@ -30,4 +30,14 @@ extension DictationCoordinator {
             )
         }
     }
+
+    /// The single technical answer to "will the hotkey work right now?" Setup
+    /// completion is deliberately not part of this: after the user confirms a
+    /// speech choice, the pipeline may already be usable while the assistant is
+    /// still open on its final page.
+    public var isReadyForDictation: Bool {
+        guard modelState == .ready, Permissions.allGranted else { return false }
+        if case .error = phase { return false }
+        return true
+    }
 }
