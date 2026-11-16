@@ -39,6 +39,9 @@ public final class PlainsaySettings {
     public var asrModel: String { didSet { defaults.set(asrModel, forKey: Key.asrModel.rawValue) } }
     public var asrBaseURL: String { didSet { defaults.set(asrBaseURL, forKey: Key.asrBaseURL.rawValue) } }
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
+    /// Mute the Mac's sound output while recording. Off by default: silencing
+    /// everything else on the machine is not something to discover by surprise.
+    public var muteOutputWhileRecording: Bool { didSet { defaults.set(muteOutputWhileRecording, forKey: Key.muteOutputWhileRecording.rawValue) } }
     /// Whether dictations are written to disk at all.
     ///
     /// On by default, and that default is deliberate: pasting into another app
@@ -269,6 +272,7 @@ public final class PlainsaySettings {
         case dismissedTermProposals
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
+        case muteOutputWhileRecording
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -296,6 +300,7 @@ public final class PlainsaySettings {
         dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
+        muteOutputWhileRecording = defaults.object(forKey: Key.muteOutputWhileRecording.rawValue) as? Bool ?? false
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
         translationTargetLanguage = defaults.string(forKey: Key.translationTargetLanguage.rawValue)

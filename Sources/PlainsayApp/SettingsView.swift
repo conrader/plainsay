@@ -140,6 +140,7 @@ private struct GeneralSettings: View {
 
             Section {
                 Toggle("Play a sound when dictation starts and ends", isOn: $settings.playFeedbackSounds)
+                Toggle("Mute audio output while dictating", isOn: $settings.muteOutputWhileRecording)
             }
 
             Section("Setup") {

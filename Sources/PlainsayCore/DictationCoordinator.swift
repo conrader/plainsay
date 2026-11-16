@@ -123,6 +123,8 @@ public final class DictationCoordinator {
 
     private let settings: PlainsaySettings
     private let recorder: any AudioRecording
+    private let outputMute: any SystemOutputMuting
+    private var muteTask: Task<Void, Never>?
     private let inserter: any TextInserting
     private var engine: (any TranscriptionEngine)?
     /// Recording, transcription, and crash recovery all retain the current
@@ -182,6 +184,7 @@ public final class DictationCoordinator {
         pendingAudio: PendingAudioStore = PendingAudioStore(),
         cloud: PlainsayCloudClient = PlainsayCloudClient(),
         recorder: any AudioRecording = AudioRecorder(),
+        outputMute: any SystemOutputMuting = SystemOutputMute(),
         inserter: any TextInserting = PasteboardTextInserter(),
         makeEngine: @escaping @MainActor (OnDeviceModel, String?, @escaping @Sendable (SpeechModelLoadState) -> Void) -> any TranscriptionEngine = { _, _, _ in
             // Replaced below; the real construction needs the whole settings
@@ -199,6 +202,7 @@ public final class DictationCoordinator {
         self.pendingAudio = pendingAudio
         self.cloud = cloud
         self.recorder = recorder
+        self.outputMute = outputMute
         self.inserter = inserter
         self.makeEngine = makeEngine
         self.makeCleaner = makeCleaner
@@ -337,6 +341,7 @@ public final class DictationCoordinator {
         meterTask?.cancel()
         stopLivePreview()
         recorder.cancel()
+        restoreOutput()
         cancellationPending = false
         machine.reset()
         phase = .idle
@@ -804,6 +809,7 @@ public final class DictationCoordinator {
         // hand the abandoned audio to the pipeline.
         tailTask?.cancel()
         recorder.cancel()
+        restoreOutput()
         if isCapturingCorrection {
             correctionGeneration += 1
             finishCorrection(.failure(DictationCorrectionError.cancelled))
@@ -893,6 +899,7 @@ public final class DictationCoordinator {
         // sentence you just spoke while it transcribes.
         levelHistory = []
         playSound("Tink")
+        muteOutputIfWanted()
         startMetering()
         startLivePreview()
     }
@@ -945,6 +952,7 @@ public final class DictationCoordinator {
         stopMetering()
         stopLivePreview()
         let samples = recorder.stop()
+        restoreOutput()
         guard phase == .recording else { return }
 
         if reachedMaximumDuration {
@@ -1327,6 +1335,7 @@ public final class DictationCoordinator {
         stopMetering()
         stopLivePreview()
         recorder.cancel()
+        restoreOutput()
         lastErrorMessage = message
         lastErrorCameFromModelLoad = isModelLoadError
         phase = .error(message)
@@ -1345,5 +1354,28 @@ public final class DictationCoordinator {
     private func playSound(_ name: String) {
         guard settings.playFeedbackSounds else { return }
         NSSound(named: name)?.play()
+    }
+
+    /// How long the start sound gets before the output is muted; muting at
+    /// once would swallow it along with the music.
+    static let muteDelayAfterStartSound: Duration = .milliseconds(300)
+
+    private func muteOutputIfWanted() {
+        guard settings.muteOutputWhileRecording else { return }
+        let delay = settings.playFeedbackSounds ? Self.muteDelayAfterStartSound : .zero
+        muteTask?.cancel()
+        muteTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            // A quick tap or Escape can end the recording before the delay
+            // does; muting then would leave the Mac silent with nobody to undo it.
+            guard !Task.isCancelled, let self, self.phase == .recording, self.recorder.isRecording else { return }
+            self.outputMute.mute()
+        }
+    }
+
+    private func restoreOutput() {
+        muteTask?.cancel()
+        muteTask = nil
+        outputMute.restore()
     }
 }
