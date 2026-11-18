@@ -312,7 +312,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">WAT OPEN IS</span>
-          <p>De broncode van de Plainsay Mac-client omvat de integraties voor transcriptie en Polishing, de HUD, Instellingen en de Setup-assistent. Componenten en modellen van derden behouden hun eigen licenties. De Mac-client verstuurt geen analytics of telemetrie. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst.</p>
+          <p>De broncode van de Plainsay Mac-client omvat de integraties voor transcriptie en Polishing, de HUD, Instellingen en de Setup-assistent. Componenten en modellen van derden behouden hun eigen licenties. Optionele gebruiksstatistieken staan standaard uit. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst.</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">WAT NIET</span>
@@ -448,7 +448,7 @@
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open source", body: "De broncode van de Plainsay Mac-client is openbaar onder de MIT-licentie. Elke al onder MIT uitgebrachte versie blijft vrij om te forken en aan te passen; componenten en modellen van derden hebben eigen licenties." },
-    { icon: "lock.shield.fill", title: "Standaard transparant", body: "De Mac-client verstuurt geen analytics of telemetrie. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst." },
+    { icon: "lock.shield.fill", title: "Standaard transparant", body: "Optionele gebruiksstatistieken staan standaard uit. Controles op ondertekende updates maken standaard contact met api.plainsay.app en kunnen in Instellingen worden uitgeschakeld. De optionele Cloud registreert account-, abonnements- en gebruiksmetadata die nodig zijn voor de betaalde dienst." },
     { icon: "clock.arrow.circlepath", title: "Herstelbare terugvalopties", body: "Als Polishing mislukt, gebruikt Plainsay het ruwe transcript. Is er geen veilig plakdoel, dan blijft de tekst op het klembord; als Geschiedenis is ingeschakeld, voegt Plainsay het voltooide transcript vóór het invoegen aan de lokale geschiedenis toe." },
     { icon: "clock.arrow.circlepath", title: "Geschiedenis onder jouw controle", body: "De geschiedenis bewaart standaard maximaal 100 dictaties gedurende 30 dagen. Kies 7, 30, 90 of 365 dagen, wis de geschiedenis of schakel deze uit; bij uitschakelen worden opgeslagen transcripties verwijderd." },
     { icon: "text.quote", title: "Suggesties voor woordenschat", body: "In Instellingen worden terugkerende namen en producttermen uit opgeslagen dictaties voorgesteld. Er wordt niets toegevoegd tenzij je „Toevoegen“ kiest; elke suggestie kun je afwijzen. Bij toegepaste correcties worden overeenkomsten voorzichtig bepaald en wordt de dichtstbijzijnde kandidaat gekozen." },

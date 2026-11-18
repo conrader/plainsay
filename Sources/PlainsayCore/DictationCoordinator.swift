@@ -66,6 +66,9 @@ public final class DictationCoordinator {
 
     /// Internal only so `DictationCoordinator+Private.swift` can read the speech source.
     let settings: PlainsaySettings
+    private let usageStatistics: UsageStatistics?
+    private var usageConsentGeneration: Int?
+    private var preparedLanguage: String?
     private let recorder: any AudioRecording
     private let inserter: any TextInserting
     private var engine: (any TranscriptionEngine)?
@@ -156,7 +159,8 @@ public final class DictationCoordinator {
         readTargetWindowTitle: (@MainActor @Sendable () -> String?)? = nil,
         usesInjectedEngine: Bool = false,
         injectedSource: TranscriptionSource = .onDevice,
-        privateDictation: PrivateDictationState = PrivateDictationState()
+        privateDictation: PrivateDictationState = PrivateDictationState(),
+        usageStatistics: UsageStatistics? = nil
     ) {
         self.settings = settings
         self.history = history
@@ -174,6 +178,7 @@ public final class DictationCoordinator {
         self.usesInjectedEngine = usesInjectedEngine
         self.injectedSource = injectedSource
         self.privateDictation = privateDictation
+        self.usageStatistics = usageStatistics
         self.hotkeys = HotkeyMonitor(binding: settings.binding)
         self.machine = HotkeyStateMachine(mode: settings.hotkeyMode)
 
@@ -498,8 +503,9 @@ public final class DictationCoordinator {
         // Tests inject `makeEngine`; production goes through the factory, which
         // is the only thing that knows about remote providers.
         let source = usesInjectedEngine ? injectedSource : settings.transcriptionSource
+        let language = settings.primaryLanguage
         let engine = usesInjectedEngine
-            ? makeEngine(settings.model, settings.primaryLanguage, onState)
+            ? makeEngine(settings.model, language, onState)
             : ProviderFactory.makeEngine(settings, onState: onState)
         guard !Task.isCancelled, generation == modelLoadGeneration else { return }
         self.engine = engine
@@ -513,6 +519,7 @@ public final class DictationCoordinator {
             // Don't depend on the engine having reported readiness itself —
             // a successful `prepare()` is the definition of ready.
             preparedSource = source
+            preparedLanguage = language
             applyModelState(.ready)
         } catch {
             guard generation == modelLoadGeneration else {
@@ -720,6 +727,9 @@ public final class DictationCoordinator {
             return
         }
 
+        usageConsentGeneration = usageStatistics?.beginDictation(
+            isPrivate: privateDictation.isArmed, isCorrection: isCapturingCorrection
+        )
         switch modelState {
         case .ready:
             break
@@ -731,6 +741,7 @@ public final class DictationCoordinator {
             machine.reset()
             return
         case .failed:
+            usageStatistics?.record(usageConsentGeneration, failures: [.model])
             flashError(modelStatusMessage, isModelLoadError: true)
             machine.reset()
             return
@@ -740,6 +751,7 @@ public final class DictationCoordinator {
         // guarantees that the sentence being spoken is lost. The setup and
         // Settings permission buttons own that interaction.
         guard microphoneAuthorized() else {
+            usageStatistics?.record(usageConsentGeneration, failures: [.permission])
             flashError(
                 Localization.coreString("coordinator.needsMicrophone", fallback: "Plainsay needs microphone access")
             )
@@ -779,6 +791,7 @@ public final class DictationCoordinator {
         do {
             try recorder.start()
         } catch {
+            usageStatistics?.record(usageConsentGeneration, failures: [.recording])
             // Nothing was recorded, so nothing captured for it may linger.
             targetApp = nil
             targetBundleIdentifier = nil
@@ -987,8 +1000,25 @@ public final class DictationCoordinator {
 
     private func runPipeline(_ samples: [Float], stoppedAtRecordingLimit: Bool) async {
         let duration = Double(samples.count) / whisperSampleRate
+        let mode: UsageStatistics.Mode? = switch preparedSource {
+        case .onDevice: .local
+        case .cloud: .cloud
+        case .remote: .remote
+        case nil: nil
+        }
+        let consent = usageConsentGeneration
+        let language = preparedLanguage
+        var attemptedPolishing = false
+        var failures: [UsageStatistics.Failure] = []
+        defer {
+            usageStatistics?.record(
+                consent, seconds: duration, mode: mode,
+                attemptedPolishing: attemptedPolishing, language: language, failures: failures
+            )
+        }
 
         guard let engine else {
+            failures.append(.model)
             record(text: "", raw: "", outcome: .modelNotReady, duration: duration)
             flashError(Localization.coreString("coordinator.modelNotLoaded", fallback: "Speech model not loaded"))
             return
@@ -1009,6 +1039,7 @@ public final class DictationCoordinator {
         do {
             transcript = try await engine.transcribe(samples: filteredSamples, prompt: prompt)
         } catch {
+            failures.append(.transcription)
             Log.pipeline.error("transcription failed: \(error.localizedDescription, privacy: .public)")
             record(text: "", raw: "", outcome: .transcriptionFailed, duration: duration)
             flashError(PrivateDictationState.notice(error.localizedDescription, stillArmed: showsStillArmed))
@@ -1042,12 +1073,14 @@ public final class DictationCoordinator {
         if policy.allowsCleanup { settings.refreshCredentialPresence() }
         let cleaner = policy.allowsCleanup ? makeCleaner(settings) : NoCleanup()
         let style = policy.allowsCleanup ? resolvedDictationStyle(for: policy) : .plain
+        attemptedPolishing = !(cleaner is NoCleanup)
 
         var finalText = transcript
         var usedRaw = false
         do {
             finalText = try await cleaner.clean(transcript, dictionary: dictionary, style: style)
         } catch {
+            failures.append(.polishing)
             // Cleanup is best-effort: a failure must never cost the dictation.
             Log.cleanup.error("cleanup failed, using raw transcript: \(error.localizedDescription, privacy: .public)")
             usedRaw = true
@@ -1106,8 +1139,10 @@ public final class DictationCoordinator {
             scheduleReset()
             playSound("Pop")
         case .noFocusedElement:
+            failures.append(.insertion)
             saveToClipboard(historyID: historyID, reason: .nothingFocused)
         case .targetUnavailable(let loss):
+            failures.append(.insertion)
             saveToClipboard(historyID: historyID, reason: .targetGone(loss))
         }
     }

@@ -38,11 +38,14 @@ final class AppModel {
         )
     }()
 
+    private let usageStatistics: UsageStatistics
     private var startTask: Task<Void, Never>?
 
     private init() {
         let settings = PlainsaySettings.shared
-        let coordinator = DictationCoordinator(settings: settings)
+        let usageStatistics = UsageStatistics()
+        let coordinator = DictationCoordinator(settings: settings, usageStatistics: usageStatistics)
+        self.usageStatistics = usageStatistics
         self.coordinator = coordinator
         self.hud = HUDController(coordinator: coordinator)
         self.settingsWindow = SettingsWindowController(
@@ -52,6 +55,9 @@ final class AppModel {
             updates: updates,
             voiceEnrollment: voiceEnrollment
         )
+        settings.onUsageStatisticsChanged = { [usageStatistics] revision in
+            usageStatistics.updateConsent(revision)
+        }
         coordinator.onVoiceEdit = { [weak self] in
             guard let self, !self.coordinator.phase.isBusy, !self.coordinator.refuseEditingIfPrivate() else { return }
             self.voiceEditWindow.show()
@@ -70,6 +76,7 @@ final class AppModel {
             return
         }
 
+        usageStatistics.updateConsent(settings.usageStatisticsConsentRevision)
         hud.start()
         let task = Task { @MainActor [coordinator] in
             await coordinator.start(requestMicrophonePermission: requestMicrophonePermission)

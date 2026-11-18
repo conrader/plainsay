@@ -144,6 +144,10 @@ private struct GeneralSettings: View {
                 Toggle("Play a sound when dictation starts and ends", isOn: $settings.playFeedbackSounds)
             }
 
+            Section("Privacy") {
+                UsageStatisticsPreference(isOn: $settings.shareAnonymousUsageStatistics)
+            }
+
             Section("Setup") {
                 Button("Run Setup Assistant…") {
                     openSetupAssistant()

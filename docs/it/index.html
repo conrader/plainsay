@@ -312,7 +312,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">COSA È APERTO</span>
-          <p>Il sorgente del client Plainsay per Mac comprende le integrazioni di trascrizione e Polishing, l&#x27;HUD, Impostazioni e l&#x27;Assistente di configurazione. Componenti e modelli di terze parti conservano le proprie licenze. Il client Mac non invia analytics né telemetria. Il controllo degli aggiornamenti firmati contatta api.plainsay.app per impostazione predefinita e può essere disattivato nelle Impostazioni. Il Cloud opzionale registra i metadati di account, abbonamento e utilizzo necessari al servizio a pagamento.</p>
+          <p>Il sorgente del client Plainsay per Mac comprende le integrazioni di trascrizione e Polishing, l&#x27;HUD, Impostazioni e l&#x27;Assistente di configurazione. Componenti e modelli di terze parti conservano le proprie licenze. Le statistiche di utilizzo facoltative sono disattivate per impostazione predefinita. Il controllo degli aggiornamenti firmati contatta api.plainsay.app per impostazione predefinita e può essere disattivato nelle Impostazioni. Il Cloud opzionale registra i metadati di account, abbonamento e utilizzo necessari al servizio a pagamento.</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">COSA NON LO È</span>
@@ -448,7 +448,7 @@
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open source", body: "Il sorgente del client Plainsay per Mac è pubblico con licenza MIT. Ogni versione già pubblicata sotto MIT resta libera da forkare e modificare; componenti e modelli di terze parti hanno licenze proprie." },
-    { icon: "lock.shield.fill", title: "Trasparente di default", body: "Il client Mac non invia analytics né telemetria. Il controllo degli aggiornamenti firmati contatta api.plainsay.app per impostazione predefinita e può essere disattivato nelle Impostazioni. Il Cloud opzionale registra i metadati di account, abbonamento e utilizzo necessari al servizio a pagamento." },
+    { icon: "lock.shield.fill", title: "Trasparente di default", body: "Le statistiche di utilizzo facoltative sono disattivate per impostazione predefinita. Il controllo degli aggiornamenti firmati contatta api.plainsay.app per impostazione predefinita e può essere disattivato nelle Impostazioni. Il Cloud opzionale registra i metadati di account, abbonamento e utilizzo necessari al servizio a pagamento." },
     { icon: "clock.arrow.circlepath", title: "Fallback recuperabili", body: "Se Polishing non riesce, Plainsay usa la trascrizione grezza. Se non c’è una destinazione sicura per incollare, il testo resta negli appunti; quando la cronologia è attiva, Plainsay aggiunge la trascrizione completata alla cronologia prima dell’inserimento." },
     { icon: "clock.arrow.circlepath", title: "Cronologia sotto il tuo controllo", body: "Per impostazione predefinita, la cronologia conserva fino a 100 dettature per 30 giorni. Scegli 7, 30, 90 o 365 giorni, cancellala o disattivala; disattivandola, le trascrizioni salvate vengono eliminate." },
     { icon: "text.quote", title: "Suggerimenti di vocabolario", body: "Le Impostazioni propongono nomi e termini di prodotto ricorrenti rilevati nelle dettature salvate. Non viene aggiunto nulla finché non scegli Aggiungi e ogni suggerimento può essere ignorato. Le correzioni applicate usano una corrispondenza prudente e scelgono il candidato più vicino." },

@@ -11,7 +11,7 @@ A native Mac dictation app in a 12 MB download, with Whisper and Parakeet runnin
   <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-required-14161A?style=flat-square&logo=apple">
 </p>
 <p align="center"><code>brew install --cask conrader/plainsay/plainsay</code> · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download the notarized DMG</strong></a></p>
-<p align="center"><strong>12 MB native app · free Local mode · no account · no telemetry</strong></p>
+<p align="center"><strong>12 MB native app · free Local mode · no account · usage statistics off by default</strong></p>
 <p align="center"><a href="https://github.com/conrader/plainsay"><strong>⭐ Star Plainsay on GitHub</strong></a>, the simplest way to help other Mac users find it.</p>
 
 <p align="center">
@@ -217,15 +217,70 @@ signed-update delivery can still produce ordinary web-server access records.
 
 Local mode does not mean the app never uses the network: the selected model
 must be downloaded once, and the default update check contacts
-`api.plainsay.app` (it can be switched off). The Mac client sends no analytics
-or telemetry. By default, History keeps up to 100 raw and final transcript
-records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear the
+`api.plainsay.app` (it can be switched off). By default, History keeps up to
+100 raw and final transcript records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear the
 records, or stop saving them; turning History off deletes saved transcripts.
 Audio is staged in an owner-only local folder while a dictation is processed
 and removed after a successful or completed attempt. Interrupted recordings
 can remain for recovery. On each launch, Plainsay removes ones older than 7
 days and keeps no more than the newest 20; clearing History purges them too.
 These files are excluded from backups.
+
+### Optional anonymous usage statistics
+
+**Share anonymous usage statistics** is off by default for new and existing
+installations. You can enable it on the Ready screen during setup or in
+**Settings → General → Privacy**. It helps the developers understand active
+installs, version adoption, which features people use, and where dictation fails.
+
+- Usage statistics are optional. We seek prior consent for storing and reading the counters on your Mac under [ePrivacy Article 5(3)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02002L0058-20091219) and [Poland’s Electronic Communications Law, Article 399](https://eli.sejm.gov.pl/eli/DU/2024/1221/ogl/pol).
+- An unchecked switch asks for a specific, informed choice. Consent is our basis for any personal data processed in receiving a report. [GDPR Articles 6(1)(a) and 7](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+- The same switch withdraws consent and clears pending counters. Dictation is available either way. [GDPR Article 7(3)](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+
+When enabled, Plainsay counts standard dictation attempts on your Mac.
+It sends at most one HTTPS batch per UTC day to
+`POST https://api.plainsay.app/v1/usage-statistics`, independent of update
+checks. The batch can include up to seven closed days to cover time offline.
+Turning sharing off cancels any in-flight upload, stops collection and clears
+pending statistics. An upload already received is merged into totals.
+
+Each reported day contributes one daily active install. Your Mac marks one
+report per Monday–Sunday UTC week as a weekly active install. The figures
+cover participating installations. Reinstalls or turning sharing off and on
+can count an installation twice in a week. Expired or interrupted deliveries
+can reduce counts. No account or install identifier is sent. The request
+never contains text, audio, vocabulary, target app names or IDs, file paths,
+or error messages. Private dictations and correction commands are excluded.
+The network uses the IP address to deliver the request, and the usage
+statistics route does not log or store it. The collector folds the report into
+90-day totals and keeps no individual reports.
+
+An example request body follows. The language codes are configured speech
+hints (or `auto` when unavailable). Dictations, audio minutes, and mode totals
+are ranges. Polishing can overlap any speech mode. Failures are capped at
+100 per category per day.
+
+```json
+{
+  "schema": 1,
+  "days": [
+    {
+      "day": "2026-11-16",
+      "weekly_active": true,
+      "app_version": "0.2.38",
+      "macos_version": "15.7",
+      "dictations": "5-19",
+      "audio_minutes": "1-<5",
+      "modes": {"local": "5-19", "polishing": "1-4"},
+      "languages": ["pl"],
+      "failures": {"polishing": 1}
+    }
+  ]
+}
+```
+
+See the [privacy policy](https://plainsay.app/privacy/#usage-statistics) and
+[collector and reporting instructions](Server/UsageStatistics/README.md).
 
 ### Private next dictation
 

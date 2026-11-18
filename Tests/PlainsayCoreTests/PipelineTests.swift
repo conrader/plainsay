@@ -350,7 +350,8 @@ private struct Harness {
         // Default `.paste`: the suite below is about the pipeline, and the
         // real capture would otherwise read whatever application happens to
         // be frontmost on the machine running the tests.
-        pasteTargetDecision: PasteTargetDecision = .paste
+        pasteTargetDecision: PasteTargetDecision = .paste,
+        usageStatistics: UsageStatistics? = nil
     ) {
         // An isolated defaults suite so tests never disturb real preferences.
         let suite = UserDefaults(suiteName: "plainsay.tests.\(UUID().uuidString)")!
@@ -386,7 +387,8 @@ private struct Harness {
                 captures.value += 1
                 return pasteTarget
             },
-            usesInjectedEngine: true
+            usesInjectedEngine: true,
+            usageStatistics: usageStatistics
         )
     }
 
@@ -437,6 +439,55 @@ private struct Harness {
 @Suite("Dictation pipeline", .serialized)
 @MainActor
 struct PipelineTests {
+    @Test func usageStatisticsCountStandardButNotPrivateDictation() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var date = ISO8601DateFormatter().date(from: "2026-11-16T23:59:00Z")!
+        var payload: Data?
+        let statistics = UsageStatistics(
+            file: directory.appendingPathComponent("days.json"),
+            appVersion: "0.2.38",
+            macOSVersion: "15.7",
+            now: { date },
+            send: { payload = $0 }
+        )
+        statistics.updateConsent(1, automaticallyUpload: false)
+        let harness = Harness(usageStatistics: statistics)
+        harness.settings.spokenLanguages = ["pl"]
+        harness.cleaner.error = TranscriptionError.failed("sensitive message")
+        await harness.ready()
+
+        harness.dictate()
+        try await harness.waitUntil {
+            harness.inserter.handledCount == 1 && !harness.coordinator.mayStillWriteHistory
+        }
+        #expect(harness.inserter.handledCount == 1)
+
+        let refusal = harness.coordinator.armPrivateNextDictation()
+        #expect(refusal == nil)
+        harness.recorder.duration = 60
+        harness.dictate()
+        try await harness.waitUntil {
+            harness.inserter.handledCount == 2 && !harness.coordinator.mayStillWriteHistory
+        }
+        #expect(harness.inserter.handledCount == 2)
+
+        date.addTimeInterval(60)
+        let upload = try #require(statistics.flush(isOnline: true))
+        await upload.value
+        let data = try #require(payload)
+        let envelope = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let days = try #require(envelope["days"] as? [[String: Any]])
+        let day = try #require(days.first)
+        #expect(day["audio_minutes"] as? String == "<1")
+        #expect(day["modes"] as? [String: String] == ["local": "1-4", "polishing": "1-4"])
+        #expect(day["languages"] as? [String] == ["pl"])
+        #expect(day["failures"] as? [String: Int] == ["polishing": 1])
+        let body = String(decoding: data, as: UTF8.self)
+        #expect(!body.contains("sensitive message"))
+        #expect(!body.contains(harness.engine.transcript))
+    }
+
     @Test("A dictation is transcribed, cleaned, and inserted")
     func happyPath() async throws {
         let harness = Harness()

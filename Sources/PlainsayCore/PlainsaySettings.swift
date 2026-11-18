@@ -42,6 +42,19 @@ public final class PlainsaySettings {
     public var asrProvider: ASRProvider { didSet { persist(asrProvider, .asrProvider) } }
     public var asrModel: String { didSet { defaults.set(asrModel, forKey: Key.asrModel.rawValue) } }
     public var asrBaseURL: String { didSet { defaults.set(asrBaseURL, forKey: Key.asrBaseURL.rawValue) } }
+    // Odd revisions mean consent is on. A single preference stores the choice
+    // and distinguishes old queues after withdrawal, even if deletion fails.
+    public private(set) var usageStatisticsConsentRevision: Int
+    public var shareAnonymousUsageStatistics: Bool {
+        get { usageStatisticsConsentRevision % 2 == 1 }
+        set {
+            guard newValue != shareAnonymousUsageStatistics else { return }
+            usageStatisticsConsentRevision += 1
+            defaults.set(usageStatisticsConsentRevision, forKey: Key.usageStatisticsConsentRevision.rawValue)
+            onUsageStatisticsChanged?(usageStatisticsConsentRevision)
+        }
+    }
+    @ObservationIgnored public var onUsageStatisticsChanged: ((Int) -> Void)?
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
     /// Whether dictations are written to disk at all.
     ///
@@ -314,7 +327,7 @@ public final class PlainsaySettings {
 
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
-        case livePreviewEnabled
+        case livePreviewEnabled, usageStatisticsConsentRevision
         case historyEnabled, historyRetentionDays
         case emailModeEnabled, translationTargetLanguage, lastTranslationTarget
         case voiceFilterEnabled, voiceEmbedding
@@ -352,6 +365,7 @@ public final class PlainsaySettings {
         replacementRules = decode(.replacementRules, ReplacementRuleSet())
         dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
+        usageStatisticsConsentRevision = defaults.integer(forKey: Key.usageStatisticsConsentRevision.rawValue)
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false

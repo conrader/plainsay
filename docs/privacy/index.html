@@ -72,12 +72,12 @@
       <div class="eyebrow">Legal · Privacy</div>
       <h1>Privacy, mode by mode.</h1>
       <p class="sub">Local dictation and Plainsay Cloud do not have the same data flow. This policy keeps those boundaries explicit and describes the website, account, billing, support, and update paths too.</p>
-      <div class="updated">Effective 27 August 2026 · Last updated 10 October 2026</div>
+      <div class="updated">Effective 27 August 2026 · Last updated 18 November 2026</div>
     </header>
 
     <section id="controller">
       <h2>1. Controller and contact</h2>
-      <p>For the website and Plainsay Cloud, the controller is:</p>
+      <p>The controller is:</p>
       <div class="card">
         <address>
           <strong>DMT Sp. z o.o.</strong><br>
@@ -99,7 +99,7 @@
         <li><strong class="accent">Local transcription:</strong> recorded audio and transcript text stay on your Mac when Polishing is off or uses a local endpoint. No Plainsay account is needed.</li>
         <li><strong class="accent">Plainsay Cloud speech:</strong> the app sends recorded audio and limited request metadata to DMT. DMT processes it on an operated node when available or forwards it to deAPI as a fallback.</li>
         <li><strong class="accent">Hosted Polishing:</strong> transcript text and vocabulary terms go to the selected provider. Style-aware BYOK providers also receive any enabled translation-target or email-layout instruction. Since v0.2.33 the Plainsay Cloud cleanup request carries the same choices as structured fields — a layout name and a target language code, not free prompt text.</li>
-        <li><strong class="accent">No advertising analytics:</strong> the Mac client has no analytics or telemetry SDK, and the website has no advertising or analytics cookies.</li>
+        <li><strong class="accent">Optional usage statistics:</strong> off by default. The Mac app can send daily counts if you opt in. The website has no advertising or analytics cookies.</li>
         <li><strong class="accent">Content database:</strong> Plainsay Cloud does not store recorded audio or transcript text in its application database. It does store account, subscription, session, and usage metadata.</li>
       </ul>
     </section>
@@ -158,11 +158,19 @@
             <tr><td>Secure, troubleshoot, and prevent abuse</td><td>Minimal network, route, status, session, and usage metadata</td><td>Legitimate interests in service security, reliability, and fraud prevention, Art. 6(1)(f)</td><td>Some network metadata arises automatically; Local can be used offline after model download</td></tr>
             <tr><td>Answer support, complaints, and rights requests</td><td>Contact details and the content of correspondence</td><td>Contract or pre-contract steps, Art. 6(1)(b); legal obligations, Art. 6(1)(c); claims and support interests, Art. 6(1)(f)</td><td>We may be unable to answer or verify the request</td></tr>
             <tr><td>Windows waitlist</td><td>Email address, chosen platform and language, sign-up date</td><td>Your consent, Art. 6(1)(a) GDPR; you can withdraw it at any time by emailing <a href="mailto:hi@plainsay.app">hi@plainsay.app</a></td><td>We cannot tell you when a Windows version is available; nothing else changes</td></tr>
+            <tr><td>Understand use and reliability of the Mac app</td><td>Optional daily usage statistics and transient network address for delivery</td><td>Your consent, Art. 6(1)(a) GDPR for any personal data processed</td><td>Dictation remains available</td></tr>
             <tr><td>Deliver signed app updates</td><td>Ordinary request metadata such as network address, time, requested file, and status</td><td>Contract/service security and legitimate interest in safe software, Art. 6(1)(b) and (f)</td><td>Automatic update checks can be disabled</td></tr>
           </tbody>
         </table>
       </div>
       <p>We do not use consent as a catch-all basis. Plainsay currently sends no marketing email and performs no advertising profiling. Subscription status and the rolling usage allowance are evaluated automatically to allow or refuse a Cloud request, but this does not produce a legal or similarly significant effect within Article 22 GDPR.</p>
+    </section>
+
+    <section id="usage-statistics">
+      <h2>Optional Mac usage statistics</h2>
+      <p>Help DMT understand how many installations actively dictate, which app and macOS versions and features they use, and where the app fails. Sharing is off by default. You can enable it during setup or under <strong>Settings → General → Privacy → Share anonymous usage statistics</strong>. The same switch withdraws consent, stops collection, cancels pending requests and deletes queued data. Withdrawal does not affect earlier processing.</p>
+      <p>The app sends at most one HTTPS batch per UTC day to DMT at <code>api.plainsay.app</code>. Reports contain usage dates, a once-per-week contribution, the app version and macOS major and minor version, ranges for dictations and audio minutes, ranges for local, Plainsay Cloud, other remote speech and Polishing use, language hints and counts of fixed failure categories. Unsent counts can be held on your Mac for up to seven completed days. They are discarded when the app next runs after that window. The app also remembers your consent choice and which recent weeks it has counted. Private dictations and correction commands are excluded.</p>
+      <p>Reports never contain an account or install identifier, recorded audio, transcripts, vocabulary, app names or bundle identifiers, file paths, or error messages. The IP address is used to deliver the connection and is never logged or stored for this route. The collector combines submissions into independent totals, keeps them for 90 days, and keeps no individual reports. Once incorporated into totals, a contribution cannot be found by installation. Usage statistics do not go to dictation providers or advertising services.</p>
     </section>
 
     <section id="recipients">
@@ -171,7 +179,7 @@
         <table>
           <thead><tr><th>Recipient</th><th>Purpose and data</th><th>Location or route</th></tr></thead>
           <tbody>
-            <tr><td>OVHcloud / OVH sp. z o.o.</td><td>Hosting the website, API, update files, and Cloud database</td><td>Warsaw-region infrastructure, Poland</td></tr>
+            <tr><td>OVHcloud / OVH sp. z o.o.</td><td>Hosting the website, API, update files, Cloud database, and optional usage statistics</td><td>Warsaw-region infrastructure, Poland</td></tr>
             <tr><td>Stripe</td><td>Checkout, payment method, billing address where requested, customer and subscription management; DMT receives identifiers and status, not full card data</td><td>Stripe’s applicable European entity and global infrastructure</td></tr>
             <tr><td>Apple</td><td>Optional Sign in with Apple verification; Apple identifier and optional relay/email address</td><td>Apple’s applicable regional and global infrastructure</td></tr>
             <tr><td>Resend (Plus Five Five, Inc.)</td><td>Delivery of the one-time sign-in email; email address and message content</td><td>United States and listed subprocessors</td></tr>
@@ -195,6 +203,7 @@
         <li><strong>Cloud sessions:</strong> the service revokes the current session on sign-out and expires a token after 90 days without use.</li>
         <li><strong>Account, subscription, and usage metadata:</strong> kept while the Cloud account exists. After a verified deletion request, data not subject to an exception is removed within 30 days.</li>
         <li><strong>Payment, tax, accounting, complaint, and claims records:</strong> kept for the period required by applicable Polish or EU law, or until relevant claims expire. Stripe may keep its own records under its legal duties.</li>
+        <li><strong>Optional usage statistics:</strong> up to seven completed UTC days pending on your Mac while enabled. The collector retains aggregate totals for 90 calendar days.</li>
         <li><strong>Website and update access logs:</strong> rotated daily and ordinarily retained for 14 days. API proxy access logging is disabled; minimal application event logs exclude headers, query strings, and request bodies and are removed under size-based system rotation.</li>
         <li><strong>Support correspondence:</strong> kept while the matter is open and thereafter only as needed for follow-up, legal duties, or claims.</li>
         <li><strong>Waitlist entries:</strong> until we send the Windows announcement, then deleted, and in any case no later than 24 months after you sign up, or sooner on request. Deleted entries may remain in server backups for up to 30 days until they rotate out.</li>

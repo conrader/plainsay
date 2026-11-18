@@ -26665,6 +26665,252 @@
         }
       }
     },
+    "usageStatistics.detail": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Hilf uns, Plainsay zu verbessern: Teile tägliche Nutzungsbereiche, App- und macOS-Versionen, Sprachmodus, Sprachhinweise und Fehlerzahlen. Diktatinhalte und Kontodaten werden nie übertragen. Unter Einstellungen › Allgemein kannst du die Freigabe beenden und ausstehende Statistiken löschen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Help improve Plainsay by sharing daily usage ranges, app and macOS versions, speech mode, language hints, and failure counts. Dictation content and account details are never included. Turn this off in Settings › General to stop sharing and delete pending statistics."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Ayuda a mejorar Plainsay compartiendo intervalos de uso diario, versiones de la app y de macOS, modo de reconocimiento de voz, indicaciones de idioma y recuentos de fallos. Nunca se incluye el contenido de los dictados ni datos de la cuenta. Desactívalo en Ajustes › General para dejar de compartir y borrar las estadísticas pendientes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Aidez à améliorer Plainsay en partageant des plages d’utilisation quotidienne, les versions de l’app et de macOS, le mode de reconnaissance vocale, les indications de langue et le nombre d’échecs. Le contenu des dictées et les données du compte sont toujours exclus. Désactivez le partage dans Réglages › Général pour supprimer les statistiques en attente."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facoltativo. Aiuta a migliorare Plainsay condividendo intervalli di utilizzo giornaliero, versioni dell’app e di macOS, modalità di riconoscimento vocale, indicazioni sulla lingua e conteggi degli errori. Il contenuto delle dettature e i dati dell’account sono sempre esclusi. Disattiva l’opzione in Impostazioni › Generali per interrompere la condivisione ed eliminare le statistiche in attesa."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任意です。日ごとの使用量の範囲、アプリとmacOSのバージョン、音声認識モード、言語のヒント、失敗件数を共有すると、Plainsayの改善に役立ちます。音声入力の内容やアカウント情報は含まれません。共有を停止して未送信の統計を削除するには、「設定」›「一般」でオフにしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택 사항입니다. 일일 사용량 범위, 앱 및 macOS 버전, 음성 인식 모드, 언어 힌트, 실패 횟수를 공유하면 Plainsay 개선에 도움이 됩니다. 받아쓰기 내용과 계정 정보는 포함되지 않습니다. 설정 › 일반에서 끄면 공유가 중지되고 전송 대기 중인 통계가 삭제됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optioneel. Help Plainsay te verbeteren door dagelijkse gebruiksbereiken, app- en macOS-versies, spraakmodus, taalhints en aantallen fouten te delen. Dicteerinhoud en accountgegevens worden nooit meegestuurd. Zet dit uit onder Instellingen › Algemeen om het delen te stoppen en openstaande statistieken te wissen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcjonalnie. Pomóż ulepszać Plainsay, udostępniając dzienne przedziały użycia, wersje aplikacji i macOS, tryb rozpoznawania mowy, wskazówki językowe i liczbę błędów. Statystyki nigdy nie zawierają treści dyktowania ani danych konta. Wyłącz tę opcję w Ustawieniach › Ogólne, aby zatrzymać udostępnianie i usunąć oczekujące statystyki."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Ajude a melhorar o Plainsay partilhando intervalos de utilização diária, versões da aplicação e do macOS, modo de reconhecimento de voz, indicações de idioma e contagens de falhas. Nunca são incluídos conteúdos dos ditados nem dados da conta. Desative em Definições › Geral para parar a partilha e apagar as estatísticas pendentes."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно. Помогите улучшить Plainsay, поделившись диапазонами использования за день, версиями приложения и macOS, режимом распознавания речи, языковыми подсказками и числом сбоев. Содержимое диктовок и данные аккаунта не передаются. Отключите эту опцию в разделе «Настройки › Основные», чтобы прекратить отправку и удалить неотправленную статистику."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необов’язково. Допоможіть удосконалити Plainsay, поділившись денними діапазонами використання, версіями застосунку та macOS, режимом розпізнавання мовлення, мовними підказками й кількістю помилок. Зміст диктувань і дані облікового запису не надсилаються. Вимкніть у розділі «Налаштування › Загальні», щоб припинити надсилання та видалити ненадіслану статистику."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选。分享每日使用量范围、App 和 macOS 版本、语音识别模式、语言提示及失败次数，帮助改进 Plainsay。统计从不包含听写内容或账户信息。可在“设置 › 通用”中关闭分享并删除待发送的统计。"
+          }
+        }
+      }
+    },
+    "usageStatistics.privacyLink": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutz für Nutzungsstatistiken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage statistics privacy details"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidad de las estadísticas de uso"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confidentialité des statistiques d’utilisation"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy delle statistiche di utilizzo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用状況統計のプライバシー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용 통계 개인정보 처리 안내"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy van gebruiksstatistieken"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prywatność statystyk użycia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidade das estatísticas de utilização"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфиденциальность статистики использования"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфіденційність статистики використання"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用统计隐私详情"
+          }
+        }
+      }
+    },
+    "usageStatistics.toggle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anonyme Nutzungsstatistiken teilen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share anonymous usage statistics"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir estadísticas de uso anónimas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager des statistiques d’utilisation anonymes"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condividi statistiche di utilizzo anonime"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匿名の使用状況統計を共有"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "익명 사용 통계 공유"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anonieme gebruiksstatistieken delen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Udostępniaj anonimowe statystyki użycia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partilhar estatísticas de utilização anónimas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Делиться анонимной статистикой использования"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ділитися анонімною статистикою використання"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享匿名使用统计"
+          }
+        }
+      }
+    },
     "window.settingsTitle": {
       "localizations": {
         "de": {

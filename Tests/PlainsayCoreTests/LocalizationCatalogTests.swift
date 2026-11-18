@@ -42,6 +42,7 @@ struct LocalizationCatalogTests {
             "settings.emailMode.explanation", "settings.emailMode.needsSubscription",
             "settings.modelDownloadNoteWithPreparation", "spokenLanguages.makePrimary",
             "settings.vocabulary.dictationCount",
+            "usageStatistics.detail", "usageStatistics.privacyLink", "usageStatistics.toggle",
         ]
         for key in keys {
             let english = try #require(forms(strings, key, "en").values.first, "\(key) en")
