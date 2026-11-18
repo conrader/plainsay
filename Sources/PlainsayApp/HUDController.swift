@@ -98,11 +98,15 @@ final class HUDController {
         show()
     }
 
+    private static let accessibilityTimeout: Float = 0.25
+
     private func workingScreen() -> NSScreen? {
         let screens = NSScreen.screens
         guard screens.count > 1 else { return screens.first }
+        // Runs on the main thread; bound each AX request so a hung frontmost app
+        // falls back to the pointer's display instead of stalling the HUD.
         let focusedFrame = NSWorkspace.shared.frontmostApplication.flatMap {
-            FocusedWindow.accessibilityFrame(of: $0)
+            FocusedWindow.accessibilityFrame(of: $0, messagingTimeout: Self.accessibilityTimeout)
         }
         let index = Self.screenIndex(
             screenFrames: screens.map(\.frame),
