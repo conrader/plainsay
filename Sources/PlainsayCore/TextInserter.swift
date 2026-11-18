@@ -93,6 +93,25 @@ public protocol TextInserting: Sendable {
     /// becomes the clipboard's contents and stays there — `keepOnClipboard`
     /// does not apply, because here the clipboard is the only copy there is.
     @MainActor func copyToClipboard(_ text: String)
+
+    /// Same as above, with the pasteboard write optionally marked concealed
+    /// and transient (private dictation). Separate requirements, because a
+    /// protocol requirement cannot take a default argument; the extension
+    /// below forwards to the unmarked versions for conformers that predate it.
+    @MainActor func insert(_ text: String, keepOnClipboard: Bool, concealed: Bool) async -> TextInsertionOutcome
+    @MainActor func copyToClipboard(_ text: String, concealed: Bool)
+}
+
+extension TextInserting {
+    @MainActor
+    public func insert(_ text: String, keepOnClipboard: Bool, concealed: Bool) async -> TextInsertionOutcome {
+        await insert(text, keepOnClipboard: keepOnClipboard)
+    }
+
+    @MainActor
+    public func copyToClipboard(_ text: String, concealed: Bool) {
+        copyToClipboard(text)
+    }
 }
 
 /// Inserts text by writing it to the pasteboard and synthesizing ⌘V.
@@ -120,6 +139,11 @@ public struct PasteboardTextInserter: TextInserting {
 
     @MainActor
     public func insert(_ text: String, keepOnClipboard: Bool) async -> TextInsertionOutcome {
+        await insert(text, keepOnClipboard: keepOnClipboard, concealed: false)
+    }
+
+    @MainActor
+    public func insert(_ text: String, keepOnClipboard: Bool, concealed: Bool) async -> TextInsertionOutcome {
         guard !text.isEmpty else { return .inserted }
 
         // Without Accessibility, `CGEvent.post` is silently dropped: the
@@ -134,8 +158,7 @@ public struct PasteboardTextInserter: TextInserting {
         let pasteboard = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture(from: pasteboard)
 
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        ConcealedPasteboard.write(text, to: pasteboard, concealed: concealed)
         // `changeCount` increments on every write to the pasteboard, ours
         // included. Recorded right after our own write, so a mismatch later
         // means someone else — the user copying something else, another
@@ -177,14 +200,18 @@ public struct PasteboardTextInserter: TextInserting {
 
     @MainActor
     public func copyToClipboard(_ text: String) {
+        copyToClipboard(text, concealed: false)
+    }
+
+    @MainActor
+    public func copyToClipboard(_ text: String, concealed: Bool) {
         guard !text.isEmpty else { return }
         let pasteboard = NSPasteboard.general
         // No snapshot and no restore, deliberately. The previous clipboard is
         // overwritten and stays overwritten, exactly as on the
         // `.noFocusedElement` path above: restoring over a dictation that has
         // nowhere else to live is how a dictation disappears.
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        ConcealedPasteboard.write(text, to: pasteboard, concealed: concealed)
         Log.insertion.info(
             "left \(text.count, privacy: .public) chars on the clipboard without pasting"
         )

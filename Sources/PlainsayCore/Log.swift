@@ -17,6 +17,7 @@ public enum Log {
     public static let insertion = Logger(subsystem: subsystem, category: "insertion")
     public static let cleanup = Logger(subsystem: subsystem, category: "cleanup")
     public static let model = Logger(subsystem: subsystem, category: "model")
+    public static let history = Logger(subsystem: subsystem, category: "history")
 
     /// Shell command that shows this app's logs, surfaced in the UI so the user
     /// does not have to know the incantation.
