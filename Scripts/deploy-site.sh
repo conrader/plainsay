@@ -9,6 +9,8 @@
 # macOS 15 requirement that had already been lowered to 14. Anything a
 # release changes in docs/ has to actually reach the server, so this runs
 # from release.sh too.
+# Remote paths are constants expanded by the local shell.
+# shellcheck disable=SC2029
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -49,6 +51,10 @@ verify_checkout_is_current() {
   local behind
   behind=$(git rev-list --count "HEAD..$remote")
   if [ "$behind" -gt 0 ]; then
+    if [ "$CHECK_ONLY" = 0 ] && [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
+      echo "==> main advanced during release; deferring the website deploy to the next release"
+      exit 0
+    fi
     echo "refusing to deploy: this checkout is $behind commit(s) behind $remote (on $branch)." >&2
     echo "Publishing it would revert the live site to an older version and delete anything added since." >&2
     echo "Run: git pull --ff-only origin ${DEPLOY_SITE_BRANCH:-main}" >&2
@@ -86,6 +92,8 @@ validate_legal_page() {
 validate_legal_page docs/privacy/index.html
 validate_legal_page docs/terms/index.html
 
+[ -f docs/index.html ] || { echo "docs/index.html missing — wrong directory?" >&2; exit 1; }
+
 if [ "$CHECK_ONLY" = "1" ]; then
   echo "==> docs/ is publishable from this checkout"
   exit 0
@@ -94,10 +102,16 @@ fi
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
 
-[ -f docs/index.html ] || { echo "docs/index.html missing — wrong directory?" >&2; exit 1; }
-
 echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
-ssh "$HOST" "sudo mkdir -p $REMOTE_DIR && sudo chown -R \$(whoami) $REMOTE_DIR"
+RSYNC_OPTIONS=()
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
+  # The dedicated deployment user owns this tree. The worktree is private,
+  # but the files copied to nginx's document root must be readable by nginx.
+  RSYNC_OPTIONS=(-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15'
+    --no-owner --no-group --chmod="Du=rwx,Dgo=rx,Fu=rw,Fgo=r")
+else
+  ssh "$HOST" "sudo -n mkdir -p $REMOTE_DIR && sudo -n chown -R \$(whoami) $REMOTE_DIR"
+fi
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
 #
@@ -117,7 +131,9 @@ EXCLUDES=(
   --exclude='.DS_Store'
   --exclude='*.md'
 )
-rsync -az --delete "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
-ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
+rsync -az --delete "${RSYNC_OPTIONS[@]+"${RSYNC_OPTIONS[@]}"}" "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
+  ssh "$HOST" "sudo -n chown -R www-data:www-data $REMOTE_DIR && sudo -n chmod -R a+rX $REMOTE_DIR"
+fi
 
 echo "==> Live: https://plainsay.app/"
