@@ -20,7 +20,8 @@ SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Konrad Sierzputowski (
 echo "==> Building ($CONFIG)"
 swift build -c "$CONFIG" --product PlainsayApp
 
-BINARY="$(swift build -c "$CONFIG" --product PlainsayApp --show-bin-path)/PlainsayApp"
+BIN_DIR="$(swift build -c "$CONFIG" --product PlainsayApp --show-bin-path)"
+BINARY="$BIN_DIR/PlainsayApp"
 
 echo "==> Assembling $APP"
 rm -rf "$APP"
@@ -64,7 +65,7 @@ cp .build/checkouts/Sparkle/LICENSE \
 # Sparkle ships as a framework and SwiftPM does not embed it, so the binary
 # links against something the bundle does not contain. Copy it in and point
 # the loader at it, or the app dies at launch with a dyld error.
-SPARKLE_SRC="$(swift build -c "$CONFIG" --show-bin-path)/Sparkle.framework"
+SPARKLE_SRC="$BIN_DIR/Sparkle.framework"
 if [ -d "$SPARKLE_SRC" ]; then
 	echo "==> Embedding Sparkle"
 	mkdir -p "$APP/Contents/Frameworks"
