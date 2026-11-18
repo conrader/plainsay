@@ -49,16 +49,53 @@ export SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Konrad Sierzput
 	exit 1
 }
 
+# shellcheck source=Scripts/release-state.sh
+source Scripts/release-state.sh
+release_state_init
+DMG_STAGING=""
+DMG_MOUNT=""
+REMOTE_STAGE=""
+TAP_DIR=""
+cleanup() {
+	local result=$?
+	trap - EXIT
+	if [ -n "$DMG_MOUNT" ]; then detach_dmg "$DMG_MOUNT" || true; fi
+	if [ -n "$DMG_STAGING" ]; then rm -rf "$DMG_STAGING" || true; fi
+	if [ -e "$PENDING" ]; then
+		if [ -n "$TAP_DIR" ] && [ -z "$NIGHTLY_SOURCE" ]; then
+			echo "Kept release artifacts at $PWD/dist. See $PENDING." >&2
+		fi
+	else
+		if [ -n "$TAP_DIR" ]; then rm -rf "$TAP_DIR" || true; fi
+		if [ -n "$REMOTE_STAGE" ]; then
+			ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "rm -rf '$REMOTE_STAGE'" || \
+				echo "Inspect leftover staging directory $REMOTE_STAGE" >&2
+		fi
+	fi
+	release_lock || echo "Inspect leftover lock $LOCK." >&2
+	exit "$result"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+if [ -n "$NIGHTLY_SOURCE" ]; then
+	# The nightly parent keeps the lock through worktree cleanup. Only its
+	# direct release child can inherit it.
+	if [ "${PLAINSAY_NIGHTLY_LOCK_PID:-}" != "$PPID" ] ||
+		[ "$(cat "$LOCK/pid" 2>/dev/null)" != "$PPID" ]; then
+		echo "Nightly publication requires the parent's release lock" >&2
+		exit 1
+	fi
+else
+	acquire_release_lock
+fi
+check_pending_release
+
 SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
 [ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
 [ "$SIGN_IDENTITY" != "-" ] || {
 	echo "release DMGs require a Developer ID identity, not ad-hoc signing" >&2
-	exit 1
-}
-AVAILABLE_IDENTITIES=$(security find-identity -v -p codesigning)
-grep -Fq "$SIGN_IDENTITY" <<<"$AVAILABLE_IDENTITIES" || {
-	echo "Developer ID identity not available: $SIGN_IDENTITY" >&2
 	exit 1
 }
 validate_legal_page() {
@@ -83,12 +120,6 @@ validate_legal_page docs/terms/index.html
 	echo "working tree is not clean — commit the exact source and legal documents before releasing" >&2
 	exit 1
 }
-# The site deploy runs near the end, after the update feed is already live.
-# Any reason it would refuse — a checkout behind origin, uncommitted docs —
-# has to surface now, or a release aborts having shipped a new app while
-# plainsay.app still describes the old one.
-./Scripts/deploy-site.sh --check-only
-
 if gh release view "v$VERSION" >/dev/null 2>&1; then
 	echo "GitHub Release v$VERSION already exists — choose a new version; this script never overwrites a release" >&2
 	exit 1
@@ -120,6 +151,10 @@ check_feed_build() {
 		return 1
 	}
 }
+check_release_candidate() {
+	check_feed_build || return 1
+	if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
+}
 
 # Read rather than hardcoded a second time: this used to be a bare "15.0"
 # literal here that silently stopped matching Info.plist's own
@@ -137,7 +172,24 @@ BUILD=$(PlistBuddy -c "Print :CFBundleVersion" Scripts/Info.plist)
 	exit 1
 }
 [[ "$BUILD" =~ ^[1-9][0-9]{0,8}$ ]] || { echo "Info.plist needs a positive integer build" >&2; exit 1; }
-check_feed_build
+check_release_candidate
+# Find any stale checkout or site validation errors before publication starts.
+./Scripts/deploy-site.sh --check-only
+
+# macOS has no built-in timeout command. The alarm survives exec and bounds
+# each local check without sending any keychain passwords or opening a prompt.
+run_keychain_check() {
+	/usr/bin/perl -e 'alarm shift; exec @ARGV or die "exec: $!\n"' 15 "$@"
+}
+if ! run_keychain_check swift Scripts/check-release-keychain.swift ||
+	! AVAILABLE_IDENTITIES=$(run_keychain_check security find-identity -v -p codesigning); then
+	echo "Signing keychain is locked, unavailable, or did not respond within 15 seconds. Unlock it in the release user's login session and retry." >&2
+	exit 1
+fi
+grep -Fq "$SIGN_IDENTITY" <<<"$AVAILABLE_IDENTITIES" || {
+	echo "Developer ID identity not available: $SIGN_IDENTITY. Check the signing keychain and private key." >&2
+	exit 1
+}
 
 echo "==> Version $VERSION (build $BUILD)"
 
@@ -177,6 +229,7 @@ else
 	rm -f "$APP_STAMP"
 	./Scripts/bundle.sh
 	codesign --verify --deep --strict build/Plainsay.app
+	if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
 
 	# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
 	# the app the first time anyone launches it from a download — which is every
@@ -224,22 +277,18 @@ swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 # window bounds vs. icon-view content area have a well-known small offset
 # in this recipe elsewhere, but it lines up correctly here as written.
 echo "==> Building DMG"
+if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
 DMG="dist/Plainsay-$VERSION.dmg"
+DMG_STAGING=$(mktemp -d)
 if [ -n "$NIGHTLY_SOURCE" ]; then
 	# The login session owns the signing keys. Keep Finder automation out of
 	# the unattended path so a TCC prompt cannot stall the release.
-	DMG_STAGING=$(mktemp -d)
-	trap 'rm -rf "$DMG_STAGING"' EXIT
 	ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
 	ln -s /Applications "$DMG_STAGING/Applications"
 	hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -fs HFS+ \
 		-format UDZO -ov "$DMG" >/dev/null
-	rm -rf "$DMG_STAGING"
-	trap - EXIT
 else
 	DMG_RW="dist/Plainsay-$VERSION-rw.dmg"
-	DMG_STAGING=$(mktemp -d)
-	DMG_MOUNT=""
 	# Finder can keep a just-closed window's volume busy for a moment, so a single
 	# detach attempt is not enough; the read-write image is scratch, so forcing
 	# it as a last resort loses nothing.
@@ -250,12 +299,6 @@ else
 		done
 		hdiutil detach "$1" -force -quiet
 	}
-	cleanup_dmg_build() {
-		rm -rf "$DMG_STAGING"
-		if [ -n "$DMG_MOUNT" ]; then detach_dmg "$DMG_MOUNT" || true; fi
-	}
-	trap cleanup_dmg_build EXIT
-
 	ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
 	ln -s /Applications "$DMG_STAGING/Applications"
 	mkdir -p "$DMG_STAGING/.background"
@@ -302,9 +345,9 @@ else
 
 	hdiutil convert "$DMG_RW" -format UDZO -ov -o "$DMG" >/dev/null
 	rm -f "$DMG_RW"
-	rm -rf "$DMG_STAGING"
-	trap - EXIT
 fi
+rm -rf "$DMG_STAGING"
+DMG_STAGING=""
 
 # The app inside is already signed and stapled, but Gatekeeper assesses the
 # DMG container independently on first mount. Sign the container before
@@ -348,6 +391,7 @@ if [ "$MODE" = --prepare-only ]; then
 	echo "Prepared and verified $ZIP, $DMG and dist/appcast.xml."
 	exit 0
 fi
+check_release_candidate
 
 # Plain text for the release body: GitHub's own markdown renderer is what
 # displays it, not Sparkle's CDATA-wrapped HTML — reusing the HTML string
@@ -363,22 +407,13 @@ echo "==> Staging update artifacts on $HOST"
 if [ -z "$NIGHTLY_SOURCE" ]; then
 	ssh "$HOST" "sudo -n mkdir -p '$REMOTE_DIR/releases' && sudo -n chown -R \$(whoami) '$REMOTE_DIR'"
 fi
-REMOTE_STAGE=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "mktemp -d '$REMOTE_DIR/.release-stage.XXXXXX'")
-case "$REMOTE_STAGE" in
+STAGE_PATH=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "mktemp -d '$REMOTE_DIR/.release-stage.XXXXXX'")
+case "$STAGE_PATH" in
 	"$REMOTE_DIR"/.release-stage.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]) ;;
-	*) echo "unexpected remote staging path: $REMOTE_STAGE" >&2; exit 1 ;;
+	*) echo "unexpected remote staging path: $STAGE_PATH" >&2; exit 1 ;;
 esac
+REMOTE_STAGE=$STAGE_PATH
 echo "    Remote staging directory: $REMOTE_STAGE"
-TAP_DIR=""
-PUBLICATION_STARTED=0
-cleanup_publish() {
-	if [ -n "$TAP_DIR" ]; then rm -rf "$TAP_DIR"; fi
-	if [ "$PUBLICATION_STARTED" = 0 ]; then
-		ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "rm -rf '$REMOTE_STAGE'" || \
-			echo "Inspect leftover staging directory $REMOTE_STAGE" >&2
-	fi
-}
-trap cleanup_publish EXIT
 
 ZIP_BASENAME=$(basename "$ZIP")
 DMG_BASENAME=$(basename "$DMG")
@@ -397,7 +432,7 @@ verify_staged appcast.xml "$LOCAL_FEED_SHA"
 
 # Prepare the cask locally while failures can still leave the public channels
 # alone. Its GitHub asset becomes available when the draft is published.
-TAP_DIR=$(mktemp -d)
+TAP_DIR=$(mktemp -d "$PWD/dist/tap.XXXXXX")
 git clone --quiet --depth 1 "https://github.com/conrader/homebrew-plainsay.git" "$TAP_DIR"
 CASK="$TAP_DIR/Casks/plainsay.rb"
 [ -f "$CASK" ] || { echo "tap has no Casks/plainsay.rb" >&2; exit 1; }
@@ -414,6 +449,10 @@ grep -Fxq "$CASK_URL" "$CASK" || {
 }
 git -C "$TAP_DIR" -c core.hooksPath=/dev/null -c commit.gpgSign=false commit --quiet -am "Plainsay $VERSION"
 
+RELEASE_COMMIT=$(git rev-parse HEAD)
+RELEASE_TARGET=(--target "$RELEASE_COMMIT")
+check_release_candidate
+
 # Back up the single-item appcast and installer before replacing either.
 # A fresh private directory permits a retry after pre-publication failures.
 BACKUP=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "set -eu
@@ -425,27 +464,20 @@ cp '$REMOTE_DIR/releases/Plainsay-latest.dmg' \"\$backup/Plainsay-latest.dmg\"
 printf '%s\\n' \"\$backup\"")
 echo "    Previous appcast and installer: $BACKUP"
 
-RELEASE_COMMIT=$(git rev-parse HEAD)
-RELEASE_TARGET=(--target "$RELEASE_COMMIT")
-check_feed_build
+# A disconnect from here on can leave the channels at different versions.
+# Install the shared marker atomically before either path mutates GitHub.
+(
+	umask 077
+	printf 'tag=v%s\nbuild=%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\nlocal_checkout=%s\nlocal_tap=%s\n' \
+		"$VERSION" "$BUILD" "$RELEASE_COMMIT" "${NIGHTLY_SOURCE:-$RELEASE_COMMIT}" "$REMOTE_STAGE" "$BACKUP" \
+		"$LOCAL_ZIP_SHA" "$LOCAL_DMG_SHA" "$LOCAL_FEED_SHA" "$PWD" "$TAP_DIR" > "$LOCK/publish.pending"
+	mv "$LOCK/publish.pending" "$PENDING"
+)
 if [ -n "$NIGHTLY_SOURCE" ]; then
-	REMOTE_MAIN=$(git ls-remote --exit-code origin refs/heads/main | cut -f 1)
-	if [ "$REMOTE_MAIN" != "$NIGHTLY_SOURCE" ]; then
-		echo "origin/main moved during preparation; deferring publication" >&2
-		exit 1
-	fi
-	# From here on, a disconnect can leave GitHub, Sparkle and the tap at
-	# different versions. Keep a persistent stop marker until verified.
-	PENDING="${PLAINSAY_NIGHTLY_PENDING:?nightly publication marker is required}"
-	printf 'tag=v%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\n' \
-		"$VERSION" "$RELEASE_COMMIT" "$NIGHTLY_SOURCE" "$REMOTE_STAGE" "$BACKUP" \
-		"$LOCAL_ZIP_SHA" "$LOCAL_DMG_SHA" "$LOCAL_FEED_SHA" > "$PENDING"
-	PUBLICATION_STARTED=1
 	git push --no-follow-tags origin "$RELEASE_COMMIT:refs/tags/v$VERSION"
 	RELEASE_TARGET=(--verify-tag)
 fi
 
-PUBLICATION_STARTED=1
 echo "==> Creating private GitHub Release draft v$VERSION"
 gh release create "v$VERSION" "$ZIP" "$DMG" \
 	--draft "${RELEASE_TARGET[@]}" --title "$VERSION" --notes "$BODY"
@@ -460,6 +492,7 @@ mv '$REMOTE_STAGE/$ZIP_BASENAME' '$REMOTE_DIR/releases/$ZIP_BASENAME'
 mv '$REMOTE_STAGE/$DMG_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'
 mv '$REMOTE_STAGE/appcast.xml' '$REMOTE_DIR/appcast.xml'
 rmdir '$REMOTE_STAGE'"
+REMOTE_STAGE=""
 if [ -z "$NIGHTLY_SOURCE" ]; then
 	ssh "$HOST" "sudo -n chown www-data:www-data '$REMOTE_DIR' '$REMOTE_DIR/releases' '$REMOTE_DIR/appcast.xml' '$REMOTE_DIR/releases/$ZIP_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'"
 fi
@@ -512,4 +545,4 @@ echo "  package:  $FEED_URL/releases/Plainsay-$VERSION.zip"
 echo "  download: $(gh repo view --json url --jq .url)/releases/latest"
 echo "  brew:     brew install --cask conrader/plainsay/plainsay"
 
-if [ -n "$NIGHTLY_SOURCE" ]; then rm -f "$PENDING"; fi
+rm -f "$PENDING"

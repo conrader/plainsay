@@ -33,47 +33,59 @@ Logs go to `~/Library/Logs/PlainsayRelease/nightly.log`.
 `vMAJOR.MINOR.PATCH` tags and reads GitHub CI and version metadata. It leaves
 release destinations and the source checkout untouched. `--prepare-only` also
 runs the Swift build, tests, Developer ID signing, Sparkle signature verification,
-and both Apple notarizations. The scratch worktree is removed on exit.
+and both Apple notarizations. The scratch worktree is removed on exit unless
+publication needs reconciliation.
 Use a normal run to publish.
 
 The newest main push run of `ci.yml` must have succeeded for the exact
 candidate SHA. If the head is pending or red, the run defers. Each successful
-night covers all merges through that tested head. The patch version increments
-from the higher of the last stable tag and main's plist version. The build
-increments from the higher of the last tag's plist build and main's plist build,
-and publication also requires it to exceed the live feed build. This keeps
-builds monotonic across marketing version changes and after restoring an older
-feed. For a subsequent manual release, commit both plist fields and pick an
-integer build above the highest shipped build, including withdrawn builds.
+night covers all merges through that tested head. When main's plist version is
+ahead of the last stable tag, the nightly uses the committed version and build
+as-is. If that build is at or below the last tagged build or the live feed
+build, correct the plist on main before trying again. Otherwise, the nightly
+increments the last stable patch version and adds one to the higher of the
+tagged and main plist builds. All releases must exceed the live feed build.
+For a manual release, commit both plist fields and use a build above the
+highest shipped build, including withdrawn builds.
+A successful nightly publication completes the release for that version.
 
-A detached worktree gets a version-only commit whose parent is the tested main
-SHA. The nightly pushes the version tag to that commit and uses the tag when
-creating the release. This leaves main free of release commits. Nightly DMGs
-include the app and Applications shortcut with a standard Finder layout.
-A fresh main check before pushing avoids publishing a stale candidate. If main
-advances after publication starts, the site deploy waits for the next release
-to avoid overwriting newer site content. The nightly SSH account owns both
-deployment roots and publishes without sudo.
+A detached worktree gets a version-only commit when the nightly generates a
+version bump. For a version already committed on main, the tag points directly
+at the tested main SHA. Nightly DMGs include the app and Applications shortcut
+with a standard Finder layout. The nightly checks main before the Swift build
+and again during packaging. Both release paths recheck the live feed before
+creating the remote backup, and the nightly rechecks main at that point too.
+If main advances after publication starts, the site deploy waits for the next
+release to avoid overwriting newer site content. The nightly SSH account owns
+both deployment roots and publishes without sudo.
 
-Run only one production publisher at a time. To pause the agent, run
+Manual and nightly releases on the signing host share an exclusive lock and
+publication marker. Run them as the same user with the same state directory
+(`PLAINSAY_NIGHTLY_STATE_DIR` can override the default). Before signing, both
+paths check that the default keychain is unlocked and the Developer ID signing
+identity is available. Each check has a 15-second limit. If a check fails,
+unlock the signing keychain in the login session and check the identity before
+retrying. To pause the agent, run
 `launchctl disable "gui/$(id -u)/com.plainsay.nightly-release"` as the release
 user, wait for an active run to finish, and then boot out the service.
 Use `launchctl enable` with the same service target before bootstrapping again.
-The nightly lock and a possible
-`publish.pending` marker live at
-`~/Library/Application Support/PlainsayRelease/`. If a lock is left after a
-crash, confirm its PID and any child build/publish processes are gone. Use
-`git worktree list` and `git worktree remove --force` for its recorded scratch
-worktree if present, then remove the stale lock directory.
+The `nightly.lock` directory and `publish.pending` marker live under
+`~/Library/Application Support/PlainsayRelease/` by default. If a crash leaves
+the lock behind, confirm its PID and any child build or publish processes are
+gone before removing it. A scratch worktree may remain under `nightly.*/source`
+in the state directory. If a marker exists, retain the worktree through
+reconciliation.
 
 ## Interrupted publication
 
 GitHub, nginx, the website, and the Homebrew tap commit independently. The
-nightly writes `publish.pending` before the first public GitHub mutation and
-clears it after channel verification. A later run stops while it exists. Logs
-and the marker record the exact tag, staged paths, backup and SHA-256 checksums.
-Failures before that marker, including tests, signing and notarization, leave
-public artifacts untouched and can be retried.
+manual and nightly publishers write `publish.pending` before the first GitHub
+mutation and clear it after channel verification. Both paths stop while it
+exists. The marker records the tag, build, commits, staging and backup paths,
+SHA-256 checksums, and local checkout and tap paths. A failed publish retains
+the ZIP, DMG, appcast and committed tap clone in that checkout's `dist` folder.
+The nightly prints the retained worktree path and releases the lock. Failures
+before the marker leave public artifacts untouched and can be retried.
 
 Pause the agent and inspect the GitHub tag and release (including drafts),
 public appcast, stable DMG, the versioned ZIP and the tap. If the tag and
@@ -84,7 +96,8 @@ update, and deploy the current website checkout if necessary. If publication
 only created an unused tag or incomplete draft, inspect and resolve those
 before retrying. Preserve any tag that corresponds to an artifact users may
 already have installed. Clear the marker after confirming the resulting state,
-then resume scheduling.
+then remove any retained nightly checkout with `git worktree remove --force`
+and remove its empty scratch directory. Resume scheduling after cleanup.
 
 ## Pulling a bad Sparkle build
 

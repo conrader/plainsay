@@ -19,37 +19,36 @@ export PATH="$PATH:/usr/libexec" # macOS PlistBuddy
 
 cd "$(dirname "$0")/.."
 ROOT=$(pwd -P)
-STATE="${PLAINSAY_NIGHTLY_STATE_DIR:-$HOME/Library/Application Support/PlainsayRelease}"
-[[ "$STATE" = /* ]] || { echo "Use an absolute nightly state path" >&2; exit 2; }
-mkdir -p "$STATE"
+# shellcheck source=Scripts/release-state.sh
+source Scripts/release-state.sh
+release_state_init
 
 log() { printf '[%s] %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
 fail() { log "ERROR: $*" >&2; exit 1; }
 
-# Atomic directory lock. A crash leaves it in place for operator inspection.
-LOCK="$STATE/nightly.lock"
-if ! mkdir "$LOCK" 2>/dev/null; then
-	fail "cannot acquire $LOCK. Inspect the lock before running again."
-fi
+SCRATCH=""
 WORKTREE=""
 cleanup() {
 	local result=$?
 	trap - EXIT
 	if [ "$result" -ne 0 ]; then log "Nightly release exited with status $result."; fi
-	if [ -n "$WORKTREE" ]; then
-		git -C "$ROOT" worktree remove --force "$WORKTREE" || log "Inspect leftover worktree $WORKTREE."
+	if [ -n "$SCRATCH" ]; then
+		if [ -e "$PENDING" ]; then
+			log "Kept worktree and release artifacts at $WORKTREE. See $PENDING."
+		elif [ ! -d "$WORKTREE" ] || git -C "$ROOT" worktree remove --force "$WORKTREE"; then
+			rmdir "$SCRATCH" || log "Inspect leftover scratch directory $SCRATCH."
+		else
+			log "Inspect leftover worktree $WORKTREE."
+		fi
 	fi
-	rm -f "$LOCK/pid" "$LOCK/last.plist" "$LOCK/main.plist"
-	rmdir "$LOCK"
+	release_lock || log "Inspect leftover lock $LOCK."
 	exit "$result"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
-printf '%s\n' "$$" > "$LOCK/pid"
-
-PENDING="$STATE/publish.pending"
-[ ! -e "$PENDING" ] || fail "publication needs reconciliation. See $PENDING and RELEASING.md."
+acquire_release_lock
+check_pending_release
 
 # Fetch only current remote tags into a private namespace, ignoring local tags.
 TAG_REFS=refs/plainsay-nightly/tags
@@ -100,10 +99,17 @@ MAIN_VERSION=$(PlistBuddy -c 'Print :CFBundleShortVersionString' "$LOCK/main.pli
 [[ "$LAST_BUILD" =~ ^$NUMBER$ && "$MAIN_BUILD" =~ ^$NUMBER$ && "$MAIN_VERSION" =~ ^$SEMVER$ ]] ||
 	fail "main and $LAST_TAG must have numeric release metadata"
 
-BASE_VERSION=$(printf '%s\n' "${LAST_TAG#v}" "$MAIN_VERSION" | sort -t . -k1,1nr -k2,2nr -k3,3nr | sed -n '1p')
-IFS=. read -r major minor patch <<< "$BASE_VERSION"
-VERSION="$major.$minor.$((patch + 1))"
-BUILD=$(( (MAIN_BUILD > LAST_BUILD ? MAIN_BUILD : LAST_BUILD) + 1 ))
+LAST_VERSION=${LAST_TAG#v}
+HIGHEST_VERSION=$(printf '%s\n' "$LAST_VERSION" "$MAIN_VERSION" | sort -t . -k1,1nr -k2,2nr -k3,3nr | sed -n '1p')
+if [ "$HIGHEST_VERSION" != "$LAST_VERSION" ]; then
+	VERSION=$MAIN_VERSION
+	BUILD=$MAIN_BUILD
+	[ "$BUILD" -gt "$LAST_BUILD" ] || fail "main's unreleased v$VERSION needs a build newer than $LAST_TAG (build $LAST_BUILD)"
+else
+	IFS=. read -r major minor patch <<< "$LAST_VERSION"
+	VERSION="$major.$minor.$((patch + 1))"
+	BUILD=$(( (MAIN_BUILD > LAST_BUILD ? MAIN_BUILD : LAST_BUILD) + 1 ))
+fi
 [[ "$VERSION" =~ ^$SEMVER$ && "$BUILD" =~ ^$NUMBER$ ]] || fail "release version or build overflow"
 
 log "$MODE: $LAST_TAG -> v$VERSION (build $BUILD), main $SOURCE, CI green."
@@ -119,21 +125,25 @@ git var GIT_COMMITTER_IDENT >/dev/null
 # The enclosing state and lock directories are private. Use normal modes
 # for files that will end up inside the distributable app and DMG.
 umask 022
-WORKTREE="$LOCK/source"
+SCRATCH=$(mktemp -d "$STATE/nightly.XXXXXX")
+WORKTREE="$SCRATCH/source"
 git worktree add --quiet --detach "$WORKTREE" "$SOURCE"
 cd "$WORKTREE"
-PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Scripts/Info.plist
-PlistBuddy -c "Set :CFBundleVersion $BUILD" Scripts/Info.plist
-git -c core.hooksPath=/dev/null -c commit.gpgSign=false commit --quiet -m "Release $VERSION" -- Scripts/Info.plist
+if [ "$VERSION" != "$MAIN_VERSION" ]; then
+	PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Scripts/Info.plist
+	PlistBuddy -c "Set :CFBundleVersion $BUILD" Scripts/Info.plist
+	git -c core.hooksPath=/dev/null -c commit.gpgSign=false commit --quiet -m "Release $VERSION" -- Scripts/Info.plist
+fi
 
 # Match the macOS CI unit suite. Do not install the locally built application.
+check_nightly_main "$SOURCE"
 log "Running the Swift build and tests for v$VERSION."
 swift build </dev/null
 swift test </dev/null
 export CONFIG=release INSTALL=0 NOTARIZE=1 REBUILD=1
 export DEPLOY_SITE_BRANCH=main
 unset DEPLOY_SITE_SKIP_GIT_CHECK
-export PLAINSAY_NIGHTLY_SOURCE="$SOURCE" PLAINSAY_NIGHTLY_PENDING="$PENDING"
+export PLAINSAY_NIGHTLY_SOURCE="$SOURCE" PLAINSAY_NIGHTLY_LOCK_PID="$$"
 NOTES="<p>Nightly update from main.</p><p><a href=\"https://github.com/$GH_REPO/compare/$LAST_TAG...v$VERSION\">Changes since $LAST_TAG</a></p>"
 release_args=("$VERSION" "$NOTES")
 if [ "$MODE" = prepare ]; then release_args+=(--prepare-only); fi
