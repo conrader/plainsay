@@ -38,6 +38,10 @@ let package = Package(
             name: "PlainsayCoreTests",
             dependencies: ["PlainsayCore"]
         ),
+        .testTarget(
+            name: "PlainsayAppTests",
+            dependencies: ["PlainsayApp"]
+        ),
         .executableTarget(
             name: "BenchmarkCLI",
             dependencies: ["PlainsayCore"]
