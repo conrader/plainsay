@@ -4,6 +4,8 @@ import json
 import os
 import re
 import sqlite3
+import threading
+import time
 from contextlib import closing
 from datetime import date, datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -13,6 +15,10 @@ ROUTE = "/v1/usage-statistics"
 MAX_BODY = 16 * 1024
 PENDING_DAYS = 7
 RETENTION_DAYS = 90
+# Tolerate one day of client/server clock skew on either side of the window.
+CLOCK_SKEW_DAYS = 1
+BODY_DEADLINE_SECONDS = 10
+DEFAULT_RATE_PER_MINUTE = 600
 DAY_KEYS = {
     "day", "weekly_active", "app_version", "macos_version", "dictations",
     "audio_minutes", "modes", "languages", "failures",
@@ -60,7 +66,8 @@ def decode_batch(body, today):
         raw_day = row["day"]
         require(type(raw_day) is str and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", raw_day))
         day = date.fromisoformat(raw_day)
-        require(1 <= (today - day).days <= PENDING_DAYS and day not in seen_days)
+        age = (today - day).days
+        require(1 - CLOCK_SKEW_DAYS <= age <= PENDING_DAYS + CLOCK_SKEW_DAYS and day not in seen_days)
         seen_days.add(day)
         require(type(row["weekly_active"]) is bool)
         week = day - timedelta(days=day.weekday())
@@ -87,6 +94,40 @@ def decode_batch(body, today):
         else:
             require(row["audio_minutes"] != "0" and languages)
     return days
+
+
+class RateLimiter:
+    """Global token bucket. It never sees or keeps client addresses."""
+
+    def __init__(self, per_minute, clock=time.monotonic):
+        self.capacity = float(per_minute)
+        self.tokens = self.capacity
+        self.rate = per_minute / 60.0
+        self.clock = clock
+        self.updated = clock()
+        self.lock = threading.Lock()
+
+    def allow(self):
+        with self.lock:
+            now = self.clock()
+            self.tokens = min(self.capacity, self.tokens + (now - self.updated) * self.rate)
+            self.updated = now
+            if self.tokens < 1:
+                return False
+            self.tokens -= 1
+            return True
+
+
+def read_body(rfile, length, deadline):
+    """Read exactly `length` bytes, bounding the total time, not just each recv."""
+    chunks, remaining = [], length
+    while remaining:
+        require(time.monotonic() < deadline)
+        chunk = rfile.read1(min(remaining, 4096)) if hasattr(rfile, "read1") else rfile.read(remaining)
+        require(chunk)
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return b"".join(chunks)
 
 
 def open_store(path):
@@ -163,6 +204,9 @@ class UsageHandler(BaseHTTPRequestHandler):
         if self.path != ROUTE:
             self.reply(404)
             return
+        if not self.server.limiter.allow():
+            self.reply(429)
+            return
         if (self.headers.get_content_type() != "application/json"
                 or self.headers.get("Transfer-Encoding") is not None
                 or self.headers.get("Content-Encoding") is not None):
@@ -179,8 +223,7 @@ class UsageHandler(BaseHTTPRequestHandler):
 
         today = self.server.today()
         try:
-            body = self.rfile.read(length)
-            require(len(body) == length)
+            body = read_body(self.rfile, length, time.monotonic() + BODY_DEADLINE_SECONDS)
             days = decode_batch(body, today)
         except (ValueError, RecursionError, TimeoutError):
             self.reply(400)
@@ -195,10 +238,11 @@ class UsageHandler(BaseHTTPRequestHandler):
 
 
 class UsageServer(HTTPServer):
-    def __init__(self, port, db, today=utc_today):
+    def __init__(self, port, db, today=utc_today, rate_per_minute=DEFAULT_RATE_PER_MINUTE):
         # Raise a configuration/DB error at startup without accepting requests.
         self.db = db
         self.today = today
+        self.limiter = RateLimiter(rate_per_minute)
         self.last_prune = None
         self.prune_if_needed()
         super().__init__(("127.0.0.1", port), UsageHandler)
@@ -222,9 +266,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", required=True, type=Path)
     parser.add_argument("--port", default=8765, type=int)
+    parser.add_argument("--max-per-minute", default=DEFAULT_RATE_PER_MINUTE, type=int,
+                        help="global accepted-request budget for the route (no per-client state)")
     args = parser.parse_args()
+    if args.max_per_minute < 1:
+        parser.error("--max-per-minute must be positive")
     os.umask(0o077)
-    with closing(open_store(args.db)) as db, UsageServer(args.port, db) as server:
+    with closing(open_store(args.db)) as db, UsageServer(args.port, db, rate_per_minute=args.max_per_minute) as server:
         try:
             server.serve_forever()
         except KeyboardInterrupt:

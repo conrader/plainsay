@@ -11,6 +11,9 @@ Run this Python 3.10+ collector separately with the standard library and SQLite.
    the service manager to restart it after failures. The collector binds to
    `127.0.0.1:8765`. Keep the SQLite database off public paths and out of
    snapshots and backups so the 90-calendar-day expiry applies.
+   The collector also enforces its own global budget of accepted route requests
+   (`--max-per-minute`, default 600) and answers HTTP 429 beyond it; it keeps no
+   per-client state. Request bodies must arrive within 10 seconds in total.
 2. Proxy only `POST https://api.plainsay.app/v1/usage-statistics` to that loopback
    route. Require TLS, limit bodies to 16 KiB, enforce header/body timeouts and
    a global route request/connection limit, and turn off upstream retries.
@@ -53,8 +56,8 @@ with fewer than five contributing install-days are omitted from the CSV.
   clipboard fallbacks when insertion cannot be attempted.
 
 See the [example body and consent rationale](../../README.md#optional-anonymous-usage-statistics).
-The collector accepts up to seven closed UTC days, validates the complete
-schema, and merges independent totals in one transaction. It keeps no request
+The collector accepts up to seven closed UTC days (with one day of clock-skew
+tolerance either way), validates the complete schema, and merges independent totals in one transaction. It keeps no request
 rows or replay keys. Totals expire based on their UTC day or week start. The
 client checks connectivity before sending and makes one attempt per UTC day.
 It reserves the batch on disk before sending and skips retries after dispatch

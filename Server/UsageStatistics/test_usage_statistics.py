@@ -10,7 +10,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from report import report_rows
-from server import LANGUAGES, UsageHandler, aggregate, decode_batch, open_store, prune
+from server import LANGUAGES, RateLimiter, UsageHandler, aggregate, decode_batch, open_store, prune
 
 ROOT = Path(__file__).resolve().parents[2]
 TODAY = date(2026, 11, 18)
@@ -66,12 +66,25 @@ class UsageStatisticsTests(unittest.TestCase):
 
     def test_accepts_only_recent_closed_days(self):
         batch = example()
-        for day in ("2026-11-18", "2026-11-19", "2026-11-10", "20261116", "2026-11-31"):
+        for day in ("2026-11-19", "2026-11-09", "20261116", "2026-11-31"):
             with self.subTest(day=day), self.assertRaises(ValueError):
                 batch["days"][0]["day"] = day
                 decode(batch)
-        batch["days"][0]["day"] = "2026-11-11"
-        self.assertEqual(len(decode(batch)), 1)
+        # One day of clock skew either way must not drop a whole batch.
+        for day in ("2026-11-18", "2026-11-11", "2026-11-10"):
+            with self.subTest(day=day):
+                batch["days"][0]["day"] = day
+                self.assertEqual(len(decode(batch)), 1)
+
+    def test_global_rate_limiter_refills_without_client_state(self):
+        now = [0.0]
+        limiter = RateLimiter(2, clock=lambda: now[0])
+        self.assertTrue(limiter.allow())
+        self.assertTrue(limiter.allow())
+        self.assertFalse(limiter.allow())
+        now[0] += 30
+        self.assertTrue(limiter.allow())
+        self.assertFalse(limiter.allow())
 
     def test_counts_weekly_on_monday_and_rolls_up_independent_marginals(self):
         batch = example()
@@ -107,19 +120,27 @@ class UsageStatisticsTests(unittest.TestCase):
         invalid = example()
         invalid["days"].append(dict(invalid["days"][0], day="2026-11-17", text="secret"))
         with closing(open_store(":memory:")) as db, redirect_stderr(io.StringIO()) as stderr:
-            def post(path, body, *, content_type="application/json"):
+            allowed = [True]
+
+            def post(path, body, *, content_type="application/json", length=None):
                 request = (
                     f"POST {path} HTTP/1.1\r\nContent-Type: {content_type}\r\n"
-                    f"Content-Length: {len(body)}\r\n\r\n"
+                    f"Content-Length: {len(body) if length is None else length}\r\n\r\n"
                 ).encode() + body
                 connection = FakeConnection(request)
-                UsageHandler(connection, ("192.0.2.10", 5555), SimpleNamespace(db=db, today=lambda: TODAY))
+                UsageHandler(connection, ("192.0.2.10", 5555), SimpleNamespace(
+                    db=db, today=lambda: TODAY, limiter=SimpleNamespace(allow=lambda: allowed[0])
+                ))
                 return bytes(connection.response)
 
             self.assertIn(b" 404 ", post("/v1/usage-statistics?secret", body))
             self.assertIn(b" 415 ", post("/v1/usage-statistics", body, content_type="text/plain"))
             self.assertIn(b" 413 ", post("/v1/usage-statistics", b"x" * 16385))
             self.assertIn(b" 400 ", post("/v1/usage-statistics", json.dumps(invalid).encode()))
+            self.assertIn(b" 400 ", post("/v1/usage-statistics", body[:-1], length=len(body)))
+            allowed[0] = False
+            self.assertIn(b" 429 ", post("/v1/usage-statistics", body))
+            allowed[0] = True
             self.assertEqual(db.execute("SELECT COUNT(*) FROM totals").fetchone(), (0,))
             reply = post("/v1/usage-statistics", body)
             self.assertIn(b" 204 ", reply)

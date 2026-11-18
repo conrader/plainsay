@@ -11,9 +11,9 @@ struct UsageStatisticsPreference: View {
             ), isOn: $isOn)
             Text(Localization.appString(
                 "usageStatistics.detail",
-                fallback: """
-                    Optional. Help improve Plainsay by sharing daily usage ranges, app and macOS                     versions, speech mode, language hints, and failure counts. Dictation content                     and account details are never included. Turn this off in Settings › General                     to stop sharing and delete pending statistics.
-                    """
+                fallback: "Optional. Help improve Plainsay by sharing daily usage ranges, app and macOS versions, "
+                    + "speech mode, language hints, and failure counts. Dictation content and account details are "
+                    + "never included. Turn this off in Settings › General to stop sharing and delete pending statistics."
             ))
             .font(.callout)
             .foregroundStyle(.secondary)
