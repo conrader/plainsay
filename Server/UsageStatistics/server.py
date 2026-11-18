@@ -18,6 +18,7 @@ RETENTION_DAYS = 90
 # Tolerate one day of client/server clock skew on either side of the window.
 CLOCK_SKEW_DAYS = 1
 BODY_DEADLINE_SECONDS = 10
+SOCKET_TIMEOUT_SECONDS = 5
 DEFAULT_RATE_PER_MINUTE = 600
 DAY_KEYS = {
     "day", "weekly_active", "app_version", "macos_version", "dictations",
@@ -118,15 +119,24 @@ class RateLimiter:
             return True
 
 
-def read_body(rfile, length, deadline):
-    """Read exactly `length` bytes, bounding the total time, not just each recv."""
+def read_body(rfile, connection, length, deadline):
+    """Read exactly `length` bytes within the body deadline."""
     chunks, remaining = [], length
-    while remaining:
-        require(time.monotonic() < deadline)
-        chunk = rfile.read1(min(remaining, 4096)) if hasattr(rfile, "read1") else rfile.read(remaining)
-        require(chunk)
-        chunks.append(chunk)
-        remaining -= len(chunk)
+    try:
+        while remaining:
+            seconds_left = deadline - time.monotonic()
+            if seconds_left <= 0:
+                raise TimeoutError("request body deadline exceeded")
+            connection.settimeout(min(SOCKET_TIMEOUT_SECONDS, seconds_left))
+            # read1 makes at most one underlying socket read.
+            chunk = rfile.read1(min(remaining, 4096))
+            if time.monotonic() >= deadline:
+                raise TimeoutError("request body deadline exceeded")
+            require(chunk)
+            chunks.append(chunk)
+            remaining -= len(chunk)
+    finally:
+        connection.settimeout(SOCKET_TIMEOUT_SECONDS)
     return b"".join(chunks)
 
 
@@ -183,7 +193,7 @@ def aggregate(db, days):
 
 class UsageHandler(BaseHTTPRequestHandler):
     def setup(self):
-        self.request.settimeout(5)
+        self.request.settimeout(SOCKET_TIMEOUT_SECONDS)
         super().setup()
 
     def log_message(self, *_args):
@@ -223,9 +233,13 @@ class UsageHandler(BaseHTTPRequestHandler):
 
         today = self.server.today()
         try:
-            body = read_body(self.rfile, length, time.monotonic() + BODY_DEADLINE_SECONDS)
+            body = read_body(self.rfile, self.connection, length, time.monotonic() + BODY_DEADLINE_SECONDS)
             days = decode_batch(body, today)
-        except (ValueError, RecursionError, TimeoutError):
+        except TimeoutError:
+            self.close_connection = True
+            self.reply(408)
+            return
+        except (ValueError, RecursionError):
             self.reply(400)
             return
         try:

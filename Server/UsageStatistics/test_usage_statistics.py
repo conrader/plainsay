@@ -8,9 +8,10 @@ from copy import deepcopy
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from report import report_rows
-from server import LANGUAGES, RateLimiter, UsageHandler, aggregate, decode_batch, open_store, prune
+from server import LANGUAGES, ROUTE, RateLimiter, UsageHandler, aggregate, decode_batch, open_store, prune
 
 ROOT = Path(__file__).resolve().parents[2]
 TODAY = date(2026, 11, 18)
@@ -148,14 +149,48 @@ class UsageStatisticsTests(unittest.TestCase):
             self.assertEqual(stderr.getvalue(), "")
             self.assertEqual(db.execute("SELECT value FROM totals WHERE metric='daily_active'").fetchone(), (1,))
 
+    def test_body_finishing_after_deadline_is_rejected(self):
+        self.assert_body_completion(14.5, b" 408 ", 0)
+
+    def test_body_finishing_before_deadline_is_accepted(self):
+        self.assert_body_completion(9.875, b" 204 ", 1)
+
+    def assert_body_completion(self, completion_time, status, daily_active_count):
+        body = json.dumps(example()).encode()
+        headers = (
+            f"POST {ROUTE} HTTP/1.1\r\nContent-Type: application/json\r\n"
+            f"Content-Length: {len(body)}\r\n\r\n"
+        ).encode()
+        connection = FakeConnection(headers + body)
+        now = 0.0
+        reads = iter(((4.875, 1), (9.75, 1), (completion_time, len(body))))
+        read_timeouts = []
+
+        def read_chunk(size):
+            nonlocal now
+            read_timeouts.append(connection.timeout)
+            # Return the bytes even if the deadline has elapsed by the time the read returns.
+            now, available = next(reads)
+            return connection.request.read(min(size, available))
+
+        with closing(open_store(":memory:")) as db:
+            with patch("server.time.monotonic", lambda: now), patch.object(connection.request, "read1", read_chunk):
+                UsageHandler(connection, ("192.0.2.10", 5555), SimpleNamespace(
+                    db=db, today=lambda: TODAY, limiter=SimpleNamespace(allow=lambda: True)
+                ))
+            self.assertIn(status, bytes(connection.response))
+            self.assertEqual(read_timeouts, [5, 5, 0.25])
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM totals WHERE metric='daily_active'").fetchone(),
+                             (daily_active_count,))
+
 
 class FakeConnection:
     def __init__(self, request):
         self.request = io.BytesIO(request)
         self.response = bytearray()
 
-    def settimeout(self, _seconds):
-        pass
+    def settimeout(self, seconds):
+        self.timeout = seconds
 
     def makefile(self, _mode, _buffer_size):
         return self.request
