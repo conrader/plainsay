@@ -120,8 +120,9 @@ public enum ProviderFactory {
         }
     }
 
-    private static func makeOnDeviceEngine(
+    public static func makeOnDeviceEngine(
         _ settings: PlainsaySettings,
+        modelCache: URL? = nil,
         onState: @escaping @Sendable (SpeechModelLoadState) -> Void
     ) -> any TranscriptionEngine {
         switch settings.model {
@@ -129,12 +130,14 @@ public enum ProviderFactory {
             ParakeetEngine(
                 language: settings.primaryLanguage,
                 spokenLanguages: settings.spokenLanguages,
+                modelCache: modelCache,
                 onStateChange: onState
             )
         default:
             WhisperKitEngine(
                 model: settings.model,
                 spokenLanguages: settings.spokenLanguages,
+                modelCache: modelCache,
                 onStateChange: onState
             )
         }

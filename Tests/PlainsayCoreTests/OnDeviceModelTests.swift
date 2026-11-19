@@ -22,6 +22,26 @@ struct OnDeviceModelTests {
         #expect(PlainsaySettings(defaults: defaults).model == .parakeetTDT06BV3)
     }
 
+    @Test("The measured model fallback applies to the Polish-primary bilingual profile")
+    func polishEnglishModelFallback() {
+        let suite = "plainsay.models.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        let settings = PlainsaySettings(defaults: defaults)
+        settings.spokenLanguages = ["pl-PL", "en-US"]
+        let expected: OnDeviceModel = OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
+            ? .parakeetTDT06BV3 : .largeV3Turbo
+        #expect(PlainsaySettings(defaults: defaults).model == expected)
+
+        settings.spokenLanguages = ["en", "pl"]
+        #expect(PlainsaySettings(defaults: defaults).model == .largeV3Turbo)
+
+        settings.spokenLanguages = ["pl", "en"]
+        settings.model = .smallEN
+        #expect(PlainsaySettings(defaults: defaults).model == .smallEN)
+    }
+
     @Test("A preference written by the old Whisper-only enum still decodes")
     func oldWhisperPreferenceStillDecodes() {
         let defaults = UserDefaults(suiteName: "plainsay.models.\(UUID().uuidString)")!

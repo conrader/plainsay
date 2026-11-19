@@ -95,7 +95,7 @@ func normalize(_ text: String) -> [String] {
 /// (substitutions + deletions + insertions) / reference word count.
 func wordErrorRate(reference: [String], hypothesis: [String]) -> (errors: Int, refWords: Int) {
     let n = reference.count, m = hypothesis.count
-    if n == 0 { return (m, 0) }
+    if n == 0 || m == 0 { return (n + m, n) }
     var dp = [[Int]](repeating: [Int](repeating: 0, count: m + 1), count: n + 1)
     for i in 0...n { dp[i][0] = i }
     for j in 0...m { dp[0][j] = j }
@@ -115,6 +115,15 @@ func wordErrorRate(reference: [String], hypothesis: [String]) -> (errors: Int, r
 struct BenchmarkCLI {
     static func main() async {
         let args = CommandLine.arguments
+        if args.dropFirst().first == "dictation-eval" {
+            do {
+                try await DictationQualityEval.run(Array(args.dropFirst(2)))
+            } catch {
+                FileHandle.standardError.write(Data("Dictation eval failed: \(error.localizedDescription)\n".utf8))
+                exit(1)
+            }
+            return
+        }
         guard args.count > 1 else {
             print("usage: BenchmarkCLI <manifest.json>")
             exit(1)

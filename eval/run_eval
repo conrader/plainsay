@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+case "${1:-}" in
+    dev|heldout) [ "$#" = 1 ] || exit 2 ;;
+    *) echo "usage: eval/run_eval {dev|heldout}" >&2; exit 2 ;;
+esac
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+free_kib=$(df -Pk / | awk 'NR==2 {print $4}')
+if [ "$free_kib" -lt 8388608 ]; then
+    echo 'Stopped: / has less than 8 GiB free' >&2
+    exit 1
+fi
+cd "$root"
+swift build --product BenchmarkCLI >&2
+bin=$(swift build --show-bin-path)
+# Prevent the Hub library from reading credentials while loading the local tokenizer.
+exec env -i PATH=/usr/bin:/bin HF_TOKEN=public-eval-local-only "$bin/BenchmarkCLI" \
+    dictation-eval "$1" "$root/data/manifest-$1.tsv" "$root/../data"

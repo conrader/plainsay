@@ -1,0 +1,59 @@
+both	defaultModel	.parakeetTDT06BV3	Compare onboarding-recommended Parakeet v3 INT8 with Whisper Turbo
+whisper	whisperLeadingPadSeconds	0.16	Give the encoder left context before the first phoneme
+whisper	whisperFirstTokenThreshold	nil	Keep uncertain utterance starts on the greedy decode
+whisper	whisperSuppressBlank	true	Suppress blank output at the first decoder step
+whisper	whisperFallbackCount	2	Limit retries that move decoding away from the greedy result
+whisper	whisperLogProbThreshold	-0.8	Retry low-confidence decodes sooner
+whisper	whisperFallbackIncrement	0.1	Use gentler increases in sampling temperature after failures
+whisper	whisperCompressionThreshold	2.1	Retry repetitive transcripts sooner
+whisper	whisperLeadingPadSeconds	0.32	Give front-edge phonemes more encoder context
+whisper	whisperTrailingPadSeconds	0.24	Pad the tail to keep the last token inside the audio window
+whisper	whisperNoSpeechThreshold	0.65	Suppress more low-confidence high-silence windows
+whisper	whisperTopK	2	Limit the fallback sampler to the two highest-scoring tokens
+whisper	whisperFirstTokenThreshold	-2.0	Reduce fallback on marginal first tokens
+whisper	whisperFallbackCount	0	Use deterministic greedy decoding for all utterances
+whisper	whisperLogProbThreshold	-1.25	Preserve acoustically plausible low-confidence decodes
+whisper	whisperLeadingPadSeconds	0.08	Shift encoder alignment with a shorter lead-in
+whisper	whisperTrailingPadSeconds	0.6	Allow more context past the final phoneme
+whisper	whisperCompressionThreshold	nil	Avoid compression-triggered fallback on legitimate repetitions
+whisper	whisperFallbackIncrement	0.35	Escape repetitive greedy decodes in fewer fallback passes
+whisper	whisperNoSpeechThreshold	0.98	Retain utterances on audio with a high no-speech estimate
+whisper	whisperTopK	3	Limit fallback sampling to three plausible tokens
+whisper	whisperLeadingPadSeconds	0.48	Test a wider lead-in for clipped speech starts
+whisper	whisperFallbackCount	1	Allow one alternate decode before returning a result
+whisper	whisperFirstTokenThreshold	-0.9	Retry starts with weak first-token evidence sooner
+whisper	whisperTrailingPadSeconds	0.08	Set minimal post-roll for final consonants
+whisper	whisperLogProbThreshold	nil	Isolate repetition and first-token signals from mean-confidence fallback
+whisper	whisperCompressionThreshold	2.7	Allow modestly repetitive but confident text
+whisper	whisperNoSpeechThreshold	0.8	Test intermediate silence suppression
+whisper	whisperLeadingPadSeconds	0.04	Shift acoustic frames by a minimal lead-in
+whisper	whisperFallbackIncrement	0.05	Keep fallback sampling close to greedy decoding
+parakeet	parakeetLeadingPadSeconds	0.16	Give the first phoneme two extra encoder frames of left context
+parakeet	parakeetTrailingPadSeconds	0.16	Give final phonemes two encoder frames before the edge
+parakeet	parakeetConsecutiveBlankLimit	8	Allow more trailing blank steps before terminating
+parakeet	parakeetQuietPeakTarget	0.45	Boost weak clips to a moderate peak
+parakeet	parakeetMaxSymbolsPerStep	5	Suppress repeated token bursts within an encoder frame
+parakeet	parakeetLeadingPadSeconds	0.08	Use a single encoder frame of pre-roll
+parakeet	parakeetTrailingPadSeconds	0.32	Extend post-roll for weak final words
+parakeet	parakeetConsecutiveBlankLimit	2	Suppress token emissions deep into trailing silence
+parakeet	parakeetQuietPeakTarget	0.7	Use more of the dynamic range for quiet clips
+parakeet	parakeetMaxSymbolsPerStep	15	Allow more emissions within a frame for rapid speech
+parakeet	parakeetLeadingPadSeconds	0.32	Test a four-frame gap before the first phoneme
+parakeet	parakeetTrailingPadSeconds	0.08	Use one encoder frame of post-roll
+parakeet	parakeetMaxTokensPerChunk	110	Limit runaway decoding on repeated phrases
+parakeet	parakeetQuietPeakTarget	0.3	Amplify only the quietest input peaks
+parakeet	parakeetLeadingPadSeconds	0.04	Shift input alignment by a fraction of an encoder frame
+parakeet	parakeetTrailingPadSeconds	0.04	Give the last phoneme a short subframe of post-roll
+parakeet	parakeetMaxSymbolsPerStep	3	Prevent longer bursts of same-frame insertions
+parakeet	parakeetTrailingPadSeconds	0.24	Use three frames to close the utterance
+parakeet	parakeetConsecutiveBlankLimit	12	Allow more room for delayed trailing tokens
+parakeet	parakeetQuietPeakTarget	0.9	Raise quiet input peaks near full scale with capped gain
+parakeet	parakeetLeadingPadSeconds	0.24	Use three frames of pre-roll
+parakeet	parakeetMaxTokensPerChunk	180	Allow long dense clauses beyond the original token cap
+parakeet	parakeetLeadingPadSeconds	0.12	Test pre-roll between one and two encoder frames
+parakeet	parakeetTrailingPadSeconds	0.12	Test post-roll between one and two encoder frames
+parakeet	parakeetQuietPeakTarget	0.6	Test an intermediate quiet-input peak target
+parakeet	parakeetLeadingPadSeconds	0.5	Try a longer natural pause before speech
+parakeet	parakeetTrailingPadSeconds	0.5	Try a longer natural pause after speech
+parakeet	parakeetConsecutiveBlankLimit	4	End trailing decoding one blank step earlier
+parakeet	parakeetMaxSymbolsPerStep	8	Test modest suppression of same-frame token bursts

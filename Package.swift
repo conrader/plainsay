@@ -44,7 +44,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "BenchmarkCLI",
-            dependencies: ["PlainsayCore"]
+            dependencies: ["PlainsayCore", .product(name: "FluidAudio", package: "FluidAudio")]
         ),
         .executableTarget(
             name: "MiniTranscribeServer",

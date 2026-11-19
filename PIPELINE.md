@@ -1,0 +1,12 @@
+# Plainsay dictation pipeline
+
+- `AudioRecorder.swift` captures 16 kHz mono Float32. `DictationCoordinator.swift` applies a 0.3 s minimum, short release-tail grace, a recording limit, and the optional enrolled-speaker filter before ASR.
+- `PlainsaySettings.swift` defaults to on-device Whisper Large v3 Turbo. The retained Parakeet fallback and input tuning apply to the Polish-primary, English-secondary profile on supported hardware. `ModelRecommendation.swift` recommends Parakeet TDT 0.6B v3 during onboarding when it covers the selected languages on Apple silicon.
+- `ProviderFactory.swift` selects `WhisperKitEngine.swift` or `ParakeetEngine.swift`. Both load verified Core ML files using `ModelIntegrity.swift` and `ModelDigests.swift`. Remote and Plainsay Cloud also implement `TranscriptionEngine`.
+- WhisperKit transcribes without timestamps, detects language before decoding, and uses VAD chunking above 30 s. Empty output with peak above 0.02 retries with relaxed silence thresholds. A result outside the configured languages can trigger a forced retry in the primary language.
+- Baseline Whisper uses temperature 0, up to five fallbacks in steps of 0.2, top-K 5, and compression, log-probability, first-token, and no-speech thresholds of 2.4, −1.0, −1.5, and 0.9.
+- `TermDictionary.swift` renders the vocabulary prompt (default term `Plainsay`). WhisperKit prepends its text tokens after filtering out special tokens. Parakeet ignores the prompt and uses a script-level language hint and fresh TDT decoder state per clip.
+- Parakeet uses the v3 INT8 encoder, FluidAudio chunking with mel context off, and TDT limits of 10 symbols per step, 150 tokens per chunk, and 5 trailing blank steps.
+- Both engines call `normalizeTranscript` to remove bracketed sound annotations, collapse whitespace, and handle bare non-speech markers. The final dictation applies vocabulary corrections, optional Polishing, frozen replacement rules, and insertion sanitization.
+- **Loop edit surface** `Sources/PlainsayCore/DictationTuning.swift`. It owns the model fallback, Whisper decode/retry/VAD/prompt controls, input padding, Parakeet TDT/mel/gain controls, and ASR text normalization rules. Baseline values preserve the existing binary settings and behavior.
+- `eval/run_eval` reuses the app's on-device factory, both engines, the dictionary, `NoCleanup`, replacement rules, and final text sanitizer. It starts at captured PCM with an isolated Polish-primary/English profile. See [DATA.md](DATA.md) for sampling, scoring, and latency.

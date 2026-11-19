@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Baseline both splits, tune on DEV, then score the DEV winner on HELD-OUT."""
+import csv
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import signal
+import subprocess
+import time
+
+ROOT = Path(__file__).resolve().parent.parent
+TUNING = Path("Sources/PlainsayCore/DictationTuning.swift")
+LOGS = ROOT.parent / "data" / "logs" / "loop"
+RESULTS = ROOT / "results.tsv"
+BRANCH = "autoresearch/dictation-quality"
+ITERATIONS = 30
+EVAL_SECONDS = 8 * 60
+LOOP_SECONDS = 4 * 60 * 60
+
+
+def git(*args):
+    return subprocess.check_output(
+        ["git", "-c", "commit.gpgSign=false", "-c", "core.hooksPath=/dev/null",
+         "-c", "user.name=Plainsay Autoresearch", "-c", "user.email=autoresearch@localhost", *args],
+        cwd=ROOT, text=True,
+    ).strip()
+
+
+def check_disk():
+    if shutil.disk_usage("/").free < 8 * 1024**3:
+        raise SystemExit("Stopped: / has less than 8 GiB free")
+
+
+def evaluate(split, label, timeout=EVAL_SECONDS):
+    check_disk()
+    started = time.monotonic()
+    output = LOGS / f"{label}.json"
+    with output.open("w") as stdout, (LOGS / f"{label}.log").open("w") as stderr:
+        with subprocess.Popen(
+            ["./eval/run_eval", split], cwd=ROOT, stdout=stdout, stderr=stderr, start_new_session=True,
+        ) as process:
+            try:
+                status = process.wait(timeout=timeout)
+            except (KeyboardInterrupt, subprocess.TimeoutExpired):
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                        process.wait()
+                raise
+    if status:
+        raise RuntimeError(f"{label} failed with exit {status}. See {LOGS / (label + '.log')}")
+    report = json.loads(output.read_text())
+    return report, time.monotonic() - started
+
+
+def record(writer, number, split, hypothesis, report, seconds, decision, sha):
+    polish = report["languages"]["pl_pl"]["wer"]
+    english = report["languages"]["en_us"]["wer"]
+    writer.writerow((number, split, hypothesis, f"{polish:.9f}", f"{english:.9f}",
+                     f"{report['meanLatencySeconds']:.6f}", f"{report['p90LatencySeconds']:.6f}",
+                     f"{report['score']:.9f}", f"{seconds:.3f}", decision, sha))
+    if split == "dev" or number == "best":
+        print(f"{number} {split} {decision}  score={report['score']:.5f}  "
+              f"p90={report['p90LatencySeconds']:.3f}s  elapsed={seconds:.1f}s  {hypothesis}", flush=True)
+
+
+def try_variant(number, proposal, baseline_p90, best, writer, timeout):
+    check_disk()
+    key, value, hypothesis = proposal
+    path = ROOT / TUNING
+    before = path.read_text()
+    pattern = rf"^(    static let {key}(?:: [^=\n]+)? = )[^\n]+$"
+    after, matches = re.subn(pattern, lambda match: match[1] + value, before, flags=re.MULTILINE)
+    if matches != 1 or after == before:
+        raise RuntimeError(f"proposal did not change exactly one setting: {key}={value}")
+    description = f"{hypothesis} [{key}={value}]"
+    path.write_text(after)
+    if git("diff", "--name-only") != str(TUNING):
+        path.write_text(before)
+        raise RuntimeError("unexpected change outside the tuning file")
+    git("add", "--", str(TUNING))
+    git("commit", "-m", f"Trial {number:02}: {hypothesis}")
+    candidate = git("rev-parse", "HEAD")
+    kept = False
+    try:
+        report, seconds = evaluate("dev", f"trial-{number:02}", timeout)
+        guard_holds = report["p90LatencySeconds"] <= baseline_p90 * 1.15
+        kept = report["score"] < best["score"] and guard_holds
+        reason = "kept" if kept else ("discarded (score)" if guard_holds else "discarded (latency)")
+        record(writer, number, "dev", description, report, seconds, reason, candidate)
+        return report if kept else best
+    except subprocess.TimeoutExpired:
+        writer.writerow((number, "dev", description, "", "", "", "", "", f"{timeout:.3f}",
+                         "discarded (timeout)", candidate))
+        print(f"{number} dev discarded after {timeout:.1f}s timeout  {description}", flush=True)
+        return best
+    except (Exception, KeyboardInterrupt, SystemExit):
+        writer.writerow((number, "dev", description, "", "", "", "", "", "",
+                         "discarded (eval failed)", candidate))
+        raise
+    finally:
+        if not kept:
+            git("revert", "--no-edit", candidate)
+
+
+def main():
+    check_disk()
+    if git("branch", "--show-current") != BRANCH or git("status", "--porcelain"):
+        raise SystemExit(f"Start on a clean {BRANCH} branch")
+    if RESULTS.exists() or LOGS.exists():
+        raise SystemExit("Existing run artifacts found. Preserve them before starting another run.")
+    with (ROOT / "eval/hypotheses.tsv").open() as source:
+        hypotheses = list(csv.reader(source, delimiter="\t"))
+    LOGS.mkdir(parents=True)
+    baseline_sha = git("rev-parse", "HEAD")
+    with RESULTS.open("x", newline="", buffering=1) as stream:
+        writer = csv.writer(stream, delimiter="\t", lineterminator="\n")
+        writer.writerow(("iter", "split", "hypothesis", "wer_pl", "wer_en", "mean_s", "p90_s",
+                         "score", "elapsed_s", "decision", "commit"))
+        baseline, seconds = evaluate("dev", "baseline-dev")
+        record(writer, 0, "dev", "Unchanged local dictation defaults", baseline, seconds, "baseline", baseline_sha)
+        heldout, seconds = evaluate("heldout", "baseline-heldout")
+        record(writer, 0, "heldout", "Unchanged local dictation defaults", heldout, seconds, "baseline", baseline_sha)
+        print("Both baselines recorded. Starting the DEV-only loop.", flush=True)
+
+        deadline = time.monotonic() + LOOP_SECONDS
+        best = try_variant(1, hypotheses[0][1:], baseline["p90LatencySeconds"], baseline, writer, EVAL_SECONDS)
+        engine = "parakeet" if best["model"] == "nvidia_parakeet-tdt-0.6b-v3" else "whisper"
+        proposals = [row[1:] for row in hypotheses[1:] if row[0] == engine]
+        for number, proposal in enumerate(proposals[:ITERATIONS - 1], 2):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            best = try_variant(number, proposal, baseline["p90LatencySeconds"], best, writer,
+                               min(EVAL_SECONDS, remaining))
+
+        print("DEV loop finished. Running the best configuration on HELD-OUT once.", flush=True)
+        best_sha = git("rev-parse", "HEAD")
+        best_heldout, seconds = evaluate("heldout", "best-heldout")
+        record(writer, "best", "heldout", "Best DEV configuration", best_heldout, seconds, "final", best_sha)
+
+
+if __name__ == "__main__":
+    main()

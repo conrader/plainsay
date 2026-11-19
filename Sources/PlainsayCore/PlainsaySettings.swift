@@ -355,7 +355,8 @@ public final class PlainsaySettings {
 
         binding = decode(.binding, HotkeyBinding.rightCommandKey)
         hotkeyMode = decode(.hotkeyMode, HotkeyMode.hybrid)
-        model = decode(.model, OnDeviceModel.largeV3Turbo)
+        let languages = decode(.language, [String]())
+        model = decode(.model, DictationTuning.fallbackModel(for: languages))
         // "Plainsay" is a made-up word, and Whisper mishears made-up words —
         // seeded by default so a fresh install spells its own name correctly
         // without the user having to notice and add it themselves. Only
@@ -395,7 +396,7 @@ public final class PlainsaySettings {
         asrProvider = decode(.asrProvider, ASRProvider.groq)
         asrModel = defaults.string(forKey: Key.asrModel.rawValue) ?? ""
         asrBaseURL = defaults.string(forKey: Key.asrBaseURL.rawValue) ?? ""
-        spokenLanguages = decode(.language, [])
+        spokenLanguages = languages
         interfaceLanguage = defaults.string(forKey: Key.interfaceLanguage.rawValue)
         Localization.setOverride(interfaceLanguage)
     }
