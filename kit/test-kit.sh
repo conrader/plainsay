@@ -38,6 +38,7 @@ case "${0##*/}" in
             [[ $1 == -o && $2 == BatchMode=yes && $3 == -o && $4 == StrictHostKeyChecking=yes &&
                 $5 == codex-server &&
                 $6 == 'test -w /var/www/plainsay-updates && test -w /var/www/plainsay-updates/releases && test -w /var/www/plainsay-app' ]] || exit 99
+            if IFS= read -r unexpected; then exit 99; fi
             printf 'write check\n' >> "$TEST_STORE/ssh"
             [[ ${BAD_SSH:-0} == 0 ]]
         fi ;;

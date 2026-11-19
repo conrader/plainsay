@@ -151,7 +151,7 @@ verify_ssh() {
     [[ -f $PIN_FILE && $(cat "$PIN_FILE") == "$pin" ]] || die 'Installed OVH host key is missing or differs.'
     check_ssh_config
     ssh -o BatchMode=yes -o StrictHostKeyChecking=yes codex-server \
-        'test -w /var/www/plainsay-updates && test -w /var/www/plainsay-updates/releases && test -w /var/www/plainsay-app' >/dev/null ||
+        'test -w /var/www/plainsay-updates && test -w /var/www/plainsay-updates/releases && test -w /var/www/plainsay-app' </dev/null >/dev/null ||
         die 'The pinned OVH SSH login or document root write check failed.'
 }
 
