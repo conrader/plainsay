@@ -121,6 +121,7 @@ dry_run() {
     [[ $plan == *'/var/backups/plainsay-deploy'* &&
         $plan == *'from="100.106.213.49",restrict'* &&
         $plan == *'command="/var/lib/plainsay-deploy/bin/deploy-command"'* &&
+        $plan == *'8 GiB free'* &&
         $plan == *'/var/www/plainsay-app'* && $plan != *"$host_blob"* ]]
     plan=$(bash ./ovh-provision.sh --without-source-pin --dry-run "$public_key")
     [[ $plan == *'with restrict'* && $plan != *'from='* ]]
@@ -297,6 +298,13 @@ rmdir '$stage'"
     reject env -u SSH_ORIGINAL_COMMAND bash "$kit/ovh-deploy-command.sh"
     grep -Fxq 'plainsay-deploy: command not permitted.' "$TEST_STORE/err"
     [[ ! -s $TEST_STORE/out ]]
+    # Release staging and backups stop below 8 GiB free.
+    bash -c 'source "$1"; free=$2; df() { printf "h\nfs 1 1 %s 1%% /\n" "$free"; }; enough_space' \
+        _ "$kit/ovh-deploy-command.sh" $((8 * 1024 * 1024))
+    if bash -c 'source "$1"; free=$2; df() { printf "h\nfs 1 1 %s 1%% /\n" "$free"; }; enough_space' \
+        _ "$kit/ovh-deploy-command.sh" $((8 * 1024 * 1024 - 1)); then
+        return 1
+    fi
 }
 
 acl_restore() {

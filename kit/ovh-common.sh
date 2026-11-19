@@ -10,6 +10,7 @@ DEPLOY_HOME=/var/lib/plainsay-deploy
 BACKUP=/var/backups/plainsay-deploy
 UPDATES=/var/www/plainsay-updates
 SITE=/var/www/plainsay-app
+MIN_FREE_KIB=$((8 * 1024 * 1024))
 
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
@@ -17,6 +18,16 @@ require_tools() {
     local tool
     for tool in "$@"; do
         command -v "$tool" >/dev/null || die "Install $tool on OVH before proceeding."
+    done
+}
+
+# Stop when / or the update root has less than 8 GiB available.
+check_disk_free() {
+    local path available
+    for path in / "$UPDATES"; do
+        available=$(df -Pk -- "$path" | awk 'NR == 2 { print $4 }')
+        [[ $available =~ ^[0-9]+$ ]] || die "Could not read free space for $path."
+        (( available >= MIN_FREE_KIB )) || die "STOP: less than 8 GiB free on the filesystem of $path."
     done
 }
 

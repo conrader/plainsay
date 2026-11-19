@@ -8,6 +8,7 @@ UPDATES=/var/www/plainsay-updates
 SITE=/var/www/plainsay-app
 RECEIVER=/var/lib/plainsay-deploy/bin/rsync
 SFTP_SERVER=/usr/lib/openssh/sftp-server
+MIN_FREE_KIB=$((8 * 1024 * 1024))
 
 STAGE_RE="$UPDATES/\\.release-stage\\.[A-Za-z0-9]{6}"
 VERSION_RE='[0-9]+\.[0-9]+\.[0-9]+'
@@ -90,6 +91,15 @@ allowed_rsync() {
     done
 }
 
+# Release uploads and backups stop when / or the update root is below 8 GiB.
+enough_space() {
+    local path available
+    for path in / "$UPDATES"; do
+        available=$(df -Pk -- "$path" | awk 'NR == 2 { print $4 }') || return 1
+        [[ $available =~ ^[0-9]+$ ]] && (( available >= MIN_FREE_KIB )) || return 1
+    done
+}
+
 main() {
     local command=${SSH_ORIGINAL_COMMAND:-} words
     if [[ $command == "$SFTP_SERVER" || $command == internal-sftp ]]; then
@@ -101,6 +111,11 @@ main() {
             exec "$RECEIVER" "${words[@]:1}"
         fi
     elif allowed_shell "$command"; then
+        if [[ $command == "mktemp -d '$UPDATES/.release-stage.XXXXXX'" ||
+            $command == *'.release-backups/v'* ]] && ! enough_space; then
+            printf 'plainsay-deploy: STOP, less than 8 GiB free on the update host.\n' >&2
+            exit 1
+        fi
         exec /bin/bash -c "$command"
     fi
     printf 'plainsay-deploy: command not permitted.\n' >&2

@@ -37,6 +37,7 @@ key_options="restrict,command=\"$DEPLOY_HOME/bin/deploy-command\""
 if [[ $dry_run == 1 ]]; then
     printf '%s\n' \
         'Check OVH tools: rsync sha256sum mktemp xmllint and POSIX ACL utilities.' \
+        "Stop unless / and $UPDATES each have at least 8 GiB free." \
         "Back up existing ACLs, owners and groups to $BACKUP." \
         "Create locked system user $DEPLOY_USER and shared group $DEPLOY_GROUP for it and $LEGACY_USER." \
         "Grant shared directory access to $UPDATES, its releases and backup directories, and the $SITE tree." \
@@ -45,8 +46,9 @@ if [[ $dry_run == 1 ]]; then
     exit 0
 fi
 
-require_tools flock rsync sha256sum mktemp xmllint getfacl setfacl runuser useradd usermod groupadd
+require_tools flock rsync sha256sum mktemp xmllint getfacl setfacl runuser useradd usermod groupadd df
 lock_ovh
+check_disk_free
 check_tree "$UPDATES"
 check_tree "$UPDATES/releases"
 check_tree "$SITE"

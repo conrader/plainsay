@@ -16,6 +16,8 @@ Run the setup commands on the named host during the rollout.
   website, and denies HTTP access to dot paths such as `.release-backups` and
   `.release-stage.*`. The update root and `releases/` must share a filesystem
   for the publish renames. Check the live feed has a numeric Sparkle build.
+- On OVH, confirm at least 8 GiB free on `/` and on the update root
+  (`df -h / /var/www/plainsay-updates`). Provisioning stops below that.
 - On OVH, install `rsync`, `libxml2-utils` (`xmllint`), and `acl` if needed.
   Check `command -v rsync sha256sum mktemp xmllint getfacl setfacl`. Check
   OpenSSH accepts public keys for the dedicated account, uses Ubuntu's PAM
@@ -58,7 +60,8 @@ commands sent by `Scripts/release.sh`, an rsync push into
 `/var/www/plainsay-app`, the write probe below, and SFTP for `scp` uploads.
 Any other command, including a shell, is refused. If `release.sh` changes
 its remote commands, update the forced command in the same change;
-`Tests/release_sandbox.py` fails otherwise. For the manual Sparkle
+`Tests/release_sandbox.py` fails otherwise. Release staging and backups stop
+when `/` or the update root has less than 8 GiB free. For the manual Sparkle
 rollback in RELEASING.md, use `sudo -u plainsay-deploy bash` from an admin
 shell. Confirm that sshd sees that address for
 mini-m4. If the approved Tailscale route passes through an address-translating
