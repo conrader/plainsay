@@ -51,8 +51,16 @@ sudo ./kit/ovh-provision.sh --dry-run "$PUBKEY"
 sudo ./kit/ovh-provision.sh "$PUBKEY"
 ```
 
-The kit installs one key with `from="100.106.213.49",restrict`.
-Confirm that sshd sees that address for
+The kit installs one key with
+`from="100.106.213.49",restrict,command="/var/lib/plainsay-deploy/bin/deploy-command"`.
+The forced command (`ovh-deploy-command.sh`) runs only the exact remote
+commands sent by `Scripts/release.sh`, an rsync push into
+`/var/www/plainsay-app`, the write probe below, and SFTP for `scp` uploads.
+Any other command, including a shell, is refused. If `release.sh` changes
+its remote commands, update the forced command in the same change;
+`Tests/release_sandbox.py` fails otherwise. For the manual Sparkle
+rollback in RELEASING.md, use `sudo -u plainsay-deploy bash` from an admin
+shell. Confirm that sshd sees that address for
 mini-m4. If the approved Tailscale route passes through an address-translating
 hop, use `--without-source-pin` only after confirming the restricted tailnet
 route and caller. The `restrict` options remain in effect. The account has a

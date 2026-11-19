@@ -152,6 +152,13 @@ def fake_tool(tool, args):
         print("Accepted")
     elif tool == "ssh":
         command = args[-1]
+        if not command.startswith("sudo -n "):
+            # The nightly deploy key's forced command must admit every remote command.
+            subprocess.run(
+                ("bash", "-c", 'source "$1"; allowed_shell "$2"', "_",
+                 ROOT / "kit/ovh-deploy-command.sh", command),
+                check=True,
+            )
         if ".release-backups" in command:
             print("/var/www/plainsay-updates/.release-backups/vtest.ABC123")
         elif ".release-stage" in command and command.startswith("mktemp"):

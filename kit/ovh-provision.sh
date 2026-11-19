@@ -31,14 +31,17 @@ require_tools ssh-keygen
 printf '%s\n' "$pubkey" | ssh-keygen -l -E sha256 -f /dev/stdin >/dev/null 2>&1 ||
     die 'Invalid Ed25519 public key.'
 
+# The forced command admits only the release, site and probe commands.
+key_options="restrict,command=\"$DEPLOY_HOME/bin/deploy-command\""
+
 if [[ $dry_run == 1 ]]; then
     printf '%s\n' \
         'Check OVH tools: rsync sha256sum mktemp xmllint and POSIX ACL utilities.' \
         "Back up existing ACLs, owners and groups to $BACKUP." \
         "Create locked system user $DEPLOY_USER and shared group $DEPLOY_GROUP for it and $LEGACY_USER." \
         "Grant shared directory access to $UPDATES, its releases and backup directories, and the $SITE tree." \
-        "Install the site rsync receiver under $DEPLOY_HOME/bin and verify deploy/nginx access." \
-        "Install one authorized key with ${source_pin}restrict in $DEPLOY_HOME/.ssh/authorized_keys."
+        "Install the site rsync receiver and forced command under $DEPLOY_HOME/bin and verify deploy/nginx access." \
+        "Install one authorized key with ${source_pin}${key_options} in $DEPLOY_HOME/.ssh/authorized_keys."
     exit 0
 fi
 
@@ -50,6 +53,7 @@ check_tree "$SITE"
 [[ $(stat -c %d -- "$UPDATES") == "$(stat -c %d -- "$UPDATES/releases")" ]] ||
     die 'The update root and releases directory must support same-filesystem renames.'
 [[ -x /usr/bin/rsync ]] || die 'The receiver needs /usr/bin/rsync.'
+[[ -x /usr/lib/openssh/sftp-server ]] || die 'The forced command needs /usr/lib/openssh/sftp-server for scp.'
 id "$LEGACY_USER" >/dev/null 2>&1 || die "Existing publisher $LEGACY_USER is missing."
 nginx_uid=$(id -u "$NGINX_USER") || die "Missing nginx user $NGINX_USER."
 for file in "$UPDATES/appcast.xml" "$UPDATES/releases/Plainsay-latest.dmg" "$SITE/index.html"; do
@@ -153,6 +157,7 @@ runuser -u "$NGINX_USER" -- test -r "$SITE/index.html" || die 'nginx cannot read
 install -d -o root -g root -m 0755 -- "$DEPLOY_HOME" "$DEPLOY_HOME/bin"
 install -d -o root -g "$DEPLOY_GROUP" -m 0750 -- "$DEPLOY_HOME/.ssh"
 install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-site-rsync.sh" "$DEPLOY_HOME/bin/rsync"
+install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-deploy-command.sh" "$DEPLOY_HOME/bin/deploy-command"
 # shellcheck disable=SC2016 # Expand PATH when the remote Bash shell starts.
 printf 'export PATH="%s/bin:$PATH"\n' "$DEPLOY_HOME" > "$DEPLOY_HOME/.bashrc"
 chmod 0644 -- "$DEPLOY_HOME/.bashrc"
@@ -160,7 +165,7 @@ chmod 0644 -- "$DEPLOY_HOME/.bashrc"
 # the public key, while only root can change it.
 keyfile=$(mktemp "$DEPLOY_HOME/.ssh/.authorized_keys.XXXXXX")
 trap 'rm -f -- "$keyfile"' EXIT
-printf '%srestrict %s\n' "$source_pin" "$pubkey" > "$keyfile"
+printf '%s%s %s\n' "$source_pin" "$key_options" "$pubkey" > "$keyfile"
 chown "root:$DEPLOY_GROUP" -- "$keyfile"
 chmod 0640 -- "$keyfile"
 mv -f -- "$keyfile" "$DEPLOY_HOME/.ssh/authorized_keys"

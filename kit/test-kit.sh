@@ -120,6 +120,7 @@ dry_run() {
     plan=$(bash ./ovh-provision.sh --dry-run "$public_key")
     [[ $plan == *'/var/backups/plainsay-deploy'* &&
         $plan == *'from="100.106.213.49",restrict'* &&
+        $plan == *'command="/var/lib/plainsay-deploy/bin/deploy-command"'* &&
         $plan == *'/var/www/plainsay-app'* && $plan != *"$host_blob"* ]]
     plan=$(bash ./ovh-provision.sh --without-source-pin --dry-run "$public_key")
     [[ $plan == *'with restrict'* && $plan != *'from='* ]]
@@ -233,8 +234,11 @@ shared_receiver() {
     group=$("$REAL_ID" -g)
     setfacl -m "g:$group:rwx,d:g:$group:rwx" "$dest" "$dest/older"
     sed "s|/var/www/plainsay-app|$dest|g" "$kit/ovh-site-rsync.sh" > "$TEST_STORE/receiver"
-    printf '#!/bin/bash\nshift 2\nexec "%s" "$@"\n' "$TEST_STORE/receiver" > "$TEST_STORE/transport"
-    chmod +x "$TEST_STORE/receiver" "$TEST_STORE/transport"
+    sed -e "s|/var/www/plainsay-app|$dest|g" -e "s|/var/lib/plainsay-deploy/bin/rsync|$TEST_STORE/receiver|" \
+        "$kit/ovh-deploy-command.sh" > "$TEST_STORE/command"
+    # Like sshd with a forced command, pass the remote command as one string.
+    printf '#!/bin/bash\nshift\nSSH_ORIGINAL_COMMAND="$*" exec "%s"\n' "$TEST_STORE/command" > "$TEST_STORE/transport"
+    chmod +x "$TEST_STORE/receiver" "$TEST_STORE/command" "$TEST_STORE/transport"
     rsync -az --delete --no-owner --no-group --chmod='Du=rwx,Dgo=rx,Fu=rw,Fgo=r' \
         -e "$TEST_STORE/transport" "$source/" "fixture:$dest/"
     [[ $(cat "$dest/older/index.html") == updated && $(cat "$dest/new/index.html") == new &&
@@ -248,6 +252,51 @@ shared_receiver() {
     rsync -az --delete -e "$TEST_STORE/transport" "$source/" "fixture:$dest/"
     [[ $(cat "$dest/new/index.html") == 'legacy deploy' &&
         $("$REAL_STAT" -c %a "$dest/new") == 775 ]]
+    mkdir "$TEST_STORE/elsewhere"
+    reject rsync -az -e "$TEST_STORE/transport" "$source/" "fixture:$TEST_STORE/elsewhere/"
+    reject rsync -az -e "$TEST_STORE/transport" "fixture:$dest/" "$TEST_STORE/elsewhere/"
+    [[ -z $(ls -A "$TEST_STORE/elsewhere") ]]
+}
+
+forced_command() {
+    local updates=/var/www/plainsay-updates version=0.2.40 stage zip dmg command
+    stage="$updates/.release-stage.Ab12Cd"
+    zip="Plainsay-$version.zip"
+    dmg="Plainsay-$version.dmg"
+    allowed() { bash -c 'source "$1"; allowed_shell "$2"' _ "$kit/ovh-deploy-command.sh" "$1"; }
+    denied() { if allowed "$1"; then printf 'Unexpectedly allowed: %s\n' "$1" >&2; return 1; fi; }
+    # These mirror the remote commands in Scripts/release.sh.
+    allowed "mktemp -d '$updates/.release-stage.XXXXXX'"
+    allowed "sha256sum '$stage/$zip'"
+    allowed "sha256sum '$stage/appcast.xml'"
+    allowed "rm -rf '$stage'"
+    allowed "test -w $updates && test -w $updates/releases && test -w /var/www/plainsay-app"
+    command="set -eu
+umask 077
+mkdir -p '$updates/.release-backups'
+backup=\$(mktemp -d '$updates/.release-backups/v$version.XXXXXX')
+cp '$updates/appcast.xml' \"\$backup/appcast.xml\"
+cp '$updates/releases/Plainsay-latest.dmg' \"\$backup/Plainsay-latest.dmg\"
+printf '%s\\n' \"\$backup\""
+    allowed "$command"
+    denied "$command"$'\nid'
+    command="set -eu
+chmod a+r '$stage/$zip' '$stage/$dmg' '$stage/appcast.xml'
+mv '$stage/$zip' '$updates/releases/$zip'
+mv '$stage/$dmg' '$updates/releases/Plainsay-latest.dmg'
+mv '$stage/appcast.xml' '$updates/appcast.xml'
+rmdir '$stage'"
+    allowed "$command"
+    denied "${command/rmdir/rm -rf}"
+    denied "rm -rf '$stage'; id"
+    denied "rm -rf '$updates'"
+    denied "sha256sum '$stage/../../../etc/shadow'"
+    denied "sudo -n chown -R conrader '$updates'"
+    denied id
+    reject env SSH_ORIGINAL_COMMAND=id bash "$kit/ovh-deploy-command.sh"
+    reject env -u SSH_ORIGINAL_COMMAND bash "$kit/ovh-deploy-command.sh"
+    grep -Fxq 'plainsay-deploy: command not permitted.' "$TEST_STORE/err"
+    [[ ! -s $TEST_STORE/out ]]
 }
 
 acl_restore() {
@@ -279,4 +328,5 @@ case_run 'existing SSH identity conflict leaves config intact' conflicting_ident
 case_run 'unmanaged GitHub Keychain credential is preserved' existing_keychain
 case_run 'local rsync preserves shared ACLs and public site modes' shared_receiver
 case_run 'ACL grants preserve effective access and the baseline restores exactly' acl_restore
+case_run 'forced command admits only release, site and probe commands' forced_command
 printf '%d sandbox tests passed.\n' "$passed"
