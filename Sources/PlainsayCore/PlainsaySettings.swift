@@ -356,7 +356,14 @@ public final class PlainsaySettings {
         binding = decode(.binding, HotkeyBinding.rightCommandKey)
         hotkeyMode = decode(.hotkeyMode, HotkeyMode.hybrid)
         let languages = decode(.language, [String]())
-        model = decode(.model, DictationTuning.fallbackModel(for: languages))
+        let setupVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
+        let setupWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
+        // Saved languages can also belong to a pre-onboarding install.
+        // Keep its historical Turbo default until the user picks a model.
+        let modelFallback: OnDeviceModel = setupWasPresented && setupVersion < Self.currentOnboardingVersion
+            ? DictationTuning.fallbackModel(for: languages)
+            : .largeV3Turbo
+        model = decode(.model, modelFallback)
         // "Plainsay" is a made-up word, and Whisper mishears made-up words —
         // seeded by default so a fresh install spells its own name correctly
         // without the user having to notice and add it themselves. Only
@@ -382,8 +389,8 @@ public final class PlainsaySettings {
         // which would silently mean "keep everything" for exactly the users
         // who already have the most stored.
         historyRetentionDays = defaults.object(forKey: Key.historyRetentionDays.rawValue) as? Int ?? 30
-        onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
-        onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
+        onboardingVersion = setupVersion
+        onboardingWasPresented = setupWasPresented
         onboardingStep = defaults.integer(forKey: Key.onboardingStep.rawValue)
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false

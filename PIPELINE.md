@@ -1,7 +1,7 @@
 # Plainsay dictation pipeline
 
 - `AudioRecorder.swift` captures 16 kHz mono Float32. `DictationCoordinator.swift` applies a 0.3 s minimum, short release-tail grace, a recording limit, and the optional enrolled-speaker filter before ASR.
-- `PlainsaySettings.swift` defaults to on-device Whisper Large v3 Turbo. The retained Parakeet fallback and input tuning apply to the Polish-primary, English-secondary profile on supported hardware. `ModelRecommendation.swift` recommends Parakeet TDT 0.6B v3 during onboarding when it covers the selected languages on Apple silicon.
+- `PlainsaySettings.swift` defaults legacy installs without a saved model to on-device Whisper Large v3 Turbo. The Parakeet fallback is limited to first-run setup with Polish as primary and English as secondary on supported hardware. The setup assistant persists the confirmed model. `ModelRecommendation.swift` recommends Parakeet TDT 0.6B v3 during onboarding when it covers the selected languages on Apple silicon.
 - `ProviderFactory.swift` selects `WhisperKitEngine.swift` or `ParakeetEngine.swift`. Both load verified Core ML files using `ModelIntegrity.swift` and `ModelDigests.swift`. Remote and Plainsay Cloud also implement `TranscriptionEngine`.
 - WhisperKit transcribes without timestamps, detects language before decoding, and uses VAD chunking above 30 s. Empty output with peak above 0.02 retries with relaxed silence thresholds. A result outside the configured languages can trigger a forced retry in the primary language.
 - Baseline Whisper uses temperature 0, up to five fallbacks in steps of 0.2, top-K 5, and compression, log-probability, first-token, and no-speech thresholds of 2.4, −1.0, −1.5, and 0.9.

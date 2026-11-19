@@ -22,29 +22,57 @@ struct OnDeviceModelTests {
         #expect(PlainsaySettings(defaults: defaults).model == .parakeetTDT06BV3)
     }
 
-    @Test("The measured model fallback applies to the Polish-primary bilingual profile")
-    func polishEnglishModelFallback() {
+    @Test("A Polish-primary bilingual legacy install without a model keeps Whisper Turbo")
+    func legacyPolishEnglishModelFallback() {
+        let suite = "plainsay.models.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        PlainsaySettings(defaults: defaults).spokenLanguages = ["pl", "en"]
+        #expect(defaults.object(forKey: "model") == nil)
+
+        let upgraded = PlainsaySettings(defaults: defaults)
+        #expect(upgraded.model == .largeV3Turbo)
+        #expect(upgraded.migrateLegacyOnboardingIfNeeded(allPermissionsGranted: false))
+        #expect(ProviderFactory.makeEngine(upgraded) { _ in } is WhisperKitEngine)
+        #expect(PlainsaySettings(defaults: defaults).model == .largeV3Turbo)
+    }
+
+    @Test("First-run Polish-primary bilingual setup defaults to Parakeet and persists the choice")
+    func firstRunPolishEnglishModelFallback() {
         let suite = "plainsay.models.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
 
         let settings = PlainsaySettings(defaults: defaults)
-        settings.spokenLanguages = ["pl-PL", "en-US"]
-        let expected: OnDeviceModel = OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
-            ? .parakeetTDT06BV3 : .largeV3Turbo
-        #expect(PlainsaySettings(defaults: defaults).model == expected)
-
+        settings.onboardingWasPresented = true
         settings.spokenLanguages = ["en", "pl"]
         #expect(PlainsaySettings(defaults: defaults).model == .largeV3Turbo)
 
-        settings.spokenLanguages = ["pl", "en"]
-        settings.model = .smallEN
-        #expect(PlainsaySettings(defaults: defaults).model == .smallEN)
+        settings.spokenLanguages = ["pl-PL", "en-US"]
+        let expected: OnDeviceModel = OnDeviceModel.parakeetTDT06BV3.isSupportedOnCurrentHardware
+            ? .parakeetTDT06BV3 : .largeV3Turbo
+        let resumedSetup = PlainsaySettings(defaults: defaults)
+        #expect(resumedSetup.model == expected)
+        #expect(defaults.object(forKey: "model") == nil)
+
+        let recommendation = OnDeviceModel.recommended(for: resumedSetup.spokenLanguages)
+        #expect(recommendation == expected)
+        resumedSetup.applySetupSpeechSelection(source: .onDevice, model: recommendation)
+        resumedSetup.onboardingVersion = PlainsaySettings.currentOnboardingVersion
+
+        #expect(defaults.data(forKey: "model") != nil)
+        #expect(PlainsaySettings(defaults: defaults).model == expected)
     }
 
     @Test("A preference written by the old Whisper-only enum still decodes")
     func oldWhisperPreferenceStillDecodes() {
-        let defaults = UserDefaults(suiteName: "plainsay.models.\(UUID().uuidString)")!
+        let suite = "plainsay.models.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let setup = PlainsaySettings(defaults: defaults)
+        setup.onboardingWasPresented = true
+        setup.spokenLanguages = ["pl", "en"]
         defaults.set(
             Data(#""openai_whisper-small.en""#.utf8),
             forKey: "model"

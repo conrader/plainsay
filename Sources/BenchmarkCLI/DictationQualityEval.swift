@@ -68,8 +68,10 @@ struct DictationQualityEval {
             throw EvalError("cannot create isolated settings")
         }
         defer { defaults.removePersistentDomain(forName: suite) }
-        // Set the profile before loading the model fallback from settings.
-        PlainsaySettings(defaults: defaults).spokenLanguages = ["pl", "en"]
+        // Match first-run setup so the eval uses the tuned model fallback.
+        let setup = PlainsaySettings(defaults: defaults)
+        setup.onboardingWasPresented = true
+        setup.spokenLanguages = ["pl", "en"]
         let settings = PlainsaySettings(defaults: defaults)
         let dictionary = settings.dictionary
         let rules = settings.replacementRules
