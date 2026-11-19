@@ -20,8 +20,8 @@ Run the setup commands on the named host during the rollout.
   (`df -h / /var/www/plainsay-updates`). Provisioning stops below that.
 - On OVH, install `rsync`, `libxml2-utils` (`xmllint`), and `acl` if needed.
   Check `command -v rsync sha256sum mktemp xmllint getfacl setfacl`. Check
-  OpenSSH accepts public keys for the dedicated account, uses Ubuntu's PAM
-  handling for locked-password accounts, and serves SFTP for current `scp`.
+  OpenSSH accepts public keys for the dedicated account and uses Ubuntu's PAM
+  handling for locked-password accounts.
   Check any host-level `AllowUsers`, `Match` and sudo rules for `plainsay-deploy`
   and confirm TCP/22 reaches OpenSSH over the tailnet.
 - On the Apple silicon Mac, log in as `konrad` in the Aqua session. Install
@@ -57,26 +57,26 @@ The kit installs one key with
 `from="100.106.213.49",restrict,command="/var/lib/plainsay-deploy/bin/deploy-command"`.
 The forced command (`ovh-deploy-command.sh`) runs only the exact remote
 commands sent by `Scripts/release.sh`, an rsync push into
-`/var/www/plainsay-app`, the write probe below, and SFTP for `scp` uploads.
-Any other command, including a shell, is refused. If `release.sh` changes
+`/var/www/plainsay-app`, and the write probe below. The key refuses shell
+sessions and file-transfer subsystems. If `release.sh` changes
 its remote commands, update the forced command in the same change;
-`Tests/release_sandbox.py` fails otherwise. Release staging and backups stop
+`Tests/release_sandbox.py` fails otherwise. Use the matching kit and release
+scripts before enabling nightly. Release staging, uploads and backups stop
 when `/` or the update root has less than 8 GiB free. For the manual Sparkle
 rollback in RELEASING.md, use `sudo -u plainsay-deploy bash` from an admin
-shell. Confirm that sshd sees that address for
-mini-m4. If the approved Tailscale route passes through an address-translating
-hop, use `--without-source-pin` only after confirming the restricted tailnet
-route and caller. The `restrict` options remain in effect. The account has a
+shell. Confirm that sshd sees `100.106.213.49` for mini-m4. The account has a
 locked password, a dedicated group, and no sudo membership.
 
 OVH saves the original ACLs, owners, groups and modes of changed paths under
 `/var/backups/plainsay-deploy/` before granting access. The account can stage
-via `mktemp -d` and `scp`, run `sha256sum`, copy the old appcast and stable
-DMG into `.release-backups/`, and publish using `chmod`, `mv` and `rmdir`
-under `/var/www/plainsay-updates`. Pre-publication cleanup removes only the
+via `mktemp -d`, upload the three artifacts over SSH stdin, run `sha256sum`,
+copy the old appcast and stable DMG into `.release-backups/`, and publish
+using `chmod`, `mv` and `rmdir` under `/var/www/plainsay-updates`.
+Pre-publication cleanup removes only the
 unique staging directory. The release rollback also uses `xmllint` on OVH.
 Site publishing uses `rsync -az --delete` with the exclusions in
-`Scripts/deploy-site.sh` under `/var/www/plainsay-app`.
+`Scripts/deploy-site.sh` under `/var/www/plainsay-app`. The nightly receiver
+accepts the site's regular files and directories.
 
 ### Keep the current website deploy working in both directions
 

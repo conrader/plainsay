@@ -404,7 +404,7 @@ BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</p>#\n\n
 # in a unique directory on the same filesystem as the update feed, so the
 # final renames cannot expose a partially transferred file.
 echo "==> Staging update artifacts on $HOST"
-if [ -z "$NIGHTLY_SOURCE" ]; then
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
 	ssh "$HOST" "sudo -n mkdir -p '$REMOTE_DIR/releases' && sudo -n chown -R \$(whoami) '$REMOTE_DIR'"
 fi
 STAGE_PATH=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "mktemp -d '$REMOTE_DIR/.release-stage.XXXXXX'")
@@ -417,7 +417,14 @@ echo "    Remote staging directory: $REMOTE_STAGE"
 
 ZIP_BASENAME=$(basename "$ZIP")
 DMG_BASENAME=$(basename "$DMG")
-scp -q "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$ZIP" "$DMG" dist/appcast.xml "$HOST:$REMOTE_STAGE/"
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
+	for artifact in "$ZIP" "$DMG" dist/appcast.xml; do
+		ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" \
+			"cat > '$REMOTE_STAGE/${artifact##*/}'" < "$artifact"
+	done
+else
+	scp -q "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$ZIP" "$DMG" dist/appcast.xml "$HOST:$REMOTE_STAGE/"
+fi
 verify_staged() {
 	local package="$1" checksum="$2" remote_checksum
 	remote_checksum=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "sha256sum '$REMOTE_STAGE/$package'" | awk '{print $1}')
@@ -493,7 +500,7 @@ mv '$REMOTE_STAGE/$DMG_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'
 mv '$REMOTE_STAGE/appcast.xml' '$REMOTE_DIR/appcast.xml'
 rmdir '$REMOTE_STAGE'"
 REMOTE_STAGE=""
-if [ -z "$NIGHTLY_SOURCE" ]; then
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
 	ssh "$HOST" "sudo -n chown www-data:www-data '$REMOTE_DIR' '$REMOTE_DIR/releases' '$REMOTE_DIR/appcast.xml' '$REMOTE_DIR/releases/$ZIP_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'"
 fi
 

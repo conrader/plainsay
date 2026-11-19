@@ -164,6 +164,9 @@ def fake_tool(tool, args):
         elif ".release-stage" in command and command.startswith("mktemp"):
             server.mkdir()
             print("/var/www/plainsay-updates/.release-stage.ABC123")
+        elif command.startswith("cat > "):
+            package = Path(command.strip("'")).name
+            (server / package).write_bytes(sys.stdin.buffer.read())
         elif command.startswith("sha256sum"):
             package = Path(command.strip("'")).name
             print(hashlib.sha256((server / package).read_bytes()).hexdigest())

@@ -5,7 +5,7 @@ umask 077
 source "$(dirname "$0")/ovh-common.sh"
 
 usage() {
-    printf 'Usage: %s [--dry-run] [--without-source-pin] "ssh-ed25519 PUBLIC_KEY [comment]"\n' "$0"
+    printf 'Usage: %s [--dry-run] "ssh-ed25519 PUBLIC_KEY [comment]"\n' "$0"
 }
 
 dry_run=0
@@ -13,7 +13,6 @@ source_pin='from="100.106.213.49",'
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run) dry_run=1 ;;
-        --without-source-pin) source_pin='' ;;
         -h|--help) usage; exit 0 ;;
         --) shift; break ;;
         -*) usage >&2; exit 2 ;;
@@ -55,7 +54,6 @@ check_tree "$SITE"
 [[ $(stat -c %d -- "$UPDATES") == "$(stat -c %d -- "$UPDATES/releases")" ]] ||
     die 'The update root and releases directory must support same-filesystem renames.'
 [[ -x /usr/bin/rsync ]] || die 'The receiver needs /usr/bin/rsync.'
-[[ -x /usr/lib/openssh/sftp-server ]] || die 'The forced command needs /usr/lib/openssh/sftp-server for scp.'
 id "$LEGACY_USER" >/dev/null 2>&1 || die "Existing publisher $LEGACY_USER is missing."
 nginx_uid=$(id -u "$NGINX_USER") || die "Missing nginx user $NGINX_USER."
 for file in "$UPDATES/appcast.xml" "$UPDATES/releases/Plainsay-latest.dmg" "$SITE/index.html"; do

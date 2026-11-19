@@ -123,8 +123,7 @@ dry_run() {
         $plan == *'command="/var/lib/plainsay-deploy/bin/deploy-command"'* &&
         $plan == *'8 GiB free'* &&
         $plan == *'/var/www/plainsay-app'* && $plan != *"$host_blob"* ]]
-    plan=$(bash ./ovh-provision.sh --without-source-pin --dry-run "$public_key")
-    [[ $plan == *'with restrict'* && $plan != *'from='* ]]
+    reject bash ./ovh-provision.sh --without-source-pin --dry-run "$public_key"
 }
 
 arguments() {
@@ -229,6 +228,7 @@ shared_receiver() {
     local dest="$TEST_STORE/site" source="$TEST_STORE/source" group
     mkdir -p "$source/older" "$source/new" "$dest/older"
     printf 'new\n' > "$source/new/index.html"
+    ln -s index.html "$source/new/link.html"
     printf 'updated\n' > "$source/older/index.html"
     printf 'delete me\n' > "$dest/older/stale.html"
     chmod 755 "$dest" "$dest/older"
@@ -243,7 +243,7 @@ shared_receiver() {
     rsync -az --delete --no-owner --no-group --chmod='Du=rwx,Dgo=rx,Fu=rw,Fgo=r' \
         -e "$TEST_STORE/transport" "$source/" "fixture:$dest/"
     [[ $(cat "$dest/older/index.html") == updated && $(cat "$dest/new/index.html") == new &&
-        ! -e $dest/older/stale.html ]]
+        ! -e $dest/older/stale.html && ! -L $dest/new/link.html ]]
     [[ $("$REAL_STAT" -c %a "$dest") == 775 &&
         $("$REAL_STAT" -c %a "$dest/older") == 775 &&
         $("$REAL_STAT" -c %a "$dest/new") == 775 &&
@@ -254,6 +254,13 @@ shared_receiver() {
     [[ $(cat "$dest/new/index.html") == 'legacy deploy' &&
         $("$REAL_STAT" -c %a "$dest/new") == 775 ]]
     mkdir "$TEST_STORE/elsewhere"
+    printf 'dry run\n' > "$source/dry.html"
+    rsync -az --delete --dry-run --itemize-changes --rsync-path="$TEST_STORE/receiver" \
+        -e "$TEST_STORE/transport" "$source/" "fixture:$dest/" > "$TEST_STORE/dry-run"
+    grep -Fq 'dry.html' "$TEST_STORE/dry-run"
+    [[ ! -e $dest/dry.html ]]
+    rsync -az --delete --protocol=29 -e "$TEST_STORE/transport" "$source/" "fixture:$dest/"
+    [[ -f $dest/dry.html && ! -L $dest/new/link.html ]]
     reject rsync -az -e "$TEST_STORE/transport" "$source/" "fixture:$TEST_STORE/elsewhere/"
     reject rsync -az -e "$TEST_STORE/transport" "fixture:$dest/" "$TEST_STORE/elsewhere/"
     [[ -z $(ls -A "$TEST_STORE/elsewhere") ]]
@@ -270,6 +277,7 @@ forced_command() {
     allowed "mktemp -d '$updates/.release-stage.XXXXXX'"
     allowed "sha256sum '$stage/$zip'"
     allowed "sha256sum '$stage/appcast.xml'"
+    allowed "cat > '$stage/$zip'"
     allowed "rm -rf '$stage'"
     allowed "test -w $updates && test -w $updates/releases && test -w /var/www/plainsay-app"
     command="set -eu
@@ -292,19 +300,52 @@ rmdir '$stage'"
     denied "rm -rf '$stage'; id"
     denied "rm -rf '$updates'"
     denied "sha256sum '$stage/../../../etc/shadow'"
+    denied "cat > '$updates/appcast.xml'"
+    denied "cat > '$stage/$zip'"$'\n'
     denied "sudo -n chown -R conrader '$updates'"
     denied id
     reject env SSH_ORIGINAL_COMMAND=id bash "$kit/ovh-deploy-command.sh"
+    reject env SSH_ORIGINAL_COMMAND=internal-sftp bash "$kit/ovh-deploy-command.sh"
     reject env -u SSH_ORIGINAL_COMMAND bash "$kit/ovh-deploy-command.sh"
     grep -Fxq 'plainsay-deploy: command not permitted.' "$TEST_STORE/err"
     [[ ! -s $TEST_STORE/out ]]
-    # Release staging and backups stop below 8 GiB free.
-    bash -c 'source "$1"; free=$2; df() { printf "h\nfs 1 1 %s 1%% /\n" "$free"; }; enough_space' \
-        _ "$kit/ovh-deploy-command.sh" $((8 * 1024 * 1024))
-    if bash -c 'source "$1"; free=$2; df() { printf "h\nfs 1 1 %s 1%% /\n" "$free"; }; enough_space' \
-        _ "$kit/ovh-deploy-command.sh" $((8 * 1024 * 1024 - 1)); then
-        return 1
-    fi
+}
+
+stage_upload() {
+    local stage updates="$TEST_STORE/updates" root_free=8388608 updates_free=8388608
+    mkdir -p "$updates/releases" "$TEST_STORE/elsewhere"
+    sed "s|/var/www/plainsay-updates|$updates|g" "$kit/ovh-deploy-command.sh" > "$TEST_STORE/command"
+    run_command() {
+        SSH_ORIGINAL_COMMAND=$1 bash -c '
+            source "$1"
+            df() {
+                local free=$updates_free
+                if [[ $3 == / ]]; then free=$root_free; fi
+                printf "header\nfs 1 1 %s 1%% /\n" "$free"
+            }
+            root_free=$2 updates_free=$3
+            main
+        ' _ "$TEST_STORE/command" "$root_free" "$updates_free"
+    }
+    stage=$(run_command "mktemp -d '$updates/.release-stage.XXXXXX'")
+    printf '%s\n' 'staged upload' | run_command "cat > '$stage/appcast.xml'"
+    [[ $(cat "$stage/appcast.xml") == 'staged upload' &&
+        $("$REAL_STAT" -c %a "$stage/appcast.xml") == 600 &&
+        $(ls -A "$stage") == appcast.xml ]]
+    ln -s "$TEST_STORE/elsewhere" "$updates/.release-stage.Symlnk"
+    reject run_command "cat > '$updates/.release-stage.Symlnk/appcast.xml'" </dev/null
+    [[ ! -e $TEST_STORE/elsewhere/appcast.xml ]]
+    root_free=8388607
+    reject run_command "mktemp -d '$updates/.release-stage.XXXXXX'"
+    root_free=8388608 updates_free=8388607
+    reject run_command "cat > '$stage/appcast.xml'" </dev/null
+    [[ $(cat "$stage/appcast.xml") == 'staged upload' ]]
+    reject run_command "$(bash -c 'source "$1"; backup_template 1.2.3' _ "$TEST_STORE/command")"
+    grep -Fq 'cannot confirm 8 GiB free' "$TEST_STORE/err"
+    [[ ! -e $updates/.release-backups ]]
+    updates_free=unknown
+    reject run_command "mktemp -d '$updates/.release-stage.XXXXXX'"
+    grep -Fq 'cannot confirm 8 GiB free' "$TEST_STORE/err"
 }
 
 acl_restore() {
@@ -324,7 +365,7 @@ acl_restore() {
     diff -u "$TEST_STORE/acl.before" "$TEST_STORE/acl.after"
 }
 
-case_run 'OVH dry-run prints both source-pin variants' dry_run
+case_run 'OVH dry-run requires the fixed source pin' dry_run
 case_run 'usage and malformed arguments' arguments
 case_run 'pin, alias and hostname validation' bad_pin
 case_run 'key-only uses the same mode-600 key on retry' key_only
@@ -337,4 +378,5 @@ case_run 'unmanaged GitHub Keychain credential is preserved' existing_keychain
 case_run 'local rsync preserves shared ACLs and public site modes' shared_receiver
 case_run 'ACL grants preserve effective access and the baseline restores exactly' acl_restore
 case_run 'forced command admits only release, site and probe commands' forced_command
+case_run 'staged uploads stay private and both disk checks fail closed' stage_upload
 printf '%d sandbox tests passed.\n' "$passed"

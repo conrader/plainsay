@@ -1,19 +1,21 @@
 #!/bin/bash
 # Forced command for the plainsay-deploy key. It runs only the exact remote
 # commands sent by Scripts/release.sh, Scripts/deploy-site.sh and the kit's
-# write probe, plus SFTP for scp uploads. Everything else is refused.
+# write probe. Uploads stream directly into a validated release stage.
 set -euo pipefail
 export LC_ALL=C
+export PATH=/usr/bin:/bin
+umask 077
 UPDATES=/var/www/plainsay-updates
 SITE=/var/www/plainsay-app
 RECEIVER=/var/lib/plainsay-deploy/bin/rsync
-SFTP_SERVER=/usr/lib/openssh/sftp-server
 MIN_FREE_KIB=$((8 * 1024 * 1024))
 
 STAGE_RE="$UPDATES/\\.release-stage\\.[A-Za-z0-9]{6}"
 VERSION_RE='[0-9]+\.[0-9]+\.[0-9]+'
 PACKAGE_RE="Plainsay-$VERSION_RE\\.(zip|dmg)|appcast\\.xml"
 CHECKSUM_RE="^sha256sum '($STAGE_RE)/($PACKAGE_RE)'\$"
+UPLOAD_RE="^cat > '($STAGE_RE)/($PACKAGE_RE)'\$"
 REMOVE_RE="^rm -rf '($STAGE_RE)'\$"
 ACTIVATE_RE="^set -eu"$'\n'"chmod a\\+r '($STAGE_RE)/(Plainsay-$VERSION_RE\\.zip)' '$STAGE_RE/(Plainsay-$VERSION_RE\\.dmg)' "
 
@@ -58,7 +60,7 @@ allowed_shell() {
         "mktemp -d '$UPDATES/.release-stage.XXXXXX'")
             return 0 ;;
     esac
-    if [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE ]]; then
+    if [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE || $command =~ $UPLOAD_RE ]]; then
         return 0
     fi
     if [[ $command =~ \.release-backups/v($VERSION_RE)\.XXXXXX ]]; then
@@ -78,14 +80,16 @@ allowed_shell() {
 allowed_rsync() {
     local count=$# argument
     (( count >= 5 )) || return 1
-    [[ $1 == rsync && $2 == --server ]] || return 1
+    [[ ( $1 == rsync || $1 == "$RECEIVER" ) && $2 == --server ]] || return 1
+    # The optional -e argument is rsync's server compatibility suffix.
+    [[ $3 =~ ^-[nvlogDtprz]+(e\.[iLsfxCIvu]*)?$ ]] || return 1
     [[ ${*: -2:1} == . ]] || return 1
     [[ ${!count} == "$SITE" || ${!count} == "$SITE/" ]] || return 1
-    for argument in "${@:3:count-4}"; do
+    for argument in "${@:4:count-5}"; do
         case "$argument" in
             --delete|--delete-before|--delete-during|--delete-delay|--delete-after) ;;
             --no-o|--no-g|--no-owner|--no-group|--no-perms|--omit-dir-times) ;;
-            -[A-Za-z]*) [[ $argument =~ ^-[A-Za-z][A-Za-z.]*$ ]] || return 1 ;;
+            --log-format=%i|--log-format=%i%I) ;;
             *) return 1 ;;
         esac
     done
@@ -100,21 +104,41 @@ enough_space() {
     done
 }
 
+require_space() {
+    if ! enough_space; then
+        printf 'plainsay-deploy: cannot confirm 8 GiB free on / and the update filesystem.\n' >&2
+        exit 1
+    fi
+}
+
+upload() (
+    stage=$1 package=$2
+    cd -P -- "$stage" && [[ $PWD == "$stage" && -O . ]] || exit 126
+    require_space
+    # Keep incomplete uploads private. A retry replaces only the named file.
+    tmp=$(mktemp -- .upload.XXXXXX)
+    trap 'rm -f -- "$tmp"' EXIT
+    cat > "$tmp"
+    mv -fT -- "$tmp" "$package"
+)
+
 main() {
     local command=${SSH_ORIGINAL_COMMAND:-} words
-    if [[ $command == "$SFTP_SERVER" || $command == internal-sftp ]]; then
-        exec "$SFTP_SERVER" -P symlink,hardlink
-    fi
-    if [[ $command == 'rsync --server '* && $command != *$'\n'* ]]; then
-        read -r -a words <<< "$command"
-        if allowed_rsync "${words[@]}"; then
-            exec "$RECEIVER" "${words[@]:1}"
+    if [[ $command == 'rsync --server '* || $command == "$RECEIVER --server "* ]]; then
+        if [[ $command != *$'\n'* ]]; then
+            IFS=' ' read -r -a words <<< "$command"
+            if allowed_rsync "${words[@]}" && [[ -d $SITE && $(realpath -e -- "$SITE") == "$SITE" ]]; then
+                exec "$RECEIVER" "${words[@]:1:${#words[@]}-3}" \
+                    --no-D --munge-links --safe-links "${words[@]: -2}"
+            fi
         fi
+    elif [[ $command =~ $UPLOAD_RE ]]; then
+        upload "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        return
     elif allowed_shell "$command"; then
         if [[ $command == "mktemp -d '$UPDATES/.release-stage.XXXXXX'" ||
-            $command == *'.release-backups/v'* ]] && ! enough_space; then
-            printf 'plainsay-deploy: STOP, less than 8 GiB free on the update host.\n' >&2
-            exit 1
+            $command == *'.release-backups/v'* ]]; then
+            require_space
         fi
         exec /bin/bash -c "$command"
     fi
