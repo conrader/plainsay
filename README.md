@@ -386,6 +386,31 @@ transcript instead of inserting partial edited text.
 Read [How it works](https://plainsay.app/how-it-works/) for the pipeline and
 [Why on-device](https://plainsay.app/why-on-device/) for the privacy trade-offs.
 
+## Speech model benchmarks
+
+Measured on a Mac mini M4 on 2026-11-19 using 80 held-out FLEURS read-speech
+clips (40 Polish, 40 US English, 1,614 reference words). Overall word error
+rate (WER) is the mean of the Polish and English rates. Latency runs from audio
+already in memory to final text with the model loaded.
+
+| Model | WER overall | WER PL | WER EN | p90 latency | Model download size |
+|---|---:|---:|---:|---:|---:|
+| Whisper Turbo (previous default) | 5.88% | 5.72% | 6.04% | 1.08 s | ~632 MB |
+| Parakeet v3 INT8 (tuned) | 5.68% | 5.20% | 6.15% | 0.21 s | ~475 MB |
+
+The WER difference is within noise (95 vs. 92 word errors). The main gain is
+about 5× lower p90 latency. The tuned preset uses 320 ms pre-roll, 40 ms
+post-roll, and up to 4× gain on quiet clips. Live microphone audio and clips
+longer than 30 seconds remain untested.
+
+Parakeet is the default for new Polish-primary, English-secondary setups.
+Existing installs using Whisper Turbo keep it.
+
+Follow the [eval data and model setup](DATA.md), then run
+`eval/run_eval heldout` to evaluate Parakeet. The paired rerun used the same
+command at autoresearch revisions `2fca985` (Whisper Turbo) and `e74c204`
+(Parakeet).
+
 ## Reproducible benchmark
 
 | Local engine | Word error rate | Average latency | Real-time factor |
