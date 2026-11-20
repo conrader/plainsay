@@ -1,13 +1,14 @@
 #!/bin/bash
 
-release_notarytool() {
-	local keychain="${PLAINSAY_RELEASE_KEYCHAIN:-$HOME/Library/Keychains/herdr-release.keychain-db}"
-	local password_file="${PLAINSAY_RELEASE_KCPASS:-$HOME/.herdr-release/kcpass}"
-	if [ -z "${PLAINSAY_RELEASE_KEYCHAIN+x}" ] && [ ! -e "$password_file" ] && [ ! -L "$password_file" ]; then
-		xcrun notarytool "$@" --keychain-profile plainsay-notary
-		return
-	fi
+RELEASE_KEYCHAIN="${PLAINSAY_RELEASE_KEYCHAIN:-$HOME/Library/Keychains/herdr-release.keychain-db}"
+RELEASE_KCPASS="${PLAINSAY_RELEASE_KCPASS:-$HOME/.herdr-release/kcpass}"
 
+release_keychain_configured() {
+	[ -n "${PLAINSAY_RELEASE_KEYCHAIN+x}" ] || [ -e "$RELEASE_KCPASS" ] || [ -L "$RELEASE_KCPASS" ]
+}
+
+unlock_release_keychain() {
+	local keychain="$RELEASE_KEYCHAIN" password_file="$RELEASE_KCPASS"
 	if [ ! -f "$password_file" ] || ! (
 		# Keep the password out of shell traces, argv, and the environment.
 		set +ax
@@ -36,5 +37,13 @@ release_notarytool() {
 		printf 'Could not unlock release keychain %s using %s.\n' "$keychain" "$password_file" >&2
 		return 1
 	fi
-	xcrun notarytool "$@" --keychain-profile plainsay-notary --keychain "$keychain"
+}
+
+release_notarytool() {
+	if release_keychain_configured; then
+		unlock_release_keychain || return 1
+		xcrun notarytool "$@" --keychain-profile plainsay-notary --keychain "$RELEASE_KEYCHAIN"
+	else
+		xcrun notarytool "$@" --keychain-profile plainsay-notary
+	fi
 }

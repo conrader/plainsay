@@ -11,7 +11,7 @@ The app supports Apple silicon on macOS 14 and later.
 | --- | --- |
 | Build host | Apple silicon Mac with Xcode 16 or later, Swift 6+, and selected Xcode tools. The CI reference is `macos-15`. Run `swift build` to resolve SwiftPM dependencies and obtain Sparkle's `sign_update`. `bundle.sh` uses `xcstringstool`, `rsync`, `install_name_tool`, and `codesign`. The release also uses `security`, `PlistBuddy`, `ditto`, `hdiutil`, `osascript`/Finder, `spctl`, `xcrun`, Git, `gh`, `curl`, SSH/SCP, and checksum utilities. |
 | Apple signing and notarization | The Developer ID Application identity in `Scripts/release.sh` needs its private key and certificate in the signing user's Keychain. The app and Sparkle helpers are signed inside out with hardened runtime and secure timestamps. The app and DMG are submitted separately, stapled, and assessed. `plainsay-notary` is the Keychain profile created from an App Store Connect API `.p8`, key ID, and issuer ID. The old `NOTARIZE=0` branch could still reach publication. The updated script requires notarization. |
-| Sparkle | Use the existing Ed25519 private key in the release Mac's login Keychain, matching `SUPublicEDKey` in `Scripts/Info.plist`. `sign_update` signs the ZIP. The script writes a single-item appcast and takes its minimum macOS version from the plist. It uses no `generate_appcast`. |
+| Sparkle | Use the Ed25519 private key matching `SUPublicEDKey` in `Scripts/Info.plist`. On `mini-m4`, store that key under account `com.plainsay.sparkle` in the `herdr-release` keychain. `sign_update` signs the ZIP. The script writes a single-item appcast and takes its minimum macOS version from the plist. |
 | Version and source | Both version fields in `Scripts/Info.plist` had to be committed. Historically `CFBundleVersion = major * 10000 + minor * 100 + patch` (0.2.38 used build 238). The release checked the live build, a clean Git tree, reviewed privacy and terms pages, and site checkout freshness. |
 | Update host and site | `HOST` defaults to the SSH alias `codex-server`. nginx serves `/var/www/plainsay-updates` as `api.plainsay.app`. The script stages and verifies uploads, then replaces the stable DMG and appcast with same-filesystem renames. `deploy-site.sh` uses rsync to publish `docs/` to `/var/www/plainsay-app` and the old manual path uses sudo for permissions. |
 | GitHub and Homebrew | GitHub CLI creates a draft for the committed source, attaches the signed ZIP and notarized DMG, and publishes it as latest with a `v<version>` tag. Then Git updates `Casks/plainsay.rb` on `conrader/homebrew-plainsay:main` with the version and DMG SHA-256. GitHub API verifies the cask. GitHub and Git credentials must permit writes to their respective repositories. No `brew` executable is required to release. |
@@ -49,6 +49,14 @@ For a manual release, commit both plist fields and use a build above the
 highest shipped build, including withdrawn builds.
 A successful nightly publication completes the release for that version.
 
+For a manual release on `mini-m4`, set
+`PLAINSAY_SPARKLE_ACCOUNT=com.plainsay.sparkle` in the environment when running
+`Scripts/release.sh`. Keep `herdr-release` in the release user's keychain search
+list and keep its password file at `~/.herdr-release/kcpass` (or the path set
+by `PLAINSAY_RELEASE_KCPASS`) readable only by that user. The release unlocks
+this keychain for ZIP signing, including when it reuses a notarized app.
+An unset or empty `PLAINSAY_SPARKLE_ACCOUNT` selects the legacy `ed25519` account.
+
 A detached worktree gets a version-only commit when the nightly generates a
 version bump. For a version already committed on main, the tag points directly
 at the tested main SHA. Nightly DMGs include the app and Applications shortcut
@@ -69,6 +77,11 @@ retrying. To pause the agent, run
 `launchctl disable "gui/$(id -u)/com.plainsay.nightly-release"` as the release
 user, wait for an active run to finish, and then boot out the service.
 Use `launchctl enable` with the same service target before bootstrapping again.
+To pick up `PLAINSAY_SPARKLE_ACCOUNT`, reinstall the updated
+`com.plainsay.nightly-release.plist` in the release user's
+`~/Library/LaunchAgents/`, preserving any host-specific paths and settings.
+Reload it with `launchctl bootout` if loaded, then `launchctl bootstrap` in
+the release user's Aqua session (`gui/$(id -u)`).
 The `nightly.lock` directory and `publish.pending` marker live under
 `~/Library/Application Support/PlainsayRelease/` by default. If a crash leaves
 the lock behind, confirm its PID and any child build or publish processes are

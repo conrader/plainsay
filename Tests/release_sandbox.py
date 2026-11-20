@@ -24,10 +24,10 @@ def git(*args, **kwargs):
     return subprocess.check_output(("git", *args), text=True, **kwargs).strip()
 
 
-def fake_bundle():
-    app = Path("build/Plainsay.app/Contents")
+def fake_bundle(checkout=Path(".")):
+    app = checkout / "build/Plainsay.app/Contents"
     app.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile("Scripts/Info.plist", app / "Info.plist")
+    shutil.copyfile(checkout / "Scripts/Info.plist", app / "Info.plist")
 
 
 def fake_tool(tool, args):
@@ -40,6 +40,7 @@ def fake_tool(tool, args):
     mode = os.environ.get("RELEASE_TEST_MODE")
     env = os.environ
     marker = Path(env["PLAINSAY_NIGHTLY_STATE_DIR"]) / "publish.pending"
+    unlocked_keychain = case / "release-keychain-unlocked"
     remote = case / "origin.git"
     server = case / "staged"
 
@@ -112,7 +113,11 @@ def fake_tool(tool, args):
             sign_update.symlink_to(case / "bin/sign_update")
         elif args[0] == "Scripts/check-release-keychain.swift":
             return 1 if mode == "locked-keychain" else 0
-        elif args[0] not in ("test", "Scripts/verify-sparkle-signature.swift", "Scripts/make-dmg-background.swift"):
+        elif args[0] == "Scripts/verify-sparkle-signature.swift":
+            if mode == "sparkle-signature-mismatch":
+                print("The update signature does not match the app's Sparkle public key.", file=sys.stderr)
+                return 1
+        elif args[0] not in ("test", "Scripts/make-dmg-background.swift"):
             raise AssertionError(args)
     elif tool == "security":
         if args == ["-i"]:
@@ -124,7 +129,13 @@ def fake_tool(tool, args):
             if mode == "notary-unlock-fails":
                 print("security: fixture unlock failed", file=sys.stderr)
                 return 1
-            (case / "notary-unlocked").touch()
+            unlocked_keychain.touch()
+            return 0
+        if args == ["list-keychains"]:
+            keychain = release_keychain(env)
+            if mode == "keychain-not-in-search-list":
+                keychain += ".other"
+            print(f'    "{keychain}"')
             return 0
         assert args == ["find-identity", "-v", "-p", "codesigning"]
         if mode == "hung-keychain":
@@ -143,6 +154,9 @@ def fake_tool(tool, args):
             assert args[0] == "-f%z"
             print(Path(args[1]).stat().st_size)
     elif tool == "sign_update":
+        # Consume a fresh unlock just as the notary stub does.
+        if release_keychain_configured(env):
+            unlocked_keychain.unlink()
         print("fake-signature")
     elif tool == "hdiutil":
         if args[0] == "create":
@@ -164,9 +178,9 @@ def fake_tool(tool, args):
         if args[0] == "notarytool":
             assert args[1] == "submit"
             profile = ["--keychain-profile", "plainsay-notary"]
-            if "PLAINSAY_RELEASE_KEYCHAIN" in env or release_kcpass(env).exists():
+            if release_keychain_configured(env):
                 assert args[-4:] == [*profile, "--keychain", release_keychain(env)]
-                (case / "notary-unlocked").unlink()
+                unlocked_keychain.unlink()
             else:
                 assert args[-2:] == profile and "--keychain" not in args
             print('{"status": "Accepted"}')
@@ -222,6 +236,11 @@ def release_keychain(env):
 
 def release_kcpass(env):
     return Path(env.get("PLAINSAY_RELEASE_KCPASS") or f"{env['HOME']}/.herdr-release/kcpass")
+
+
+def release_keychain_configured(env):
+    password_file = release_kcpass(env)
+    return "PLAINSAY_RELEASE_KEYCHAIN" in env or password_file.exists() or password_file.is_symlink()
 
 
 class ReleaseSandbox(unittest.TestCase):
@@ -367,8 +386,19 @@ class ReleaseSandbox(unittest.TestCase):
         path.parent.mkdir(parents=True)
         path.symlink_to(self.case / "bin/sign_update")
 
+    def stage_notarized_app(self):
+        self.bump_main()
+        self.install_sign_update()
+        fake_bundle(self.checkout)
+        commit = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        (self.checkout / "build/Plainsay.app.release-stamp").write_text(f"0.3.0 300 {commit}\n")
+
     def events(self):
         return (self.case / "events").read_text()
+
+    def assert_sign_update(self, account, version="0.3.0"):
+        calls = [shlex.split(line) for line in self.events().splitlines() if line.startswith("sign_update")]
+        self.assertEqual(calls, [["sign_update", "-p", "--account", account, f"dist/Plainsay-{version}.zip"]])
 
     def assert_unlocked(self):
         self.assertFalse((self.state / "nightly.lock").exists())
@@ -481,9 +511,13 @@ class ReleaseSandbox(unittest.TestCase):
     def test_nightly_from_unchanged_plist_cleans_worktree_on_success(self):
         self.make_tap()
         kcpass = self.kcpass.rename(self.case / "custom kcpass")
+        plist = ROOT / "Scripts/com.plainsay.nightly-release.plist"
+        agent_env = plistlib.loads(plist.read_bytes())["EnvironmentVariables"]
+        agent_env.pop("PATH")  # Keep the fake tools on PATH.
         self.nightly(match="Nightly publish complete for v0.2.39",
                      PLAINSAY_RELEASE_KEYCHAIN=str(self.case / 'custom "release" \\ keychain-db'),
-                     PLAINSAY_RELEASE_KCPASS=str(kcpass))
+                     PLAINSAY_RELEASE_KCPASS=str(kcpass), **agent_env)
+        self.assert_sign_update("com.plainsay.sparkle", "0.2.39")
         self.assertFalse((self.state / "publish.pending").exists())
         self.assertIn("refs/tags/v0.2.39", self.events())
         self.assert_clean_nightly()
@@ -493,8 +527,49 @@ class ReleaseSandbox(unittest.TestCase):
         self.bump_main()
         self.install_sign_update()
         self.manual("--prepare-only")
+        self.assert_sign_update("ed25519")
         self.assertEqual(self.events().count("xcrun notarytool submit"), 2)
         self.assertNotIn("security -i", self.events())
+
+    def test_manual_reuse_unlocks_release_keychain_before_signing(self):
+        self.stage_notarized_app()
+        self.manual("--prepare-only", REBUILD="0", PLAINSAY_SPARKLE_ACCOUNT="com.plainsay.sparkle",
+                    match="Reusing build/Plainsay.app")
+        self.assert_sign_update("com.plainsay.sparkle")
+        events = self.events()
+        self.assertLess(events.index("security -i\n"), events.index("sign_update "))
+        self.assertNotIn("xcrun notarytool submit dist/notarize.zip", events)
+        self.assertEqual(events.count("xcrun notarytool submit"), 1)
+
+    def test_empty_sparkle_account_uses_default(self):
+        self.stage_notarized_app()
+        self.manual("--prepare-only", REBUILD="0", PLAINSAY_SPARKLE_ACCOUNT="")
+        self.assert_sign_update("ed25519")
+
+    def test_manual_reuse_stops_if_signing_keychain_is_not_in_search_list(self):
+        self.stage_notarized_app()
+        self.manual(REBUILD="0", mode="keychain-not-in-search-list", status=1,
+                    match="missing from the Sparkle keychain search list")
+        self.assertNotRegex(self.events(), r"security -i|sign_update|xcrun notarytool")
+        self.assert_unlocked()
+
+    def test_manual_reuse_stops_if_signing_keychain_unlock_fails(self):
+        self.stage_notarized_app()
+        output = self.manual(REBUILD="0", mode="notary-unlock-fails", status=1,
+                             match="Could not unlock release keychain")
+        self.assertIn("Reusing build/Plainsay.app", output)
+        self.assertIn("security -i\n", self.events())
+        self.assertNotRegex(self.events(), r"sign_update|xcrun notarytool")
+        self.assert_unlocked()
+
+    def test_sparkle_signature_mismatch_stops_publication(self):
+        self.stage_notarized_app()
+        self.manual(REBUILD="0", mode="sparkle-signature-mismatch", status=1,
+                    match="The update signature does not match")
+        self.assert_sign_update("ed25519")
+        self.assertNotRegex(self.events(), r"hdiutil |ssh |git push|gh release create")
+        self.assertFalse((self.state / "publish.pending").exists())
+        self.assert_unlocked()
 
     def test_nightly_requires_password_file(self):
         self.kcpass.unlink()

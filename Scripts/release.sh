@@ -263,6 +263,18 @@ ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app "$ZIP"
 
 LENGTH=$(stat -f%z "$ZIP")
 echo "==> Signing $ZIP ($LENGTH bytes)"
+# Sparkle uses the session search list. An app reused above skipped its unlock.
+if release_keychain_configured; then
+	if ! KEYCHAIN_SEARCH_LIST=$(run_keychain_check security list-keychains); then
+		echo "Could not read the keychain search list for Sparkle signing." >&2
+		exit 1
+	fi
+	if ! grep -Fxq -- "    \"$RELEASE_KEYCHAIN\"" <<<"$KEYCHAIN_SEARCH_LIST"; then
+		echo "Release keychain $RELEASE_KEYCHAIN is missing from the Sparkle keychain search list." >&2
+		exit 1
+	fi
+	unlock_release_keychain
+fi
 SIGNATURE=$("$SIGN_UPDATE" -p --account "${PLAINSAY_SPARKLE_ACCOUNT:-ed25519}" "$ZIP")
 PUBLIC_KEY=$(PlistBuddy -c 'Print :SUPublicEDKey' build/Plainsay.app/Contents/Info.plist)
 swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
