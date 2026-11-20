@@ -362,6 +362,20 @@ acl_restore() {
     diff -u "$TEST_STORE/acl.before" "$TEST_STORE/acl.after"
 }
 
+# Reversal must remove every file provisioning installs under the deploy
+# home, or its final rmdir aborts after the account is gone.
+reverse_removes_installed_files() {
+    local installed removed name
+    # shellcheck disable=SC2016 # literal $DEPLOY_HOME in the scripts
+    installed=$(sed -nE 's#^install .* "\$DEPLOY_HOME/(bin/[a-z-]+)"$#\1#p' ovh-provision.sh | sort)
+    [[ $(wc -l <<<"$installed") -ge 3 ]]
+    # shellcheck disable=SC2016 # literal $DEPLOY_HOME in the scripts
+    removed=$(sed -n '/rm -f -- "$DEPLOY_HOME\/.bashrc"/,/^ *for directory/p' ovh-reverse.sh)
+    for name in $installed; do
+        grep -Fq "\"\$DEPLOY_HOME/$name\"" <<<"$removed" || { echo "ovh-reverse.sh keeps $name" >&2; return 1; }
+    done
+}
+
 case_run 'OVH dry-run requires the fixed source pin' dry_run
 case_run 'usage and malformed arguments' arguments
 case_run 'pin, alias and hostname validation' bad_pin
@@ -376,4 +390,5 @@ case_run 'local rsync preserves shared ACLs and public site modes' shared_receiv
 case_run 'ACL grants preserve effective access and the baseline restores exactly' acl_restore
 case_run 'forced command admits only release, site and probe commands' forced_command
 case_run 'staged uploads stay private and both disk checks fail closed' stage_upload
+case_run 'OVH reversal removes every installed deploy binary' reverse_removes_installed_files
 printf '%d sandbox tests passed.\n' "$passed"

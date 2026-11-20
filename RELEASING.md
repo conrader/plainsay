@@ -66,17 +66,29 @@ after their public HTTPS responses return 200 and match the local bytes. After
 publication it checks the new appcast, DMG, and every local enclosure the same
 way. It retains the stable DMG, the files referenced by the live appcast, and
 one verified rollback archive. The helper serializes update-root activation
-and retention on OVH. Backups for a version newer than the live one belong to
-a publisher that has not activated yet and are kept. A legacy backup tree the
-deploy account cannot delete is reported and kept whole.
+and retention on OVH. Each backup writes a `NAME.tar.pending` receipt beside
+its archive. A prune keeps every archive that still has a receipt, whatever
+its version, because it belongs to a publication in flight, and removes its
+own receipt last. Activation records the old and new stable DMG and appcast
+checksums in `.release-backups/activation` before its renames and removes the
+record after them. If activation stops between the renames, the record stays
+and `backup` refuses the mixed DMG and appcast, so no prune can replace the
+last coherent rollback. A legacy backup tree is first renamed to
+`.release-trash.NAME` and then removed. A tree that cannot be removed is
+reported and kept whole or left as trash for the next prune.
 
-After the cask read-back, `Scripts/prune-github-assets.sh` deletes the
-`Plainsay-X.Y.Z.{dmg,zip}` assets of every non-draft release older than the
-live version. It first re-reads the cask and requires the latest public
-release to be the live tag with a ZIP and a DMG whose digest matches the
-cask, so it deletes nothing otherwise. It keeps the release pages and tags,
-skips assets that are already gone, and supports `DRY_RUN=1`. If it fails,
-the release has still shipped. Rerun the command the release prints.
+After the cask read-back, `Scripts/prune-github-assets.sh VERSION DMG_SHA
+ZIP_SHA` deletes the `Plainsay-X.Y.Z.{dmg,zip}` assets of every public,
+non-prerelease release older than the live version. Before the listing and
+again before every delete, it re-reads the cask and the latest release. The
+cask must install VERSION from vVERSION's own DMG with DMG_SHA. Latest must
+be the public, non-prerelease vVERSION, with DMG and ZIP digests equal to the
+shipped checksums. Otherwise it deletes nothing more. A rollback that
+switches either pointer stops it before the next delete. It keeps the release
+pages and tags. An asset counts as already gone only when GitHub no longer
+lists it; a 404 from DELETE for a listed asset is an error. It supports
+`DRY_RUN=1`. `publish.pending` stays until it succeeds, with the exact rerun
+command in its `remaining=` line.
 
 For a manual release on `mini-m4`, set
 `PLAINSAY_SPARKLE_ACCOUNT=com.plainsay.sparkle` in the environment when running
@@ -193,7 +205,8 @@ Pause the agent and inspect the GitHub tag and release (including drafts),
 public appcast, stable DMG, the versioned ZIP and the tap. If the tag and
 release became public, reconcile the staged files or use the rollback below.
 Activate any remaining valid staged files in ZIP, DMG, appcast order using the
-recorded checksums. Use the public GitHub DMG checksum to finish the cask
+recorded checksums, then remove `.release-backups/activation` once the DMG
+and appcast are the new pair. Use the public GitHub DMG checksum to finish the cask
 update, and deploy the current website checkout if necessary. If publication
 only created an unused tag or incomplete draft, inspect and resolve those
 before retrying. Preserve any tag that corresponds to an artifact users may
@@ -202,7 +215,10 @@ retention with
 `/var/lib/plainsay-deploy/bin/release-retention prune "$version" "$archive_name" "$backup_sha" "$zip_sha" "$dmg_sha" "$feed_sha"`
 on OVH using the marker's values. Use the version without the leading `v`
 and the archive basename. The helper repeats public verification, so a retry
-after a lost SSH connection is safe. Clear the marker after confirming the
+after a lost SSH connection is safe. If the marker has a `remaining=` line,
+everything else succeeded. Run that GitHub prune command from the checkout.
+Remove the `.pending` receipt of an abandoned publication's archive once its
+archive is no longer needed. Clear the marker after confirming the
 resulting state, then clean the retained manual build products listed above or
 remove the nightly checkout with `git worktree remove --force` and remove its
 empty scratch directory. Resume scheduling after cleanup.
@@ -234,10 +250,18 @@ empty scratch directory. Resume scheduling after cleanup.
    ```
 
 3. Purge any caching layer for `/appcast.xml` and the stable DMG if present.
-   Verify the feed and DMG from `https://api.plainsay.app`, mark the bad GitHub
-   release as withdrawn in its notes, restore the previous release as Latest,
-   and revert the corresponding cask update. Keep the bad tag as a version and
-   build high-water mark. The next release must have a higher build.
+   Verify the feed and DMG from `https://api.plainsay.app` and mark the bad
+   GitHub release as withdrawn in its notes. The bad release's prune deleted
+   the previous release's GitHub binaries, so restore them before switching
+   any pointer. Copy the same verified archive to the Mac, check its
+   SHA-256, extract it into an empty directory, and take `DMG_SHA` from the
+   `sha256` line of the cask commit you are reverting to. Then run
+   `Scripts/restore-github-assets.sh PREV dir/releases/Plainsay-latest.dmg
+   dir/releases/Plainsay-PREV.zip DMG_SHA`. It uploads what is missing, never
+   replaces a different asset, reads both digests back from GitHub, and only
+   then makes vPREV Latest. Revert the cask only after it succeeds. Keep the
+   bad tag as a version and build high-water mark. The next release must
+   have a higher build.
 4. Devices that installed or already downloaded the bad update can require
    a forward fix. Merge the fix or revert to main and release it at a higher
    build number. Test update discovery from both the bad and prior good builds.

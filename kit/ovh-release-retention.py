@@ -25,6 +25,9 @@ VERSION = r"[0-9]+\.[0-9]+\.[0-9]+"
 BACKUP = rf"v{VERSION}\.[a-zA-Z0-9_]{{6,8}}"
 STAGE = r"\.release-stage\.[a-zA-Z0-9]{6}"
 SHA = r"[a-f0-9]{64}"
+ACTIVATION = "activation"
+PENDING = ".pending"
+TRASH = ".release-trash."
 ARTIFACT = r"Plainsay[a-zA-Z0-9._-]*\.(?:dmg|zip|delta|tar\.gz|tar|tgz|aar|pkg|tbz2|txz)|[a-zA-Z0-9._-]+\.delta"
 
 
@@ -94,6 +97,31 @@ def appcast(feed):
     return max(map(int, builds)), assets
 
 
+def read_activation(backups):
+    """Return the (old, new) DMG and appcast pairs of the last activation, if recorded."""
+    marker = backups / ACTIVATION
+    if not os.path.lexists(marker):
+        return None
+    fields = regular(marker).read_text().split()
+    require(len(fields) == 5 and re.fullmatch(VERSION, fields[0]) and
+            all(re.fullmatch(SHA, checksum) for checksum in fields[1:]), "Invalid activation marker")
+    return (fields[1], fields[2]), (fields[3], fields[4])
+
+
+def write_activation(backups, version, old, new):
+    with tempfile.NamedTemporaryFile("w", prefix=".activation.", dir=backups, delete=False) as temp:
+        temp.write(" ".join((version, *old, *new)) + "\n")
+    os.replace(temp.name, backups / ACTIVATION)
+
+
+def coherent(backups, dmg_sha, feed_sha):
+    """Reject a stable DMG and appcast left from two releases by an interrupted activation."""
+    pairs = read_activation(backups)
+    require(pairs is None or (dmg_sha, feed_sha) in pairs,
+            "An interrupted activation left the stable DMG and appcast from different releases. "
+            "Reconcile them before taking a rollback archive")
+
+
 def backup(root, version):
     backups = directory(root / ".release-backups")
     feed = regular(root / FEED).read_bytes()
@@ -101,6 +129,7 @@ def backup(root, version):
     _, assets = appcast(feed)
     for relative in sorted(assets | {DMG}):
         expected[relative] = file_digest(root / relative)
+    coherent(backups, expected[DMG], expected[FEED])
     for relative, checksum in expected.items():
         verify_live(relative, checksum)
 
@@ -117,6 +146,11 @@ def backup(root, version):
             require(all(digest(archive.extractfile(relative)) == checksum for relative, checksum in expected.items()),
                     "Rollback archive differs from the verified public files")
         path.chmod(0o644)
+        # The receipt marks the archive as owned by a publication in flight.
+        # Other publishers' prunes keep it until its own prune removes it.
+        receipt = backups / f"{path.name}{PENDING}"
+        with receipt.open("x") as stream:
+            stream.write(f"{version}\n")
         return f"{path.name} {file_digest(path)}"
     except BaseException:
         path.unlink()
@@ -129,8 +163,8 @@ def activate(root, version, stage, archive, expected):
     dmg_name = f"Plainsay-{version}.dmg"
     with tarfile.open(archive, "r") as rollback:
         previous_feed = rollback.extractfile(FEED).read()
-        require(hashlib.sha256(previous_feed).hexdigest() == file_digest(root / FEED) and
-                digest(rollback.extractfile(DMG)) == file_digest(root / DMG),
+        old = (digest(rollback.extractfile(DMG)), hashlib.sha256(previous_feed).hexdigest())
+        require(old == (file_digest(root / DMG), file_digest(root / FEED)),
                 "Live release changed after its rollback archive was taken")
     previous_build, _ = appcast(previous_feed)
     build, assets = appcast(regular(stage / FEED).read_bytes())
@@ -141,9 +175,14 @@ def activate(root, version, stage, archive, expected):
         path.chmod(0o644)
     target_zip = root / "releases" / zip_name
     require(not target_zip.exists() and not target_zip.is_symlink(), "Versioned ZIP already exists")
+    # The DMG and appcast are swapped by two renames. Record both pairs first
+    # so a later backup can tell a completed pair from a half-activated one.
+    backups = archive.parent
+    write_activation(backups, version, old, (expected[1], expected[2]))
     (stage / zip_name).replace(target_zip)
     (stage / dmg_name).replace(root / DMG)
     (stage / FEED).replace(root / FEED)
+    (backups / ACTIVATION).unlink()
     stage.rmdir()
 
 
@@ -161,34 +200,77 @@ def prune(root, version, archive, expected):
         require(file_digest(root / relative) == checksum, f"Live file changed at {relative}")
         verify_live(relative, checksum)
 
-    # Plan every backup removal before unlinking anything, so an unremovable
-    # backup cannot interrupt the prune halfway. A backup for a newer version
-    # belongs to a publisher that has not activated yet and must survive.
-    live = version_key(version)
-    doomed = []
-    for path in sorted(archive.parent.iterdir()):
-        match = re.fullmatch(rf"v({VERSION})\.[a-zA-Z0-9_]{{6,8}}(\.tar)?", path.name)
-        if path == archive or not match or version_key(match[1]) > live:
+    # Plan every backup removal before unlinking anything. An archive with a
+    # pending receipt belongs to a publication in flight and must survive.
+    backups = archive.parent
+    pairs = read_activation(backups)
+    require(pairs is None or (dmg_sha, feed_sha) in pairs, "Live DMG and appcast come from different releases")
+    for path in sorted(backups.iterdir()):
+        if path.name.startswith(TRASH):
+            discard(path)
+    doomed, legacy = [], []
+    for path in sorted(backups.iterdir()):
+        match = re.fullmatch(rf"v{VERSION}\.[a-zA-Z0-9_]{{6,8}}(\.tar)?", path.name)
+        if path == archive or not match:
             continue
         mode = path.lstat().st_mode
-        if stat.S_ISREG(mode) or (stat.S_ISDIR(mode) and not match[2] and removable(path)):
-            doomed.append(path)
-        elif stat.S_ISDIR(mode) and not match[2]:
-            print(f"plainsay retention: kept unremovable legacy backup {path}", file=sys.stderr)
+        if match[1] and stat.S_ISREG(mode):
+            if not os.path.lexists(backups / f"{path.name}{PENDING}"):
+                doomed.append(path)
+        elif not match[1] and stat.S_ISDIR(mode):
+            if removable(path):
+                legacy.append(path)
+            else:
+                report(f"kept unremovable legacy backup {path}")
+
+    # A legacy tree is renamed out of the backup namespace in one step, so a
+    # failed removal leaves trash rather than a partial rollback.
+    trash = []
+    for path in legacy:
+        target = backups / f"{TRASH}{path.name}"
+        try:
+            path.rename(target)
+        except OSError as error:
+            report(f"kept legacy backup {path}: {error}")
+        else:
+            trash.append(target)
 
     for path in sorted((root / "releases").iterdir()):
         if re.fullmatch(ARTIFACT, path.name) and f"releases/{path.name}" not in checksums:
             if stat.S_ISREG(path.lstat().st_mode):
                 path.unlink()
     for path in doomed:
-        if path.is_dir() and not path.is_symlink():
-            shutil.rmtree(path)
-        else:
+        try:
+            path.unlink()
+        except OSError as error:
+            report(f"kept superseded backup {path}: {error}")
+    for path in trash:
+        discard(path)
+    if pairs is not None and pairs[1] == (dmg_sha, feed_sha):
+        (backups / ACTIVATION).unlink()
+    for path in backups.iterdir():
+        if path.name.endswith(PENDING) and (path.name == f"{archive.name}{PENDING}" or
+                                            not os.path.lexists(backups / path.name[:-len(PENDING)])):
             path.unlink()
 
 
-def version_key(version):
-    return tuple(map(int, version.split(".")))
+def report(message):
+    print(f"plainsay retention: {message}", file=sys.stderr)
+
+
+def discard(path):
+    """Remove a renamed legacy tree; report rather than raise on failure."""
+    failures = []
+
+    def failed(_function, name, error):
+        failures.append(f"{name}: {error[1] if isinstance(error, tuple) else error}")
+
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=failed)
+    else:
+        shutil.rmtree(path, onerror=failed)
+    if failures:
+        report(f"could not fully remove discarded backup {path}: {failures[0]}")
 
 
 def removable(top):

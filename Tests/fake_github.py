@@ -3,7 +3,9 @@
 
 The state holds `releases` (tag_name, draft, prerelease, assets with id, name
 and digest), the `latest` tag, the published `cask` text and optional
-`delete_errors` mapping asset ids to an HTTP status. `--jq` filters run
+`delete_errors` mapping asset ids to an HTTP status, and optional
+`after_list` fields merged into the state once the release listing is served,
+and `corrupt_uploads`, which stores a wrong digest for uploaded assets. `--jq` filters run
 through the real jq, so the scripts' filters are exercised as written.
 """
 
@@ -60,12 +62,31 @@ def api(args, state_path):
         return emit(next(r for r in state["releases"] if r["tag_name"] == state["latest"]), jq)
     if endpoint.startswith(f"{REPO}/releases?"):
         assert "--paginate" in args
-        return emit(state["releases"], jq)
+        code = emit(state["releases"], jq)
+        # Simulate a pointer change racing the listing, e.g. a rollback.
+        if "after_list" in state:
+            state.update(state.pop("after_list"))
+            save(state_path, state)
+        return code
+    if endpoint.startswith(f"{REPO}/releases/tags/"):
+        tag = endpoint.rsplit("/", 1)[1]
+        entry = next((r for r in state["releases"] if r["tag_name"] == tag), None)
+        if entry is None:
+            print("gh: Not Found (HTTP 404)", file=sys.stderr)
+            return 1
+        return emit(entry, jq)
     prefix = f"{REPO}/releases/assets/"
     assert endpoint.startswith(prefix) and args[1:3] == ["-X", "DELETE"], args
     asset = int(endpoint[len(prefix):])
     status = state.get("delete_errors", {}).get(str(asset))
+    if status == "404-gone":
+        # Another client deleted the asset between the check and this DELETE.
+        for release in state["releases"]:
+            release["assets"] = [a for a in release["assets"] if a["id"] != asset]
+        save(state_path, state)
+        status = 404
     if status:
+        # A 404 for an existing asset models a token that may not delete it.
         print(f"gh: Server Error (HTTP {status})", file=sys.stderr)
         return 1
     for release in state["releases"]:
@@ -84,9 +105,20 @@ def release(args, state_path):
     if args[1] == "create":
         files = [a for a in args[3:] if Path(a).is_file()]
         add_release(state, tag, files)
+    elif args[1] == "upload":
+        entry = next(r for r in state["releases"] if r["tag_name"] == tag)
+        draft = entry["draft"]
+        add_release(state, tag, [a for a in args[3:] if Path(a).is_file()])
+        uploaded = state["releases"].pop(0)
+        if state.get("corrupt_uploads"):
+            for asset in uploaded["assets"]:
+                asset["digest"] = "sha256:" + "0" * 64
+        entry["assets"] += uploaded["assets"]
+        entry["draft"] = draft
     elif args[1] == "edit":
         entry = next(r for r in state["releases"] if r["tag_name"] == tag)
-        entry["draft"] = "--draft=false" not in args
+        if any(a.startswith("--draft") for a in args):
+            entry["draft"] = "--draft=false" not in args
         if "--latest" in args:
             state["latest"] = tag
     save(state_path, state)
@@ -97,4 +129,6 @@ if __name__ == "__main__":
     if log:
         with open(log, "a") as stream:
             stream.write(" ".join(["gh", *sys.argv[1:]]) + "\n")
+    if sys.argv[1:2] == ["release"]:
+        sys.exit(release(sys.argv[1:], os.environ["FAKE_GITHUB_STATE"]))
     sys.exit(api(sys.argv[1:], os.environ["FAKE_GITHUB_STATE"]))

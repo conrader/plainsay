@@ -154,15 +154,84 @@ class Retention(unittest.TestCase):
             self.prune(receipt)
         self.assertTrue((self.root / OLD).exists())
 
-    def test_prune_keeps_backup_of_an_in_flight_newer_publish(self):
+    def test_prune_keeps_only_archives_with_a_pending_receipt(self):
+        receipt = self.backup()
+        self.assertTrue((self.backups / f"{receipt[0]}.pending").is_file())
+        self.activate(receipt)
+        # Publisher B shipped a lower version to GitHub and took its archive
+        # after A's activation. Its receipt, not its version, keeps it.
+        in_flight = self.backups / "v0.2.38.Other_12.tar"
+        in_flight.write_text("publisher B's archive, taken before B activates")
+        (self.backups / f"{in_flight.name}.pending").write_text("0.2.38\n")
+        for name in ("v0.2.40.Newer_1.tar", "v0.2.38.Older_1.tar"):
+            (self.backups / name).write_text("superseded, no receipt")
+        (self.backups / "v0.2.30.Gone_123.tar.pending").write_text("orphan")
+        self.prune(receipt)
+        self.assertEqual(sorted(p.name for p in self.backups.iterdir()),
+                         sorted((receipt[0], in_flight.name, f"{in_flight.name}.pending")))
+
+    def interrupt_activation(self, receipt):
+        real = Path.replace
+
+        def replace(path, target):
+            if Path(target) == self.root / retention.FEED:
+                raise OSError("connection lost")
+            return real(path, target)
+
+        with patch.object(Path, "replace", replace), self.assertRaisesRegex(OSError, "connection lost"):
+            self.activate(receipt)
+
+    def test_interrupted_activation_blocks_mixed_backup_and_keeps_rollback(self):
+        (self.backups / "v0.2.37.Older_1.tar").write_text("older coherent archive")
+        receipt = self.backup()
+        self.interrupt_activation(receipt)
+        self.assertEqual((self.root / retention.DMG).read_bytes(), b"new dmg")
+        self.assertEqual((self.root / retention.FEED).read_bytes(), appcast(OLD))
+        with self.assertRaisesRegex(ValueError, "different releases"):
+            retention.run(self.root, ["backup", "0.2.40"])
+        with self.assertRaisesRegex(ValueError, "does not contain the uploaded ZIP"):
+            self.prune(receipt)
+        self.assertEqual(sorted(p.name for p in self.backups.iterdir()), sorted((
+            receipt[0], f"{receipt[0]}.pending", "activation", "v0.2.37.Older_1.tar")))
+        # Completing the interrupted rename makes the pair coherent again.
+        (self.stage / retention.FEED).replace(self.root / retention.FEED)
+        self.stage.rmdir()
+        self.prune(receipt)
+        self.assertEqual([p.name for p in self.backups.iterdir()], [receipt[0]])
+
+    def test_rollback_pair_with_activation_marker_is_coherent(self):
+        receipt = self.backup()
+        real = Path.replace
+
+        def replace(path, target):
+            if Path(target) == self.root / retention.DMG:
+                raise OSError("connection lost")
+            return real(path, target)
+
+        with patch.object(Path, "replace", replace), self.assertRaises(OSError):
+            self.activate(receipt)  # Only the ZIP moved; DMG and appcast are still the old pair.
+        retention.run(self.root, ["backup", "0.2.39"])
+
+    def test_failed_legacy_removal_leaves_no_partial_backup(self):
+        legacy = self.backups / "v0.2.37.Old123"
+        (legacy / "nested").mkdir(parents=True)
+        (legacy / "nested/appcast.xml").write_text("legacy")
+        (legacy / "top.xml").write_text("legacy")
         receipt = self.backup()
         self.activate(receipt)
-        newer = self.backups / "v0.2.40.Other_12.tar"
-        newer.write_text("publisher B's archive, taken before B activates")
-        older = self.backups / "v0.2.38.Older_1.tar"
-        older.write_text("superseded")
-        self.prune(receipt)
-        self.assertEqual(sorted(p.name for p in self.backups.iterdir()), sorted((receipt[0], newer.name)))
+        trash = self.backups / ".release-trash.v0.2.37.Old123"
+        self.addCleanup(lambda: (trash / "nested").exists() and (trash / "nested").chmod(0o700))
+        (legacy / "nested").chmod(0o500)  # Like an immutable entry: unlink fails inside.
+        with patch.object(retention, "removable", return_value=True), \
+                patch("sys.stderr", new_callable=StringIO) as stderr:
+            self.prune(receipt)
+        self.assertIn("could not fully remove discarded backup", stderr.getvalue())
+        self.assertFalse(legacy.exists())
+        self.assertEqual(sorted(p.name for p in self.backups.iterdir()), sorted((receipt[0], trash.name)))
+        self.assertFalse((self.root / OLD).exists())
+        (trash / "nested").chmod(0o700)
+        self.prune(receipt)  # The next prune finishes the discarded tree.
+        self.assertEqual([p.name for p in self.backups.iterdir()], [receipt[0]])
 
     def test_prune_repairs_owned_legacy_backup_permissions(self):
         legacy = self.backups / "v0.2.37.Old123"

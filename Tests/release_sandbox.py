@@ -787,7 +787,11 @@ class ReleaseSandbox(unittest.TestCase):
         output = self.manual(status=1, match="older GitHub binaries remain")
         self.assertIn("Rerun: Scripts/prune-github-assets.sh 0.3.0 ", output)
         self.assertIn("release-retention prune", self.events())
-        self.assertFalse((self.state / "publish.pending").exists())
+        data = self.assert_artifacts_retained()  # The marker blocks both publishers until reconciled.
+        rerun = f"Scripts/prune-github-assets.sh 0.3.0 {data['dmg_sha']} {data['zip_sha']}"
+        self.assertEqual(data["remaining"], rerun)
+        self.assertIn(f"Rerun: {rerun}", output)
+        self.nightly("--dry-run", status=1, match="needs reconciliation")
         live = next(r for r in fake_github.load(self.github)["releases"] if r["tag_name"] == "v0.3.0")
         self.assertEqual(sorted(a["name"] for a in live["assets"]), ["Plainsay-0.3.0.dmg", "Plainsay-0.3.0.zip"])
         self.assert_unlocked()

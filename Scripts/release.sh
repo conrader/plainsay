@@ -571,20 +571,24 @@ echo "==> Retaining the verified public release and one rollback archive"
 DOWNLOAD_URL=$(gh repo view --json url --jq .url)/releases/latest
 ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "$RETENTION prune $VERSION $RECEIPT"
 
+# Both channels and the cask now serve $VERSION, so older GitHub binaries are
+# the only remaining copies. The helper re-verifies that before each delete.
+# The marker stays until it finishes, with the exact rerun command in it.
+PRUNE_GITHUB="Scripts/prune-github-assets.sh $VERSION $LOCAL_DMG_SHA $LOCAL_ZIP_SHA"
+printf 'remaining=%s\n' "$PRUNE_GITHUB" >> "$PENDING"
+echo "==> Deleting older GitHub release binaries"
+./Scripts/prune-github-assets.sh "$VERSION" "$LOCAL_DMG_SHA" "$LOCAL_ZIP_SHA" || {
+	echo "Published $VERSION, but older GitHub binaries remain." >&2
+	echo "Rerun: $PRUNE_GITHUB" >&2
+	echo "Then remove $PENDING." >&2
+	exit 1
+}
+
 if [ -z "$NIGHTLY_SOURCE" ]; then
 	rm -rf dist build/Plainsay.app "$PLAINSAY_BUILD_SCRATCH_PATH"
 	rm -f "$APP_STAMP"
 fi
 rm -f "$PENDING"
-
-# Both channels and the cask now serve $VERSION, so older GitHub binaries are
-# the only remaining copies. The helper re-verifies that before deleting.
-echo "==> Deleting older GitHub release binaries"
-./Scripts/prune-github-assets.sh "$VERSION" "$LOCAL_DMG_SHA" || {
-	echo "Published $VERSION, but older GitHub binaries remain." >&2
-	echo "Rerun: Scripts/prune-github-assets.sh $VERSION $LOCAL_DMG_SHA" >&2
-	exit 1
-}
 
 echo
 echo "Published $VERSION"
