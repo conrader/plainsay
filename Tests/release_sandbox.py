@@ -17,7 +17,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = Path(__file__).resolve()
 DEV_ID = "Test Developer ID"
-KEYCHAIN_PASSWORD = "fixture password"
+KEYCHAIN_PASSWORD = 'fixture "quoted" \\ $password'
 
 
 def git(*args, **kwargs):
@@ -32,9 +32,11 @@ def fake_bundle():
 
 def fake_tool(tool, args):
     case = Path(os.environ["RELEASE_TEST_CASE"])
-    unlocking = tool == "security" and args[0] == "unlock-keychain"
+    logged_args = args
+    if tool == "security" and args[:1] == ["unlock-keychain"]:
+        logged_args = args[:1] + args[-1:]
     with (case / "events").open("a") as events:
-        events.write(shlex.join([tool, args[0], args[-1]] if unlocking else [tool, *args]) + "\n")
+        events.write(shlex.join([tool, *logged_args]) + "\n")
     mode = os.environ.get("RELEASE_TEST_MODE")
     env = os.environ
     marker = Path(env["PLAINSAY_NIGHTLY_STATE_DIR"]) / "publish.pending"
@@ -113,9 +115,14 @@ def fake_tool(tool, args):
         elif args[0] not in ("test", "Scripts/verify-sparkle-signature.swift", "Scripts/make-dmg-background.swift"):
             raise AssertionError(args)
     elif tool == "security":
-        if unlocking:
-            assert args == ["unlock-keychain", "-p", KEYCHAIN_PASSWORD, release_keychain(env)]
+        if args == ["-i"]:
+            command = sys.stdin.read().splitlines()
+            assert len(command) == 1
+            assert shlex.split(command[0]) == [
+                "unlock-keychain", "-p", KEYCHAIN_PASSWORD, "--", release_keychain(env),
+            ]
             if mode == "notary-unlock-fails":
+                print("security: fixture unlock failed", file=sys.stderr)
                 return 1
             (case / "notary-unlocked").touch()
             return 0
@@ -130,8 +137,11 @@ def fake_tool(tool, args):
         else:
             dst.write_text("fake zip\n")
     elif tool == "stat":
-        assert args[0] == "-f%z"
-        print(Path(args[1]).stat().st_size)
+        if args == ["-f", "%OLp"]:
+            print(f"{os.fstat(sys.stdin.fileno()).st_mode & 0o7777:o}")
+        else:
+            assert args[0] == "-f%z"
+            print(Path(args[1]).stat().st_size)
     elif tool == "sign_update":
         print("fake-signature")
     elif tool == "hdiutil":
@@ -153,8 +163,12 @@ def fake_tool(tool, args):
     elif tool == "xcrun":
         if args[0] == "notarytool":
             assert args[1] == "submit"
-            assert args[-4:] == ["--keychain-profile", "plainsay-notary", "--keychain", release_keychain(env)]
-            (case / "notary-unlocked").unlink()
+            profile = ["--keychain-profile", "plainsay-notary"]
+            if "PLAINSAY_RELEASE_KEYCHAIN" in env or release_kcpass(env).exists():
+                assert args[-4:] == [*profile, "--keychain", release_keychain(env)]
+                (case / "notary-unlocked").unlink()
+            else:
+                assert args[-2:] == profile and "--keychain" not in args
             print('{"status": "Accepted"}')
         else:
             assert args[0] == "stapler"
@@ -206,6 +220,10 @@ def release_keychain(env):
     return env.get("PLAINSAY_RELEASE_KEYCHAIN") or f"{env['HOME']}/Library/Keychains/herdr-release.keychain-db"
 
 
+def release_kcpass(env):
+    return Path(env.get("PLAINSAY_RELEASE_KCPASS") or f"{env['HOME']}/.herdr-release/kcpass")
+
+
 class ReleaseSandbox(unittest.TestCase):
     def setUp(self):
         workspace = tempfile.TemporaryDirectory(prefix="plainsay-release-test-")
@@ -216,8 +234,10 @@ class ReleaseSandbox(unittest.TestCase):
         self.remote = self.case / "origin.git"
         self.state = self.case / "release state"
         self.state.mkdir()
-        (self.case / ".herdr-release").mkdir()
-        (self.case / ".herdr-release/kcpass").write_text(f"{KEYCHAIN_PASSWORD}\n")
+        self.kcpass = release_kcpass({"HOME": self.case})
+        self.kcpass.parent.mkdir()
+        self.kcpass.touch(mode=0o600)
+        self.kcpass.write_text(f"{KEYCHAIN_PASSWORD}\n")
         (self.case / "feed-build").write_text("238")
         (self.case / "events").touch()
         bin_dir = self.case / "bin"
@@ -338,6 +358,10 @@ class ReleaseSandbox(unittest.TestCase):
     def manual(self, *args, **kwargs):
         return self.run_release("./Scripts/release.sh", "0.3.0", "Test notes", *args, **kwargs)
 
+    def notary(self, **kwargs):
+        return self.run_release("/bin/bash", "-x", "-c",
+                                "source Scripts/release-notary.sh; release_notarytool submit fake.zip", **kwargs)
+
     def install_sign_update(self):
         path = self.checkout / ".build/artifacts/sparkle/Sparkle/bin/sign_update"
         path.parent.mkdir(parents=True)
@@ -456,15 +480,49 @@ class ReleaseSandbox(unittest.TestCase):
 
     def test_nightly_from_unchanged_plist_cleans_worktree_on_success(self):
         self.make_tap()
+        kcpass = self.kcpass.rename(self.case / "custom kcpass")
         self.nightly(match="Nightly publish complete for v0.2.39",
-                     PLAINSAY_RELEASE_KEYCHAIN=str(self.case / "custom release.keychain-db"))
+                     PLAINSAY_RELEASE_KEYCHAIN=str(self.case / 'custom "release" \\ keychain-db'),
+                     PLAINSAY_RELEASE_KCPASS=str(kcpass))
         self.assertFalse((self.state / "publish.pending").exists())
         self.assertIn("refs/tags/v0.2.39", self.events())
         self.assert_clean_nightly()
 
+    def test_manual_notarization_uses_default_lookup_without_release_credentials(self):
+        self.kcpass.unlink()
+        self.bump_main()
+        self.install_sign_update()
+        self.manual("--prepare-only")
+        self.assertEqual(self.events().count("xcrun notarytool submit"), 2)
+        self.assertNotIn("security -i", self.events())
+
+    def test_nightly_requires_password_file(self):
+        self.kcpass.unlink()
+        self.nightly("--prepare-only", status=1, match="Could not unlock release keychain")
+        self.assertNotIn("xcrun notarytool", self.events())
+        self.assert_clean_nightly()
+
+    def test_explicit_keychain_requires_password_file(self):
+        self.kcpass.unlink()
+        self.notary(status=1, match="Could not unlock release keychain", PLAINSAY_RELEASE_KEYCHAIN="")
+        self.assertNotIn("xcrun notarytool", self.events())
+
+    def test_notary_rejects_group_or_world_readable_password_file(self):
+        for mode in (0o640, 0o604):
+            with self.subTest(mode=oct(mode)):
+                self.kcpass.chmod(mode)
+                self.notary(status=1, match="password file is group/world readable")
+        self.assertNotRegex(self.events(), r"security -i|xcrun notarytool")
+
+    def test_notary_password_stays_out_of_shell_trace(self):
+        output = self.notary(match='{"status": "Accepted"}')
+        self.assertNotIn("fixture", output)
+        self.assertIn("security -i\n", self.events())
+
     def test_notary_unlock_failure_stops_before_submission(self):
-        self.nightly("--prepare-only", status=1, mode="notary-unlock-fails",
-                     match="Could not unlock release keychain")
+        output = self.nightly("--prepare-only", status=1, mode="notary-unlock-fails",
+                              match="Could not unlock release keychain")
+        self.assertIn("security: fixture unlock failed", output)
         self.assertNotIn("xcrun notarytool", self.events())
         self.assert_clean_nightly()
 

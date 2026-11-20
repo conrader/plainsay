@@ -141,6 +141,7 @@ log "Running the Swift build and tests for v$VERSION."
 swift build </dev/null
 swift test </dev/null
 export CONFIG=release INSTALL=0 NOTARIZE=1 REBUILD=1
+export PLAINSAY_RELEASE_KEYCHAIN="${PLAINSAY_RELEASE_KEYCHAIN:-$HOME/Library/Keychains/herdr-release.keychain-db}"
 export DEPLOY_SITE_BRANCH=main
 unset DEPLOY_SITE_SKIP_GIT_CHECK
 export PLAINSAY_NIGHTLY_SOURCE="$SOURCE" PLAINSAY_NIGHTLY_LOCK_PID="$$"
