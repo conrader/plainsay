@@ -263,7 +263,7 @@ ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app "$ZIP"
 
 LENGTH=$(stat -f%z "$ZIP")
 echo "==> Signing $ZIP ($LENGTH bytes)"
-SIGNATURE=$("$SIGN_UPDATE" -p "$ZIP")
+SIGNATURE=$("$SIGN_UPDATE" -p --account "${PLAINSAY_SPARKLE_ACCOUNT:-ed25519}" "$ZIP")
 PUBLIC_KEY=$(PlistBuddy -c 'Print :SUPublicEDKey' build/Plainsay.app/Contents/Info.plist)
 swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 
