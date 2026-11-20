@@ -18,8 +18,8 @@ Run the setup commands on the named host during the rollout.
   for the publish renames. Check the live feed has a numeric Sparkle build.
 - On OVH, confirm at least 8 GiB free on `/` and on the update root
   (`df -h / /var/www/plainsay-updates`). Provisioning stops below that.
-- On OVH, install `rsync`, `libxml2-utils` (`xmllint`), and `acl` if needed.
-  Check `command -v rsync sha256sum mktemp xmllint getfacl setfacl`. Check
+- On OVH, install `rsync`, `python3`, `libxml2-utils` (`xmllint`), and `acl` if needed.
+  Check `command -v rsync sha256sum mktemp python3 xmllint getfacl setfacl`. Check
   OpenSSH accepts public keys for the dedicated account and uses Ubuntu's PAM
   handling for locked-password accounts.
   Check any host-level `AllowUsers`, `Match` and sudo rules for `plainsay-deploy`
@@ -69,11 +69,24 @@ locked password, a dedicated group, and no sudo membership.
 
 OVH saves the original ACLs, owners, groups and modes of changed paths under
 `/var/backups/plainsay-deploy/` before granting access. The account can stage
-via `mktemp -d`, upload the three artifacts over SSH stdin, run `sha256sum`,
-copy the old appcast and stable DMG into `.release-backups/`, and publish
-using `chmod`, `mv` and `rmdir` under `/var/www/plainsay-updates`.
-Pre-publication cleanup removes only the
-unique staging directory. The release rollback also uses `xmllint` on OVH.
+via `mktemp -d`, upload the three artifacts over SSH stdin, and run
+`sha256sum`. The root-owned `release-retention` helper verifies and archives
+the previous release, activates the staged release, and prunes public
+artifacts and previous backups after independent HTTPS verification. The
+forced command validates the helper's version, stage, archive and hash
+arguments. Pre-publication cleanup removes the unique staging directory.
+The release rollback also uses `xmllint` on OVH.
+
+For an existing installation, pause release publishers while installing the
+matching helper and forced command on OVH. From this checkout, run:
+
+```bash
+sudo install -o root -g root -m 0755 kit/ovh-release-retention.py /var/lib/plainsay-deploy/bin/release-retention
+sudo install -o root -g root -m 0755 kit/ovh-deploy-command.sh /var/lib/plainsay-deploy/bin/deploy-command
+```
+
+Then check access from the signing Mac with
+`ssh codex-server '/var/lib/plainsay-deploy/bin/release-retention check'`.'
 Site publishing uses `rsync -az --delete` with the exclusions in
 `Scripts/deploy-site.sh` under `/var/www/plainsay-app`. The nightly receiver
 accepts the site's regular files and directories.

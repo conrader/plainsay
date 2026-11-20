@@ -27,6 +27,12 @@ def git(*args, **kwargs):
 
 
 def fake_bundle(checkout=Path(".")):
+    if "PLAINSAY_BUILD_SCRATCH_PATH" in os.environ:
+        assert os.environ.get("INSTALL") == "0"
+        path = Path(os.environ["PLAINSAY_BUILD_SCRATCH_PATH"]) / "artifacts/sparkle/Sparkle/bin/sign_update"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.is_symlink():
+            path.symlink_to(Path(os.environ["RELEASE_TEST_CASE"]) / "bin/sign_update")
     app = checkout / "build/Plainsay.app/Contents"
     app.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(checkout / "Scripts/Info.plist", app / "Info.plist")
@@ -61,7 +67,7 @@ def fake_tool(tool, args):
     def assert_marker():
         state = dict(line.split("=", 1) for line in marker.read_text().splitlines())
         assert state["tag"] and state["backup"] and state["stage"]
-        for item in ("zip_sha", "dmg_sha", "feed_sha"):
+        for item in ("backup_sha", "zip_sha", "dmg_sha", "feed_sha"):
             assert re.fullmatch(r"[a-f0-9]{64}", state[item])
         assert (Path(state["local_tap"]) / ".git").is_dir()
 
@@ -224,8 +230,23 @@ def fake_tool(tool, args):
                  ROOT / "kit/ovh-deploy-command.sh", command),
                 check=True,
             )
-        if ".release-backups" in command:
-            print("/var/www/plainsay-updates/.release-backups/vtest.ABC123")
+        if command.startswith("/var/lib/plainsay-deploy/bin/release-retention "):
+            action, *parameters = command.split()[1:]
+            if action == "check":
+                return 0
+            if action == "backup":
+                print(f"v{parameters[0]}.ABC_1234.tar {'0' * 64}")
+            elif action == "activate":
+                assert_marker()
+                (server / next(server.glob("*.dmg")).name).rename(server / "Plainsay-latest.dmg")
+            elif action == "prune":
+                assert_marker()
+                history = (case / "events").read_text()
+                assert "api.plainsay.app/releases/Plainsay-latest.dmg" in history
+                assert re.search(r"(?m)^gh api .*Casks/plainsay.rb", history)
+                return 1 if mode == "prune-fails" else 0
+            else:
+                raise AssertionError(action)
         elif ".release-stage" in command and command.startswith("mktemp"):
             server.mkdir()
             print("/var/www/plainsay-updates/.release-stage.ABC123")
@@ -237,9 +258,6 @@ def fake_tool(tool, args):
             print(hashlib.sha256((server / package).read_bytes()).hexdigest())
         elif command.startswith("rm -rf"):
             shutil.rmtree(server)
-        elif command.startswith("set -eu\nchmod"):
-            assert_marker()
-            (server / next(server.glob("*.dmg")).name).rename(server / "Plainsay-latest.dmg")
         else:
             assert command.startswith("sudo -n "), command
     elif tool == "scp":
@@ -249,6 +267,8 @@ def fake_tool(tool, args):
         artifact = Path(args[-1]).name
         if artifact == "appcast.xml" and not (server / "Plainsay-latest.dmg").exists():
             print(f"<sparkle:version>{(case / 'feed-build').read_text()}</sparkle:version>")
+        elif artifact == "Plainsay-latest.dmg" and mode == "bad-public-dmg":
+            print("unverified dmg")
         else:
             sys.stdout.buffer.write((server / artifact).read_bytes())
     else:
@@ -559,13 +579,13 @@ class ReleaseSandbox(unittest.TestCase):
             self.git("commit", "--allow-empty", "-qm", "new source after tag")
         self.local_checkout()
 
-    def make_tap(self):
+    def make_tap(self, target='app "Plainsay.app"'):
         tap = self.case / "tap"
         self.git("init", "-q", tap)
         self.git("symbolic-ref", "HEAD", "refs/heads/main", cwd=tap)
         (tap / "Casks").mkdir()
         (tap / "Casks/plainsay.rb").write_text(
-            'cask "plainsay" do\n  version "0.2.38"\n  sha256 "old"\n  url "old"\nend\n'
+            f'cask "plainsay" do\n  version "0.2.38"\n  sha256 "old"\n  url "old"\n  {target}\nend\n'
         )
         self.git("add", ".", cwd=tap)
         self.git("commit", "-qm", "old cask", cwd=tap)
@@ -600,7 +620,9 @@ class ReleaseSandbox(unittest.TestCase):
 
     def stage_notarized_app(self):
         self.bump_main()
-        self.install_sign_update()
+        sign_update = self.checkout / "build/release-swiftpm/artifacts/sparkle/Sparkle/bin/sign_update"
+        sign_update.parent.mkdir(parents=True)
+        sign_update.symlink_to(self.case / "bin/sign_update")
         fake_bundle(self.checkout)
         commit = self.git("rev-parse", "HEAD", cwd=self.checkout)
         (self.checkout / "build/Plainsay.app.release-stamp").write_text(f"0.3.0 300 {commit}\n")
@@ -718,11 +740,34 @@ class ReleaseSandbox(unittest.TestCase):
         self.nightly("--dry-run", match="v0.3.0 (build 300)")
         self.make_tap()
         self.install_sign_update()
-        self.manual(match="Published 0.3.0")
+        self.manual(match="Published 0.3.0", INSTALL="1")
         self.assertFalse((self.state / "publish.pending").exists())
-        self.assertFalse(list((self.checkout / "dist").glob("tap.*")))
+        for path in ("dist", "build/Plainsay.app", "build/Plainsay.app.release-stamp", "build/release-swiftpm"):
+            self.assertFalse((self.checkout / path).exists(), path)
+        self.assertTrue((self.checkout / ".build").is_dir())
         self.assertIn("osascript Scripts/dmg-layout.applescript", self.events())
         self.assert_unlocked()
+
+    def test_renamed_cask_target_stops_before_publication(self):
+        self.bump_main()
+        self.make_tap(target='app "Plainsay.app", target: "Plainsay Next.app"')
+        self.manual(status=1, match="must install a single Plainsay.app")
+        self.assertNotRegex(self.events(), r"release-retention backup|git push|gh release create")
+        self.assertFalse((self.state / "publish.pending").exists())
+
+    def test_bad_public_artifact_blocks_prune_and_retains_staging(self):
+        self.bump_main()
+        self.make_tap()
+        self.manual(status=1, mode="bad-public-dmg", match="published DMG checksum mismatch")
+        self.assertNotIn("release-retention prune", self.events())
+        self.assert_artifacts_retained()
+
+    def test_prune_failure_keeps_marker_and_local_artifacts(self):
+        self.bump_main()
+        self.make_tap()
+        self.manual(status=1, mode="prune-fails", match="Kept release artifacts")
+        self.assertIn("release-retention prune", self.events())
+        self.assert_artifacts_retained()
 
     def test_nightly_from_unchanged_plist_cleans_worktree_on_success(self):
         self.make_tap()
@@ -889,14 +934,14 @@ class ReleaseSandbox(unittest.TestCase):
         self.make_tap()
         self.nightly(status=1, mode="late-main", match="origin/main moved")
         self.assertIn("rm -rf", self.events())
-        self.assertNotRegex(self.events(), r"\.release-backups|git push|gh release create")
+        self.assertNotRegex(self.events(), r"release-retention backup|git push|gh release create")
         self.assert_clean_nightly()
 
     def test_live_feed_advanced_after_staging(self):
         self.make_tap()
         self.nightly(status=1, mode="late-feed", match="newer than the published Sparkle build 300")
         self.assertIn("rm -rf", self.events())
-        self.assertNotRegex(self.events(), r"\.release-backups|git push|gh release create")
+        self.assertNotRegex(self.events(), r"release-retention backup|git push|gh release create")
         self.assert_clean_nightly()
 
 

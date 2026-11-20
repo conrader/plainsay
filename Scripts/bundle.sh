@@ -18,9 +18,10 @@ APP="build/Plainsay.app"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Konrad Sierzputowski (FQ5759XB2L)}"
 
 echo "==> Building ($CONFIG)"
-swift build -c "$CONFIG" --product PlainsayApp
+SWIFT_SCRATCH="${PLAINSAY_BUILD_SCRATCH_PATH:-$PWD/.build}"
+swift build --scratch-path "$SWIFT_SCRATCH" -c "$CONFIG" --product PlainsayApp
 
-BIN_DIR="$(swift build -c "$CONFIG" --product PlainsayApp --show-bin-path)"
+BIN_DIR="$(swift build --scratch-path "$SWIFT_SCRATCH" -c "$CONFIG" --product PlainsayApp --show-bin-path)"
 BINARY="$BIN_DIR/PlainsayApp"
 
 echo "==> Assembling $APP"
@@ -40,7 +41,10 @@ cp Scripts/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # different table names (Localizable vs CoreLocalizable), so this is a
 # real merge, not an overwrite.
 echo "==> Compiling String Catalogs"
-STRINGS_TMP=$(mktemp -d)
+STRINGS_TMP=$(mktemp -d "$APP/Contents/.strings.XXXXXX")
+trap 'rm -rf "$STRINGS_TMP"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 xcrun xcstringstool compile Sources/PlainsayApp/Resources/Localizable.xcstrings --output-directory "$STRINGS_TMP/app"
 xcrun xcstringstool compile Sources/PlainsayCore/Resources/CoreLocalizable.xcstrings --output-directory "$STRINGS_TMP/core"
 for lproj in "$STRINGS_TMP"/app/*.lproj "$STRINGS_TMP"/core/*.lproj; do
@@ -50,16 +54,17 @@ for lproj in "$STRINGS_TMP"/app/*.lproj "$STRINGS_TMP"/core/*.lproj; do
 	cp -R "$lproj/." "$APP/Contents/Resources/$name/"
 done
 rm -rf "$STRINGS_TMP"
+trap - EXIT INT TERM
 cp LICENSE "$APP/Contents/Resources/Plainsay-MIT.txt"
 cp THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/"
 mkdir -p "$APP/Contents/Resources/ThirdPartyLicenses"
-cp .build/checkouts/FluidAudio/LICENSE \
+cp "$SWIFT_SCRATCH"/checkouts/FluidAudio/LICENSE \
 	"$APP/Contents/Resources/ThirdPartyLicenses/FluidAudio-Apache-2.0.txt"
-cp .build/checkouts/WhisperKit/LICENSE \
+cp "$SWIFT_SCRATCH"/checkouts/WhisperKit/LICENSE \
 	"$APP/Contents/Resources/ThirdPartyLicenses/WhisperKit-MIT.txt"
-cp .build/checkouts/WhisperKit/NOTICES \
+cp "$SWIFT_SCRATCH"/checkouts/WhisperKit/NOTICES \
 	"$APP/Contents/Resources/ThirdPartyLicenses/WhisperKit-NOTICES.txt"
-cp .build/checkouts/Sparkle/LICENSE \
+cp "$SWIFT_SCRATCH"/checkouts/Sparkle/LICENSE \
 	"$APP/Contents/Resources/ThirdPartyLicenses/Sparkle-LICENSE.txt"
 
 # Sparkle ships as a framework and SwiftPM does not embed it, so the binary

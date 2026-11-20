@@ -37,6 +37,7 @@ if [ -n "$NIGHTLY_SOURCE" ]; then
 fi
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-updates
+RETENTION=/var/lib/plainsay-deploy/bin/release-retention
 FEED_URL="https://api.plainsay.app"
 # Keep the app bundle and DMG on the same Developer ID identity. bundle.sh has
 # the same fallback, but variables assigned in a child script do not propagate
@@ -91,8 +92,12 @@ else
 fi
 check_pending_release
 
-SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
-[ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
+# The nightly already owns its worktree and SwiftPM output. A manual release
+# uses a separate scratch path so cleanup leaves developer builds alone.
+export PLAINSAY_BUILD_SCRATCH_PATH="$PWD/build/release-swiftpm"
+if [ -n "$NIGHTLY_SOURCE" ]; then export PLAINSAY_BUILD_SCRATCH_PATH="$PWD/.build"; fi
+export INSTALL=0
+SIGN_UPDATE="$PLAINSAY_BUILD_SCRATCH_PATH/artifacts/sparkle/Sparkle/bin/sign_update"
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
 [ "$SIGN_IDENTITY" != "-" ] || {
 	echo "release DMGs require a Developer ID identity, not ad-hoc signing" >&2
@@ -210,7 +215,7 @@ notarize() {
 APP_STAMP="build/Plainsay.app.release-stamp"
 RELEASE_KEY="$VERSION $BUILD $(git rev-parse HEAD)"
 reuse_notarized_app() {
-	[ "${REBUILD:-0}" != "1" ] || return 1
+	[ "${REBUILD:-0}" != "1" ] && [ -x "$SIGN_UPDATE" ] || return 1
 	[ -d build/Plainsay.app ] && [ "$(cat "$APP_STAMP" 2>/dev/null)" = "$RELEASE_KEY" ] || return 1
 	local plist=build/Plainsay.app/Contents/Info.plist
 	[ "$(PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null)" = "$VERSION" ] || return 1
@@ -255,6 +260,7 @@ fi
 
 echo "==> Packaging"
 mkdir -p dist
+[ -x "$SIGN_UPDATE" ] || { echo "sign_update missing from the release SwiftPM scratch path" >&2; exit 1; }
 ZIP="dist/Plainsay-$VERSION.zip"
 # ditto, not zip: it preserves the symlinks and extended attributes inside the
 # framework, and a plain zip corrupts the signature on the way through.
@@ -294,7 +300,7 @@ swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 echo "==> Building DMG"
 if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
 DMG="dist/Plainsay-$VERSION.dmg"
-DMG_STAGING=$(mktemp -d)
+DMG_STAGING=$(mktemp -d "$PWD/dist/.dmg-staging.XXXXXX")
 if [ -n "$NIGHTLY_SOURCE" ]; then
 	# The login session owns the signing keys. Keep Finder automation out of
 	# the unattended path so a TCC prompt cannot stall the release.
@@ -419,9 +425,7 @@ BODY=$(printf '%s' "${NOTES:-Bug fixes and improvements.}" | sed -E 's#</p>#\n\n
 # in a unique directory on the same filesystem as the update feed, so the
 # final renames cannot expose a partially transferred file.
 echo "==> Staging update artifacts on $HOST"
-if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
-	ssh "$HOST" "sudo -n mkdir -p '$REMOTE_DIR/releases' && sudo -n chown -R \$(whoami) '$REMOTE_DIR'"
-fi
+ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "$RETENTION check"
 STAGE_PATH=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "mktemp -d '$REMOTE_DIR/.release-stage.XXXXXX'")
 case "$STAGE_PATH" in
 	"$REMOTE_DIR"/.release-stage.[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]) ;;
@@ -459,6 +463,13 @@ git clone --quiet --depth 1 "https://github.com/conrader/homebrew-plainsay.git" 
 CASK="$TAP_DIR/Casks/plainsay.rb"
 [ -f "$CASK" ] || { echo "tap has no Casks/plainsay.rb" >&2; exit 1; }
 CASK_URL='  url "https://github.com/conrader/plainsay/releases/download/v#{version}/Plainsay-#{version}.dmg"'
+verify_cask_target() {
+	[ "$(sed -n -E '/^[[:space:]]+app[[:space:]]/p')" = '  app "Plainsay.app"' ] || {
+		echo "Homebrew must install a single Plainsay.app at its standard app target" >&2
+		return 1
+	}
+}
+verify_cask_target < "$CASK"
 sed -e "s|^  version .*|  version \"$VERSION\"|" \
 	-e "s|^  sha256 .*|  sha256 \"$LOCAL_DMG_SHA\"|" \
 	-e "s|^  url .*|$CASK_URL|" "$CASK" > "$CASK.next"
@@ -475,23 +486,26 @@ RELEASE_COMMIT=$(git rev-parse HEAD)
 RELEASE_TARGET=(--target "$RELEASE_COMMIT")
 check_release_candidate
 
-# Back up the single-item appcast and installer before replacing either.
-# A fresh private directory permits a retry after pre-publication failures.
-BACKUP=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "set -eu
-umask 077
-mkdir -p '$REMOTE_DIR/.release-backups'
-backup=\$(mktemp -d '$REMOTE_DIR/.release-backups/v$VERSION.XXXXXX')
-cp '$REMOTE_DIR/appcast.xml' \"\$backup/appcast.xml\"
-cp '$REMOTE_DIR/releases/Plainsay-latest.dmg' \"\$backup/Plainsay-latest.dmg\"
-printf '%s\\n' \"\$backup\"")
-echo "    Previous appcast and installer: $BACKUP"
+# Preserve the previous live installer and all its feed assets as one
+# verified rollback archive before changing any public channel.
+BACKUP_RECEIPT=$(ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "$RETENTION backup $VERSION")
+IFS=' ' read -r BACKUP_NAME BACKUP_SHA <<< "$BACKUP_RECEIPT"
+[[ "$BACKUP_RECEIPT" = "$BACKUP_NAME $BACKUP_SHA" &&
+   "$BACKUP_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[a-zA-Z0-9_]{8}\.tar$ &&
+   "$BACKUP_NAME" = "v$VERSION."* && "$BACKUP_SHA" =~ ^[a-f0-9]{64}$ ]] || {
+	echo "Invalid rollback archive receipt" >&2
+	exit 1
+}
+BACKUP="$REMOTE_DIR/.release-backups/$BACKUP_NAME"
+RECEIPT="$BACKUP_NAME $BACKUP_SHA $LOCAL_ZIP_SHA $LOCAL_DMG_SHA $LOCAL_FEED_SHA"
+echo "    Verified rollback archive: $BACKUP (SHA-256 $BACKUP_SHA)"
 
 # A disconnect from here on can leave the channels at different versions.
 # Install the shared marker atomically before either path mutates GitHub.
 (
 	umask 077
-	printf 'tag=v%s\nbuild=%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\nlocal_checkout=%s\nlocal_tap=%s\n' \
-		"$VERSION" "$BUILD" "$RELEASE_COMMIT" "${NIGHTLY_SOURCE:-$RELEASE_COMMIT}" "$REMOTE_STAGE" "$BACKUP" \
+	printf 'tag=v%s\nbuild=%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nbackup_sha=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\nlocal_checkout=%s\nlocal_tap=%s\n' \
+		"$VERSION" "$BUILD" "$RELEASE_COMMIT" "${NIGHTLY_SOURCE:-$RELEASE_COMMIT}" "$REMOTE_STAGE" "$BACKUP" "$BACKUP_SHA" \
 		"$LOCAL_ZIP_SHA" "$LOCAL_DMG_SHA" "$LOCAL_FEED_SHA" "$PWD" "$TAP_DIR" > "$LOCK/publish.pending"
 	mv "$LOCK/publish.pending" "$PENDING"
 )
@@ -508,16 +522,8 @@ echo "==> Publishing GitHub Release v$VERSION"
 gh release edit "v$VERSION" --draft=false --latest
 
 echo "==> Activating update feed"
-ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "set -eu
-chmod a+r '$REMOTE_STAGE/$ZIP_BASENAME' '$REMOTE_STAGE/$DMG_BASENAME' '$REMOTE_STAGE/appcast.xml'
-mv '$REMOTE_STAGE/$ZIP_BASENAME' '$REMOTE_DIR/releases/$ZIP_BASENAME'
-mv '$REMOTE_STAGE/$DMG_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'
-mv '$REMOTE_STAGE/appcast.xml' '$REMOTE_DIR/appcast.xml'
-rmdir '$REMOTE_STAGE'"
+ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "$RETENTION activate $VERSION ${REMOTE_STAGE##*/} $RECEIPT"
 REMOTE_STAGE=""
-if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
-	ssh "$HOST" "sudo -n chown www-data:www-data '$REMOTE_DIR' '$REMOTE_DIR/releases' '$REMOTE_DIR/appcast.xml' '$REMOTE_DIR/releases/$ZIP_BASENAME' '$REMOTE_DIR/releases/Plainsay-latest.dmg'"
-fi
 
 ./Scripts/deploy-site.sh
 
@@ -547,6 +553,7 @@ git -C "$TAP_DIR" push --quiet origin HEAD:main
 # correctly. The contents API reflects the commit straight away.
 PUBLISHED_CASK=$(gh api -H "Accept: application/vnd.github.raw" \
 	"repos/conrader/homebrew-plainsay/contents/Casks/plainsay.rb")
+verify_cask_target <<<"$PUBLISHED_CASK"
 grep -Fq "version \"$VERSION\"" <<<"$PUBLISHED_CASK" || {
 	echo "published cask does not install $VERSION" >&2
 	exit 1
@@ -560,11 +567,19 @@ grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" <<<"$PUBLISHED_CASK" || {
 	exit 1
 }
 
+echo "==> Retaining the verified public release and one rollback archive"
+DOWNLOAD_URL=$(gh repo view --json url --jq .url)/releases/latest
+ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" "$RETENTION prune $VERSION $RECEIPT"
+
+if [ -z "$NIGHTLY_SOURCE" ]; then
+	rm -rf dist build/Plainsay.app "$PLAINSAY_BUILD_SCRATCH_PATH"
+	rm -f "$APP_STAMP"
+fi
+rm -f "$PENDING"
+
 echo
 echo "Published $VERSION"
 echo "  feed:     $FEED_URL/appcast.xml"
 echo "  package:  $FEED_URL/releases/Plainsay-$VERSION.zip"
-echo "  download: $(gh repo view --json url --jq .url)/releases/latest"
+echo "  download: $DOWNLOAD_URL"
 echo "  brew:     brew install --cask conrader/plainsay/plainsay"
-
-rm -f "$PENDING"

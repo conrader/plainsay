@@ -35,17 +35,17 @@ key_options="restrict,command=\"$DEPLOY_HOME/bin/deploy-command\""
 
 if [[ $dry_run == 1 ]]; then
     printf '%s\n' \
-        'Check OVH tools: rsync sha256sum mktemp xmllint and POSIX ACL utilities.' \
+        'Check OVH tools: rsync sha256sum mktemp python3 xmllint and POSIX ACL utilities.' \
         "Stop unless / and $UPDATES each have at least 8 GiB free." \
         "Back up existing ACLs, owners and groups to $BACKUP." \
         "Create locked system user $DEPLOY_USER and shared group $DEPLOY_GROUP for it and $LEGACY_USER." \
         "Grant shared directory access to $UPDATES, its releases and backup directories, and the $SITE tree." \
-        "Install the site rsync receiver and forced command under $DEPLOY_HOME/bin and verify deploy/nginx access." \
+        "Install the site rsync receiver, retention helper and forced command under $DEPLOY_HOME/bin and verify deploy/nginx access." \
         "Install one authorized key with ${source_pin}${key_options} in $DEPLOY_HOME/.ssh/authorized_keys."
     exit 0
 fi
 
-require_tools flock rsync sha256sum mktemp xmllint getfacl setfacl runuser useradd usermod groupadd df
+require_tools flock rsync sha256sum mktemp python3 xmllint getfacl setfacl runuser useradd usermod groupadd df
 lock_ovh
 check_disk_free
 check_tree "$UPDATES"
@@ -157,6 +157,7 @@ runuser -u "$NGINX_USER" -- test -r "$SITE/index.html" || die 'nginx cannot read
 install -d -o root -g root -m 0755 -- "$DEPLOY_HOME" "$DEPLOY_HOME/bin"
 install -d -o root -g "$DEPLOY_GROUP" -m 0750 -- "$DEPLOY_HOME/.ssh"
 install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-site-rsync.sh" "$DEPLOY_HOME/bin/rsync"
+install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-release-retention.py" "$DEPLOY_HOME/bin/release-retention"
 install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-deploy-command.sh" "$DEPLOY_HOME/bin/deploy-command"
 # shellcheck disable=SC2016 # Expand PATH when the remote Bash shell starts.
 printf 'export PATH="%s/bin:$PATH"\n' "$DEPLOY_HOME" > "$DEPLOY_HOME/.bashrc"

@@ -28,6 +28,7 @@ fail() { log "ERROR: $*" >&2; exit 1; }
 
 SCRATCH=""
 WORKTREE=""
+RELEASE_COMPLETE=0
 cleanup() {
 	local result=$?
 	trap - EXIT
@@ -36,12 +37,22 @@ cleanup() {
 		if [ -e "$PENDING" ]; then
 			log "Kept worktree and release artifacts at $WORKTREE. See $PENDING."
 		elif [ ! -d "$WORKTREE" ] || git -C "$ROOT" worktree remove --force "$WORKTREE"; then
-			rmdir "$SCRATCH" || log "Inspect leftover scratch directory $SCRATCH."
+			if ! rmdir "$SCRATCH"; then
+				log "Inspect leftover scratch directory $SCRATCH."
+				[ "$result" -ne 0 ] || result=1
+			fi
 		else
 			log "Inspect leftover worktree $WORKTREE."
+			[ "$result" -ne 0 ] || result=1
 		fi
 	fi
-	release_lock || log "Inspect leftover lock $LOCK."
+	if ! release_lock; then
+		log "Inspect leftover lock $LOCK."
+		[ "$result" -ne 0 ] || result=1
+	fi
+	if [ "$result" = 0 ] && [ "$RELEASE_COMPLETE" = 1 ]; then
+		log "Nightly $MODE complete for v$VERSION."
+	fi
 	exit "$result"
 }
 trap cleanup EXIT
@@ -149,4 +160,4 @@ NOTES="<p>Nightly update from main.</p><p><a href=\"https://github.com/$GH_REPO/
 release_args=("$VERSION" "$NOTES")
 if [ "$MODE" = prepare ]; then release_args+=(--prepare-only); fi
 ./Scripts/release.sh "${release_args[@]}" </dev/null
-log "Nightly $MODE complete for v$VERSION."
+RELEASE_COMPLETE=1

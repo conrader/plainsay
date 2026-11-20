@@ -9,6 +9,7 @@ umask 077
 UPDATES=/var/www/plainsay-updates
 SITE=/var/www/plainsay-app
 RECEIVER=/var/lib/plainsay-deploy/bin/rsync
+RETENTION=/var/lib/plainsay-deploy/bin/release-retention
 MIN_FREE_KIB=$((8 * 1024 * 1024))
 
 STAGE_RE="$UPDATES/\\.release-stage\\.[A-Za-z0-9]{6}"
@@ -17,63 +18,21 @@ PACKAGE_RE="Plainsay-$VERSION_RE\\.(zip|dmg)|appcast\\.xml"
 CHECKSUM_RE="^sha256sum '($STAGE_RE)/($PACKAGE_RE)'\$"
 UPLOAD_RE="^cat > '($STAGE_RE)/($PACKAGE_RE)'\$"
 REMOVE_RE="^rm -rf '($STAGE_RE)'\$"
-ACTIVATE_RE="^set -eu"$'\n'"chmod a\\+r '($STAGE_RE)/(Plainsay-$VERSION_RE\\.zip)' '$STAGE_RE/(Plainsay-$VERSION_RE\\.dmg)' "
-
-backup_template() {
-    local template
-    template=$(cat <<'EOF'
-set -eu
-umask 077
-mkdir -p '@U@/.release-backups'
-backup=$(mktemp -d '@U@/.release-backups/v@V@.XXXXXX')
-cp '@U@/appcast.xml' "$backup/appcast.xml"
-cp '@U@/releases/Plainsay-latest.dmg' "$backup/Plainsay-latest.dmg"
-printf '%s\n' "$backup"
-EOF
-)
-    template=${template//@U@/$UPDATES}
-    printf '%s' "${template//@V@/$1}"
-}
-
-activate_template() {
-    local template
-    template=$(cat <<'EOF'
-set -eu
-chmod a+r '@S@/@Z@' '@S@/@D@' '@S@/appcast.xml'
-mv '@S@/@Z@' '@U@/releases/@Z@'
-mv '@S@/@D@' '@U@/releases/Plainsay-latest.dmg'
-mv '@S@/appcast.xml' '@U@/appcast.xml'
-rmdir '@S@'
-EOF
-)
-    template=${template//@S@/$1}
-    template=${template//@Z@/$2}
-    template=${template//@D@/$3}
-    printf '%s' "${template//@U@/$UPDATES}"
-}
+SHA_RE='[a-f0-9]{64}'
+BACKUP_RE="v$VERSION_RE\\.[A-Za-z0-9_]{8}\\.tar"
+RECEIPT_RE="$BACKUP_RE $SHA_RE $SHA_RE $SHA_RE $SHA_RE"
+RETENTION_RE="^$RETENTION (check|backup $VERSION_RE|activate $VERSION_RE \\.release-stage\\.[A-Za-z0-9]{6} $RECEIPT_RE|prune $VERSION_RE $RECEIPT_RE)\$"
 
 # Succeeds when $1 is a shell command this key may run verbatim.
 allowed_shell() {
-    local command=$1 version stage zip dmg
+    local command=$1
     case "$command" in
         "test -w $UPDATES && test -w $UPDATES/releases && test -w $SITE" |\
         "mktemp -d '$UPDATES/.release-stage.XXXXXX'")
             return 0 ;;
     esac
-    if [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE || $command =~ $UPLOAD_RE ]]; then
-        return 0
-    fi
-    if [[ $command =~ \.release-backups/v($VERSION_RE)\.XXXXXX ]]; then
-        version=${BASH_REMATCH[1]}
-        [[ $command == "$(backup_template "$version")" ]] && return 0
-    fi
-    if [[ $command =~ $ACTIVATE_RE ]]; then
-        stage=${BASH_REMATCH[1]}
-        zip=${BASH_REMATCH[2]}
-        dmg=${BASH_REMATCH[3]}
-        [[ $command == "$(activate_template "$stage" "$zip" "$dmg")" ]] && return 0
-    fi
-    return 1
+    [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE || $command =~ $UPLOAD_RE ||
+        $command =~ $RETENTION_RE ]]
 }
 
 # Succeeds when $@ is an rsync push into the website root.
@@ -135,9 +94,12 @@ main() {
     elif [[ $command =~ $UPLOAD_RE ]]; then
         upload "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
         return
+    elif [[ $command =~ $RETENTION_RE ]]; then
+        IFS=' ' read -r -a words <<< "$command"
+        if [[ ${words[1]} == backup ]]; then require_space; fi
+        exec "$RETENTION" "${words[@]:1}"
     elif allowed_shell "$command"; then
-        if [[ $command == "mktemp -d '$UPDATES/.release-stage.XXXXXX'" ||
-            $command == *'.release-backups/v'* ]]; then
+        if [[ $command == "mktemp -d '$UPDATES/.release-stage.XXXXXX'" ]]; then
             require_space
         fi
         exec /bin/bash -c "$command"

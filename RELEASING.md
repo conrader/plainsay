@@ -5,15 +5,22 @@ Sparkle checks `https://api.plainsay.app/appcast.xml` at launch and on its
 the integer `CFBundleVersion`. Installation timing depends on Sparkle settings.
 The app supports Apple silicon on macOS 14 and later.
 
+Sparkle replaces the running bundle at its installed path and cleans up its
+temporary app bundles. The Homebrew cask installs one `app "Plainsay.app"` in
+Homebrew's app directory and upgrades the same target. The release checks this
+stanza before publishing and when it reads back the tap. Install or upgrade
+into the same app directory. Installer downloads and the Homebrew download
+cache are separate from the installed app.
+
 ## What the manual release did at 2145b01
 
 | Requirement | Source and behavior |
 | --- | --- |
-| Build host | Apple silicon Mac with Xcode 16 or later, Swift 6+, and selected Xcode tools. The CI reference is `macos-15`. Run `swift build` to resolve SwiftPM dependencies and obtain Sparkle's `sign_update`. `bundle.sh` uses `xcstringstool`, `rsync`, `install_name_tool`, and `codesign`. The release also uses `security`, `PlistBuddy`, `ditto`, `hdiutil`, `osascript`/Finder, `spctl`, `xcrun`, Git, `gh`, `curl`, SSH/SCP, and checksum utilities. |
+| Build host | Apple silicon Mac with Xcode 16 or later, Swift 6+, and selected Xcode tools. The CI reference is `macos-15`. The release resolves SwiftPM dependencies and obtains Sparkle's `sign_update` in its own scratch path. `bundle.sh` uses `xcstringstool`, `rsync`, `install_name_tool`, and `codesign`. The release also uses `security`, `PlistBuddy`, `ditto`, `hdiutil`, `osascript`/Finder, `spctl`, `xcrun`, Git, `gh`, `curl`, SSH/SCP, and checksum utilities. |
 | Apple signing and notarization | The Developer ID Application identity in `Scripts/release.sh` needs its private key and certificate in the signing user's Keychain. The app and Sparkle helpers are signed inside out with hardened runtime and secure timestamps. The app and DMG are submitted separately, stapled, and assessed. `plainsay-notary` is the Keychain profile created from an App Store Connect API `.p8`, key ID, and issuer ID. The old `NOTARIZE=0` branch could still reach publication. The updated script requires notarization. |
 | Sparkle | Use the Ed25519 private key matching `SUPublicEDKey` in `Scripts/Info.plist`. On `mini-m4`, store that key under account `com.plainsay.sparkle` in the `herdr-release` keychain. `sign_update` signs the ZIP. The script writes a single-item appcast and takes its minimum macOS version from the plist. |
 | Version and source | Both version fields in `Scripts/Info.plist` had to be committed. Historically `CFBundleVersion = major * 10000 + minor * 100 + patch` (0.2.38 used build 238). The release checked the live build, a clean Git tree, reviewed privacy and terms pages, and site checkout freshness. |
-| Update host and site | `HOST` defaults to the SSH alias `codex-server`. nginx serves `/var/www/plainsay-updates` as `api.plainsay.app`. The script stages and verifies uploads, then replaces the stable DMG and appcast with same-filesystem renames. `deploy-site.sh` uses rsync to publish `docs/` to `/var/www/plainsay-app` and the old manual path uses sudo for permissions. |
+| Update host and site | `HOST` defaults to the SSH alias `codex-server`. nginx serves `/var/www/plainsay-updates` as `api.plainsay.app`. The script stages and verifies uploads, then replaces the stable DMG and appcast with same-filesystem renames. `deploy-site.sh` uses rsync to publish `docs/` to `/var/www/plainsay-app`. |
 | GitHub and Homebrew | GitHub CLI creates a draft for the committed source, attaches the signed ZIP and notarized DMG, and publishes it as latest with a `v<version>` tag. Then Git updates `Casks/plainsay.rb` on `conrader/homebrew-plainsay:main` with the version and DMG SHA-256. GitHub API verifies the cask. GitHub and Git credentials must permit writes to their respective repositories. No `brew` executable is required to release. |
 
 The baseline's `.github/workflows/ci.yml` builds and tests on main pushes and
@@ -47,11 +54,24 @@ increments the last stable patch version and adds one to the higher of the
 tagged and main plist builds. All releases must exceed the live feed build.
 For a manual release, commit both plist fields and use a build above the
 highest shipped build, including withdrawn builds.
-A successful nightly publication completes the release for that version.
+A successful nightly publication completes the release for that version and
+removes the scratch worktree. A successful manual publication removes `dist/`,
+the assembled app and its stamp, and `build/release-swiftpm/`. A manual
+`--prepare-only` run keeps its verified artifacts for inspection.
+
+Install the matching [OVH kit](kit/KIT.md) before using these release scripts.
+Both release paths use the OVH retention helper to archive the previous feed,
+stable DMG, and local ZIP or delta enclosures. The helper archives files only
+after their public HTTPS responses return 200 and match the local bytes. After
+publication it checks the new appcast, DMG, and every local enclosure the same
+way. It retains the stable DMG, the files referenced by the live appcast, and
+one verified rollback archive. The helper serializes update-root activation
+and retention on OVH. GitHub release assets have their own lifecycle.
 
 For a manual release on `mini-m4`, set
 `PLAINSAY_SPARKLE_ACCOUNT=com.plainsay.sparkle` in the environment when running
-`Scripts/release.sh`. Keep `herdr-release` in the release user's keychain search
+`Scripts/release.sh`. Set `PLAINSAY_MANAGED_DOCROOTS=1` if the SSH alias uses the
+restricted OVH deploy key. Keep `herdr-release` in the release user's keychain search
 list and keep its password file at `~/.herdr-release/kcpass` (or the path set
 by `PLAINSAY_RELEASE_KCPASS`) readable only by that user. The release unlocks
 this keychain for ZIP signing, including when it reuses a notarized app.
@@ -153,8 +173,9 @@ GitHub, nginx, the website, and the Homebrew tap commit independently. The
 manual and nightly publishers write `publish.pending` before the first GitHub
 mutation and clear it after channel verification. Both paths stop while it
 exists. The marker records the tag, build, commits, staging and backup paths,
-SHA-256 checksums, and local checkout and tap paths. A failed publish retains
-the ZIP, DMG, appcast and committed tap clone in that checkout's `dist` folder.
+SHA-256 checksums (including the rollback archive checksum), and local
+checkout and tap paths. A failed publish retains the ZIP, DMG, appcast and
+committed tap clone in that checkout's `dist` folder.
 The nightly prints the retained worktree path and releases the lock. Failures
 before the marker leave public artifacts untouched and can be retried.
 
@@ -166,33 +187,40 @@ recorded checksums. Use the public GitHub DMG checksum to finish the cask
 update, and deploy the current website checkout if necessary. If publication
 only created an unused tag or incomplete draft, inspect and resolve those
 before retrying. Preserve any tag that corresponds to an artifact users may
-already have installed. Clear the marker after confirming the resulting state,
-then remove any retained nightly checkout with `git worktree remove --force`
-and remove its empty scratch directory. Resume scheduling after cleanup.
+already have installed. If the staged release is now live and verified, retry
+retention with
+`/var/lib/plainsay-deploy/bin/release-retention prune "$version" "$archive_name" "$backup_sha" "$zip_sha" "$dmg_sha" "$feed_sha"`
+on OVH using the marker's values. Use the version without the leading `v`
+and the archive basename. The helper repeats public verification, so a retry
+after a lost SSH connection is safe. Clear the marker after confirming the
+resulting state, then clean the retained manual build products listed above or
+remove the nightly checkout with `git worktree remove --force` and remove its
+empty scratch directory. Resume scheduling after cleanup.
 
 ## Pulling a bad Sparkle build
 
-1. Pause the agent using the procedure above. From
-   `codex-server`, pick the logged backup under
-   `/var/www/plainsay-updates/.release-backups/vBAD.XXXXXX`. Verify its
-   `appcast.xml` identifies the last good version and still references the
-   matching signed ZIP. The generated feed has one item, so restoring the prior
-   feed is preferable to deleting just that item.
-2. With `backup` set to that full backup directory, run on the update host
-   as the deploy user. This replaces each public file with a same-filesystem
-   rename and leaves the backups available.
+1. Pause the agent and any manual publisher. On OVH, select the logged
+   `/var/www/plainsay-updates/.release-backups/vBAD.XXXXXXXX.tar`. Confirm
+   it contains the previous appcast, stable DMG and all local enclosures.
+2. Set `backup` to the full archive path and `backup_sha` to the logged or
+   recorded SHA-256. In the update host's deploy account, restore the
+   packages before switching the appcast back.
 
    ```bash
-   set -e
-   : "${backup:?Set backup to the verified release backup directory}"
+   : "${backup:?Set backup to the verified release archive}"
+   : "${backup_sha:?Set backup_sha to the recorded SHA-256}"
    cd /var/www/plainsay-updates
-   xmllint --nonet --noout "$backup/appcast.xml"
+   flock -x . bash -s -- "$backup" "$backup_sha" <<'SH'
+   set -eu
+   printf '%s  %s\n' "$2" "$1" | sha256sum -c -
    stage=$(mktemp -d .rollback.XXXXXX)
-   install -m 0644 "$backup/appcast.xml" "$stage/appcast.xml"
-   install -m 0644 "$backup/Plainsay-latest.dmg" "$stage/Plainsay-latest.dmg"
-   mv "$stage/appcast.xml" appcast.xml
-   mv "$stage/Plainsay-latest.dmg" releases/Plainsay-latest.dmg
-   rmdir "$stage"
+   tar --extract --file "$1" --directory "$stage" --no-same-owner --no-same-permissions
+   xmllint --nonet --noout "$stage/appcast.xml"
+   chmod a+r "$stage/appcast.xml" "$stage"/releases/*
+   mv -- "$stage"/releases/* releases/
+   mv -- "$stage/appcast.xml" appcast.xml
+   rmdir -- "$stage/releases" "$stage"
+   SH
    ```
 
 3. Purge any caching layer for `/appcast.xml` and the stable DMG if present.

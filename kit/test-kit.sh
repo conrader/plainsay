@@ -268,10 +268,9 @@ shared_receiver() {
 }
 
 forced_command() {
-    local updates=/var/www/plainsay-updates version=0.2.40 stage zip dmg command
+    local updates=/var/www/plainsay-updates version=0.2.40 stage zip command
     stage="$updates/.release-stage.Ab12Cd"
     zip="Plainsay-$version.zip"
-    dmg="Plainsay-$version.dmg"
     allowed() { bash -c 'source "$1"; allowed_shell "$2"' _ "$kit/ovh-deploy-command.sh" "$1"; }
     denied() { if allowed "$1"; then printf 'Unexpectedly allowed: %s\n' "$1" >&2; return 1; fi; }
     # These mirror the remote commands in Scripts/release.sh.
@@ -281,23 +280,20 @@ forced_command() {
     allowed "cat > '$stage/$zip'"
     allowed "rm -rf '$stage'"
     allowed "test -w $updates && test -w $updates/releases && test -w /var/www/plainsay-app"
-    command="set -eu
-umask 077
-mkdir -p '$updates/.release-backups'
-backup=\$(mktemp -d '$updates/.release-backups/v$version.XXXXXX')
-cp '$updates/appcast.xml' \"\$backup/appcast.xml\"
-cp '$updates/releases/Plainsay-latest.dmg' \"\$backup/Plainsay-latest.dmg\"
-printf '%s\\n' \"\$backup\""
+    local helper=/var/lib/plainsay-deploy/bin/release-retention backup sha receipt
+    backup="v$version.AB_12Cd4.tar"
+    printf -v sha '%064d' 0
+    receipt="$version $backup $sha $sha $sha $sha"
+    allowed "$helper check"
+    allowed "$helper backup $version"
+    command="$helper activate $version ${stage##*/} $backup $sha $sha $sha $sha"
     allowed "$command"
+    allowed "$helper prune $receipt"
     denied "$command"$'\nid'
-    command="set -eu
-chmod a+r '$stage/$zip' '$stage/$dmg' '$stage/appcast.xml'
-mv '$stage/$zip' '$updates/releases/$zip'
-mv '$stage/$dmg' '$updates/releases/Plainsay-latest.dmg'
-mv '$stage/appcast.xml' '$updates/appcast.xml'
-rmdir '$stage'"
-    allowed "$command"
-    denied "${command/rmdir/rm -rf}"
+    denied "$helper prune ${receipt/$backup/../$backup}"
+    denied "$helper prune $receipt; id"
+    denied "$helper prune $version $backup"
+    denied "$helper backup $version/../../main"
     denied "rm -rf '$stage'; id"
     denied "rm -rf '$updates'"
     denied "sha256sum '$stage/../../../etc/shadow'"
@@ -341,7 +337,7 @@ stage_upload() {
     root_free=8388608 updates_free=8388607
     reject run_command "cat > '$stage/appcast.xml'" </dev/null
     [[ $(cat "$stage/appcast.xml") == 'staged upload' ]]
-    reject run_command "$(bash -c 'source "$1"; backup_template 1.2.3' _ "$TEST_STORE/command")"
+    reject run_command "/var/lib/plainsay-deploy/bin/release-retention backup 1.2.3"
     grep -Fq 'cannot confirm 8 GiB free' "$TEST_STORE/err"
     [[ ! -e $updates/.release-backups ]]
     updates_free=unknown
