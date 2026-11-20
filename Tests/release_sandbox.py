@@ -270,25 +270,108 @@ def release_keychain_configured(env):
 
 
 class ReleaseTimeout(unittest.TestCase):
+    sleep_commands = {"sleep 77", "/bin/sleep 77"}
+
     def setUp(self):
         workspace = tempfile.TemporaryDirectory(prefix="plainsay-timeout-test-")
         self.addCleanup(workspace.cleanup)
         self.case = Path(workspace.name)
 
-    def check_grandchild_stopped(self, pidfile):
-        pid = int(pidfile.read_text())
-        # A killed orphan may still be a zombie until the system reaps it.
+    def live_process(self, pid):
         result = subprocess.run(("ps", "-p", str(pid), "-o", "stat=", "-o", "command="),
                                 capture_output=True, text=True, check=False)
         fields = result.stdout.strip().split(maxsplit=1)
-        if not fields or fields[0].startswith("Z"):
+        # A killed orphan may still be a zombie until the system reaps it.
+        return result.stdout.strip() if fields and not fields[0].startswith("Z") else ""
+
+    def check_grandchild_stopped(self, pidfile):
+        pid = int(pidfile.read_text())
+        live = self.live_process(pid)
+        if not live:
             return
-        if len(fields) == 2 and fields[1] == "sleep 77":
+        self.stop_fixture_sleep(pid, live)
+        self.fail(f"Child PID {pid} survived the watchdog: {live}")
+
+    def stop_fixture_sleep(self, pid, live):
+        if live and live.split(maxsplit=1)[-1] in self.sleep_commands:
             try:
                 os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-        self.fail(f"Grandchild PID {pid} survived the watchdog: {result.stdout.strip()}")
+
+    def check_wrapper_shutdown(self, first_signal, *, escalate=False):
+        watchdog_file = self.case / "watchdog.pid"
+        sleep_file = self.case / "sleep.pid"
+        command = 'echo "$$" > "$1"; exec /bin/sleep 77'
+        if escalate:
+            command = 'trap "" TERM; ' + command
+        with subprocess.Popen(
+            ("/bin/bash", "-c", 'trap "exit 143" TERM; "$@"; exit "$?"', "_",
+             "/bin/sh", "-c", 'echo "$$" > "$1"; shift; exec "$@"', "_", watchdog_file,
+             WATCHDOG, "30", "Wrapper shutdown", "/bin/sh", "-c", command, "_", sleep_file),
+            start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        ) as wrapper:
+            watchdog = None
+            try:
+                deadline = time.monotonic() + 3
+                while time.monotonic() < deadline and wrapper.poll() is None:
+                    if sleep_file.exists() and sleep_file.read_text().strip():
+                        sleeper = int(sleep_file.read_text())
+                        command_fields = self.live_process(sleeper).split(maxsplit=1)
+                        if len(command_fields) == 2 and command_fields[1] in self.sleep_commands:
+                            watchdog = int(watchdog_file.read_text())
+                            break
+                    time.sleep(0.01)
+                else:
+                    self.fail("Wrapper shutdown fixture did not start")
+                self.assertEqual(os.getpgid(watchdog), wrapper.pid)
+                self.assertNotEqual(os.getpgid(sleeper), wrapper.pid)
+
+                # Mirror launchd's group delivery using the two verified fixture PIDs.
+                if first_signal == signal.SIGTERM:
+                    wrapper.terminate()
+                    os.kill(watchdog, signal.SIGTERM)
+                if escalate:
+                    time.sleep(0.2)
+                    self.assertTrue(self.live_process(sleeper), "Sleep did not ignore TERM")
+                if first_signal == signal.SIGKILL or escalate:
+                    # Kill the watchdog first so it cannot clean up on wrapper death.
+                    os.kill(watchdog, signal.SIGKILL)
+                    wrapper.kill()
+                    # Bash may finish processing the foreground status or pending TERM first.
+                    expected_statuses = (-signal.SIGKILL, 143 if escalate else 137)
+                else:
+                    expected_statuses = (143,)
+
+                deadline = time.monotonic() + 1.5
+                while time.monotonic() < deadline:
+                    if wrapper.poll() is not None and not self.live_process(sleeper):
+                        break
+                    time.sleep(0.01)
+                self.assertFalse(self.live_process(sleeper), "Sleep survived release shutdown")
+                self.assertIn(wrapper.poll(), expected_statuses, "Wrapper did not exit promptly")
+            finally:
+                if watchdog is None and watchdog_file.exists() and watchdog_file.read_text().strip():
+                    watchdog = int(watchdog_file.read_text())
+                if watchdog is not None and str(WATCHDOG) in self.live_process(watchdog):
+                    try:
+                        os.kill(watchdog, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                if wrapper.poll() is None:
+                    wrapper.kill()
+                if sleep_file.exists() and sleep_file.read_text().strip():
+                    sleeper = int(sleep_file.read_text())
+                    self.stop_fixture_sleep(sleeper, self.live_process(sleeper))
+
+    def test_kill_release_group_stops_sleep(self):
+        self.check_wrapper_shutdown(signal.SIGKILL)
+
+    def test_term_release_group_stops_sleep_promptly(self):
+        self.check_wrapper_shutdown(signal.SIGTERM)
+
+    def test_term_then_kill_release_group_stops_stubborn_sleep(self):
+        self.check_wrapper_shutdown(signal.SIGTERM, escalate=True)
 
     def test_timeout_stops_grandchild(self):
         pidfile = self.case / "sleep.pid"
@@ -354,7 +437,7 @@ else:
                             time.sleep(0.01)
                         self.assertTrue(ready.exists(), "Signal fixture did not start")
                         watchdog.send_signal(signum)
-                        stdout, stderr = watchdog.communicate(timeout=4)
+                        stdout, stderr = watchdog.communicate(timeout=1.5)
                     finally:
                         if watchdog.poll() is None:
                             watchdog.kill()

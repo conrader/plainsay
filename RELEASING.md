@@ -84,7 +84,10 @@ The whole `notarytool` invocation has a 30-minute limit, including upload and
 the 20-minute service wait. At the deadline, the watchdog sends TERM to the
 command's process group, gives it two seconds to exit, then sends KILL and
 returns status 124. It forwards INT, TERM, and HUP to the same group on
-interruption. A timeout stops the nightly before publication.
+interruption and ends the grace period early once the commands have exited. If
+the release shell dies, the watchdog kills the command group. A guardian in the
+command group handles cleanup if launchd kills the watchdog itself. A timeout
+stops the nightly before publication.
 For a Sparkle signing timeout, check the item's ACL as described above. For
 Developer ID or notarization failures, check the signing identity or the
 `plainsay-notary` profile in the release user's login session before retrying.
