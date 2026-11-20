@@ -114,6 +114,29 @@ gone before removing it. A scratch worktree may remain under `nightly.*/source`
 in the state directory. If a marker exists, retain the worktree through
 reconciliation.
 
+### Known limits of the release watchdog
+
+`Scripts/release-timeout.pl` has these known gaps:
+
+- When the command exits on its own, the watchdog kills only the guardian.
+  Grandchildren left in the command's process group keep running. This
+  predates the guardian.
+- The group kill reaches only processes that stay in the command's process
+  group. A descendant that calls `setsid()` or changes its process group
+  escapes it. The `codesign` and `notarytool` helpers are not expected to.
+- If the watchdog is SIGKILLed after forking the guardian but before the
+  guardian's `setpgid`, the guardian's group kill does nothing. This is
+  harmless because the command has not started yet.
+- If launchd SIGKILLs the nightly bash shell, its EXIT trap does not run and
+  `nightly.lock` stays behind. The next run refuses to start until the lock is
+  inspected and removed as described above. Nothing is published after a
+  failed step.
+- On a timeout the watchdog always waits the full two-second grace period
+  before KILL. Only an INT, TERM or HUP ends the grace period early.
+- The watchdog has been tested only in a Linux sandbox. Its behaviour on macOS
+  with perl 5.34 and during a launchd bootout has not been exercised on
+  `mini-m4` yet. The first dry signing run there covers it.
+
 ## Interrupted publication
 
 GitHub, nginx, the website, and the Homebrew tap commit independently. The
