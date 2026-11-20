@@ -161,18 +161,58 @@ def prune(root, version, archive, expected):
         require(file_digest(root / relative) == checksum, f"Live file changed at {relative}")
         verify_live(relative, checksum)
 
+    # Plan every backup removal before unlinking anything, so an unremovable
+    # backup cannot interrupt the prune halfway. A backup for a newer version
+    # belongs to a publisher that has not activated yet and must survive.
+    live = version_key(version)
+    doomed = []
+    for path in sorted(archive.parent.iterdir()):
+        match = re.fullmatch(rf"v({VERSION})\.[a-zA-Z0-9_]{{6,8}}(\.tar)?", path.name)
+        if path == archive or not match or version_key(match[1]) > live:
+            continue
+        mode = path.lstat().st_mode
+        if stat.S_ISREG(mode) or (stat.S_ISDIR(mode) and not match[2] and removable(path)):
+            doomed.append(path)
+        elif stat.S_ISDIR(mode) and not match[2]:
+            print(f"plainsay retention: kept unremovable legacy backup {path}", file=sys.stderr)
+
     for path in sorted((root / "releases").iterdir()):
         if re.fullmatch(ARTIFACT, path.name) and f"releases/{path.name}" not in checksums:
             if stat.S_ISREG(path.lstat().st_mode):
                 path.unlink()
-    for path in sorted(archive.parent.iterdir()):
-        if path == archive or not re.fullmatch(rf"{BACKUP}(?:\.tar)?", path.name):
-            continue
-        mode = path.lstat().st_mode
-        if stat.S_ISREG(mode):
-            path.unlink()
-        elif stat.S_ISDIR(mode) and not path.name.endswith(".tar"):
+    for path in doomed:
+        if path.is_dir() and not path.is_symlink():
             shutil.rmtree(path)
+        else:
+            path.unlink()
+
+
+def version_key(version):
+    return tuple(map(int, version.split(".")))
+
+
+def removable(top):
+    """Make a backup tree owned by this account deletable; report whether it is."""
+    uid = os.geteuid()
+
+    def grant(path):
+        info = os.lstat(path)
+        if stat.S_ISDIR(info.st_mode) and info.st_uid == uid:
+            os.chmod(path, stat.S_IMODE(info.st_mode) | stat.S_IRWXU)
+
+    def fail(error):
+        raise error
+
+    try:
+        grant(top)
+        for parent, dirs, _ in os.walk(top, onerror=fail):
+            if not os.access(parent, os.R_OK | os.W_OK | os.X_OK):
+                return False
+            for name in dirs:
+                grant(os.path.join(parent, name))
+    except OSError:
+        return False
+    return True
 
 
 @contextmanager

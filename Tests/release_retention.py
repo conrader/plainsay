@@ -3,7 +3,7 @@
 
 import hashlib
 import importlib.util
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 import tarfile
 import tempfile
@@ -153,6 +153,46 @@ class Retention(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Rollback archive checksum mismatch"):
             self.prune(receipt)
         self.assertTrue((self.root / OLD).exists())
+
+    def test_prune_keeps_backup_of_an_in_flight_newer_publish(self):
+        receipt = self.backup()
+        self.activate(receipt)
+        newer = self.backups / "v0.2.40.Other_12.tar"
+        newer.write_text("publisher B's archive, taken before B activates")
+        older = self.backups / "v0.2.38.Older_1.tar"
+        older.write_text("superseded")
+        self.prune(receipt)
+        self.assertEqual(sorted(p.name for p in self.backups.iterdir()), sorted((receipt[0], newer.name)))
+
+    def test_prune_repairs_owned_legacy_backup_permissions(self):
+        legacy = self.backups / "v0.2.37.Old123"
+        (legacy / "nested").mkdir(parents=True)
+        (legacy / "nested/appcast.xml").write_text("legacy")
+        (legacy / "nested").chmod(0)
+        legacy.chmod(0o500)
+        receipt = self.backup()
+        self.activate(receipt)
+        self.prune(receipt)
+        self.assertEqual([p.name for p in self.backups.iterdir()], [receipt[0]])
+        self.assertFalse((self.root / OLD).exists())
+
+    def test_prune_skips_whole_unremovable_legacy_backup(self):
+        legacy = self.backups / "v0.2.37.Old123"
+        (legacy / "nested").mkdir(parents=True)
+        (legacy / "nested/appcast.xml").write_text("legacy")
+        (legacy / "nested").chmod(0)
+        self.addCleanup(lambda: (legacy / "nested").chmod(0o700))
+        receipt = self.backup()
+        self.activate(receipt)
+        # Another account's 0700 tree: this account cannot repair its mode.
+        with patch.object(retention.os, "chmod", side_effect=PermissionError("not owner")), \
+                patch("sys.stderr", new_callable=StringIO) as stderr:
+            self.prune(receipt)
+        self.assertIn("kept unremovable legacy backup", stderr.getvalue())
+        self.assertEqual(sorted(p.name for p in self.backups.iterdir()), sorted((receipt[0], legacy.name)))
+        self.assertEqual(oct((legacy / "nested").stat().st_mode & 0o777), oct(0))
+        self.assertFalse((self.root / OLD).exists())
+        self.assertFalse(any((self.releases / name).exists() for name in ORPHANS))
 
     def test_ambiguous_local_enclosure_fails_closed(self):
         for path in ("releases/subdir/Plainsay.zip", "releases/Plainsay%2e202.zip"):

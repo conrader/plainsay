@@ -577,6 +577,15 @@ if [ -z "$NIGHTLY_SOURCE" ]; then
 fi
 rm -f "$PENDING"
 
+# Both channels and the cask now serve $VERSION, so older GitHub binaries are
+# the only remaining copies. The helper re-verifies that before deleting.
+echo "==> Deleting older GitHub release binaries"
+./Scripts/prune-github-assets.sh "$VERSION" "$LOCAL_DMG_SHA" || {
+	echo "Published $VERSION, but older GitHub binaries remain." >&2
+	echo "Rerun: Scripts/prune-github-assets.sh $VERSION $LOCAL_DMG_SHA" >&2
+	exit 1
+}
+
 echo
 echo "Published $VERSION"
 echo "  feed:     $FEED_URL/appcast.xml"

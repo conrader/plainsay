@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""Exercise Scripts/prune-github-assets.sh against a fake gh."""
+
+import copy
+import itertools
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+
+import fake_github
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "Scripts/prune-github-assets.sh"
+DMG_SHA = "a" * 64
+CASK = f'cask "plainsay" do\n  version "0.2.39"\n  sha256 "{DMG_SHA}"\n  app "Plainsay.app"\nend\n'
+
+
+IDS = itertools.count(1)
+
+
+def release(tag, *names, draft=False, digest="0" * 64):
+    return {"tag_name": tag, "draft": draft, "prerelease": False,
+            "assets": [{"id": next(IDS), "name": name, "digest": f"sha256:{digest}"}
+                       for name in names]}
+
+
+STATE = {"latest": "v0.2.39", "cask": CASK, "releases": [
+    release("v0.2.40", "Plainsay-0.2.40.dmg", "Plainsay-0.2.40.zip", draft=True),
+    release("v0.3.0-beta", "Plainsay-0.3.0.zip"),
+    release("v0.2.39", "Plainsay-0.2.39.dmg", "Plainsay-0.2.39.zip", digest=DMG_SHA),
+    release("v0.2.38", "Plainsay-0.2.38.dmg", "Plainsay-0.2.38.zip", "notes.txt"),
+    release("v0.2.10", "Plainsay-0.2.10.dmg", "Plainsay-0.2.39.zip"),
+    release("v0.2.9", "Plainsay-0.2.9.zip"),
+    release("v0.1.40", "Plainsay-0.1.40.dmg"),
+    release("v0.2.5", "Plainsay-0.2.5.dmg", draft=True),
+]}
+
+
+class PruneGithubAssets(unittest.TestCase):
+    def setUp(self):
+        workspace = tempfile.TemporaryDirectory(prefix="plainsay-gh-assets-")
+        self.addCleanup(workspace.cleanup)
+        self.case = Path(workspace.name)
+        bin_dir = self.case / "bin"
+        bin_dir.mkdir()
+        gh = bin_dir / "gh"
+        gh.write_text(f'#!/bin/sh\nexec python3 {ROOT / "Tests/fake_github.py"} "$@"\n')
+        gh.chmod(0o755)
+        self.state = self.case / "github.json"
+        self.log = self.case / "gh.log"
+        self.log.touch()
+        self.write(copy.deepcopy(STATE))
+        self.env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                    "FAKE_GITHUB_STATE": str(self.state), "FAKE_GITHUB_LOG": str(self.log)}
+
+    def write(self, state):
+        fake_github.save(self.state, state)
+
+    def edit(self, change):
+        state = fake_github.load(self.state)
+        change(state)
+        self.write(state)
+
+    def assets(self):
+        return {r["tag_name"]: sorted(a["name"] for a in r["assets"]) for r in fake_github.load(self.state)["releases"]}
+
+    def run_prune(self, *args, status=0, **env):
+        result = subprocess.run((SCRIPT, *args), env={**self.env, **env}, text=True, check=False,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertEqual(result.returncode, status, result.stdout)
+        return result.stdout
+
+    def deletes(self):
+        return [line for line in self.log.read_text().splitlines() if " -X DELETE " in line]
+
+    def test_deletes_only_older_versioned_binaries(self):
+        output = self.run_prune("0.2.39", DMG_SHA)
+        self.assertIn("(5 older assets deleted)", output)
+        self.assertEqual(self.assets(), {
+            "v0.2.40": ["Plainsay-0.2.40.dmg", "Plainsay-0.2.40.zip"],  # in-flight draft
+            "v0.3.0-beta": ["Plainsay-0.3.0.zip"],  # not a plain release tag
+            "v0.2.39": ["Plainsay-0.2.39.dmg", "Plainsay-0.2.39.zip"],  # live
+            "v0.2.38": ["notes.txt"],
+            "v0.2.10": ["Plainsay-0.2.39.zip"],  # name does not match its tag
+            "v0.2.9": [],
+            "v0.1.40": [],
+            "v0.2.5": ["Plainsay-0.2.5.dmg"],  # draft
+        })
+
+    def test_rerun_and_missing_assets_are_not_errors(self):
+        self.run_prune("0.2.39")
+        self.assertIn("(0 older assets deleted)", self.run_prune("0.2.39"))
+        self.assertEqual(len(self.deletes()), 5)
+
+    def test_asset_deleted_concurrently_is_skipped(self):
+        listing = fake_github.load(self.state)
+        self.edit(lambda s: s["releases"].pop(3))  # v0.2.38 vanished after listing
+        real = fake_github.load(self.state)
+        # Serve the stale listing while deletions see the current state.
+        stale = self.case / "stale.json"
+        fake_github.save(stale, listing)
+        shim = self.case / "bin/gh"
+        shim.write_text(
+            "#!/bin/sh\n"
+            'case "$*" in *"releases?per_page"*) FAKE_GITHUB_STATE=' + str(stale) + ";; esac\n"
+            f'exec python3 {ROOT / "Tests/fake_github.py"} "$@"\n')
+        self.assertEqual(real["releases"][3]["tag_name"], "v0.2.10")
+        output = self.run_prune("0.2.39", DMG_SHA)
+        self.assertIn("Already gone: v0.2.38/Plainsay-0.2.38.dmg", output)
+        self.assertIn("(3 older assets deleted)", output)
+
+    def test_server_error_fails_without_claiming_success(self):
+        doomed = next(r for r in STATE["releases"] if r["tag_name"] == "v0.2.38")["assets"][0]["id"]
+        self.edit(lambda s: s.update(delete_errors={str(doomed): 502}))
+        output = self.run_prune("0.2.39", status=1)
+        self.assertIn("HTTP 502", output)
+        self.assertNotIn("Kept only", output)
+
+    def test_unverified_live_release_deletes_nothing(self):
+        cases = {
+            "cask is another version": lambda s: s.update(cask=CASK.replace('"0.2.39"', '"0.2.38"')),
+            "latest is another tag": lambda s: s.update(latest="v0.2.38"),
+            "live digest differs": lambda s: s["releases"][2]["assets"][0].update(digest="sha256:" + "b" * 64),
+            "live zip missing": lambda s: s["releases"][2]["assets"].pop(1),
+            "live release is a draft": lambda s: s["releases"][2].update(draft=True),
+        }
+        for name, change in cases.items():
+            with self.subTest(name):
+                self.write(copy.deepcopy(STATE))
+                self.edit(change)
+                self.run_prune("0.2.39", status=1)
+                self.assertEqual(self.deletes(), [])
+        with self.subTest("shipped DMG differs from cask"):
+            self.write(copy.deepcopy(STATE))
+            self.run_prune("0.2.39", "c" * 64, status=1)
+            self.assertEqual(self.deletes(), [])
+        for bad in ("", "0.2", "v0.2.39", "0.2.39; rm"):
+            with self.subTest(version=bad):
+                self.run_prune(bad, status=1)
+        self.assertEqual(self.deletes(), [])
+
+    def test_dry_run_lists_without_deleting(self):
+        output = self.run_prune("0.2.39", DMG_SHA, DRY_RUN="1")
+        self.assertEqual(output.count("Would delete"), 5)
+        self.assertEqual(self.deletes(), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -15,6 +15,9 @@ import tempfile
 import time
 import unittest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import fake_github  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = Path(__file__).resolve()
 WATCHDOG = ROOT / "Scripts/release-timeout.pl"
@@ -84,6 +87,8 @@ def fake_tool(tool, args):
                 (case / "feed-build").write_text("300")
         os.execv(env["REAL_GIT"], [env["REAL_GIT"], *args])
     elif tool == "gh":
+        if fake_github.handles(args):
+            return fake_github.api(args, case / "github.json")
         if args[:2] == ["release", "view"]:
             if "--json" not in args:
                 return 1
@@ -95,14 +100,20 @@ def fake_tool(tool, args):
             sha = next(arg.split("=", 1)[1] for arg in args if arg.startswith("head_sha="))
             ci = env.get("CI_RESULT", "completed success")
             print("missing" if ci == "missing" else f"{sha} {ci}")
-        elif args[:2] == ["release", "create"]:
+        elif args[:2] in (["release", "create"], ["release", "edit"]):
             assert_marker()
-            return 1 if mode == "draft-fails" else 0
-        elif args[:2] == ["release", "edit"]:
-            assert_marker()
+            if mode == "draft-fails":
+                return 1
+            fake_github.release(args, case / "github.json")
         elif args[0] == "api" and "Casks/plainsay.rb" in args[-1]:
-            state = dict(line.split("=", 1) for line in marker.read_text().splitlines())
-            print((Path(state["local_tap"]) / "Casks/plainsay.rb").read_text(), end="")
+            # The fake tap push never leaves the local tap, which is the
+            # published cask. Keep its text: the marker and a manual release's
+            # dist/ tap are gone by the time the GitHub asset prune rereads it.
+            published = case / "published-cask"
+            if marker.exists():
+                state = dict(line.split("=", 1) for line in marker.read_text().splitlines())
+                published.write_text((Path(state["local_tap"]) / "Casks/plainsay.rb").read_text())
+            print(published.read_text(), end="")
         elif args[:2] == ["repo", "view"]:
             print("https://example.invalid/plainsay")
         else:
@@ -481,6 +492,16 @@ class ReleaseSandbox(unittest.TestCase):
         self.kcpass.write_text(f"{KEYCHAIN_PASSWORD}\n")
         (self.case / "feed-build").write_text("238")
         (self.case / "events").touch()
+        self.github = self.case / "github.json"
+        fake_github.save(self.github, {"latest": "v0.2.38", "releases": [
+            {"tag_name": tag, "draft": False, "prerelease": False, "assets": [
+                {"id": 10 * i + j, "name": name, "digest": "sha256:" + "0" * 64}
+                for j, name in enumerate(names)]}
+            for i, (tag, names) in enumerate((
+                ("v0.2.38", ("Plainsay-0.2.38.dmg", "Plainsay-0.2.38.zip")),
+                ("v0.2.37", ("Plainsay-0.2.37.dmg", "Plainsay-0.2.37.zip", "checksums.txt")),
+                ("v0.2.0", ("Plainsay-0.2.0.zip",)),
+            ), start=1)]})
         bin_dir = self.case / "bin"
         bin_dir.mkdir()
         for name in ("awk", "codesign", "curl", "ditto", "gh", "git", "hdiutil", "notarytool", "osascript",
@@ -509,7 +530,7 @@ class ReleaseSandbox(unittest.TestCase):
         scripts = self.seed / "Scripts"
         scripts.mkdir()
         for file in ("nightly-release.sh", "release.sh", "release-state.sh", "release-notary.sh",
-                     "check-release-keychain.swift", "deploy-site.sh"):
+                     "check-release-keychain.swift", "deploy-site.sh", "prune-github-assets.sh"):
             shutil.copy2(ROOT / "Scripts" / file, scripts / file)
         # Shorten selected deadlines in the fixture while running the real watchdog.
         shutil.copy2(WATCHDOG, scripts / "release-timeout-real.pl")
@@ -634,6 +655,14 @@ class ReleaseSandbox(unittest.TestCase):
         calls = [shlex.split(line) for line in self.events().splitlines() if line.startswith("sign_update")]
         self.assertEqual(calls, [["sign_update", "-p", "--account", account, f"dist/Plainsay-{version}.zip"]])
 
+    def assert_github_assets(self, version):
+        assets = {r["tag_name"]: sorted(a["name"] for a in r["assets"])
+                  for r in fake_github.load(self.github)["releases"]}
+        self.assertEqual(assets, {
+            f"v{version}": [f"Plainsay-{version}.dmg", f"Plainsay-{version}.zip"],
+            "v0.2.38": [], "v0.2.37": ["checksums.txt"], "v0.2.0": [],
+        })
+
     def assert_unlocked(self):
         self.assertFalse((self.state / "nightly.lock").exists())
 
@@ -746,6 +775,21 @@ class ReleaseSandbox(unittest.TestCase):
             self.assertFalse((self.checkout / path).exists(), path)
         self.assertTrue((self.checkout / ".build").is_dir())
         self.assertIn("osascript Scripts/dmg-layout.applescript", self.events())
+        self.assert_github_assets("0.3.0")
+        self.assert_unlocked()
+
+    def test_github_asset_prune_failure_after_publication_is_reported(self):
+        self.bump_main()
+        self.make_tap()
+        state = fake_github.load(self.github)
+        state["delete_errors"] = {"20": 502}
+        fake_github.save(self.github, state)
+        output = self.manual(status=1, match="older GitHub binaries remain")
+        self.assertIn("Rerun: Scripts/prune-github-assets.sh 0.3.0 ", output)
+        self.assertIn("release-retention prune", self.events())
+        self.assertFalse((self.state / "publish.pending").exists())
+        live = next(r for r in fake_github.load(self.github)["releases"] if r["tag_name"] == "v0.3.0")
+        self.assertEqual(sorted(a["name"] for a in live["assets"]), ["Plainsay-0.3.0.dmg", "Plainsay-0.3.0.zip"])
         self.assert_unlocked()
 
     def test_renamed_cask_target_stops_before_publication(self):
@@ -781,6 +825,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.assert_sign_update("com.plainsay.sparkle", "0.2.39")
         self.assertFalse((self.state / "publish.pending").exists())
         self.assertIn("refs/tags/v0.2.39", self.events())
+        self.assert_github_assets("0.2.39")
         self.assert_clean_nightly()
 
     def test_normal_sign_update_completes_nightly_preparation(self):

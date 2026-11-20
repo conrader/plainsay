@@ -66,7 +66,17 @@ after their public HTTPS responses return 200 and match the local bytes. After
 publication it checks the new appcast, DMG, and every local enclosure the same
 way. It retains the stable DMG, the files referenced by the live appcast, and
 one verified rollback archive. The helper serializes update-root activation
-and retention on OVH. GitHub release assets have their own lifecycle.
+and retention on OVH. Backups for a version newer than the live one belong to
+a publisher that has not activated yet and are kept. A legacy backup tree the
+deploy account cannot delete is reported and kept whole.
+
+After the cask read-back, `Scripts/prune-github-assets.sh` deletes the
+`Plainsay-X.Y.Z.{dmg,zip}` assets of every non-draft release older than the
+live version. It first re-reads the cask and requires the latest public
+release to be the live tag with a ZIP and a DMG whose digest matches the
+cask, so it deletes nothing otherwise. It keeps the release pages and tags,
+skips assets that are already gone, and supports `DRY_RUN=1`. If it fails,
+the release has still shipped. Rerun the command the release prints.
 
 For a manual release on `mini-m4`, set
 `PLAINSAY_SPARKLE_ACCOUNT=com.plainsay.sparkle` in the environment when running
