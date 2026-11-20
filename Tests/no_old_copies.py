@@ -21,7 +21,6 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "Scripts"
 sys.path.insert(0, str(SCRIPTS))
-import plainsay_release_retention as RETENTION
 
 
 def load(name, filename):
@@ -266,15 +265,17 @@ class OneOffPrune(unittest.TestCase):
         self.mac_dmg = f"{PARK.DOWNLOADS}/Plainsay-latest.dmg"
         self.listing = f"-rw-r--r--  1 501 20 123 Nov 20 10:00 {self.mac_dmg}\n"
         self.paused = True
+        setup_lock = root / "setup.lock"
+        setup_lock.touch()
         self.mac_removals = []
         self.latest = [self.asset("Plainsay-0.2.39.dmg", b"x")]
         self.historical = [self.asset(self.rollback_zip.name, self.rollback_zip.read_bytes()),
                            self.asset("Plainsay-0.2.38.dmg", b"verified DMG")]
         settings = patch.multiple(PARK, UPDATE=self.update, LAUNCH=self.launch,
-                                  ssh=self.ssh, mac_remove=self.mac_remove)
+                                  SETUP_LOCK=setup_lock, ssh=self.ssh, mac_remove=self.mac_remove)
         settings.start()
         self.addCleanup(settings.stop)
-        fetch = patch.multiple(RETENTION, fetch=self.fetch, LAUNCH=self.launch)
+        fetch = patch.object(PARK, "fetch", self.fetch)
         fetch.start()
         self.addCleanup(fetch.stop)
         self.entries = [str(self.legacy_zip), str(self.old), str(self.launch)]
@@ -294,14 +295,15 @@ class OneOffPrune(unittest.TestCase):
                 "size": len(data), "digest": "sha256:" + hashlib.sha256(data).hexdigest()}
 
     def fetch(self, url):
-        if url == RETENTION.APPCAST:
+        if url == PARK.APPCAST:
             return self.live
-        if url == RETENTION.CASK:
+        if url == PARK.CASK:
             return json.dumps({"encoding": "base64", "content": base64.b64encode(self.cask).decode()})
         if url.endswith("releases/latest"):
             return '{"id": 1, "draft": false, "prerelease": false}'
-        if url.endswith("tags/v0.2.38"):
-            return '{"id": 2, "tag_name": "v0.2.38", "draft": false, "prerelease": false}'
+        if "/releases/tags/" in url:
+            return json.dumps({"id": 2, "tag_name": url.rsplit("/", 1)[-1],
+                               "draft": False, "prerelease": False})
         if "/1/assets?" in url:
             return json.dumps(self.latest)
         if "/2/assets?" in url:
@@ -366,7 +368,7 @@ class OneOffPrune(unittest.TestCase):
         (self.rollback_zip.parent / "Plainsay-latest.dmg").write_bytes(b"verified DMG")
         (self.update / "appcast.xml").write_bytes(self.feed(self.rollback_zip.name))
         shutil.rmtree(self.newest)
-        self.assert_protected("No saved v0.2.38 rollback")
+        self.assert_protected("No saved newer rollback")
 
     def test_unverifiable_newest_rollback_stops_before_falling_back(self):
         older = self.make_release_backup("v0.2.38.OLD123")
@@ -379,9 +381,11 @@ class OneOffPrune(unittest.TestCase):
         self.historical[0]["digest"] = "sha256:" + "0" * 64
         self.assert_protected("Rollback ZIP checksum mismatch")
 
-    def test_newest_rollback_must_enclose_v0238(self):
+    def test_newest_verified_rollback_must_be_newer_than_launch(self):
         (self.newest / "appcast.xml").write_bytes(self.feed(self.old.name))
-        self.assert_protected("does not enclose Plainsay-0.2.38.zip")
+        self.historical = [self.asset(self.old.name, self.old.read_bytes()),
+                           self.asset("Plainsay-0.2.24.dmg", b"verified DMG")]
+        self.assert_protected("Newest verified rollback must be newer than v0.2.24")
 
     def test_another_backup_needing_legacy_zip_blocks_oneoff(self):
         older = self.make_release_backup("v0.2.38.OLD123", self.legacy_zip)
@@ -398,13 +402,13 @@ class OneOffPrune(unittest.TestCase):
 
         def fetch(url):
             nonlocal count
-            if url == RETENTION.APPCAST:
+            if url == PARK.APPCAST:
                 count += 1
                 if count == 2:
                     return self.feed(self.legacy_zip.name)
             return first_fetch(url)
 
-        with patch.object(RETENTION, "fetch", fetch):
+        with patch.object(PARK, "fetch", fetch):
             self.assert_protected("live reference matches")
 
     def test_single_quotes_and_percent_encoded_delta_block_every_delete(self):
@@ -431,14 +435,43 @@ class OneOffPrune(unittest.TestCase):
         self.cask += b'url compute_url(version)\n'
         self.assert_protected("Unsupported Homebrew")
 
+    def test_no_space_cask_stanzas_cannot_hide_a_candidate(self):
+        self.cask += (
+            b'version"0.2.24"; url"https://example.invalid/Plainsay-#{version}.zip"\n'
+        )
+        self.assert_protected("live reference matches")
+
+    def test_unparsed_no_space_cask_stanzas_block_every_delete(self):
+        cask = self.cask
+        for directive in (b'url"https://example.invalid/x" + suffix', b'version"latest"'):
+            with self.subTest(directive=directive):
+                self.cask = cask + directive + b"\n"
+                self.assert_protected("Unsupported Homebrew")
+
+    def test_rollback_digest_is_rechecked_before_every_delete(self):
+        first_fetch = self.fetch
+        checks = 0
+
+        def fetch(url):
+            nonlocal checks
+            if "/releases/tags/" in url:
+                checks += 1
+                if checks == 2:
+                    (self.newest / "Plainsay-latest.dmg").write_bytes(b"corrupt")
+            return first_fetch(url)
+
+        with patch.object(PARK, "fetch", fetch):
+            self.assert_protected("Rollback installer checksum mismatch")
+
     def test_latest_github_asset_blocks_every_delete(self):
         self.latest.append(self.asset(self.legacy_zip.name, self.legacy_zip.read_bytes()))
         self.assert_protected("live reference matches")
 
     def test_unreachable_mac_skips_only_optional_step(self):
         self.listing = None
-        with self.assertRaisesRegex(PARK.Stop, "inventory unavailable; MacBook step skipped"):
+        with redirect_stdout(io.StringIO()) as output:
             PARK.prune_macbook([self.mac_dmg], False, "fixture-user")
+        self.assertIn("SKIP macbook-m4 Downloads inventory unavailable", output.getvalue())
         self.assertTrue(self.launch.exists())
         self.assertEqual(self.mac_removals, [])
         self.run_prune(dry=False)
@@ -490,7 +523,7 @@ class OneOffPrune(unittest.TestCase):
         self.assertNotEqual(subprocess.run(command, env=env, capture_output=True).returncode, 0)
 
     def test_missing_setup_lock_is_created_and_held_during_prune(self):
-        setup_lock = self.update.parent / "setup.lock"
+        setup_lock = self.update.parent / "missing-setup.lock"
 
         def concurrent_kit(*args):
             with setup_lock.open("w") as fd:
@@ -505,72 +538,12 @@ class OneOffPrune(unittest.TestCase):
         self.assertEqual(setup_lock.stat().st_mode & 0o777, 0o600)
 
     def test_dry_run_does_not_create_missing_setup_lock(self):
-        setup_lock = self.update.parent / "setup.lock"
+        setup_lock = self.update.parent / "missing-setup.lock"
         with patch.object(PARK, "SETUP_LOCK", setup_lock), patch.dict(os.environ, {}, clear=True), \
                 patch.object(os, "geteuid", return_value=0), patch.object(sys, "stdin", io.StringIO()):
             with self.assertRaisesRegex(PARK.Stop, "Cannot take the kit lock without creating"):
                 PARK.main()
         self.assertFalse(setup_lock.exists())
-
-    def retention_fixture(self):
-        older = self.make_release_backup("v0.2.37.OLD123")
-        os.utime(older, (1, 1))
-        live_zip = self.old.parent / "Plainsay-0.2.39.zip"
-        live_zip.write_bytes(b"live")
-        self.latest.append(self.asset(live_zip.name, live_zip.read_bytes()))
-        return older, self.newest, live_zip
-
-    def test_future_retention_keeps_live_zip_and_newest_verified_rollback(self):
-        older, newest, live_zip = self.retention_fixture()
-        unmanaged = self.old.parent / "Plainsay-latest.dmg"
-        unmanaged.touch()
-        obsolete = self.old.parent / "Plainsay-0.2.25.zip"
-        obsolete.touch()
-        with redirect_stdout(io.StringIO()):
-            self.run_prune(dry=False)
-            self.assertTrue(obsolete.exists())
-            RETENTION.retain(self.update, "0.2.39", newest)
-        self.assertFalse(older.exists())
-        self.assertTrue(newest.exists())
-        self.assertEqual(set(self.old.parent.iterdir()), {live_zip, self.rollback_zip, unmanaged})
-
-    def test_future_retention_stops_on_any_public_reference(self):
-        older, newest, _ = self.retention_fixture()
-        cask = self.cask
-        for channel in ("appcast", "origin", "cask", "github"):
-            with self.subTest(channel=channel):
-                if channel == "appcast":
-                    self.live = self.feed(self.old.name)
-                elif channel == "origin":
-                    (self.update / "appcast.xml").write_bytes(self.feed(self.old.name))
-                elif channel == "cask":
-                    self.cask += f'url "https://example.invalid/{self.old.name}"\n'.encode()
-                else:
-                    self.latest.append(self.asset(self.old.name, self.old.read_bytes()))
-                with self.assertRaisesRegex(RETENTION.Stop, "Appcast|Live reference"):
-                    RETENTION.retain(self.update, "0.2.39", newest)
-                self.assertTrue(self.old.exists())
-                self.assertTrue(older.exists())
-                self.live = self.feed("Plainsay-0.2.39.zip")
-                (self.update / "appcast.xml").write_bytes(self.live)
-                self.cask = cask
-
-    def test_future_retention_preserves_recovery_on_verification_failure(self):
-        older, newest, _ = self.retention_fixture()
-        (newest / "Plainsay-latest.dmg").write_bytes(b"corrupt")
-        with self.assertRaisesRegex(RETENTION.Stop, "Rollback installer checksum mismatch"):
-            RETENTION.retain(self.update, "0.2.39", newest)
-        self.assertTrue(older.exists())
-        self.assertTrue(self.old.exists())
-
-    def test_future_retention_stops_before_orphaning_launch_backup(self):
-        older, newest, _ = self.retention_fixture()
-        with self.assertRaisesRegex(RETENTION.Stop, "still depends on Plainsay-0.2.23.zip"):
-            RETENTION.retain(self.update, "0.2.39", newest)
-        self.assertTrue(older.exists())
-        self.assertTrue(self.old.exists())
-        self.assertTrue(self.legacy_zip.exists())
-        self.assertTrue(self.launch.exists())
 
     def test_unsafe_candidate_blocks_every_delete(self):
         unrelated = self.old.with_suffix(".unrelated")
@@ -585,7 +558,7 @@ class OneOffPrune(unittest.TestCase):
 
 
     def test_setup_and_update_locks_both_gate_the_run(self):
-        setup_lock = self.update.parent / "setup.lock"
+        setup_lock = self.update.parent / "missing-setup.lock"
         setup_lock.touch()
         for locked in (setup_lock, self.update):
             with self.subTest(locked=locked), patch.object(PARK, "SETUP_LOCK", setup_lock):
@@ -599,6 +572,92 @@ class OneOffPrune(unittest.TestCase):
                     os.close(fd)
         self.assertTrue(self.old.exists())
         self.assertEqual(self.mac_removals, [])
+
+
+class ParkRollout(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(prefix="plainsay-rollout-fixture-")
+        self.addCleanup(temp.cleanup)
+        root = Path(temp.name)
+        self.checkout = root / "checkout"
+        self.checkout.mkdir()
+        self.remote = root / "origin"
+        self.deploy = root / "deploy"
+        self.deploy.mkdir()
+        self.current = self.deploy / "deploy-command"
+        self.current.write_text("original\n")
+        self.log = root / "sudo.log"
+        executables = root / "bin"
+        executables.mkdir()
+        sudo = executables / "sudo"
+        sudo.write_text(
+            '#!/bin/bash\nset -eu\nshift\nprintf "%s\\n" "$1" >> "$FIXTURE_SUDO_LOG"\n'
+            'if [[ $1 == install ]]; then exec install -m "$7" "${@:8}"; fi\n'
+            'exec "$@"\n'
+        )
+        sudo.chmod(0o755)
+        self.env = dict(os.environ, PATH=f"{executables}:{os.environ['PATH']}",
+                        FIXTURE_SUDO_LOG=str(self.log))
+        self.git("init", "-q", "-b", "main")
+        self.git("config", "user.email", "fixture@example.invalid")
+        self.git("config", "user.name", "Fixture")
+        source = self.checkout / "kit/ovh-deploy-command.sh"
+        source.parent.mkdir()
+        source.write_text("original\n")
+        self.git("add", "kit")
+        self.git("commit", "-qm", "base")
+        self.base = self.git("rev-parse", "HEAD")
+        self.git("init", "-q", "--bare", str(self.remote))
+        self.git("remote", "add", "origin", str(self.remote))
+        self.git("push", "-q", "origin", "main")
+        source.write_text("new command\n")
+        self.git("commit", "-qam", "rollout")
+        self.new = self.git("rev-parse", "HEAD")
+        self.prev = self.deploy / f"deploy-command.prev-{self.base[:7]}"
+
+    def git(self, *args):
+        return subprocess.check_output(["git", *args], cwd=self.checkout, text=True).strip()
+
+    def park(self, action):
+        script = (SCRIPTS / f"park-no-old-copies-{action}.sh").read_text()
+        script = script.replace("/var/lib/plainsay-deploy/bin", str(self.deploy))
+        return subprocess.run(["bash", "-s", "--", self.base, self.new], cwd=self.checkout, env=self.env,
+                              input=script, text=True, capture_output=True)
+
+    def test_step1_rerun_preserves_prev_after_rejected_push(self):
+        hook = self.remote / "hooks/pre-receive"
+        hook.write_text("#!/bin/sh\nexit 1\n")
+        hook.chmod(0o755)
+        self.assertIn("Could not fast-forward", self.park("step1").stderr)
+        self.assertEqual(self.prev.read_text(), "original\n")
+        self.assertEqual(self.current.read_text(), "new command\n")
+        hook.unlink()
+        result = self.park("step1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.prev.read_text(), "original\n")
+        self.assertEqual(self.git("ls-remote", "origin", "refs/heads/main").split()[0], self.new)
+        self.log.unlink()
+        self.assertEqual(self.park("step1").returncode, 0)
+        self.assertFalse(self.log.exists())
+
+    def test_step1_guard_runs_before_any_production_write(self):
+        self.git("commit", "--allow-empty", "-qm", "unexpected")
+        self.git("push", "-q", "origin", "HEAD:main")
+        result = self.park("step1")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("origin/main is outside", result.stderr)
+        self.assertFalse(self.log.exists())
+        self.assertFalse(self.prev.exists())
+        self.assertEqual(self.current.read_text(), "original\n")
+
+    def test_undo_restores_prev_and_is_idempotent(self):
+        self.assertEqual(self.park("step1").returncode, 0)
+        for _ in range(2):
+            result = self.park("undo")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.current.read_text(), "original\n")
+            self.assertEqual(self.prev.read_text(), "original\n")
+            self.assertEqual(self.git("ls-remote", "origin", "refs/heads/main").split()[0], self.base)
 
 
 class BundleInstall(unittest.TestCase):

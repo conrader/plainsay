@@ -615,14 +615,10 @@ grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" <<<"$PUBLISHED_CASK" || {
 }
 
 DOWNLOAD_URL=$(gh repo view --json url --jq .url)/releases/latest
-# Keep recovery artifacts until publication is verified. Retention has its own
-# reference gates and can stop without requiring publication reconciliation.
+# Keep recovery artifacts until publication is verified.
 rm -f "$PENDING"
 rm -rf -- "$RELEASE_STAGE"
 TAP_DIR=""
-echo "==> Retaining live and rollback release artifacts"
-ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" \
-	"/usr/bin/python3 -B /var/lib/plainsay-deploy/bin/plainsay_release_retention.py $VERSION ${BACKUP##*/}"
 
 echo
 echo "Published $VERSION"

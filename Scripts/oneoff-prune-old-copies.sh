@@ -4,11 +4,11 @@ set -euo pipefail
 export DRY_RUN="${DRY_RUN:-1}"
 cd "$(dirname "$0")"
 if [[ ${1:-} == --macbook ]]; then
-    exec python3 -B oneoff-prune-old-copies.py "$@" <<'PATHS'
+    exec python3 -I -B oneoff-prune-old-copies.py "$@" <<'PATHS'
 /Users/konradsierzputowski/Downloads/Plainsay-latest.dmg
 PATHS
 fi
-exec python3 -B oneoff-prune-old-copies.py "$@" <<'PATHS'
+exec python3 -I -B oneoff-prune-old-copies.py "$@" <<'PATHS'
 /var/www/plainsay-updates/releases/Plainsay-0.1.1.zip
 /var/www/plainsay-updates/releases/Plainsay-0.1.2.zip
 /var/www/plainsay-updates/releases/Plainsay-0.1.3.zip

@@ -250,12 +250,6 @@ def fake_tool(tool, args):
         if ".release-backups" in command:
             version = re.search(r"\.release-backups/v(\d+\.\d+\.\d+)\.XXXXXX", command)[1]
             print(f"/var/www/plainsay-updates/.release-backups/v{version}.ABC123")
-        elif command.startswith("/usr/bin/python3 -B "):
-            assert not marker.exists()
-            assert server.joinpath("Plainsay-latest.dmg").exists()
-            if mode == "retention-reference-hit":
-                print("STOP Live reference matches Plainsay-0.2.20.zip")
-                return 1
         elif ".release-stage" in command and command.startswith("mktemp"):
             server.mkdir()
             print("/var/www/plainsay-updates/.release-stage.ABC123")
@@ -732,13 +726,6 @@ class ReleaseSandbox(unittest.TestCase):
         self.assertTrue((self.manual_stage() / "inflight").exists())
         self.assert_no_publication()
 
-    def test_retention_stop_after_publication_does_not_leave_pending_marker(self):
-        self.bump_main()
-        self.make_tap()
-        self.manual(status=1, mode="retention-reference-hit", match="STOP Live reference")
-        self.assertIn("plainsay_release_retention.py 0.3.0 v0.3.0.ABC123", self.events())
-        self.assert_clean_nightly()
-
     def test_off_main_tag_no_new_source(self):
         self.add_off_main_tag(new_source=False)
         self.nightly("--dry-run", match="No new main commits since v0.2.39")
@@ -808,7 +795,6 @@ class ReleaseSandbox(unittest.TestCase):
         self.manual(status=1, mode="bad-published-package", match="published zip checksum mismatch")
         self.assert_artifacts_retained()
         self.assertTrue(self.manual_stage().exists())
-        self.assertNotIn("plainsay_release_retention.py", self.events())
 
     def test_github_asset_verification_failure_preserves_local_staging(self):
         self.bump_main()

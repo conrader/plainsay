@@ -89,8 +89,7 @@ fi
 if [[ -n $deploy_uid ]]; then userdel "$DEPLOY_USER"; fi
 if [[ -n $deploy_gid ]]; then groupdel "$DEPLOY_GROUP"; fi
 if [[ -d $DEPLOY_HOME ]]; then
-    rm -f -- "$DEPLOY_HOME/.bashrc" "$DEPLOY_HOME/bin/rsync" "$DEPLOY_HOME/bin/deploy-command" \
-        "$DEPLOY_HOME/bin/plainsay_release_retention.py"
+    rm -f -- "$DEPLOY_HOME/.bashrc" "$DEPLOY_HOME/bin/rsync" "$DEPLOY_HOME/bin/deploy-command"
     for directory in "$DEPLOY_HOME/bin" "$DEPLOY_HOME/.ssh" "$DEPLOY_HOME"; do
         if [[ -d $directory ]]; then rmdir -- "$directory"; fi
     done
