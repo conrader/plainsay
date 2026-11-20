@@ -129,13 +129,19 @@ reconciliation.
   harmless because the command has not started yet.
 - If launchd SIGKILLs the nightly bash shell, its EXIT trap does not run and
   `nightly.lock` stays behind. The next run refuses to start until the lock is
-  inspected and removed as described above. Nothing is published after a
-  failed step.
-- On a timeout the watchdog always waits the full two-second grace period
-  before KILL. Only an INT, TERM or HUP ends the grace period early.
+  inspected and removed as described above. The lock only blocks a new run.
+  A `release.sh` that was already running can survive the kill and keep
+  going. A publication step that fails can leave changes that are already
+  public in place; follow "Interrupted publication" below.
+- On a timeout the watchdog waits up to two seconds before KILL. The grace
+  period ends early when the watchdog's caller exits. After an INT, TERM or
+  HUP it also ends early, but only once the command has exited and no
+  command is left alive in its group.
 - The watchdog has been tested only in a Linux sandbox. Its behaviour on macOS
   with perl 5.34 and during a launchd bootout has not been exercised on
-  `mini-m4` yet. The first dry signing run there covers it.
+  `mini-m4` yet. `--dry-run` stops before signing, so it does not cover this.
+  `--prepare-only` exercises the watchdog around signing but not a launchd
+  bootout.
 
 ## Interrupted publication
 
