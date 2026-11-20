@@ -26,10 +26,17 @@ def git(*args, **kwargs):
     return subprocess.check_output(("git", *args), text=True, **kwargs).strip()
 
 
-def fake_bundle(checkout=Path(".")):
-    app = checkout / "build/Plainsay.app/Contents"
+def fake_bundle(checkout=Path("."), output=None):
+    bundle = Path(output or os.environ.get("PLAINSAY_BUNDLE_DIR", checkout / "build"))
+    app = bundle / "Plainsay.app/Contents"
     app.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(checkout / "Scripts/Info.plist", app / "Info.plist")
+    if os.environ.get("PLAINSAY_SWIFTPM_SCRATCH"):
+        assert os.environ["INSTALL"] == "0"
+        sign_update = Path(os.environ["PLAINSAY_SWIFTPM_SCRATCH"]) / "artifacts/sparkle/Sparkle/bin/sign_update"
+        if not sign_update.exists():
+            sign_update.parent.mkdir(parents=True, exist_ok=True)
+            sign_update.symlink_to(Path(os.environ["RELEASE_TEST_CASE"]) / "bin/sign_update")
 
 
 def hang():
@@ -40,7 +47,11 @@ def hang():
 
 def fake_tool(tool, args):
     case = Path(os.environ["RELEASE_TEST_CASE"])
-    logged_args = args
+    # Keep event assertions readable while production uses absolute stage paths.
+    logged_args = [
+        re.sub(r"^.*(?=/(?:dist/|build/Plainsay\.app))/", "", arg) if arg.startswith(str(case)) else arg
+        for arg in args
+    ]
     if tool == "security" and args[:1] == ["unlock-keychain"]:
         logged_args = args[:1] + args[-1:]
     with (case / "events").open("a") as events:
@@ -97,6 +108,12 @@ def fake_tool(tool, args):
         elif args[0] == "api" and "Casks/plainsay.rb" in args[-1]:
             state = dict(line.split("=", 1) for line in marker.read_text().splitlines())
             print((Path(state["local_tap"]) / "Casks/plainsay.rb").read_text(), end="")
+        elif args[0] == "api" and "/releases/tags/" in args[1]:
+            state = dict(line.split("=", 1) for line in marker.read_text().splitlines())
+            version = state["tag"][1:]
+            for extension in ("zip", "dmg"):
+                digest = "bad" if mode == "bad-github-asset" else state[extension + "_sha"]
+                print(f"Plainsay-{version}.{extension}\tsha256:{digest}")
         elif args[:2] == ["repo", "view"]:
             print("https://example.invalid/plainsay")
         else:
@@ -117,7 +134,7 @@ def fake_tool(tool, args):
     elif tool == "codesign":
         probe = case / "reuse-signature-probed"
         if (mode in ("reuse-signature-invalid", "hung-reuse-signature")
-                and args == ["--verify", "--deep", "--strict", "build/Plainsay.app"]
+                and logged_args == ["--verify", "--deep", "--strict", "build/Plainsay.app"]
                 and not probe.exists()):
             probe.touch()
             print("codesign: fixture reuse signature failure", file=sys.stderr)
@@ -183,6 +200,12 @@ def fake_tool(tool, args):
     elif tool == "hdiutil":
         if args[0] == "create":
             Path(args[-1]).write_text("fake dmg\n")
+        elif args[0] == "info" and mode == "stale-mount":
+            print("image-path      : /unrelated/dist/Plainsay-0.3.0-rw.dmg")
+            print("disk-a\t/Volumes/Unrelated")
+            stage = Path(env["PLAINSAY_BUNDLE_DIR"]).parent
+            print(f"image-path      : {stage / 'Plainsay-0.3.0-rw.dmg'}")
+            print("disk-b\t/Volumes/Owned")
         elif args[0] == "attach":
             (case / "mount").mkdir()
             print("test-disk\t/Volumes/FakeRelease")
@@ -249,6 +272,8 @@ def fake_tool(tool, args):
         artifact = Path(args[-1]).name
         if artifact == "appcast.xml" and not (server / "Plainsay-latest.dmg").exists():
             print(f"<sparkle:version>{(case / 'feed-build').read_text()}</sparkle:version>")
+        elif mode == "bad-published-package" and artifact.endswith(".zip"):
+            print("bad ZIP")
         else:
             sys.stdout.buffer.write((server / artifact).read_bytes())
     else:
@@ -593,6 +618,10 @@ class ReleaseSandbox(unittest.TestCase):
         return self.run_release("/bin/bash", "-x", "-c",
                                 "source Scripts/release-notary.sh; release_notarytool submit fake.zip", **kwargs)
 
+    def manual_stage(self):
+        key = hashlib.sha256(f"{self.checkout}\n0.3.0\n".encode()).hexdigest()
+        return self.state / f"release.{key}"
+
     def install_sign_update(self):
         path = self.checkout / ".build/artifacts/sparkle/Sparkle/bin/sign_update"
         path.parent.mkdir(parents=True)
@@ -601,9 +630,13 @@ class ReleaseSandbox(unittest.TestCase):
     def stage_notarized_app(self):
         self.bump_main()
         self.install_sign_update()
-        fake_bundle(self.checkout)
+        stage = self.manual_stage()
+        sign_update = stage / "swiftpm/artifacts/sparkle/Sparkle/bin/sign_update"
+        sign_update.parent.mkdir(parents=True)
+        sign_update.symlink_to(self.case / "bin/sign_update")
+        fake_bundle(self.checkout, stage / "build")
         commit = self.git("rev-parse", "HEAD", cwd=self.checkout)
-        (self.checkout / "build/Plainsay.app.release-stamp").write_text(f"0.3.0 300 {commit}\n")
+        (stage / "build/Plainsay.app.release-stamp").write_text(f"0.3.0 300 {commit}\n")
 
     def events(self):
         return (self.case / "events").read_text()
@@ -618,6 +651,7 @@ class ReleaseSandbox(unittest.TestCase):
     def assert_clean_nightly(self):
         self.assert_unlocked()
         self.assertFalse(list(self.state.glob("nightly.*")))
+        self.assertFalse(list(self.state.glob("release.*")))
 
     def assert_no_publication(self):
         self.assertNotRegex(self.events(), r"(?m)^(?:ssh|scp|rsync|git push|gh release (?:create|edit)) ")
@@ -628,7 +662,7 @@ class ReleaseSandbox(unittest.TestCase):
             line.split("=", 1)
             for line in (self.state / "publish.pending").read_text().splitlines()
         )
-        dist = Path(data["local_checkout"]) / "dist"
+        dist = Path(data["local_dist"])
         for filename, field in (
             ("Plainsay-0.3.0.zip", "zip_sha"),
             ("Plainsay-0.3.0.dmg", "dmg_sha"),
@@ -702,7 +736,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.assertEqual(data["tag"], "v0.3.0")
         self.assertEqual(data["build"], "300")
         self.assertIn("<sparkle:version>300</sparkle:version>",
-                      (Path(data["local_checkout"]) / "dist/appcast.xml").read_text())
+                      (Path(data["local_dist"]) / "appcast.xml").read_text())
         self.manual(status=1, match="needs reconciliation")
 
     def test_manual_failure_blocks_nightly_and_retains_artifacts(self):
@@ -718,10 +752,43 @@ class ReleaseSandbox(unittest.TestCase):
         self.nightly("--dry-run", match="v0.3.0 (build 300)")
         self.make_tap()
         self.install_sign_update()
-        self.manual(match="Published 0.3.0")
+        for directory in ("build", "dist", ".build"):
+            location = self.checkout / directory
+            location.mkdir(exist_ok=True)
+            (location / "local-copy").write_text("user-owned")
+        self.manual(match="Published 0.3.0", INSTALL="1", mode="stale-mount")
         self.assertFalse((self.state / "publish.pending").exists())
-        self.assertFalse(list((self.checkout / "dist").glob("tap.*")))
+        self.assertFalse(self.manual_stage().exists())
+        for directory in ("build", "dist", ".build"):
+            self.assertEqual((self.checkout / directory / "local-copy").read_text(), "user-owned")
         self.assertIn("osascript Scripts/dmg-layout.applescript", self.events())
+        self.assertIn("hdiutil detach /Volumes/Owned", self.events())
+        self.assertNotIn("hdiutil detach /Volumes/Unrelated", self.events())
+        self.assert_unlocked()
+
+    def test_public_verification_failure_preserves_local_staging(self):
+        self.bump_main()
+        self.make_tap()
+        self.manual(status=1, mode="bad-published-package", match="published zip checksum mismatch")
+        self.assert_artifacts_retained()
+        self.assertTrue(self.manual_stage().exists())
+
+    def test_github_asset_verification_failure_preserves_local_staging(self):
+        self.bump_main()
+        self.make_tap()
+        self.manual(status=1, mode="bad-github-asset", match="published GitHub asset checksum mismatch")
+        self.assert_artifacts_retained()
+
+    def test_release_stage_symlink_fails_closed(self):
+        self.bump_main()
+        outside = self.case / "outside"
+        outside.mkdir()
+        unrelated = outside / "keep"
+        unrelated.touch()
+        self.manual_stage().symlink_to(outside)
+        self.manual(status=1, match="Unsafe release staging directory")
+        self.assertTrue(unrelated.exists())
+        self.assert_no_publication()
         self.assert_unlocked()
 
     def test_nightly_from_unchanged_plist_cleans_worktree_on_success(self):
@@ -767,7 +834,7 @@ class ReleaseSandbox(unittest.TestCase):
     def test_manual_reuse_unlocks_release_keychain_before_signing(self):
         self.stage_notarized_app()
         self.manual("--prepare-only", REBUILD="0", PLAINSAY_SPARKLE_ACCOUNT="com.plainsay.sparkle",
-                    match="Reusing build/Plainsay.app")
+                    match="Reusing ")
         self.assert_sign_update("com.plainsay.sparkle")
         events = self.events()
         self.assertLess(events.index("security -i\n"), events.index("sign_update "))
@@ -778,7 +845,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.stage_notarized_app()
         output = self.manual("--prepare-only", REBUILD="0", mode="reuse-signature-invalid")
         self.assertNotIn("codesign: fixture reuse signature failure", output)
-        self.assertNotIn("Reusing build/Plainsay.app", output)
+        self.assertNotIn("Reusing ", output)
         self.assertIn("notarytool submit dist/notarize.zip", self.events())
 
     def test_manual_reuse_signature_timeout_stays_visible(self):
@@ -806,7 +873,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.stage_notarized_app()
         output = self.manual(REBUILD="0", mode="notary-unlock-fails", status=1,
                              match="Could not unlock release keychain")
-        self.assertIn("Reusing build/Plainsay.app", output)
+        self.assertIn("Reusing ", output)
         self.assertIn("security -i\n", self.events())
         self.assertNotRegex(self.events(), r"sign_update|notarytool submit")
         self.assert_unlocked()

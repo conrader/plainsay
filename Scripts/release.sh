@@ -16,7 +16,7 @@
 set -euo pipefail
 export PATH="$PATH:/usr/libexec" # macOS PlistBuddy
 
-cd "$(dirname "$0")/.."
+cd -P "$(dirname "$0")/.."
 
 VERSION="${1:?usage: release.sh <version> [notes] [--prepare-only]}"
 NOTES="${2:-}"
@@ -63,7 +63,7 @@ cleanup() {
 	if [ -n "$DMG_STAGING" ]; then rm -rf "$DMG_STAGING" || true; fi
 	if [ -e "$PENDING" ]; then
 		if [ -n "$TAP_DIR" ] && [ -z "$NIGHTLY_SOURCE" ]; then
-			echo "Kept release artifacts at $PWD/dist. See $PENDING." >&2
+			echo "Kept release artifacts at $DIST. See $PENDING." >&2
 		fi
 	else
 		if [ -n "$TAP_DIR" ]; then rm -rf "$TAP_DIR" || true; fi
@@ -72,7 +72,10 @@ cleanup() {
 				echo "Inspect leftover staging directory $REMOTE_STAGE" >&2
 		fi
 	fi
-	release_lock || echo "Inspect leftover lock $LOCK." >&2
+	if ! release_lock; then
+		echo "Inspect leftover lock $LOCK." >&2
+		[ "$result" -ne 0 ] || result=1
+	fi
 	exit "$result"
 }
 trap cleanup EXIT
@@ -91,8 +94,6 @@ else
 fi
 check_pending_release
 
-SIGN_UPDATE=".build/artifacts/sparkle/Sparkle/bin/sign_update"
-[ -x "$SIGN_UPDATE" ] || { echo "sign_update missing — run 'swift build' first" >&2; exit 1; }
 command -v gh >/dev/null || { echo "gh CLI missing — needed to publish the GitHub Release" >&2; exit 1; }
 [ "$SIGN_IDENTITY" != "-" ] || {
 	echo "release DMGs require a Developer ID identity, not ad-hoc signing" >&2
@@ -202,34 +203,61 @@ notarize() {
 	}
 }
 
+# The release lock serializes access to a private stage per checkout and version.
+# Keep it across failures for notarized app reuse and publication recovery.
+STAGE_KEY=$(printf '%s\n' "$PWD" "$VERSION" | shasum -a 256 | awk '{print $1}')
+[[ "$STAGE_KEY" =~ ^[a-f0-9]{64}$ ]] || exit 1
+RELEASE_STAGE="$STATE/release.$STAGE_KEY"
+if [ -n "$NIGHTLY_SOURCE" ]; then
+	[ ! -L "$PWD/build" ] || { echo "Unsafe nightly build directory" >&2; exit 1; }
+	RELEASE_STAGE="$PWD/build/.release-stage"
+fi
+if [ ! -e "$RELEASE_STAGE" ] && [ ! -L "$RELEASE_STAGE" ]; then
+	(umask 077; mkdir -p "$RELEASE_STAGE")
+fi
+[[ -d "$RELEASE_STAGE" && -O "$RELEASE_STAGE" && ! -L "$RELEASE_STAGE" ]] || {
+	echo "Unsafe release staging directory: $RELEASE_STAGE" >&2
+	exit 1
+}
+DIST="$RELEASE_STAGE/dist"
+export PLAINSAY_BUNDLE_DIR="$RELEASE_STAGE/build"
+export PLAINSAY_SWIFTPM_SCRATCH="$RELEASE_STAGE/swiftpm"
+if [ -n "$NIGHTLY_SOURCE" ]; then export PLAINSAY_SWIFTPM_SCRATCH="$PWD/.build"; fi
+export INSTALL=0
+for path in "$DIST" "$PLAINSAY_BUNDLE_DIR" "$PLAINSAY_SWIFTPM_SCRATCH" "$PLAINSAY_BUNDLE_DIR/Plainsay.app"; do
+	[ ! -L "$path" ] || { echo "Unsafe symlink in release staging: $path" >&2; exit 1; }
+done
+APP="$PLAINSAY_BUNDLE_DIR/Plainsay.app"
+SIGN_UPDATE="$PLAINSAY_SWIFTPM_SCRATCH/artifacts/sparkle/Sparkle/bin/sign_update"
+
 # A rerun after a late failure (the DMG step, an upload) shouldn't cost a
 # rebuild and another notarization round trip. The stamp is written only after
 # this exact version, build and commit was notarized, stapled and assessed —
 # the tree is clean, so the commit pins the source — and the app is checked
 # again before it is reused. REBUILD=1 forces a fresh build anyway.
-APP_STAMP="build/Plainsay.app.release-stamp"
+APP_STAMP="$APP.release-stamp"
 RELEASE_KEY="$VERSION $BUILD $(git rev-parse HEAD)"
 reuse_notarized_app() {
-	[ "${REBUILD:-0}" != "1" ] || return 1
-	[ -d build/Plainsay.app ] && [ "$(cat "$APP_STAMP" 2>/dev/null)" = "$RELEASE_KEY" ] || return 1
-	local plist=build/Plainsay.app/Contents/Info.plist
+	[ "${REBUILD:-0}" != "1" ] && [ -x "$SIGN_UPDATE" ] || return 1
+	[ -d "$APP" ] && [ "$(cat "$APP_STAMP" 2>/dev/null)" = "$RELEASE_KEY" ] || return 1
+	local plist="$APP/Contents/Info.plist"
 	[ "$(PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null)" = "$VERSION" ] || return 1
 	[ "$(PlistBuddy -c "Print :CFBundleVersion" "$plist" 2>/dev/null)" = "$BUILD" ] || return 1
 	Scripts/release-timeout.pl 120 'App signature verification' \
-		/bin/bash -c 'exec "$@" 2>/dev/null' _ codesign --verify --deep --strict build/Plainsay.app || return
-	xcrun stapler validate build/Plainsay.app >/dev/null 2>&1 || return 1
-	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -t exec build/Plainsay.app
+		/bin/bash -c 'exec "$@" 2>/dev/null' _ codesign --verify --deep --strict "$APP" || return
+	xcrun stapler validate "$APP" >/dev/null 2>&1 || return 1
+	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -t exec "$APP"
 }
 
 if reuse_notarized_app; then
-	echo "==> Reusing build/Plainsay.app — already notarized and stapled for $VERSION at this commit (REBUILD=1 to rebuild)"
-	rm -rf dist
+	echo "==> Reusing $APP — already notarized and stapled for $VERSION at this commit (REBUILD=1 to rebuild)"
+	rm -rf "$DIST"
 else
 	reuse_status=$?
 	[ "$reuse_status" -ne 124 ] || exit "$reuse_status"
 	rm -f "$APP_STAMP"
 	./Scripts/bundle.sh
-	Scripts/release-timeout.pl 120 'App signature verification' codesign --verify --deep --strict build/Plainsay.app
+	Scripts/release-timeout.pl 120 'App signature verification' codesign --verify --deep --strict "$APP"
 	if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
 
 	# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
@@ -241,24 +269,25 @@ else
 	#     --keychain "${PLAINSAY_RELEASE_KEYCHAIN:-$HOME/Library/Keychains/herdr-release.keychain-db}" \
 	#     --key <AuthKey_*.p8> --key-id <id> --issuer <uuid>
 	echo "==> Notarising (a few minutes)"
-	rm -rf dist && mkdir -p dist
-	ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app dist/notarize.zip
-	notarize dist/notarize.zip
-	xcrun stapler staple build/Plainsay.app
+	rm -rf "$DIST" && mkdir -p "$DIST"
+	ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/notarize.zip"
+	notarize "$DIST/notarize.zip"
+	xcrun stapler staple "$APP"
 	# The ticket is what makes this offline-verifiable; without stapling, a
 	# machine with no network sees an unnotarized app.
-	xcrun stapler validate build/Plainsay.app
-	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -vvv -t exec build/Plainsay.app
-	rm -f dist/notarize.zip
+	xcrun stapler validate "$APP"
+	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -vvv -t exec "$APP"
+	rm -f "$DIST/notarize.zip"
 	echo "$RELEASE_KEY" > "$APP_STAMP"
 fi
 
 echo "==> Packaging"
-mkdir -p dist
-ZIP="dist/Plainsay-$VERSION.zip"
+mkdir -p "$DIST"
+[ -x "$SIGN_UPDATE" ] || { echo "sign_update missing from release build" >&2; exit 1; }
+ZIP="$DIST/Plainsay-$VERSION.zip"
 # ditto, not zip: it preserves the symlinks and extended attributes inside the
 # framework, and a plain zip corrupts the signature on the way through.
-ditto -c -k --sequesterRsrc --keepParent build/Plainsay.app "$ZIP"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 
 LENGTH=$(stat -f%z "$ZIP")
 echo "==> Signing $ZIP ($LENGTH bytes)"
@@ -276,7 +305,7 @@ if release_keychain_configured; then
 fi
 SIGNATURE=$(Scripts/release-timeout.pl 120 sign_update \
 	"$SIGN_UPDATE" -p --account "${PLAINSAY_SPARKLE_ACCOUNT:-ed25519}" "$ZIP")
-PUBLIC_KEY=$(PlistBuddy -c 'Print :SUPublicEDKey' build/Plainsay.app/Contents/Info.plist)
+PUBLIC_KEY=$(PlistBuddy -c 'Print :SUPublicEDKey' "$APP/Contents/Info.plist")
 swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 
 # A DMG for GitHub is a nicer first download than a zip: Finder mounts it and
@@ -293,17 +322,17 @@ swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 # in this recipe elsewhere, but it lines up correctly here as written.
 echo "==> Building DMG"
 if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
-DMG="dist/Plainsay-$VERSION.dmg"
-DMG_STAGING=$(mktemp -d)
+DMG="$DIST/Plainsay-$VERSION.dmg"
+DMG_STAGING=$(mktemp -d "$RELEASE_STAGE/.dmg.XXXXXX")
 if [ -n "$NIGHTLY_SOURCE" ]; then
 	# The login session owns the signing keys. Keep Finder automation out of
 	# the unattended path so a TCC prompt cannot stall the release.
-	ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
+	ditto "$APP" "$DMG_STAGING/Plainsay.app"
 	ln -s /Applications "$DMG_STAGING/Applications"
 	hdiutil create -volname "Plainsay $VERSION" -srcfolder "$DMG_STAGING" -fs HFS+ \
 		-format UDZO -ov "$DMG" >/dev/null
 else
-	DMG_RW="dist/Plainsay-$VERSION-rw.dmg"
+	DMG_RW="$RELEASE_STAGE/Plainsay-$VERSION-rw.dmg"
 	# Finder can keep a just-closed window's volume busy for a moment, so a single
 	# detach attempt is not enough; the read-write image is scratch, so forcing
 	# it as a last resort loses nothing.
@@ -314,19 +343,22 @@ else
 		done
 		hdiutil detach "$1" -force -quiet
 	}
-	ditto build/Plainsay.app "$DMG_STAGING/Plainsay.app"
+	ditto "$APP" "$DMG_STAGING/Plainsay.app"
 	ln -s /Applications "$DMG_STAGING/Applications"
 	mkdir -p "$DMG_STAGING/.background"
 	swift Scripts/make-dmg-background.swift "$DMG_STAGING/.background" >/dev/null
 
 	# A scratch image left mounted by an interrupted run would make this one mount
 	# as "Plainsay $VERSION 1". Only our own read-write images are detached here.
-	hdiutil info | awk -F'\t' '
-		/^image-path/ { scratch = ($0 ~ /\/dist\/Plainsay-[0-9.]+-rw\.dmg$/) }
+	hdiutil info | RELEASE_IMAGE="$DMG_RW" awk -F'\t' '
+		/^image-path/ {
+			sub(/^image-path[[:space:]]*:[[:space:]]*/, "")
+			scratch = ($0 == ENVIRON["RELEASE_IMAGE"])
+		}
 		scratch && $NF ~ /^\/Volumes\// { print $NF }
 	' | while IFS= read -r stale; do
 		echo "    detaching stale scratch volume $stale"
-		detach_dmg "$stale" || true
+		detach_dmg "$stale" || exit 1
 	done
 
 	rm -f "$DMG" "$DMG_RW"
@@ -377,7 +409,7 @@ Scripts/release-timeout.pl 120 'DMG Gatekeeper assessment' spctl -a -vvv -t open
 
 PUBDATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
 
-cat > dist/appcast.xml <<XML
+cat > "$DIST/appcast.xml" <<XML
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
@@ -401,9 +433,9 @@ cat > dist/appcast.xml <<XML
   </channel>
 </rss>
 XML
-xmllint --nonet --noout dist/appcast.xml
+xmllint --nonet --noout "$DIST/appcast.xml"
 if [ "$MODE" = --prepare-only ]; then
-	echo "Prepared and verified $ZIP, $DMG and dist/appcast.xml."
+	echo "Prepared and verified $ZIP, $DMG and $DIST/appcast.xml."
 	exit 0
 fi
 check_release_candidate
@@ -433,12 +465,12 @@ echo "    Remote staging directory: $REMOTE_STAGE"
 ZIP_BASENAME=$(basename "$ZIP")
 DMG_BASENAME=$(basename "$DMG")
 if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
-	for artifact in "$ZIP" "$DMG" dist/appcast.xml; do
+	for artifact in "$ZIP" "$DMG" "$DIST/appcast.xml"; do
 		ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" \
 			"cat > '$REMOTE_STAGE/${artifact##*/}'" < "$artifact"
 	done
 else
-	scp -q "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$ZIP" "$DMG" dist/appcast.xml "$HOST:$REMOTE_STAGE/"
+	scp -q "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$ZIP" "$DMG" "$DIST/appcast.xml" "$HOST:$REMOTE_STAGE/"
 fi
 verify_staged() {
 	local package="$1" checksum="$2" remote_checksum
@@ -447,14 +479,14 @@ verify_staged() {
 }
 LOCAL_ZIP_SHA=$(shasum -a 256 "$ZIP" | awk '{print $1}')
 LOCAL_DMG_SHA=$(shasum -a 256 "$DMG" | awk '{print $1}')
-LOCAL_FEED_SHA=$(shasum -a 256 dist/appcast.xml | awk '{print $1}')
+LOCAL_FEED_SHA=$(shasum -a 256 "$DIST/appcast.xml" | awk '{print $1}')
 verify_staged "$ZIP_BASENAME" "$LOCAL_ZIP_SHA"
 verify_staged "$DMG_BASENAME" "$LOCAL_DMG_SHA"
 verify_staged appcast.xml "$LOCAL_FEED_SHA"
 
 # Prepare the cask locally while failures can still leave the public channels
 # alone. Its GitHub asset becomes available when the draft is published.
-TAP_DIR=$(mktemp -d "$PWD/dist/tap.XXXXXX")
+TAP_DIR=$(mktemp -d "$DIST/tap.XXXXXX")
 git clone --quiet --depth 1 "https://github.com/conrader/homebrew-plainsay.git" "$TAP_DIR"
 CASK="$TAP_DIR/Casks/plainsay.rb"
 [ -f "$CASK" ] || { echo "tap has no Casks/plainsay.rb" >&2; exit 1; }
@@ -490,9 +522,9 @@ echo "    Previous appcast and installer: $BACKUP"
 # Install the shared marker atomically before either path mutates GitHub.
 (
 	umask 077
-	printf 'tag=v%s\nbuild=%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\nlocal_checkout=%s\nlocal_tap=%s\n' \
+	printf 'tag=v%s\nbuild=%s\ncommit=%s\nsource=%s\nstage=%s\nbackup=%s\nzip_sha=%s\ndmg_sha=%s\nfeed_sha=%s\nlocal_checkout=%s\nlocal_dist=%s\nlocal_tap=%s\n' \
 		"$VERSION" "$BUILD" "$RELEASE_COMMIT" "${NIGHTLY_SOURCE:-$RELEASE_COMMIT}" "$REMOTE_STAGE" "$BACKUP" \
-		"$LOCAL_ZIP_SHA" "$LOCAL_DMG_SHA" "$LOCAL_FEED_SHA" "$PWD" "$TAP_DIR" > "$LOCK/publish.pending"
+		"$LOCAL_ZIP_SHA" "$LOCAL_DMG_SHA" "$LOCAL_FEED_SHA" "$PWD" "$DIST" "$TAP_DIR" > "$LOCK/publish.pending"
 	mv "$LOCK/publish.pending" "$PENDING"
 )
 if [ -n "$NIGHTLY_SOURCE" ]; then
@@ -533,6 +565,14 @@ gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -Fqx false || 
 	exit 1
 }
 
+PUBLISHED_ASSETS=$(gh api "repos/conrader/plainsay/releases/tags/v$VERSION" \
+	--jq '.assets[] | select(.state == "uploaded") | [.name, .digest] | @tsv')
+if ! grep -Fxq "$ZIP_BASENAME"$'\t'"sha256:$LOCAL_ZIP_SHA" <<<"$PUBLISHED_ASSETS" ||
+	! grep -Fxq "$DMG_BASENAME"$'\t'"sha256:$LOCAL_DMG_SHA" <<<"$PUBLISHED_ASSETS"; then
+	echo "published GitHub asset checksum mismatch" >&2
+	exit 1
+fi
+
 echo "==> Updating the Homebrew tap"
 git -C "$TAP_DIR" push --quiet origin HEAD:main
 
@@ -560,11 +600,16 @@ grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" <<<"$PUBLISHED_CASK" || {
 	exit 1
 }
 
+DOWNLOAD_URL=$(gh repo view --json url --jq .url)/releases/latest
+# Keep the reconciliation marker until verification succeeds. Once public
+# channels agree, a cleanup failure leaves only private staging to inspect.
+rm -f "$PENDING"
+rm -rf -- "$RELEASE_STAGE"
+TAP_DIR=""
+
 echo
 echo "Published $VERSION"
 echo "  feed:     $FEED_URL/appcast.xml"
 echo "  package:  $FEED_URL/releases/Plainsay-$VERSION.zip"
-echo "  download: $(gh repo view --json url --jq .url)/releases/latest"
+echo "  download: $DOWNLOAD_URL"
 echo "  brew:     brew install --cask conrader/plainsay/plainsay"
-
-rm -f "$PENDING"

@@ -153,8 +153,11 @@ GitHub, nginx, the website, and the Homebrew tap commit independently. The
 manual and nightly publishers write `publish.pending` before the first GitHub
 mutation and clear it after channel verification. Both paths stop while it
 exists. The marker records the tag, build, commits, staging and backup paths,
-SHA-256 checksums, and local checkout and tap paths. A failed publish retains
-the ZIP, DMG, appcast and committed tap clone in that checkout's `dist` folder.
+SHA-256 checksums, and local checkout, artifact (`local_dist`), and tap paths.
+A failed publish retains the ZIP, DMG, appcast and committed tap clone in its
+private stage. Manual `--prepare-only` prints the path of its verified outputs.
+A verified publication removes the stage after checking the public update
+files, the uploaded GitHub asset digests, and the published cask.
 The nightly prints the retained worktree path and releases the lock. Failures
 before the marker leave public artifacts untouched and can be retried.
 
