@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import shlex
 import shutil
 import socket
 import subprocess
@@ -355,7 +356,13 @@ class BackupScriptsPark(unittest.TestCase):
         install = self.root / "privacy-s8-install-backup-scripts.sh"
         install.write_text(text)
         install.chmod(0o755)
-        shutil.copy2(SCRIPTS / "privacy-s8-undo-backup-scripts.sh", self.root)
+        undo = SCRIPTS / "privacy-s8-undo-backup-scripts.sh"
+        fixture_undo = self.root / undo.name
+        undo_text = undo.read_text()
+        park_source = f"source /home/ubuntu/work/Plainsay/parks/{install.name} --undo"
+        self.assertIn(park_source, undo_text)
+        fixture_undo.write_text(undo_text.replace(park_source, f"source {shlex.quote(str(install))} --undo"))
+        fixture_undo.chmod(0o755)
 
     def park(self, action, dry_run=None):
         env = dict(os.environ, FIXTURE_CRONTAB=str(self.crontab))

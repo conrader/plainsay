@@ -5,4 +5,6 @@ if [[ $# != 0 ]]; then
     printf 'Usage: %s\n' "$0" >&2
     exit 2
 fi
-exec "$(dirname -- "${BASH_SOURCE[0]}")/privacy-s8-install-backup-scripts.sh" --undo
+# sb-park snapshots and rebinds this literal source path.
+# shellcheck disable=SC1091
+source /home/ubuntu/work/Plainsay/parks/privacy-s8-install-backup-scripts.sh --undo

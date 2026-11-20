@@ -35,8 +35,9 @@ trap 'rm -rf -- "$tmp"' EXIT
 
 digest() { sha256sum <"$1" | cut -d ' ' -f 1; }
 regular() { [[ -f $1 && ! -L $1 && $(stat -c %h -- "$1") == 1 ]]; }
-targets=("$cron/plainsay-db-backup.sh" "$cron/plainsay-backup-rotate.sh" "$bin/plainsay-offbox-backup" "$cron_d/plainsay-offbox")
-sources=("$repo/Scripts/plainsay-db-backup.sh" "$repo/Scripts/plainsay-backup-rotate.sh" \
+db_backup=plainsay-db-backup.sh
+targets=("$cron/$db_backup" "$cron/plainsay-backup-rotate.sh" "$bin/plainsay-offbox-backup" "$cron_d/plainsay-offbox")
+sources=("$repo/Scripts/$db_backup" "$repo/Scripts/plainsay-backup-rotate.sh" \
          "$repo/Scripts/plainsay-offbox-backup.py" "$tmp/offbox.new")
 metadata=(ubuntu:ubuntu:755 ubuntu:ubuntu:755 root:root:755 root:root:644)
 legacy=(
@@ -150,34 +151,56 @@ if [[ $dry_run == 1 ]]; then exit 0; fi
 
 update_file() (
     local i=$1 action=$2 target=${targets[$1]} stage
-    local run=()
-    if (( i >= 2 )); then run=(sudo -n); fi
     if ! regular "$target" || [[ $(digest "$target") != "${current[i]}" ]]; then
         stop "Installed file changed during preflight: $target"
     fi
-    stage=$("${run[@]}" mktemp -d -- "${target%/*}/.privacy-s8.XXXXXX")
-    trap '"${run[@]}" rm -rf -- "$stage"' EXIT
+    if (( i >= 2 )); then
+        stage=$(sudo -n /usr/bin/mktemp -d -- "${target%/*}/.privacy-s8.XXXXXX")
+        trap 'sudo -n /usr/bin/rm -rf -- "$stage"' EXIT
+    else
+        stage=$(/usr/bin/mktemp -d -- "${target%/*}/.privacy-s8.XXXXXX")
+        trap '/usr/bin/rm -rf -- "$stage"' EXIT
+    fi
     case $action in
         save)
             # Create a complete no-clobber copy before publishing the single .prev name.
-            "${run[@]}" cp -pnT -- "$target" "$stage/prev"
-            "${run[@]}" mv -nT -- "$stage/prev" "$target.prev"
-            if "${run[@]}" test -e "$stage/prev"; then stop "Rollback file appeared during preflight: $target.prev"; fi
+            if (( i >= 2 )); then
+                sudo -n /usr/bin/cp -pnT -- "$target" "$stage/prev"
+                sudo -n /usr/bin/mv -nT -- "$stage/prev" "$target.prev"
+                if ! sudo -n /usr/bin/test -e "$stage/prev"; then return 0; fi
+            else
+                /usr/bin/cp -pnT -- "$target" "$stage/prev"
+                /usr/bin/mv -nT -- "$stage/prev" "$target.prev"
+                if ! /usr/bin/test -e "$stage/prev"; then return 0; fi
+            fi
+            stop "Rollback file appeared during preflight: $target.prev"
             ;;
         install)
             local owner group permissions
             IFS=: read -r owner group permissions <<<"${metadata[i]}"
-            "${run[@]}" install -o "$owner" -g "$group" -m "$permissions" -- "${sources[i]}" "$stage/next"
-            "${run[@]}" mv -fT -- "$stage/next" "$target"
+            if (( i >= 2 )); then
+                sudo -n /usr/bin/install -o "$owner" -g "$group" -m "$permissions" -- "${sources[i]}" "$stage/next"
+            else
+                /usr/bin/install -o "$owner" -g "$group" -m "$permissions" -- "${sources[i]}" "$stage/next"
+            fi
             ;;
         undo)
             if ! regular "$target.prev" || [[ $(digest "$target.prev") != "${legacy[i]}" ]]; then
                 stop "Rollback file changed during preflight: $target.prev"
             fi
-            "${run[@]}" cp -pT -- "$target.prev" "$stage/next"
-            "${run[@]}" mv -fT -- "$stage/next" "$target"
+            if (( i >= 2 )); then
+                sudo -n /usr/bin/cp -pT -- "$target.prev" "$stage/next"
+            else
+                /usr/bin/cp -pT -- "$target.prev" "$stage/next"
+            fi
             ;;
+        *) return 0 ;;
     esac
+    if (( i >= 2 )); then
+        sudo -n /usr/bin/mv -fT -- "$stage/next" "$target"
+    else
+        /usr/bin/mv -fT -- "$stage/next" "$target"
+    fi
 )
 
 update_crontab() {
