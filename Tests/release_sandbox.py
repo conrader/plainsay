@@ -17,6 +17,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = Path(__file__).resolve()
+WATCHDOG = ROOT / "Scripts/release-timeout.pl"
 DEV_ID = "Test Developer ID"
 KEYCHAIN_PASSWORD = 'fixture "quoted" \\ $password'
 
@@ -113,6 +114,16 @@ def fake_tool(tool, args):
             raise AssertionError(args)
     elif tool == "uname":
         print({"-s": "Darwin", "-m": "arm64"}[args[0]])
+    elif tool == "codesign":
+        probe = case / "reuse-signature-probed"
+        if (mode in ("reuse-signature-invalid", "hung-reuse-signature")
+                and args == ["--verify", "--deep", "--strict", "build/Plainsay.app"]
+                and not probe.exists()):
+            probe.touch()
+            print("codesign: fixture reuse signature failure", file=sys.stderr)
+            if mode == "hung-reuse-signature":
+                hang()
+            return 1
     elif tool == "swift":
         if args[0] == "build":
             sign_update = Path(".build/artifacts/sparkle/Sparkle/bin/sign_update")
@@ -241,7 +252,7 @@ def fake_tool(tool, args):
         else:
             sys.stdout.buffer.write((server / artifact).read_bytes())
     else:
-        assert tool in {"codesign", "osascript", "rsync", "spctl", "xmllint"}, tool
+        assert tool in {"osascript", "rsync", "spctl", "xmllint"}, tool
     return 0
 
 
@@ -256,6 +267,99 @@ def release_kcpass(env):
 def release_keychain_configured(env):
     password_file = release_kcpass(env)
     return "PLAINSAY_RELEASE_KEYCHAIN" in env or password_file.exists() or password_file.is_symlink()
+
+
+class ReleaseTimeout(unittest.TestCase):
+    def setUp(self):
+        workspace = tempfile.TemporaryDirectory(prefix="plainsay-timeout-test-")
+        self.addCleanup(workspace.cleanup)
+        self.case = Path(workspace.name)
+
+    def check_grandchild_stopped(self, pidfile):
+        pid = int(pidfile.read_text())
+        # A killed orphan may still be a zombie until the system reaps it.
+        result = subprocess.run(("ps", "-p", str(pid), "-o", "stat=", "-o", "command="),
+                                capture_output=True, text=True, check=False)
+        fields = result.stdout.strip().split(maxsplit=1)
+        if not fields or fields[0].startswith("Z"):
+            return
+        if len(fields) == 2 and fields[1] == "sleep 77":
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        self.fail(f"Grandchild PID {pid} survived the watchdog: {result.stdout.strip()}")
+
+    def test_timeout_stops_grandchild(self):
+        pidfile = self.case / "sleep.pid"
+        self.addCleanup(self.check_grandchild_stopped, pidfile)
+        started = time.monotonic()
+        result = subprocess.run(
+            (WATCHDOG, "1", "Grandchild test", "/bin/bash", "-c",
+             'sleep 77 >/dev/null 2>&1 & echo "$!" > "$1"; wait', "_", pidfile),
+            capture_output=True, text=True, timeout=4, check=False,
+        )
+        self.assertEqual(result.returncode, 124, result.stderr)
+        self.assertLess(time.monotonic() - started, 4)
+        self.assertIn("Grandchild test timed out after 1 seconds", result.stderr)
+
+    def test_timeout_closes_command_substitution_stdout(self):
+        pidfile = self.case / "sleep.pid"
+        self.addCleanup(self.check_grandchild_stopped, pidfile)
+        result = subprocess.run(
+            ("/bin/bash", "-c", 'output=$("$@"); status=$?; printf "%s\\n" "$output"; exit "$status"',
+             "_", WATCHDOG, "1", "Capture test", "/bin/bash", "-c",
+             'trap "echo term; exit 0" TERM; (trap "" TERM; exec sleep 77) & '
+             'echo "$!" > "$1"; echo started; wait', "_", pidfile),
+            capture_output=True, text=True, timeout=4, check=False,
+        )
+        self.assertEqual(result.returncode, 124, result.stderr)
+        self.assertEqual(result.stdout, "started\nterm\n")
+        self.assertIn("Capture test timed out", result.stderr)
+
+    def test_watchdog_forwards_signals_to_child_and_grandchild(self):
+        command = """
+import os
+from pathlib import Path
+import signal
+import sys
+
+def receive(signum, frame):
+    print(f"{role} {signum}", flush=True)
+    if role == "grandchild":
+        sys.exit(0)
+
+role = "child"
+for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+    signal.signal(signum, receive)
+pid = os.fork()
+signal.alarm(8)
+if pid == 0:
+    role = "grandchild"
+    Path(sys.argv[1]).touch()
+    signal.pause()
+else:
+    os.waitpid(pid, 0)
+"""
+        for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            with self.subTest(signal=signum.name):
+                ready = self.case / signum.name
+                with subprocess.Popen(
+                    (WATCHDOG, "15", "Signal test", sys.executable, "-c", command, ready),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                ) as watchdog:
+                    try:
+                        deadline = time.monotonic() + 3
+                        while not ready.exists() and watchdog.poll() is None and time.monotonic() < deadline:
+                            time.sleep(0.01)
+                        self.assertTrue(ready.exists(), "Signal fixture did not start")
+                        watchdog.send_signal(signum)
+                        stdout, stderr = watchdog.communicate(timeout=4)
+                    finally:
+                        if watchdog.poll() is None:
+                            watchdog.kill()
+                self.assertEqual(watchdog.returncode, 128 + signum, stderr)
+                self.assertCountEqual(stdout.splitlines(), [f"child {int(signum)}", f"grandchild {int(signum)}"])
 
 
 class ReleaseSandbox(unittest.TestCase):
@@ -305,7 +409,7 @@ class ReleaseSandbox(unittest.TestCase):
                      "check-release-keychain.swift", "deploy-site.sh"):
             shutil.copy2(ROOT / "Scripts" / file, scripts / file)
         # Shorten selected deadlines in the fixture while running the real watchdog.
-        shutil.copy2(ROOT / "Scripts/release-timeout.pl", scripts / "release-timeout-real.pl")
+        shutil.copy2(WATCHDOG, scripts / "release-timeout-real.pl")
         timeout = scripts / "release-timeout.pl"
         timeout.write_text(
             '#!/usr/bin/perl\n'
@@ -586,6 +690,22 @@ class ReleaseSandbox(unittest.TestCase):
         self.assertLess(events.index("security -i\n"), events.index("sign_update "))
         self.assertNotIn("notarytool submit dist/notarize.zip", events)
         self.assertEqual(events.count("notarytool submit"), 1)
+
+    def test_manual_reuse_signature_failure_falls_back_quietly(self):
+        self.stage_notarized_app()
+        output = self.manual("--prepare-only", REBUILD="0", mode="reuse-signature-invalid")
+        self.assertNotIn("codesign: fixture reuse signature failure", output)
+        self.assertNotIn("Reusing build/Plainsay.app", output)
+        self.assertIn("notarytool submit dist/notarize.zip", self.events())
+
+    def test_manual_reuse_signature_timeout_stays_visible(self):
+        self.stage_notarized_app()
+        output = self.manual("--prepare-only", REBUILD="0", mode="hung-reuse-signature", status=124,
+                             SHORTEN_RELEASE_TIMEOUT_FOR="App signature verification",
+                             match="App signature verification timed out after 2 seconds")
+        self.assertNotIn("codesign: fixture reuse signature failure", output)
+        self.assertNotIn("notarytool submit", self.events())
+        self.assert_unlocked()
 
     def test_empty_sparkle_account_uses_default(self):
         self.stage_notarized_app()

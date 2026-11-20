@@ -216,7 +216,7 @@ reuse_notarized_app() {
 	[ "$(PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null)" = "$VERSION" ] || return 1
 	[ "$(PlistBuddy -c "Print :CFBundleVersion" "$plist" 2>/dev/null)" = "$BUILD" ] || return 1
 	Scripts/release-timeout.pl 120 'App signature verification' \
-		codesign --verify --deep --strict build/Plainsay.app || return
+		/bin/bash -c 'exec "$@" 2>/dev/null' _ codesign --verify --deep --strict build/Plainsay.app || return
 	xcrun stapler validate build/Plainsay.app >/dev/null 2>&1 || return 1
 	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -t exec build/Plainsay.app
 }
