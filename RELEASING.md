@@ -133,10 +133,14 @@ reconciliation.
   A `release.sh` that was already running can survive the kill and keep
   going. A publication step that fails can leave changes that are already
   public in place; follow "Interrupted publication" below.
-- On a timeout the watchdog waits up to two seconds before KILL. The grace
-  period ends early when the watchdog's caller exits. After an INT, TERM or
-  HUP it also ends early, but only once the command has exited and no
-  command is left alive in its group.
+- On a timeout, or after an INT, TERM or HUP, the watchdog waits about two
+  seconds before KILL. This is not a hard bound. After a signal, once the
+  command itself has exited, each poll runs a `/bin/ps` scan before it checks
+  the deadline, so a slow scan delays KILL by however long the scan takes.
+- The grace period ends early when the watchdog's caller exits, which is
+  noticed at the next poll (after any scan). After an INT, TERM or HUP it also
+  ends early, but only once the command has exited and the scan finds no
+  command left alive in its group. If `ps` fails, the group counts as alive.
 - The watchdog has been tested only in a Linux sandbox. Its behaviour on macOS
   with perl 5.34 and during a launchd bootout has not been exercised on
   `mini-m4` yet. `--dry-run` stops before signing, so it does not cover this.
