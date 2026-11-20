@@ -9,8 +9,6 @@
 # macOS 15 requirement that had already been lowered to 14. Anything a
 # release changes in docs/ has to actually reach the server, so this runs
 # from release.sh too.
-# Remote paths are constants expanded by the local shell.
-# shellcheck disable=SC2029
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -103,14 +101,11 @@ HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
 
 echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
-RSYNC_OPTIONS=()
+# The shared directories may be owned by another publisher, so skip their
+# timestamps. The managed receiver already does this on the restricted path.
+RSYNC_OPTIONS=(--omit-dir-times)
 if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
-  # The dedicated deployment user owns this tree. The worktree is private,
-  # but the files copied to nginx's document root must be readable by nginx.
-  RSYNC_OPTIONS=(-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15'
-    --no-owner --no-group --chmod="Du=rwx,Dgo=rx,Fu=rw,Fgo=r")
-else
-  ssh "$HOST" "sudo -n mkdir -p $REMOTE_DIR && sudo -n chown -R \$(whoami) $REMOTE_DIR"
+  RSYNC_OPTIONS=(-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15')
 fi
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
@@ -131,9 +126,10 @@ EXCLUDES=(
   --exclude='.DS_Store'
   --exclude='*.md'
 )
-rsync -az --delete "${RSYNC_OPTIONS[@]+"${RSYNC_OPTIONS[@]}"}" "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
-if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" != 1 ]; then
-  ssh "$HOST" "sudo -n chown -R www-data:www-data $REMOTE_DIR && sudo -n chmod -R a+rX $REMOTE_DIR"
-fi
+# Keep existing directory ACL masks and let new paths inherit receiver ACLs
+# even when the source checkout is private. nginx needs read and traverse access.
+rsync -az --delete --no-perms --no-owner --no-group \
+  --chmod='Dug=rwx,Do=rx,Fug=rw,Fo=r' \
+  "${RSYNC_OPTIONS[@]}" "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
 
 echo "==> Live: https://plainsay.app/"
