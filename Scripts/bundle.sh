@@ -87,10 +87,11 @@ for inner in \
 	"$APP/Contents/Frameworks/Sparkle.framework"
 do
 	[ -e "$inner" ] || continue
-	codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp "$inner" >/dev/null
+	Scripts/release-timeout.pl 120 'Sparkle component signing' \
+		codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp "$inner" >/dev/null
 done
 
-codesign --force \
+Scripts/release-timeout.pl 120 'App signing' codesign --force \
 	--sign "$SIGN_IDENTITY" \
 	--identifier com.plainsay.dictation \
 	--options runtime \
@@ -98,7 +99,7 @@ codesign --force \
 	--timestamp \
 	"$APP"
 
-codesign --verify --verbose=1 "$APP"
+Scripts/release-timeout.pl 120 'App signature verification' codesign --verify --verbose=1 "$APP"
 
 echo
 echo "Built $APP"

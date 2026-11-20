@@ -32,7 +32,8 @@ unlock_release_keychain() {
 		printf -v command_line 'unlock-keychain -p "%s" -- "%s"' "$password" "$keychain_arg"
 		# Leave room for the newline in security's 4096-byte input buffer.
 		(( ${#command_line} < 4095 )) || exit 1
-		builtin printf '%s\n' "$command_line" | security -i >/dev/null
+		builtin printf '%s\n' "$command_line" |
+			Scripts/release-timeout.pl 15 'Release keychain unlock' security -i >/dev/null
 	) < "$password_file"; then
 		printf 'Could not unlock release keychain %s using %s.\n' "$keychain" "$password_file" >&2
 		return 1
@@ -40,10 +41,14 @@ unlock_release_keychain() {
 }
 
 release_notarytool() {
+	local notarytool
+	local credentials=(--keychain-profile plainsay-notary)
 	if release_keychain_configured; then
 		unlock_release_keychain || return 1
-		xcrun notarytool "$@" --keychain-profile plainsay-notary --keychain "$RELEASE_KEYCHAIN"
-	else
-		xcrun notarytool "$@" --keychain-profile plainsay-notary
+		credentials+=(--keychain "$RELEASE_KEYCHAIN")
 	fi
+	# Run notarytool directly so the watchdog can stop the credential lookup.
+	notarytool=$(Scripts/release-timeout.pl 15 'Finding notarytool' xcrun --find notarytool) || return 1
+	# Allow time for upload in addition to notarytool's 20-minute service wait.
+	Scripts/release-timeout.pl 1800 notarytool "$notarytool" "$@" "${credentials[@]}"
 }

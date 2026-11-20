@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,12 @@ def fake_bundle(checkout=Path(".")):
     app = checkout / "build/Plainsay.app/Contents"
     app.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(checkout / "Scripts/Info.plist", app / "Info.plist")
+
+
+def hang():
+    signal.signal(signal.SIGALRM, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    time.sleep(30)
 
 
 def fake_tool(tool, args):
@@ -129,6 +136,8 @@ def fake_tool(tool, args):
             if mode == "notary-unlock-fails":
                 print("security: fixture unlock failed", file=sys.stderr)
                 return 1
+            if mode == "hung-unlock":
+                hang()
             unlocked_keychain.touch()
             return 0
         if args == ["list-keychains"]:
@@ -157,6 +166,8 @@ def fake_tool(tool, args):
         # Consume a fresh unlock just as the notary stub does.
         if release_keychain_configured(env):
             unlocked_keychain.unlink()
+        if mode == "hung-sign-update":
+            hang()
         print("fake-signature")
     elif tool == "hdiutil":
         if args[0] == "create":
@@ -175,17 +186,21 @@ def fake_tool(tool, args):
         else:
             os.execv(env["REAL_AWK"], [env["REAL_AWK"], *args])
     elif tool == "xcrun":
-        if args[0] == "notarytool":
-            assert args[1] == "submit"
-            profile = ["--keychain-profile", "plainsay-notary"]
-            if release_keychain_configured(env):
-                assert args[-4:] == [*profile, "--keychain", release_keychain(env)]
-                unlocked_keychain.unlink()
-            else:
-                assert args[-2:] == profile and "--keychain" not in args
-            print('{"status": "Accepted"}')
+        if args == ["--find", "notarytool"]:
+            print(case / "bin/notarytool")
         else:
             assert args[0] == "stapler"
+    elif tool == "notarytool":
+        assert args[0] == "submit"
+        profile = ["--keychain-profile", "plainsay-notary"]
+        if release_keychain_configured(env):
+            assert args[-4:] == [*profile, "--keychain", release_keychain(env)]
+            unlocked_keychain.unlink()
+        else:
+            assert args[-2:] == profile and "--keychain" not in args
+        if mode == "hung-notarytool":
+            hang()
+        print('{"status": "Accepted"}')
     elif tool == "plutil":
         assert '"Accepted"' in sys.stdin.read()
         print("Accepted")
@@ -261,7 +276,7 @@ class ReleaseSandbox(unittest.TestCase):
         (self.case / "events").touch()
         bin_dir = self.case / "bin"
         bin_dir.mkdir()
-        for name in ("awk", "codesign", "curl", "ditto", "gh", "git", "hdiutil", "osascript",
+        for name in ("awk", "codesign", "curl", "ditto", "gh", "git", "hdiutil", "notarytool", "osascript",
                      "PlistBuddy", "plutil", "rsync", "scp", "security", "sign_update", "spctl",
                      "ssh", "stat", "swift", "uname", "xcrun", "xmllint"):
             (bin_dir / name).symlink_to(SCRIPT)
@@ -289,6 +304,16 @@ class ReleaseSandbox(unittest.TestCase):
         for file in ("nightly-release.sh", "release.sh", "release-state.sh", "release-notary.sh",
                      "check-release-keychain.swift", "deploy-site.sh"):
             shutil.copy2(ROOT / "Scripts" / file, scripts / file)
+        # Shorten selected deadlines in the fixture while running the real watchdog.
+        shutil.copy2(ROOT / "Scripts/release-timeout.pl", scripts / "release-timeout-real.pl")
+        timeout = scripts / "release-timeout.pl"
+        timeout.write_text(
+            '#!/usr/bin/perl\n'
+            'use FindBin;\n'
+            '$ARGV[0] = 2 if $ARGV[1] eq ($ENV{SHORTEN_RELEASE_TIMEOUT_FOR} // "");\n'
+            'exec "$FindBin::Bin/release-timeout-real.pl", @ARGV or die "exec: $!\\n";\n'
+        )
+        timeout.chmod(0o755)
         bundle = scripts / "bundle.sh"
         bundle.write_text(f"#!/bin/bash\nexec {shlex.quote(str(SCRIPT))} --bundle\n")
         bundle.chmod(0o755)
@@ -407,6 +432,10 @@ class ReleaseSandbox(unittest.TestCase):
         self.assert_unlocked()
         self.assertFalse(list(self.state.glob("nightly.*")))
 
+    def assert_no_publication(self):
+        self.assertNotRegex(self.events(), r"(?m)^(?:ssh|scp|rsync|git push|gh release (?:create|edit)) ")
+        self.assertFalse((self.state / "publish.pending").exists())
+
     def assert_artifacts_retained(self):
         data = dict(
             line.split("=", 1)
@@ -522,13 +551,30 @@ class ReleaseSandbox(unittest.TestCase):
         self.assertIn("refs/tags/v0.2.39", self.events())
         self.assert_clean_nightly()
 
+    def test_normal_sign_update_completes_nightly_preparation(self):
+        self.nightly("--prepare-only", SHORTEN_RELEASE_TIMEOUT_FOR="sign_update",
+                     match="Nightly prepare complete for v0.2.39")
+        self.assert_sign_update("ed25519", "0.2.39")
+        self.assertIn("swift Scripts/verify-sparkle-signature.swift dist/Plainsay-0.2.39.zip fake-signature ",
+                      self.events())
+        self.assert_no_publication()
+        self.assert_clean_nightly()
+
+    def test_hung_sign_update_times_out_before_publication(self):
+        self.nightly(status=124, mode="hung-sign-update", SHORTEN_RELEASE_TIMEOUT_FOR="sign_update",
+                     match="sign_update timed out after 2 seconds. See RELEASING.md")
+        self.assert_sign_update("ed25519", "0.2.39")
+        self.assertNotRegex(self.events(), r"verify-sparkle-signature|hdiutil ")
+        self.assert_no_publication()
+        self.assert_clean_nightly()
+
     def test_manual_notarization_uses_default_lookup_without_release_credentials(self):
         self.kcpass.unlink()
         self.bump_main()
         self.install_sign_update()
         self.manual("--prepare-only")
         self.assert_sign_update("ed25519")
-        self.assertEqual(self.events().count("xcrun notarytool submit"), 2)
+        self.assertEqual(self.events().count("notarytool submit"), 2)
         self.assertNotIn("security -i", self.events())
 
     def test_manual_reuse_unlocks_release_keychain_before_signing(self):
@@ -538,8 +584,8 @@ class ReleaseSandbox(unittest.TestCase):
         self.assert_sign_update("com.plainsay.sparkle")
         events = self.events()
         self.assertLess(events.index("security -i\n"), events.index("sign_update "))
-        self.assertNotIn("xcrun notarytool submit dist/notarize.zip", events)
-        self.assertEqual(events.count("xcrun notarytool submit"), 1)
+        self.assertNotIn("notarytool submit dist/notarize.zip", events)
+        self.assertEqual(events.count("notarytool submit"), 1)
 
     def test_empty_sparkle_account_uses_default(self):
         self.stage_notarized_app()
@@ -550,7 +596,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.stage_notarized_app()
         self.manual(REBUILD="0", mode="keychain-not-in-search-list", status=1,
                     match="missing from the Sparkle keychain search list")
-        self.assertNotRegex(self.events(), r"security -i|sign_update|xcrun notarytool")
+        self.assertNotRegex(self.events(), r"security -i|sign_update|notarytool submit")
         self.assert_unlocked()
 
     def test_manual_reuse_stops_if_signing_keychain_unlock_fails(self):
@@ -559,7 +605,7 @@ class ReleaseSandbox(unittest.TestCase):
                              match="Could not unlock release keychain")
         self.assertIn("Reusing build/Plainsay.app", output)
         self.assertIn("security -i\n", self.events())
-        self.assertNotRegex(self.events(), r"sign_update|xcrun notarytool")
+        self.assertNotRegex(self.events(), r"sign_update|notarytool submit")
         self.assert_unlocked()
 
     def test_sparkle_signature_mismatch_stops_publication(self):
@@ -574,20 +620,20 @@ class ReleaseSandbox(unittest.TestCase):
     def test_nightly_requires_password_file(self):
         self.kcpass.unlink()
         self.nightly("--prepare-only", status=1, match="Could not unlock release keychain")
-        self.assertNotIn("xcrun notarytool", self.events())
+        self.assertNotIn("notarytool submit", self.events())
         self.assert_clean_nightly()
 
     def test_explicit_keychain_requires_password_file(self):
         self.kcpass.unlink()
         self.notary(status=1, match="Could not unlock release keychain", PLAINSAY_RELEASE_KEYCHAIN="")
-        self.assertNotIn("xcrun notarytool", self.events())
+        self.assertNotIn("notarytool submit", self.events())
 
     def test_notary_rejects_group_or_world_readable_password_file(self):
         for mode in (0o640, 0o604):
             with self.subTest(mode=oct(mode)):
                 self.kcpass.chmod(mode)
                 self.notary(status=1, match="password file is group/world readable")
-        self.assertNotRegex(self.events(), r"security -i|xcrun notarytool")
+        self.assertNotRegex(self.events(), r"security -i|notarytool submit")
 
     def test_notary_password_stays_out_of_shell_trace(self):
         output = self.notary(match='{"status": "Accepted"}')
@@ -598,7 +644,23 @@ class ReleaseSandbox(unittest.TestCase):
         output = self.nightly("--prepare-only", status=1, mode="notary-unlock-fails",
                               match="Could not unlock release keychain")
         self.assertIn("security: fixture unlock failed", output)
-        self.assertNotIn("xcrun notarytool", self.events())
+        self.assertNotIn("notarytool submit", self.events())
+        self.assert_clean_nightly()
+
+    def test_hung_notary_unlock_times_out_before_submission(self):
+        self.nightly(status=1, mode="hung-unlock", SHORTEN_RELEASE_TIMEOUT_FOR="Release keychain unlock",
+                     match="Release keychain unlock timed out after 2 seconds. See RELEASING.md")
+        self.assertIn("security -i\n", self.events())
+        self.assertNotIn("notarytool submit", self.events())
+        self.assert_no_publication()
+        self.assert_clean_nightly()
+
+    def test_hung_notarytool_times_out_before_publication(self):
+        self.nightly(status=1, mode="hung-notarytool", SHORTEN_RELEASE_TIMEOUT_FOR="notarytool",
+                     match="notarytool timed out after 2 seconds. See RELEASING.md")
+        self.assertIn("notarytool submit dist/notarize.zip", self.events())
+        self.assertNotIn("sign_update", self.events())
+        self.assert_no_publication()
         self.assert_clean_nightly()
 
     def test_locked_keychain_releases_nightly_lock(self):

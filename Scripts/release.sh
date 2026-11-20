@@ -176,13 +176,9 @@ check_release_candidate
 # Find any stale checkout or site validation errors before publication starts.
 ./Scripts/deploy-site.sh --check-only
 
-# macOS has no built-in timeout command. The alarm survives exec and bounds
-# each local check without sending any keychain passwords or opening a prompt.
-run_keychain_check() {
-	/usr/bin/perl -e 'alarm shift; exec @ARGV or die "exec: $!\n"' 15 "$@"
-}
-if ! run_keychain_check swift Scripts/check-release-keychain.swift ||
-	! AVAILABLE_IDENTITIES=$(run_keychain_check security find-identity -v -p codesigning); then
+if ! Scripts/release-timeout.pl 15 'Default keychain check' swift Scripts/check-release-keychain.swift ||
+	! AVAILABLE_IDENTITIES=$(Scripts/release-timeout.pl 15 'Developer ID identity lookup' \
+		security find-identity -v -p codesigning); then
 	echo "Signing keychain is locked, unavailable, or did not respond within 15 seconds. Unlock it in the release user's login session and retry." >&2
 	exit 1
 fi
@@ -219,18 +215,21 @@ reuse_notarized_app() {
 	local plist=build/Plainsay.app/Contents/Info.plist
 	[ "$(PlistBuddy -c "Print :CFBundleShortVersionString" "$plist" 2>/dev/null)" = "$VERSION" ] || return 1
 	[ "$(PlistBuddy -c "Print :CFBundleVersion" "$plist" 2>/dev/null)" = "$BUILD" ] || return 1
-	codesign --verify --deep --strict build/Plainsay.app 2>/dev/null || return 1
+	Scripts/release-timeout.pl 120 'App signature verification' \
+		codesign --verify --deep --strict build/Plainsay.app || return
 	xcrun stapler validate build/Plainsay.app >/dev/null 2>&1 || return 1
-	spctl -a -t exec build/Plainsay.app 2>/dev/null
+	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -t exec build/Plainsay.app
 }
 
 if reuse_notarized_app; then
 	echo "==> Reusing build/Plainsay.app — already notarized and stapled for $VERSION at this commit (REBUILD=1 to rebuild)"
 	rm -rf dist
 else
+	reuse_status=$?
+	[ "$reuse_status" -ne 124 ] || exit "$reuse_status"
 	rm -f "$APP_STAMP"
 	./Scripts/bundle.sh
-	codesign --verify --deep --strict build/Plainsay.app
+	Scripts/release-timeout.pl 120 'App signature verification' codesign --verify --deep --strict build/Plainsay.app
 	if [ -n "$NIGHTLY_SOURCE" ]; then check_nightly_main "$NIGHTLY_SOURCE"; fi
 
 	# Notarise before packaging for release. Without a ticket, Gatekeeper blocks
@@ -249,7 +248,7 @@ else
 	# The ticket is what makes this offline-verifiable; without stapling, a
 	# machine with no network sees an unnotarized app.
 	xcrun stapler validate build/Plainsay.app
-	spctl -a -vvv -t exec build/Plainsay.app
+	Scripts/release-timeout.pl 120 'App Gatekeeper assessment' spctl -a -vvv -t exec build/Plainsay.app
 	rm -f dist/notarize.zip
 	echo "$RELEASE_KEY" > "$APP_STAMP"
 fi
@@ -265,7 +264,7 @@ LENGTH=$(stat -f%z "$ZIP")
 echo "==> Signing $ZIP ($LENGTH bytes)"
 # Sparkle uses the session search list. An app reused above skipped its unlock.
 if release_keychain_configured; then
-	if ! KEYCHAIN_SEARCH_LIST=$(run_keychain_check security list-keychains); then
+	if ! KEYCHAIN_SEARCH_LIST=$(Scripts/release-timeout.pl 15 'Keychain search list lookup' security list-keychains); then
 		echo "Could not read the keychain search list for Sparkle signing." >&2
 		exit 1
 	fi
@@ -275,7 +274,8 @@ if release_keychain_configured; then
 	fi
 	unlock_release_keychain
 fi
-SIGNATURE=$("$SIGN_UPDATE" -p --account "${PLAINSAY_SPARKLE_ACCOUNT:-ed25519}" "$ZIP")
+SIGNATURE=$(Scripts/release-timeout.pl 120 sign_update \
+	"$SIGN_UPDATE" -p --account "${PLAINSAY_SPARKLE_ACCOUNT:-ed25519}" "$ZIP")
 PUBLIC_KEY=$(PlistBuddy -c 'Print :SUPublicEDKey' build/Plainsay.app/Contents/Info.plist)
 swift Scripts/verify-sparkle-signature.swift "$ZIP" "$SIGNATURE" "$PUBLIC_KEY"
 
@@ -368,12 +368,12 @@ DMG_STAGING=""
 # DMG container independently on first mount. Sign the container before
 # notarizing it; a ticket alone is not a usable code signature and `spctl`
 # will reject an unsigned DMG even when stapler can validate its ticket.
-codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG"
-codesign --verify --verbose=2 "$DMG"
+Scripts/release-timeout.pl 120 'DMG signing' codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG"
+Scripts/release-timeout.pl 120 'DMG signature verification' codesign --verify --verbose=2 "$DMG"
 notarize "$DMG"
 xcrun stapler staple "$DMG" >/dev/null
 xcrun stapler validate "$DMG" >/dev/null
-spctl -a -vvv -t open --context context:primary-signature "$DMG"
+Scripts/release-timeout.pl 120 'DMG Gatekeeper assessment' spctl -a -vvv -t open --context context:primary-signature "$DMG"
 
 PUBDATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
 

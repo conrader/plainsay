@@ -57,6 +57,13 @@ by `PLAINSAY_RELEASE_KCPASS`) readable only by that user. The release unlocks
 this keychain for ZIP signing, including when it reuses a notarized app.
 An unset or empty `PLAINSAY_SPARKLE_ACCOUNT` selects the legacy `ed25519` account.
 
+On `mini-m4`, run `~/bin/plainsay-import-sparkle-key` as the release user. It
+grants `/usr/bin/security` and Sparkle's `sign_update` access to the
+`com.plainsay.sparkle` item in `herdr-release.keychain-db` without an interactive
+prompt. The release checkout pins Sparkle to 2.9.5. After any Sparkle upgrade,
+run `swift build` to resolve the new binary, then re-run the import helper or
+repair the item's access control list (ACL) for the new `sign_update` binary.
+
 A detached worktree gets a version-only commit when the nightly generates a
 version bump. For a version already committed on main, the tag points directly
 at the tested main SHA. Nightly DMGs include the app and Applications shortcut
@@ -71,17 +78,29 @@ Manual and nightly releases on the signing host share an exclusive lock and
 publication marker. Run them as the same user with the same state directory
 (`PLAINSAY_NIGHTLY_STATE_DIR` can override the default). Before signing, both
 paths check that the default keychain is unlocked and the Developer ID signing
-identity is available. Each check has a 15-second limit. If a check fails,
-unlock the signing keychain in the login session and check the identity before
-retrying. To pause the agent, run
+identity is available. Keychain checks and unlocks have a 15-second limit.
+`sign_update` and Developer ID signing each have a 120-second limit per call.
+The whole `notarytool` invocation has a 30-minute limit, including upload and
+the 20-minute service wait. A timeout stops the nightly before publication.
+For a Sparkle signing timeout, check the item's ACL as described above. For
+Developer ID or notarization failures, check the signing identity or the
+`plainsay-notary` profile in the release user's login session before retrying.
+
+To pause the agent, run
 `launchctl disable "gui/$(id -u)/com.plainsay.nightly-release"` as the release
 user, wait for an active run to finish, and then boot out the service.
 Use `launchctl enable` with the same service target before bootstrapping again.
 To pick up `PLAINSAY_SPARKLE_ACCOUNT`, reinstall the updated
 `com.plainsay.nightly-release.plist` in the release user's
 `~/Library/LaunchAgents/`, preserving any host-specific paths and settings.
-Reload it with `launchctl bootout` if loaded, then `launchctl bootstrap` in
-the release user's Aqua session (`gui/$(id -u)`).
+In the release user's Aqua session, run the first command if the agent is
+loaded, then run the second command to load the updated plist.
+
+```bash
+launchctl bootout "gui/$(id -u)/com.plainsay.nightly-release"
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.plainsay.nightly-release.plist
+```
+
 The `nightly.lock` directory and `publish.pending` marker live under
 `~/Library/Application Support/PlainsayRelease/` by default. If a crash leaves
 the lock behind, confirm its PID and any child build or publish processes are
