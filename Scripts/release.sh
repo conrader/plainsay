@@ -193,9 +193,11 @@ grep -Fq "$SIGN_IDENTITY" <<<"$AVAILABLE_IDENTITIES" || {
 
 echo "==> Version $VERSION (build $BUILD)"
 
+# shellcheck source=Scripts/release-notary.sh
+source Scripts/release-notary.sh
 notarize() {
 	local package="$1" result status
-	result=$(xcrun notarytool submit "$package" --keychain-profile plainsay-notary \
+	result=$(release_notarytool submit "$package" \
 		--wait --timeout 20m --output-format json) || return 1
 	status=$(plutil -extract status raw -o - - <<< "$result") || return 1
 	[ "$status" = Accepted ] || {
@@ -237,6 +239,7 @@ else
 	#
 	# The credentials live in a Keychain profile created once with:
 	#   xcrun notarytool store-credentials "plainsay-notary" \
+	#     --keychain "${PLAINSAY_RELEASE_KEYCHAIN:-$HOME/Library/Keychains/herdr-release.keychain-db}" \
 	#     --key <AuthKey_*.p8> --key-id <id> --issuer <uuid>
 	echo "==> Notarising (a few minutes)"
 	rm -rf dist && mkdir -p dist

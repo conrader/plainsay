@@ -17,6 +17,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = Path(__file__).resolve()
 DEV_ID = "Test Developer ID"
+KEYCHAIN_PASSWORD = "fixture password"
 
 
 def git(*args, **kwargs):
@@ -31,8 +32,9 @@ def fake_bundle():
 
 def fake_tool(tool, args):
     case = Path(os.environ["RELEASE_TEST_CASE"])
+    unlocking = tool == "security" and args[0] == "unlock-keychain"
     with (case / "events").open("a") as events:
-        events.write(shlex.join([tool, *args]) + "\n")
+        events.write(shlex.join([tool, args[0], args[-1]] if unlocking else [tool, *args]) + "\n")
     mode = os.environ.get("RELEASE_TEST_MODE")
     env = os.environ
     marker = Path(env["PLAINSAY_NIGHTLY_STATE_DIR"]) / "publish.pending"
@@ -111,6 +113,12 @@ def fake_tool(tool, args):
         elif args[0] not in ("test", "Scripts/verify-sparkle-signature.swift", "Scripts/make-dmg-background.swift"):
             raise AssertionError(args)
     elif tool == "security":
+        if unlocking:
+            assert args == ["unlock-keychain", "-p", KEYCHAIN_PASSWORD, release_keychain(env)]
+            if mode == "notary-unlock-fails":
+                return 1
+            (case / "notary-unlocked").touch()
+            return 0
         assert args == ["find-identity", "-v", "-p", "codesigning"]
         if mode == "hung-keychain":
             time.sleep(60)
@@ -144,6 +152,9 @@ def fake_tool(tool, args):
             os.execv(env["REAL_AWK"], [env["REAL_AWK"], *args])
     elif tool == "xcrun":
         if args[0] == "notarytool":
+            assert args[1] == "submit"
+            assert args[-4:] == ["--keychain-profile", "plainsay-notary", "--keychain", release_keychain(env)]
+            (case / "notary-unlocked").unlink()
             print('{"status": "Accepted"}')
         else:
             assert args[0] == "stapler"
@@ -191,6 +202,10 @@ def fake_tool(tool, args):
     return 0
 
 
+def release_keychain(env):
+    return env.get("PLAINSAY_RELEASE_KEYCHAIN") or f"{env['HOME']}/Library/Keychains/herdr-release.keychain-db"
+
+
 class ReleaseSandbox(unittest.TestCase):
     def setUp(self):
         workspace = tempfile.TemporaryDirectory(prefix="plainsay-release-test-")
@@ -201,6 +216,8 @@ class ReleaseSandbox(unittest.TestCase):
         self.remote = self.case / "origin.git"
         self.state = self.case / "release state"
         self.state.mkdir()
+        (self.case / ".herdr-release").mkdir()
+        (self.case / ".herdr-release/kcpass").write_text(f"{KEYCHAIN_PASSWORD}\n")
         (self.case / "feed-build").write_text("238")
         (self.case / "events").touch()
         bin_dir = self.case / "bin"
@@ -230,7 +247,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.git("symbolic-ref", "HEAD", "refs/heads/main")
         scripts = self.seed / "Scripts"
         scripts.mkdir()
-        for file in ("nightly-release.sh", "release.sh", "release-state.sh",
+        for file in ("nightly-release.sh", "release.sh", "release-state.sh", "release-notary.sh",
                      "check-release-keychain.swift", "deploy-site.sh"):
             shutil.copy2(ROOT / "Scripts" / file, scripts / file)
         bundle = scripts / "bundle.sh"
@@ -439,9 +456,16 @@ class ReleaseSandbox(unittest.TestCase):
 
     def test_nightly_from_unchanged_plist_cleans_worktree_on_success(self):
         self.make_tap()
-        self.nightly(match="Nightly publish complete for v0.2.39")
+        self.nightly(match="Nightly publish complete for v0.2.39",
+                     PLAINSAY_RELEASE_KEYCHAIN=str(self.case / "custom release.keychain-db"))
         self.assertFalse((self.state / "publish.pending").exists())
         self.assertIn("refs/tags/v0.2.39", self.events())
+        self.assert_clean_nightly()
+
+    def test_notary_unlock_failure_stops_before_submission(self):
+        self.nightly("--prepare-only", status=1, mode="notary-unlock-fails",
+                     match="Could not unlock release keychain")
+        self.assertNotIn("xcrun notarytool", self.events())
         self.assert_clean_nightly()
 
     def test_locked_keychain_releases_nightly_lock(self):
