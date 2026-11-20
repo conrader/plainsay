@@ -126,6 +126,21 @@ if [ "${INSTALL:-0}" = "1" ]; then
 	ditto "$BUILT_APP" "$CANDIDATE"
 	Scripts/release-timeout.pl 120 'Installed app signature verification' \
 		codesign --verify --deep --strict "$CANDIDATE"
+	# Ask the app to quit, then wait for its process to exit before swapping.
+	for attempt in {0..10}; do
+		if pgrep -x PlainsayApp >/dev/null; then
+			if [ "$attempt" = 0 ]; then
+				osascript -e 'with timeout of 15 seconds' \
+					-e 'if application id "com.plainsay.dictation" is running then tell application id "com.plainsay.dictation" to quit' \
+					-e 'end timeout'
+			fi
+			[ "$attempt" -lt 10 ] || { echo "Plainsay is still running. Quit it before installing." >&2; exit 1; }
+			sleep 1
+		else
+			[ "$?" = 1 ] || exit 1
+			break
+		fi
+	done
 	swift Scripts/swap-app.swift "$CANDIDATE" /Applications/Plainsay.app
 	echo "Installed /Applications/Plainsay.app"
 	echo "Run it with:  open /Applications/Plainsay.app"

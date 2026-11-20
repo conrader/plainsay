@@ -18,8 +18,9 @@ Run the setup commands on the named host during the rollout.
   for the publish renames. Check the live feed has a numeric Sparkle build.
 - On OVH, confirm at least 8 GiB free on `/` and on the update root
   (`df -h / /var/www/plainsay-updates`). Provisioning stops below that.
-- On OVH, install `rsync`, `libxml2-utils` (`xmllint`), and `acl` if needed.
-  Check `command -v rsync sha256sum mktemp xmllint getfacl setfacl`. Check
+- On OVH, install `rsync`, `libxml2-utils` (`xmllint`), `acl`, `python3`
+  and `curl` if needed. Check
+  `command -v rsync sha256sum mktemp xmllint getfacl setfacl python3 curl`. Check
   OpenSSH accepts public keys for the dedicated account and uses Ubuntu's PAM
   handling for locked-password accounts.
   Check any host-level `AllowUsers`, `Match` and sudo rules for `plainsay-deploy`
@@ -73,7 +74,9 @@ via `mktemp -d`, upload the three artifacts over SSH stdin, run `sha256sum`,
 copy the old appcast and stable DMG into `.release-backups/`, and publish
 using `chmod`, `mv` and `rmdir` under `/var/www/plainsay-updates`.
 Pre-publication cleanup removes only the
-unique staging directory. The release rollback also uses `xmllint` on OVH.
+unique staging directory. After publication, the forced command also admits
+the installed retention helper with a version and backup name. The release
+rollback also uses `xmllint` on OVH.
 Site publishing uses `rsync -az --delete` with the exclusions in
 `Scripts/deploy-site.sh` under `/var/www/plainsay-app`. The nightly receiver
 accepts the site's regular files and directories.

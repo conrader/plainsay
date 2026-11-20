@@ -45,7 +45,7 @@ if [[ $dry_run == 1 ]]; then
     exit 0
 fi
 
-require_tools flock rsync sha256sum mktemp xmllint getfacl setfacl runuser useradd usermod groupadd df
+require_tools flock rsync sha256sum mktemp xmllint getfacl setfacl runuser useradd usermod groupadd df python3 curl
 lock_ovh
 check_disk_free
 check_tree "$UPDATES"
@@ -157,6 +157,7 @@ runuser -u "$NGINX_USER" -- test -r "$SITE/index.html" || die 'nginx cannot read
 install -d -o root -g root -m 0755 -- "$DEPLOY_HOME" "$DEPLOY_HOME/bin"
 install -d -o root -g "$DEPLOY_GROUP" -m 0750 -- "$DEPLOY_HOME/.ssh"
 install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-site-rsync.sh" "$DEPLOY_HOME/bin/rsync"
+install -o root -g root -m 0644 -- "$(dirname "$0")/../Scripts/plainsay_release_retention.py" "$DEPLOY_HOME/bin/plainsay_release_retention.py"
 install -o root -g root -m 0755 -- "$(dirname "$0")/ovh-deploy-command.sh" "$DEPLOY_HOME/bin/deploy-command"
 # shellcheck disable=SC2016 # Expand PATH when the remote Bash shell starts.
 printf 'export PATH="%s/bin:$PATH"\n' "$DEPLOY_HOME" > "$DEPLOY_HOME/.bashrc"

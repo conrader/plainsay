@@ -17,6 +17,7 @@ PACKAGE_RE="Plainsay-$VERSION_RE\\.(zip|dmg)|appcast\\.xml"
 CHECKSUM_RE="^sha256sum '($STAGE_RE)/($PACKAGE_RE)'\$"
 UPLOAD_RE="^cat > '($STAGE_RE)/($PACKAGE_RE)'\$"
 REMOVE_RE="^rm -rf '($STAGE_RE)'\$"
+RETENTION_RE="^/usr/bin/python3 -B /var/lib/plainsay-deploy/bin/plainsay_release_retention\.py $VERSION_RE v$VERSION_RE\.[A-Za-z0-9]{6}\$"
 ACTIVATE_RE="^set -eu"$'\n'"chmod a\\+r '($STAGE_RE)/(Plainsay-$VERSION_RE\\.zip)' '$STAGE_RE/(Plainsay-$VERSION_RE\\.dmg)' "
 
 backup_template() {
@@ -60,7 +61,7 @@ allowed_shell() {
         "mktemp -d '$UPDATES/.release-stage.XXXXXX'")
             return 0 ;;
     esac
-    if [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE || $command =~ $UPLOAD_RE ]]; then
+    if [[ $command =~ $CHECKSUM_RE || $command =~ $REMOVE_RE || $command =~ $UPLOAD_RE || $command =~ $RETENTION_RE ]]; then
         return 0
     fi
     if [[ $command =~ \.release-backups/v($VERSION_RE)\.XXXXXX ]]; then

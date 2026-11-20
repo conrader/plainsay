@@ -227,6 +227,16 @@ export INSTALL=0
 for path in "$DIST" "$PLAINSAY_BUNDLE_DIR" "$PLAINSAY_SWIFTPM_SCRATCH" "$PLAINSAY_BUNDLE_DIR/Plainsay.app"; do
 	[ ! -L "$path" ] || { echo "Unsafe symlink in release staging: $path" >&2; exit 1; }
 done
+STAGE_VERSION="$RELEASE_STAGE/.release-version"
+if [[ -e "$STAGE_VERSION" || -L "$STAGE_VERSION" ]]; then
+	[[ -f "$STAGE_VERSION" && ! -L "$STAGE_VERSION" && "$(cat "$STAGE_VERSION")" = "$VERSION" ]] || {
+		echo "Unexpected release staging version marker" >&2
+		exit 1
+	}
+else
+	(umask 077; set -C; printf '%s\n' "$VERSION" > "$STAGE_VERSION")
+fi
+prune_older_release_stages
 APP="$PLAINSAY_BUNDLE_DIR/Plainsay.app"
 SIGN_UPDATE="$PLAINSAY_SWIFTPM_SCRATCH/artifacts/sparkle/Sparkle/bin/sign_update"
 
@@ -516,6 +526,10 @@ backup=\$(mktemp -d '$REMOTE_DIR/.release-backups/v$VERSION.XXXXXX')
 cp '$REMOTE_DIR/appcast.xml' \"\$backup/appcast.xml\"
 cp '$REMOTE_DIR/releases/Plainsay-latest.dmg' \"\$backup/Plainsay-latest.dmg\"
 printf '%s\\n' \"\$backup\"")
+case "$BACKUP" in
+	"$REMOTE_DIR"/.release-backups/v"$VERSION".[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]) ;;
+	*) echo "Unexpected update backup path" >&2; exit 1 ;;
+esac
 echo "    Previous appcast and installer: $BACKUP"
 
 # A disconnect from here on can leave the channels at different versions.
@@ -601,11 +615,14 @@ grep -Fq "sha256 \"$LOCAL_DMG_SHA\"" <<<"$PUBLISHED_CASK" || {
 }
 
 DOWNLOAD_URL=$(gh repo view --json url --jq .url)/releases/latest
-# Keep the reconciliation marker until verification succeeds. Once public
-# channels agree, a cleanup failure leaves only private staging to inspect.
+# Keep recovery artifacts until publication is verified. Retention has its own
+# reference gates and can stop without requiring publication reconciliation.
 rm -f "$PENDING"
 rm -rf -- "$RELEASE_STAGE"
 TAP_DIR=""
+echo "==> Retaining live and rollback release artifacts"
+ssh "${SSH_OPTIONS[@]+"${SSH_OPTIONS[@]}"}" "$HOST" \
+	"/usr/bin/python3 -B /var/lib/plainsay-deploy/bin/plainsay_release_retention.py $VERSION ${BACKUP##*/}"
 
 echo
 echo "Published $VERSION"

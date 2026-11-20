@@ -158,6 +158,11 @@ A failed publish retains the ZIP, DMG, appcast and committed tap clone in its
 private stage. Manual `--prepare-only` prints the path of its verified outputs.
 A verified publication removes the stage after checking the public update
 files, the uploaded GitHub asset digests, and the published cask.
+Under the release lock, preparation removes older private stages whose
+version can be identified. After a verified publish, the OVH retention
+command keeps the new ZIP and the newest verified rollback backup and ZIP.
+If retention stops, resolve the reported guard and rerun the same OVH
+command with the version and backup name printed by the release.
 The nightly prints the retained worktree path and releases the lock. Failures
 before the marker leave public artifacts untouched and can be retried.
 

@@ -248,7 +248,14 @@ def fake_tool(tool, args):
                 check=True,
             )
         if ".release-backups" in command:
-            print("/var/www/plainsay-updates/.release-backups/vtest.ABC123")
+            version = re.search(r"\.release-backups/v(\d+\.\d+\.\d+)\.XXXXXX", command)[1]
+            print(f"/var/www/plainsay-updates/.release-backups/v{version}.ABC123")
+        elif command.startswith("/usr/bin/python3 -B "):
+            assert not marker.exists()
+            assert server.joinpath("Plainsay-latest.dmg").exists()
+            if mode == "retention-reference-hit":
+                print("STOP Live reference matches Plainsay-0.2.20.zip")
+                return 1
         elif ".release-stage" in command and command.startswith("mktemp"):
             server.mkdir()
             print("/var/www/plainsay-updates/.release-stage.ABC123")
@@ -703,6 +710,35 @@ class ReleaseSandbox(unittest.TestCase):
         self.assertEqual(marker.read_text(), "fixture")
         self.assert_clean_nightly()
 
+    def test_prepare_only_cleans_older_stages_and_keeps_inflight_and_pending(self):
+        self.bump_main()
+        older = self.state / ("release." + "a" * 64)
+        older.mkdir()
+        (older / ".release-version").write_text("0.2.99\n")
+        legacy = self.state / "nightly.123ABC/source/build/.release-stage"
+        (legacy / "build").mkdir(parents=True)
+        (legacy / "build/Plainsay.app.release-stamp").write_text("0.2.98 200 prev\n")
+        newer, pending = [self.state / ("release." + digit * 64) for digit in ("b", "c")]
+        for stage, version in ((newer, "0.10.0"), (pending, "0.2.39"), (self.manual_stage(), "0.3.0")):
+            stage.mkdir()
+            (stage / ".release-version").write_text(version + "\n")
+        (pending / "publish.pending").touch()
+        (self.manual_stage() / "inflight").touch()
+        self.manual("--prepare-only", match="Prepared and verified")
+        self.assertFalse(older.exists())
+        self.assertFalse(legacy.exists())
+        self.assertTrue(newer.exists())
+        self.assertTrue((pending / "publish.pending").exists())
+        self.assertTrue((self.manual_stage() / "inflight").exists())
+        self.assert_no_publication()
+
+    def test_retention_stop_after_publication_does_not_leave_pending_marker(self):
+        self.bump_main()
+        self.make_tap()
+        self.manual(status=1, mode="retention-reference-hit", match="STOP Live reference")
+        self.assertIn("plainsay_release_retention.py 0.3.0 v0.3.0.ABC123", self.events())
+        self.assert_clean_nightly()
+
     def test_off_main_tag_no_new_source(self):
         self.add_off_main_tag(new_source=False)
         self.nightly("--dry-run", match="No new main commits since v0.2.39")
@@ -772,6 +808,7 @@ class ReleaseSandbox(unittest.TestCase):
         self.manual(status=1, mode="bad-published-package", match="published zip checksum mismatch")
         self.assert_artifacts_retained()
         self.assertTrue(self.manual_stage().exists())
+        self.assertNotIn("plainsay_release_retention.py", self.events())
 
     def test_github_asset_verification_failure_preserves_local_staging(self):
         self.bump_main()

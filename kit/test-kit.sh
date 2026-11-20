@@ -280,6 +280,10 @@ forced_command() {
     allowed "sha256sum '$stage/appcast.xml'"
     allowed "cat > '$stage/$zip'"
     allowed "rm -rf '$stage'"
+    command="/usr/bin/python3 -B /var/lib/plainsay-deploy/bin/plainsay_release_retention.py $version v$version.Ab12Cd"
+    allowed "$command"
+    denied "$command; id"
+    denied "${command%.*}.../outside"
     allowed "test -w $updates && test -w $updates/releases && test -w /var/www/plainsay-app"
     command="set -eu
 umask 077

@@ -5,6 +5,7 @@ import fcntl
 import hashlib
 import os
 from pathlib import Path
+import re
 import shlex
 import signal
 import subprocess
@@ -18,6 +19,7 @@ RECIPIENT = Path('/etc/plainsay-offbox/recipient.txt')
 LOG = Path('/var/log/plainsay-offbox.log')
 LOCK = Path('/var/lib/plainsay-offbox/backup.lock')
 REMOTE = '/var/backups/plainsay-offbox'
+STAMPED_BACKUPS = 'plainsay-' + '[0-9]' * 8 + 'T' + '[0-9]' * 6 + 'Z.db.age'
 SSH = ['/usr/bin/ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
        '-o', 'ConnectTimeout=15', '-o', 'ServerAliveInterval=15',
        '-o', 'ServerAliveCountMax=2', 'serwerdmt']
@@ -84,6 +86,27 @@ def source_file():
     return DB
 
 
+def check_freshness():
+    listing = run(SSH + [f"""
+set -eu
+cd -P -- {shlex.quote(REMOTE)}
+test "$(pwd -P)" = {shlex.quote(REMOTE)}
+exec 9<.
+flock -s -w 20 9
+find . -maxdepth 1 -type f -name '{STAMPED_BACKUPS}' -printf '%f\\n'
+"""], 'check off-box backup freshness', 30)
+    names = listing.decode('ascii').splitlines()
+    if not names or any(not re.fullmatch(r'plainsay-\d{8}T\d{6}Z\.db\.age', name) for name in names):
+        raise BackupError('ALERT newest off-box backup is unavailable')
+    newest = max(names)
+    try:
+        created = datetime.datetime.strptime(newest, 'plainsay-%Y%m%dT%H%M%SZ.db.age')
+    except ValueError as error:
+        raise BackupError('ALERT newest off-box backup has an invalid timestamp') from error
+    if datetime.datetime.now(datetime.timezone.utc) - created.replace(tzinfo=datetime.timezone.utc) > datetime.timedelta(days=2):
+        raise BackupError(f'ALERT newest off-box backup is older than 2 days ({newest})')
+
+
 def backup():
     source = source_file()
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
@@ -113,7 +136,6 @@ def backup():
                    f'test ! -e {partial} && test ! -L {partial}'],
             'prepare remote directory')
         digest = hashlib.sha256(encrypted.read_bytes()).hexdigest()
-        pattern = 'plainsay-' + '[0-9]' * 8 + 'T' + '[0-9]' * 6 + 'Z.db.age'
         published = False
         try:
             run(SCP + [str(encrypted), f'serwerdmt:{partial}'], 'upload ciphertext')
@@ -128,7 +150,7 @@ test ! -L {partial}
 printf '%s  %s\\n' {digest} {partial} | sha256sum --check --status
 # Reject a stale writer before publishing. Hold the lock through pruning.
 export LC_ALL=C
-for existing in {pattern}; do
+for existing in {STAMPED_BACKUPS}; do
     if [ -f "$existing" ] && [ "$existing" \\> {name} ]; then exit 1; fi
 done
 chmod 0600 {partial}
@@ -141,7 +163,7 @@ if ! printf '%s  %s\\n' {digest} {final} | sha256sum --check --status; then
     rm -- {final}
     exit 1
 fi
-for old in {pattern}; do
+for old in {STAMPED_BACKUPS}; do
     if [ -f "$old" ] && [ ! -L "$old" ] && [ "$old" \\< {name} ]; then
         rm -- "$old"
     fi
@@ -165,11 +187,14 @@ def interrupted(signum, frame):
     raise BackupError(f'interrupted by signal {signum}', 128 + signum)
 
 
-def main():
+def main(check_only=False):
     os.umask(0o077)
     started = iso()
     lock = None
     try:
+        if check_only:
+            check_freshness()
+            return 0
         lock = LOCK.open('a')
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -205,4 +230,6 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    if sys.argv[1:] not in ([], ['--check-freshness']):
+        sys.exit('Usage: plainsay-offbox-backup [--check-freshness]')
+    sys.exit(main(check_only=len(sys.argv) == 2))
