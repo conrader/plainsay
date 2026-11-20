@@ -5,13 +5,16 @@ import base64
 from contextlib import redirect_stdout
 from datetime import datetime, timezone
 import fcntl
+import grp
 import hashlib
 import importlib.util
 import io
 import json
 import os
 from pathlib import Path
+import pwd
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -87,7 +90,7 @@ class OnboxRetention(unittest.TestCase):
         self.assertTrue(self.older.exists())
 
     def test_freshness_alert_is_nonzero_and_preserves_the_last_copy(self):
-        command = ["bash", "-c", 'source "$1"; log() { printf "%s\\n" "$*"; }; check_daily_backup "$2"',
+        command = ["bash", "-c", 'source "$1"; check_daily_backup "$2"',
                    "_", SCRIPTS / "plainsay-backup-rotate.sh", self.root]
         stale = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(stale.returncode, 1)
@@ -97,6 +100,55 @@ class OnboxRetention(unittest.TestCase):
         (self.backups / f"plainsay-daily-{stamp}.db").touch()
         fresh = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual((fresh.returncode, fresh.stdout), (0, ""))
+        self.backups.rename(self.root / "saved-backups")
+        missing = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(missing.returncode, 1)
+        self.assertIn("ALERT newest on-box daily backup is unavailable", missing.stdout)
+        self.assertFalse(self.backups.exists())
+
+    def test_hourly_freshness_job_notifies_at_most_once_per_24_hours(self):
+        lib = self.root / "lib.sh"
+        lib.write_text('STATE=$PLAINSAY_BACKUP_ROOT\n'
+                       'ts() { /usr/bin/date -u +%Y-%m-%dT%H:%M:%SZ; }\n'
+                       'log() { printf "%s\\n" "$*"; }\n'
+                       'init_check() { exec 9>"$STATE/$1.lock"; flock -n 9; STARTED=$(ts); }\n')
+        notifier = self.root / "sb-codejob"
+        notifier.write_text('#!/bin/bash\nprintf "%s\\n" "$*" >>"$FIXTURE_NOTICES"\n'
+                            'cat >>"$FIXTURE_NOTICES"\nexit 9\n')
+        notifier.chmod(0o755)
+        fake_date = self.root / "date"
+        fake_date.write_text('#!/bin/bash\nif [[ $* == "-u +%s" ]]; then echo "$FIXTURE_NOW"; '
+                             'else exec /usr/bin/date "$@"; fi\n')
+        fake_date.chmod(0o755)
+        script = self.root / "rotate.sh"
+        script.write_text((SCRIPTS / "plainsay-backup-rotate.sh").read_text()
+                          .replace("/home/ubuntu/work/Plainsay/cron/lib.sh", str(lib))
+                          .replace("/home/ubuntu/sb/bin/sb-codejob", str(notifier)))
+        notices = self.root / "notices"
+        env = dict(os.environ, PATH=f"{self.root}:{os.environ['PATH']}",
+                   PLAINSAY_BACKUP_ROOT=str(self.root), FIXTURE_NOTICES=str(notices))
+        now = 2_000_000_000
+        os.utime(self.other, (1, 1))
+
+        def check(time):
+            return subprocess.run(["bash", script, "--check-freshness"], capture_output=True, text=True,
+                                  env={**env, "FIXTURE_NOW": str(time)})
+
+        first = check(now)
+        self.assertEqual(first.returncode, 1, first.stderr)
+        self.assertIn("failure_wake_exit=9", first.stdout)
+        self.assertIn("--label plainsay-onbox-freshness", notices.read_text())
+        self.assertIn("ALERT newest on-box daily backup is older than 2 days", notices.read_text())
+        self.assertIn("suppressed within 24h", check(now + 86399).stdout)
+        self.assertEqual(notices.read_text().count("--label"), 1)
+        self.assertEqual(check(now + 86400).returncode, 1)
+        self.assertEqual(notices.read_text().count("--label"), 2)
+        stamp = datetime.fromtimestamp(now, timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        (self.backups / f"plainsay-daily-{stamp}.db").touch()
+        self.assertEqual(check(now + 172800).returncode, 0)
+        self.assertEqual(notices.read_text().count("--label"), 2)
+        self.assertTrue(self.older.exists())
+        self.assertTrue(self.other.exists())
 
 
 class OffboxRetention(unittest.TestCase):
@@ -237,6 +289,132 @@ class OffboxRetention(unittest.TestCase):
                 notify.assert_not_called()
         self.assertFalse(OFFBOX.FRESHNESS_NOTICE.exists())
         self.assertIn("freshness_wake=suppressed state unavailable", OFFBOX.LOG.read_text())
+
+
+class BackupScriptsPark(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(prefix="plainsay-backup-park-fixture-")
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name).resolve()
+        cron, bin_dir, cron_d, commands = (self.root / name for name in ("cron", "bin", "cron.d", "tools"))
+        for directory in (cron, bin_dir, cron_d, commands):
+            directory.mkdir(mode=0o755)
+            directory.chmod(0o755)
+        (cron / "lib.sh").touch()
+        self.targets = [cron / "plainsay-db-backup.sh", cron / "plainsay-backup-rotate.sh",
+                        bin_dir / "plainsay-offbox-backup", cron_d / "plainsay-offbox"]
+        self.previous = [path.with_name(path.name + ".prev") for path in self.targets]
+        self.sources = [SCRIPTS / "plainsay-db-backup.sh", SCRIPTS / "plainsay-backup-rotate.sh",
+                        SCRIPTS / "plainsay-offbox-backup.py"]
+        self.old_files = [f"original {path.name}\n".encode() for path in self.targets]
+        for path, content in zip(self.targets, self.old_files):
+            path.write_bytes(content)
+            path.chmod(0o644 if path.parent == cron_d else 0o755)
+        self.crontab = self.root / "crontab"
+        self.old_cron = (
+            "# other job\n31 1 * * * /bin/true\n"
+            "# Plainsay DB backup rotation: delete backup copies older than 30 days (privacy policy §8), hourly.\n"
+            f"41 * * * * {self.targets[1]} >/dev/null 2>&1\n"
+            "# Plainsay daily online DB backup (sqlite3 .backup as plainsay) into /var/lib/plainsay/backups; rotated after 30 days.\n"
+            f"17 2 * * * {self.targets[0]} >/dev/null 2>&1\n"
+        )
+        self.crontab.write_text(self.old_cron)
+        for name, body in {
+            "sudo": '[[ $1 == -n ]]; shift\nif [[ $1 == /usr/bin/id ]]; then echo 0; else exec "$@"; fi\n',
+            "git": 'case $3 in symbolic-ref) echo docs/privacy-backup-retention;; merge-base) exit 0;; *) exit 1;; esac\n',
+            "crontab": 'case $1 in -l) cat "$FIXTURE_CRONTAB";; -n) test -s "$2";; '
+                       '*) cp -- "$1" "$FIXTURE_CRONTAB";; esac\n',
+            "sb-codejob": 'exit 99\n',
+        }.items():
+            executable = commands / name
+            executable.write_text(f"#!/bin/bash\nset -eu\n{body}")
+            executable.chmod(0o755)
+        old_shas = [
+            "bfe3091e55c1533bf6f645a76ed914fd8debfcba42e0f812cc7c1f3f37989882",
+            "f3526fcc787057b36b701796eb2fa1a5e03218f9f39e5f64ca7d592d9805c78c",
+            "d74edd53f36cd3afeed11500daa07ea8405f1662d1d276936d8d9bd191eb4f82",
+            "98868456350c171935bf6c4f82662c81632b25d50baa0f92430650c690f13fb2",
+        ]
+        user = pwd.getpwuid(os.getuid()).pw_name
+        group = grp.getgrgid(os.getgid()).gr_name
+        text = (SCRIPTS / "privacy-s8-install-backup-scripts.sh").read_text()
+        for old, new in (
+            ("export PATH=/usr/bin:/bin", f"export PATH={commands}:/usr/bin:/bin"),
+            ("/home/ubuntu/work/Plainsay/privacy-s8", str(ROOT)),
+            ("/home/ubuntu/work/Plainsay/cron", str(cron)),
+            ("bin=/usr/local/bin", f"bin={bin_dir}"),
+            ("cron_d=/etc/cron.d", f"cron_d={cron_d}"),
+            ("/home/ubuntu/sb/bin/sb-codejob", str(commands / "sb-codejob")),
+            ("vps-98fe3bb4", socket.gethostname().split(".")[0]),
+            ("$(id -un) == ubuntu", f"$(id -un) == {user}"),
+            ("ubuntu:ubuntu:", f"{user}:{group}:"),
+            ("root:root:", f"{user}:{group}:"),
+            *zip(old_shas, (hashlib.sha256(content).hexdigest() for content in self.old_files)),
+        ):
+            text = text.replace(old, new)
+        install = self.root / "privacy-s8-install-backup-scripts.sh"
+        install.write_text(text)
+        install.chmod(0o755)
+        shutil.copy2(SCRIPTS / "privacy-s8-undo-backup-scripts.sh", self.root)
+
+    def park(self, action, dry_run=None):
+        env = dict(os.environ, FIXTURE_CRONTAB=str(self.crontab))
+        env.pop("DRY_RUN", None)
+        if dry_run is not None:
+            env["DRY_RUN"] = dry_run
+        return subprocess.run([self.root / f"privacy-s8-{action}-backup-scripts.sh"],
+                              env=env, capture_output=True, text=True)
+
+    def test_install_and_undo_are_dry_by_default_and_idempotent(self):
+        for action in ("install", "undo"):
+            result = self.park(action)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"{action} DRY_RUN=1", result.stdout)
+        self.assertEqual([path.read_bytes() for path in self.targets], self.old_files)
+        self.assertEqual(self.crontab.read_text(), self.old_cron)
+        self.assertFalse(any(path.exists() for path in self.previous))
+
+        for _ in range(2):
+            result = self.park("install", "0")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual([path.read_bytes() for path in self.previous], self.old_files)
+            self.assertEqual([path.read_bytes() for path in self.targets[:3]],
+                             [path.read_bytes() for path in self.sources])
+            self.assertEqual(self.crontab.read_text().count("--check-freshness"), 1)
+            self.assertIn("47 * * * *", self.crontab.read_text())
+            self.assertNotIn("rotated after 30 days", self.crontab.read_text())
+            self.assertEqual(self.targets[3].read_text().count("--check-freshness"), 1)
+            self.assertIn("53 * * * * ubuntu", self.targets[3].read_text())
+
+        unrelated = "# edited after install\n12 8 * * * /bin/false\n"
+        with self.crontab.open("a") as table:
+            table.write(unrelated)
+        review = self.park("undo")
+        self.assertEqual(review.returncode, 0, review.stderr)
+        self.assertIn(hashlib.sha256(self.old_files[0]).hexdigest(), review.stdout)
+        self.assertIn("--check-freshness", self.crontab.read_text())
+        for _ in range(2):
+            result = self.park("undo", "0")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual([path.read_bytes() for path in self.targets], self.old_files)
+            self.assertEqual([path.read_bytes() for path in self.previous], self.old_files)
+            self.assertEqual(self.crontab.read_text(), self.old_cron + unrelated)
+
+    def test_preflight_refuses_unexpected_cron_or_rollback_file_before_writing(self):
+        bad = self.old_cron + f"41 * * * * {self.targets[1]} --check-freshness\n"
+        self.crontab.write_text(bad)
+        result = self.park("install", "0")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("differ from the reviewed layout", result.stderr)
+        self.assertFalse(any(path.exists() for path in self.previous))
+        self.crontab.write_text(self.old_cron)
+        self.previous[-1].symlink_to(self.targets[-1])
+        result = self.park("install", "0")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("Unexpected rollback file", result.stderr)
+        self.assertFalse(any(path.exists() for path in self.previous[:-1]))
+        self.assertEqual([path.read_bytes() for path in self.targets], self.old_files)
+        self.assertEqual(self.crontab.read_text(), self.old_cron)
 
 
 class OneOffPrune(unittest.TestCase):
