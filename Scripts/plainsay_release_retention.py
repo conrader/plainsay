@@ -14,12 +14,15 @@ from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
 UPDATE = Path("/var/www/plainsay-updates")
+LAUNCH = Path("/var/backups/plainsay-launch-0.2.24")
 APPCAST = "https://api.plainsay.app/appcast.xml"
 GITHUB = "https://api.github.com/repos/conrader/plainsay"
 CASK = "https://api.github.com/repos/conrader/homebrew-plainsay/contents/Casks/plainsay.rb?ref=main"
 VERSION = r"[0-9]+\.[0-9]+\.[0-9]+"
 BACKUP_NAME = rf"v{VERSION}\.[A-Za-z0-9]{{6}}"
 BACKUP_FILES = {"appcast.xml", "Plainsay-latest.dmg"}
+
+
 class Stop(Exception):
     pass
 
@@ -36,11 +39,15 @@ def fetch(url):
         raise Stop(f"HTTPS read failed for {url}") from error
 
 
-def url_name(url):
+def url_path(url):
     parsed = urlsplit(url)
     if parsed.scheme != "https" or not parsed.hostname:
         raise Stop("Expected an absolute HTTPS artifact URL")
-    return PurePosixPath(unquote(parsed.path, errors="strict")).name
+    return PurePosixPath(unquote(parsed.path, errors="strict"))
+
+
+def url_name(url):
+    return url_path(url).name
 
 
 def enclosure_urls(data):
@@ -97,9 +104,10 @@ def cask_names(data):
         if "#{version}" in template:
             if not versions:
                 raise Stop("Homebrew URL requires a literal version")
-            names.update(url_name(template.replace("#{version}", v)) for v in versions)
+            for version in versions:
+                names.update(url_path(template.replace("#{version}", version)).parts)
         else:
-            names.add(url_name(template))
+            names.update(url_path(template).parts)
     return names
 
 
@@ -146,7 +154,7 @@ def live_references(update, expected_zip=None):
     # Include the origin file in case an HTTPS cache still serves an older feed.
     file_info(update / "appcast.xml")
     urls += enclosure_urls((update / "appcast.xml").read_bytes())
-    references = {url_name(url) for url in urls}
+    references = {part for url in urls for part in url_path(url).parts}
     if expected_zip is not None and local_zip(urls) != expected_zip:
         raise Stop("Hosted and origin appcasts must reference the new ZIP")
     cask = json.loads(fetch(CASK))
@@ -158,7 +166,8 @@ def live_references(update, expected_zip=None):
     if expected_zip is not None and expected_zip not in latest:
         raise Stop("GitHub Latest does not contain the new ZIP")
     for name, asset in latest.items():
-        references.update((name, url_name(asset["browser_download_url"])))
+        references.add(name)
+        references.update(url_path(asset["browser_download_url"]).parts)
     return {name.casefold() for name in references}
 
 
@@ -173,16 +182,23 @@ def local_zip(urls):
     return names.pop()
 
 
-def verify_rollback(update, path):
+def backup_zip(update, path):
+    check_directory(path)
     feed = path / "appcast.xml"
     file_info(feed)
     name = local_zip(enclosure_urls(feed.read_bytes()))
-    match = re.fullmatch(rf"Plainsay-({VERSION})\.zip", name)
-    if not match:
+    if not re.fullmatch(rf"Plainsay-{VERSION}\.zip", name):
         raise Stop("Rollback artifact has no supported versioned digest")
-    version = match[1]
+    return update / "releases" / name
+
+
+def verify_rollback(update, path, *, expected_zip=None):
+    package = backup_zip(update, path)
+    name = package.name
+    if expected_zip is not None and name != expected_zip:
+        raise Stop(f"Newest OVH release rollback {path} does not enclose {expected_zip}")
+    version = package.stem.removeprefix("Plainsay-")
     assets = github_assets(f"tags/v{version}")
-    package = update / "releases" / name
     if not matches_asset(package, assets.get(name, {})):
         raise Stop("Rollback ZIP checksum mismatch")
     if not matches_asset(path / "Plainsay-latest.dmg", assets.get(f"Plainsay-{version}.dmg", {})):
@@ -200,7 +216,17 @@ def backup_directories(update):
     if not os.path.lexists(root):
         return []
     check_directory(root)
-    return [path for path in root.iterdir() if re.fullmatch(BACKUP_NAME, path.name)]
+    paths = sorted(root.iterdir())
+    if any(not re.fullmatch(BACKUP_NAME, path.name) for path in paths):
+        raise Stop(f"Unexpected entries in {root}")
+    return paths
+
+
+def check_backup_dependencies(update, backups, obsolete):
+    for path in backups:
+        package = backup_zip(update, path)
+        if package in obsolete:
+            raise Stop(f"{path} still depends on {package.name}")
 
 
 def unfinished_publication(update):
@@ -251,6 +277,8 @@ def retain(update, version, backup):
             raise Stop(f"Live reference matches {', '.join(hits)}")
         if unfinished_publication(update):
             raise Stop("Update root contains an unfinished publication")
+        if os.path.lexists(LAUNCH):
+            check_backup_dependencies(update, [LAUNCH], obsolete)
         # Remove backup directories first so a failed cleanup can't strand an
         # older backup with a missing ZIP. The verified rollback stays intact.
         for path, files in sorted(backups.items()):

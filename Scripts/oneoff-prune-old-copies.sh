@@ -1,9 +1,14 @@
 #!/bin/bash
-# Run on OVH as root via sudo from the account that can SSH to macbook-m4.
+# Run on OVH via sudo. The OVH step uses mini-m4, and --macbook uses macbook-m4.
 set -euo pipefail
 export DRY_RUN="${DRY_RUN:-1}"
 cd "$(dirname "$0")"
-exec python3 -B oneoff-prune-old-copies.py <<'PATHS'
+if [[ ${1:-} == --macbook ]]; then
+    exec python3 -B oneoff-prune-old-copies.py "$@" <<'PATHS'
+/Users/konradsierzputowski/Downloads/Plainsay-latest.dmg
+PATHS
+fi
+exec python3 -B oneoff-prune-old-copies.py "$@" <<'PATHS'
 /var/www/plainsay-updates/releases/Plainsay-0.1.1.zip
 /var/www/plainsay-updates/releases/Plainsay-0.1.2.zip
 /var/www/plainsay-updates/releases/Plainsay-0.1.3.zip
@@ -46,5 +51,4 @@ exec python3 -B oneoff-prune-old-copies.py <<'PATHS'
 /var/www/plainsay-updates/releases/Plainsay-0.2.36.zip
 /var/www/plainsay-updates/releases/Plainsay-0.2.37.zip
 /var/backups/plainsay-launch-0.2.24
-macbook-m4:/Users/konradsierzputowski/Downloads/Plainsay-latest.dmg
 PATHS

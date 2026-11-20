@@ -14,7 +14,6 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -136,7 +135,8 @@ class OffboxRetention(unittest.TestCase):
 
         settings = patch.multiple(OFFBOX, REMOTE=str(self.remote), SSH=["fixture-ssh"], SCP=["fixture-scp"],
                                   SQLITE=["/usr/bin/sqlite3", "-readonly"], source_file=lambda: self.source,
-                                  run=run, LOG=self.root / "offbox.log", recent=[])
+                                  run=run, LOG=self.root / "offbox.log", recent=[],
+                                  LOCK=self.root / "backup.lock", FRESHNESS_NOTICE=self.root / "freshness-notice")
         settings.start()
         self.addCleanup(settings.stop)
 
@@ -188,6 +188,57 @@ class OffboxRetention(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertTrue(self.older.exists())
 
+    def test_freshness_notification_attempt_is_persisted_for_24_hours(self):
+        now = 10**18
+        interval = OFFBOX.FRESHNESS_NOTICE_INTERVAL
+        failure = OFFBOX.BackupError("fixture SSH failure", 124)
+        with patch.object(OFFBOX, "check_freshness", side_effect=failure) as freshness, \
+                patch.object(OFFBOX.time, "time_ns", return_value=now) as clock, \
+                patch.object(subprocess, "run", side_effect=subprocess.TimeoutExpired("fixture", 1)) as notify:
+            self.assertEqual(OFFBOX.main(check_only=True), 124)
+            self.assertEqual(OFFBOX.FRESHNESS_NOTICE.read_text(), f"{now}\n")
+            freshness.side_effect = None
+            self.assertEqual(OFFBOX.main(check_only=True), 0)
+            freshness.side_effect = failure
+            clock.return_value = now + interval - 1
+            self.assertEqual(OFFBOX.main(check_only=True), 124)
+            self.assertEqual(notify.call_count, 1)
+            clock.return_value = now + interval
+            self.assertEqual(OFFBOX.main(check_only=True), 124)
+            self.assertEqual(notify.call_count, 2)
+        self.assertIn("freshness_wake=suppressed within 24h", OFFBOX.LOG.read_text())
+
+    def test_freshness_notification_fails_closed_on_invalid_or_unwritable_state(self):
+        for state, setup in (
+            (self.root / "malformed", lambda path: path.write_text("bad timestamp\n")),
+            (self.root / "missing-directory" / "state", lambda path: None),
+            (self.root / "symlink", lambda path: path.symlink_to(self.older)),
+        ):
+            setup(state)
+            with self.subTest(state=state.name), patch.object(OFFBOX, "FRESHNESS_NOTICE", state), \
+                    patch.object(OFFBOX, "check_freshness", side_effect=OFFBOX.BackupError("fixture")), \
+                    patch.object(subprocess, "run") as notify:
+                self.assertEqual(OFFBOX.main(check_only=True), 1)
+                notify.assert_not_called()
+        self.assertEqual(OFFBOX.LOG.read_text().count("freshness_wake=suppressed state unavailable"), 3)
+
+    def test_freshness_cooldown_does_not_suppress_daily_backup_failure(self):
+        OFFBOX.FRESHNESS_NOTICE.write_text(f"{OFFBOX.time.time_ns()}\n")
+        with patch.object(OFFBOX, "backup", side_effect=OFFBOX.BackupError("fixture")), \
+                patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)) as notify:
+            self.assertEqual(OFFBOX.main(), 1)
+            notify.assert_called_once()
+
+    def test_freshness_notification_fails_closed_when_lock_is_held(self):
+        with OFFBOX.LOCK.open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            with patch.object(OFFBOX, "check_freshness", side_effect=OFFBOX.BackupError("fixture")), \
+                    patch.object(subprocess, "run") as notify:
+                self.assertEqual(OFFBOX.main(check_only=True), 1)
+                notify.assert_not_called()
+        self.assertFalse(OFFBOX.FRESHNESS_NOTICE.exists())
+        self.assertIn("freshness_wake=suppressed state unavailable", OFFBOX.LOG.read_text())
+
 
 class OneOffPrune(unittest.TestCase):
     def setUp(self):
@@ -199,35 +250,34 @@ class OneOffPrune(unittest.TestCase):
         releases.mkdir(parents=True)
         self.launch = root / "plainsay-launch-0.2.24"
         self.launch.mkdir()
-        self.rollback_zip = releases / "Plainsay-0.2.23.zip"
+        self.legacy_zip = releases / "Plainsay-0.2.23.zip"
+        self.legacy_zip.write_bytes(b"legacy ZIP")
+        self.rollback_zip = releases / "Plainsay-0.2.38.zip"
         self.old = releases / "Plainsay-0.2.24.zip"
         self.old.write_bytes(b"old")
         self.rollback_zip.write_bytes(b"verified ZIP")
-        rollback_dmg = self.launch / "Plainsay-latest.dmg"
-        rollback_dmg.write_bytes(b"verified DMG")
-        with tarfile.open(self.launch / "plainsay-app.tar.gz", "w:gz") as archive:
-            member = tarfile.TarInfo("plainsay-app/index.html")
-            member.size = 1
-            archive.addfile(member, io.BytesIO(b"x"))
-        (self.launch / "appcast.xml").write_bytes(self.feed("Plainsay-0.2.23.zip"))
-        self.live = self.feed("Plainsay-0.2.38.zip")
+        (self.launch / "Plainsay-latest.dmg").write_bytes(b"legacy DMG")
+        (self.launch / "plainsay-app.tar.gz").write_bytes(b"legacy site archive")
+        (self.launch / "appcast.xml").write_bytes(self.feed(self.legacy_zip.name))
+        self.newest = self.make_release_backup("v0.2.39.NEW123")
+        self.live = self.feed("Plainsay-0.2.39.zip")
         (self.update / "appcast.xml").write_bytes(self.live)
-        self.cask = b'  version "0.2.38"\n  url "https://example.invalid/Plainsay-#{version}.dmg"\n'
+        self.cask = b'  version "0.2.39"\n  url "https://example.invalid/Plainsay-#{version}.dmg"\n'
         self.mac_dmg = f"{PARK.DOWNLOADS}/Plainsay-latest.dmg"
         self.listing = f"-rw-r--r--  1 501 20 123 Nov 20 10:00 {self.mac_dmg}\n"
         self.paused = True
         self.mac_removals = []
-        self.latest = [self.asset("Plainsay-0.2.38.dmg", b"x")]
+        self.latest = [self.asset("Plainsay-0.2.39.dmg", b"x")]
         self.historical = [self.asset(self.rollback_zip.name, self.rollback_zip.read_bytes()),
-                           self.asset("Plainsay-0.2.23.dmg", rollback_dmg.read_bytes())]
+                           self.asset("Plainsay-0.2.38.dmg", b"verified DMG")]
         settings = patch.multiple(PARK, UPDATE=self.update, LAUNCH=self.launch,
                                   ssh=self.ssh, mac_remove=self.mac_remove)
         settings.start()
         self.addCleanup(settings.stop)
-        fetch = patch.object(RETENTION, "fetch", self.fetch)
+        fetch = patch.multiple(RETENTION, fetch=self.fetch, LAUNCH=self.launch)
         fetch.start()
         self.addCleanup(fetch.stop)
-        self.entries = [str(self.rollback_zip), str(self.old), str(self.launch), f"{PARK.MAC}:{self.mac_dmg}"]
+        self.entries = [str(self.legacy_zip), str(self.old), str(self.launch)]
 
     @staticmethod
     def feed(name, delta=""):
@@ -250,8 +300,8 @@ class OneOffPrune(unittest.TestCase):
             return json.dumps({"encoding": "base64", "content": base64.b64encode(self.cask).decode()})
         if url.endswith("releases/latest"):
             return '{"id": 1, "draft": false, "prerelease": false}'
-        if url.endswith("tags/v0.2.23"):
-            return '{"id": 2, "tag_name": "v0.2.23", "draft": false, "prerelease": false}'
+        if url.endswith("tags/v0.2.38"):
+            return '{"id": 2, "tag_name": "v0.2.38", "draft": false, "prerelease": false}'
         if "/1/assets?" in url:
             return json.dumps(self.latest)
         if "/2/assets?" in url:
@@ -283,72 +333,88 @@ class OneOffPrune(unittest.TestCase):
             self.run_prune(dry=False)
         self.assertTrue(self.old.exists())
         self.assertTrue(self.rollback_zip.exists())
+        self.assertTrue(self.legacy_zip.exists())
         self.assertTrue(self.launch.exists())
         self.assertEqual(self.mac_removals, [])
 
     def test_dry_run_plans_only_unprotected_paths(self):
         output = self.run_prune()
-        self.assertIn("candidates=4 planned=2 bytes=126 dry_run=1", output)
+        self.assertRegex(output, r"candidates=3 planned=3 bytes=\d+ dry_run=1")
+        self.assertTrue(self.legacy_zip.exists())
+        self.assertTrue(self.launch.exists())
         self.assertTrue(self.old.exists())
         self.assertEqual(self.mac_removals, [])
 
-    def test_explicit_delete_keeps_rollback_and_its_feed_asset(self):
+    def test_explicit_delete_removes_legacy_pair_and_keeps_verified_rollback(self):
         self.run_prune(dry=False)
         self.assertFalse(self.old.exists())
+        self.assertFalse(self.legacy_zip.exists())
+        self.assertFalse(self.launch.exists())
         self.assertTrue(self.rollback_zip.exists())
-        self.assertTrue(self.launch.exists())
-        self.assertEqual(self.mac_removals, [self.mac_dmg])
+        self.assertTrue(self.newest.exists())
+        self.assertEqual(self.mac_removals, [])
 
-    def make_release_backup(self, name="v0.2.24.ABC123"):
+    def make_release_backup(self, name, package=None):
         backups = self.update / ".release-backups"
         newer = backups / name
-        newer.mkdir(parents=True)
-        for name in ("Plainsay-latest.dmg", "appcast.xml"):
-            shutil.copyfile(self.launch / name, newer / name)
-        now = newer.stat().st_mtime
-        os.utime(newer, (now, now + 1))
+        newer.mkdir(parents=True, exist_ok=False)
+        (newer / "appcast.xml").write_bytes(self.feed((package or self.rollback_zip).name))
+        (newer / "Plainsay-latest.dmg").write_bytes(b"verified DMG")
         return newer
 
-    def test_newest_verified_rollback_allows_launch_backup_removal(self):
-        newer = self.make_release_backup()
-        self.run_prune(dry=False)
-        self.assertFalse(self.launch.exists())
-        self.assertTrue(newer.exists())
-        self.assertTrue(self.rollback_zip.exists())
+    def test_unsaved_newer_rollback_blocks_every_delete_even_with_live_artifacts(self):
+        (self.rollback_zip.parent / "Plainsay-latest.dmg").write_bytes(b"verified DMG")
+        (self.update / "appcast.xml").write_bytes(self.feed(self.rollback_zip.name))
+        shutil.rmtree(self.newest)
+        self.assert_protected("No saved v0.2.38 rollback")
 
     def test_unverifiable_newest_rollback_stops_before_falling_back(self):
-        older = self.make_release_backup()
+        older = self.make_release_backup("v0.2.38.OLD123")
         os.utime(older, (1, 1))
-        (self.launch / "Plainsay-latest.dmg").write_bytes(b"corrupt")
-        self.assert_protected("Unverified newest OVH release rollback")
+        (self.newest / "Plainsay-latest.dmg").write_bytes(b"corrupt")
+        self.assert_protected("Rollback installer checksum mismatch")
         self.assertTrue(older.exists())
+
+    def test_bad_rollback_zip_digest_blocks_every_delete(self):
+        self.historical[0]["digest"] = "sha256:" + "0" * 64
+        self.assert_protected("Rollback ZIP checksum mismatch")
+
+    def test_newest_rollback_must_enclose_v0238(self):
+        (self.newest / "appcast.xml").write_bytes(self.feed(self.old.name))
+        self.assert_protected("does not enclose Plainsay-0.2.38.zip")
+
+    def test_another_backup_needing_legacy_zip_blocks_oneoff(self):
+        older = self.make_release_backup("v0.2.38.OLD123", self.legacy_zip)
+        os.utime(older, (1, 1))
+        self.assert_protected("still depends on Plainsay-0.2.23.zip")
+
+    def test_unknown_launch_dependency_blocks_every_delete(self):
+        (self.launch / "appcast.xml").write_bytes(self.feed(self.old.name))
+        self.assert_protected("Unexpected launch rollback dependency")
 
     def test_reference_appearing_at_final_gate_blocks_every_delete(self):
         first_fetch = self.fetch
+        count = 0
 
         def fetch(url):
-            if url == RETENTION.APPCAST and self.mac_ssh_called:
-                return self.feed(self.old.name)
+            nonlocal count
+            if url == RETENTION.APPCAST:
+                count += 1
+                if count == 2:
+                    return self.feed(self.legacy_zip.name)
             return first_fetch(url)
 
-        self.mac_ssh_called = False
-
-        def record_mac(user, host, cmd):
-            if host == PARK.MAC:
-                self.mac_ssh_called = True
-            return self.ssh(user, host, cmd)
-
-        with patch.object(PARK, "ssh", record_mac), patch.object(RETENTION, "fetch", fetch):
+        with patch.object(RETENTION, "fetch", fetch):
             self.assert_protected("live reference matches")
 
     def test_single_quotes_and_percent_encoded_delta_block_every_delete(self):
-        self.live = self.feed("Plainsay-0.2.38.zip", """<sparkle:deltas>
+        self.live = self.feed("Plainsay-0.2.39.zip", """<sparkle:deltas>
           <enclosure url="https://api.plainsay.app/releases/Plainsay-0.2.%32%34.zip?build=1"/>
           </sparkle:deltas>""")
         self.assert_protected("live reference matches")
 
     def test_hosted_origin_feed_also_blocks_delete(self):
-        (self.update / "appcast.xml").write_bytes(self.feed(self.old.name))
+        (self.update / "appcast.xml").write_bytes(self.feed(self.legacy_zip.name))
         self.assert_protected("live reference matches")
 
     def test_cask_checks_both_architectures_and_query_strings(self):
@@ -356,7 +422,7 @@ class OneOffPrune(unittest.TestCase):
              url "https://example.invalid/arm.dmg"
           end
           on_intel do
-               url('https://example.invalid/Plainsay-latest.dmg?arch=intel')
+               url('https://example.invalid/plainsay-launch-0.2.24/Plainsay-latest.dmg?arch=intel')
           end
         """
         self.assert_protected("live reference matches")
@@ -366,31 +432,48 @@ class OneOffPrune(unittest.TestCase):
         self.assert_protected("Unsupported Homebrew")
 
     def test_latest_github_asset_blocks_every_delete(self):
-        self.latest.append(self.asset(self.old.name, self.old.read_bytes()))
+        self.latest.append(self.asset(self.legacy_zip.name, self.legacy_zip.read_bytes()))
         self.assert_protected("live reference matches")
 
-    def test_unreachable_mac_blocks_every_delete(self):
+    def test_unreachable_mac_skips_only_optional_step(self):
         self.listing = None
-        self.assert_protected("inventory unavailable")
+        with self.assertRaisesRegex(PARK.Stop, "inventory unavailable; MacBook step skipped"):
+            PARK.prune_macbook([self.mac_dmg], False, "fixture-user")
+        self.assertTrue(self.launch.exists())
+        self.assertEqual(self.mac_removals, [])
+        self.run_prune(dry=False)
+        self.assertFalse(self.launch.exists())
+        self.assertFalse(self.legacy_zip.exists())
 
-    def test_unknown_mac_download_blocks_every_delete(self):
+    def test_unknown_mac_download_blocks_mac_removal(self):
         self.listing = self.listing.replace("Plainsay-latest.dmg", "Plainsay-other.dmg")
-        self.assert_protected("outside the verified explicit inventory")
+        with self.assertRaisesRegex(PARK.Stop, "outside the verified explicit inventory"):
+            PARK.prune_macbook([self.mac_dmg], False, "fixture-user")
+        self.assertEqual(self.mac_removals, [])
 
-    def test_corrupt_rollback_blocks_every_delete(self):
-        (self.launch / "Plainsay-latest.dmg").write_bytes(b"corrupt")
-        self.assert_protected("Unverified newest OVH release rollback")
+    def test_optional_macbook_step_needs_no_mini_pause_and_defaults_to_dry_run(self):
+        self.paused = False
+        with patch.dict(os.environ, {}, clear=True), patch.object(os, "geteuid", return_value=0), \
+                patch.object(sys, "stdin", io.StringIO(self.mac_dmg)), redirect_stdout(io.StringIO()) as output:
+            PARK.main(macbook=True)
+        self.assertIn("candidates=1 planned=1 bytes=123 dry_run=1", output.getvalue())
+        self.assertEqual(self.mac_removals, [])
+        with redirect_stdout(io.StringIO()):
+            PARK.prune_macbook([self.mac_dmg], False, "fixture-user")
+        self.assertEqual(self.mac_removals, [self.mac_dmg])
+        self.assertTrue(self.launch.exists())
+
     def test_release_pause_is_required_and_rechecked_before_delete(self):
         self.paused = False
         self.assert_protected("release pause could not be verified")
         self.paused = True
 
-        def resume_during_inventory(user, host, command):
-            if host == PARK.MAC:
-                self.paused = False
-            return self.ssh(user, host, command)
+        def resume_after_check(user, host, command):
+            result = self.ssh(user, host, command)
+            self.paused = False
+            return result
 
-        with patch.object(PARK, "ssh", resume_during_inventory):
+        with patch.object(PARK, "ssh", resume_after_check):
             self.assert_protected("release pause could not be verified")
 
     def test_mini_pause_check_requires_lock_flag_and_no_pending_publication(self):
@@ -415,27 +498,38 @@ class OneOffPrune(unittest.TestCase):
                     fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
 
         with patch.multiple(PARK, SETUP_LOCK=setup_lock, prune=concurrent_kit), \
-                patch.dict(os.environ, {"DRY_RUN": "1"}), patch.object(os, "geteuid", return_value=0), \
+                patch.dict(os.environ, {"DRY_RUN": "0"}), patch.object(os, "geteuid", return_value=0), \
                 patch.object(sys, "stdin", io.StringIO()):
             self.assertFalse(setup_lock.exists())
             PARK.main()
         self.assertEqual(setup_lock.stat().st_mode & 0o777, 0o600)
 
+    def test_dry_run_does_not_create_missing_setup_lock(self):
+        setup_lock = self.update.parent / "setup.lock"
+        with patch.object(PARK, "SETUP_LOCK", setup_lock), patch.dict(os.environ, {}, clear=True), \
+                patch.object(os, "geteuid", return_value=0), patch.object(sys, "stdin", io.StringIO()):
+            with self.assertRaisesRegex(PARK.Stop, "Cannot take the kit lock without creating"):
+                PARK.main()
+        self.assertFalse(setup_lock.exists())
+
     def retention_fixture(self):
         older = self.make_release_backup("v0.2.37.OLD123")
         os.utime(older, (1, 1))
-        newest = self.make_release_backup("v0.2.38.NEW123")
-        live_zip = self.old.parent / "Plainsay-0.2.38.zip"
+        live_zip = self.old.parent / "Plainsay-0.2.39.zip"
         live_zip.write_bytes(b"live")
         self.latest.append(self.asset(live_zip.name, live_zip.read_bytes()))
-        return older, newest, live_zip
+        return older, self.newest, live_zip
 
     def test_future_retention_keeps_live_zip_and_newest_verified_rollback(self):
         older, newest, live_zip = self.retention_fixture()
         unmanaged = self.old.parent / "Plainsay-latest.dmg"
         unmanaged.touch()
+        obsolete = self.old.parent / "Plainsay-0.2.25.zip"
+        obsolete.touch()
         with redirect_stdout(io.StringIO()):
-            RETENTION.retain(self.update, "0.2.38", newest)
+            self.run_prune(dry=False)
+            self.assertTrue(obsolete.exists())
+            RETENTION.retain(self.update, "0.2.39", newest)
         self.assertFalse(older.exists())
         self.assertTrue(newest.exists())
         self.assertEqual(set(self.old.parent.iterdir()), {live_zip, self.rollback_zip, unmanaged})
@@ -454,10 +548,10 @@ class OneOffPrune(unittest.TestCase):
                 else:
                     self.latest.append(self.asset(self.old.name, self.old.read_bytes()))
                 with self.assertRaisesRegex(RETENTION.Stop, "Appcast|Live reference"):
-                    RETENTION.retain(self.update, "0.2.38", newest)
+                    RETENTION.retain(self.update, "0.2.39", newest)
                 self.assertTrue(self.old.exists())
                 self.assertTrue(older.exists())
-                self.live = self.feed("Plainsay-0.2.38.zip")
+                self.live = self.feed("Plainsay-0.2.39.zip")
                 (self.update / "appcast.xml").write_bytes(self.live)
                 self.cask = cask
 
@@ -465,9 +559,18 @@ class OneOffPrune(unittest.TestCase):
         older, newest, _ = self.retention_fixture()
         (newest / "Plainsay-latest.dmg").write_bytes(b"corrupt")
         with self.assertRaisesRegex(RETENTION.Stop, "Rollback installer checksum mismatch"):
-            RETENTION.retain(self.update, "0.2.38", newest)
+            RETENTION.retain(self.update, "0.2.39", newest)
         self.assertTrue(older.exists())
         self.assertTrue(self.old.exists())
+
+    def test_future_retention_stops_before_orphaning_launch_backup(self):
+        older, newest, _ = self.retention_fixture()
+        with self.assertRaisesRegex(RETENTION.Stop, "still depends on Plainsay-0.2.23.zip"):
+            RETENTION.retain(self.update, "0.2.39", newest)
+        self.assertTrue(older.exists())
+        self.assertTrue(self.old.exists())
+        self.assertTrue(self.legacy_zip.exists())
+        self.assertTrue(self.launch.exists())
 
     def test_unsafe_candidate_blocks_every_delete(self):
         unrelated = self.old.with_suffix(".unrelated")

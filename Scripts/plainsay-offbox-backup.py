@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shlex
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,8 @@ BACKUPS = Path('/var/lib/plainsay/backups')
 RECIPIENT = Path('/etc/plainsay-offbox/recipient.txt')
 LOG = Path('/var/log/plainsay-offbox.log')
 LOCK = Path('/var/lib/plainsay-offbox/backup.lock')
+FRESHNESS_NOTICE = LOCK.with_name('freshness-notice')
+FRESHNESS_NOTICE_INTERVAL = 24 * 3600 * 10**9
 REMOTE = '/var/backups/plainsay-offbox'
 STAMPED_BACKUPS = 'plainsay-' + '[0-9]' * 8 + 'T' + '[0-9]' * 6 + 'Z.db.age'
 SSH = ['/usr/bin/ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
@@ -187,6 +190,46 @@ def interrupted(signum, frame):
     raise BackupError(f'interrupted by signal {signum}', 128 + signum)
 
 
+def reserve_freshness_notice():
+    try:
+        with LOCK.open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            now = time.time_ns()
+            try:
+                fd = os.open(FRESHNESS_NOTICE, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            except FileNotFoundError:
+                pass
+            else:
+                with os.fdopen(fd, 'rb') as state:
+                    if not stat.S_ISREG(os.fstat(state.fileno()).st_mode):
+                        raise ValueError('invalid freshness notice state')
+                    stamp = state.read(32)
+                    if not re.fullmatch(rb'[1-9][0-9]{0,19}\n', stamp):
+                        raise ValueError('invalid freshness notice timestamp')
+                    if now < int(stamp) + FRESHNESS_NOTICE_INTERVAL:
+                        log('freshness_wake=suppressed within 24h of last attempt')
+                        return False
+            # Reserve before calling the notifier, including when it times out.
+            with tempfile.NamedTemporaryFile(dir=FRESHNESS_NOTICE.parent, delete=False) as state:
+                pending = Path(state.name)
+                try:
+                    state.write(f'{now}\n'.encode())
+                    state.flush()
+                    os.fsync(state.fileno())
+                    os.replace(pending, FRESHNESS_NOTICE)
+                finally:
+                    pending.unlink(missing_ok=True)
+            directory = os.open(FRESHNESS_NOTICE.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+    except (OSError, ValueError) as error:
+        log(f'freshness_wake=suppressed state unavailable ({type(error).__name__})')
+        return False
+    return True
+
+
 def main(check_only=False):
     os.umask(0o077)
     started = iso()
@@ -209,6 +252,8 @@ def main(check_only=False):
         code = error.code if isinstance(error, BackupError) else 1
         message = str(error) if isinstance(error, BackupError) else type(error).__name__
         log(f'FAIL exit={code} step={message}')
+        if check_only and not reserve_freshness_notice():
+            return code
         ended = iso()
         try:
             lines = LOG.read_text().splitlines(keepends=True)[-15:]
