@@ -5,6 +5,20 @@ import Testing
 
 // MARK: - Fakes
 
+/// Stands in for the system output so no test mutes the machine running it.
+@MainActor
+final class FakeOutputMute: SystemOutputMuting {
+    private(set) var isMuted = false
+    private(set) var muteCount = 0
+
+    func mute() {
+        isMuted = true
+        muteCount += 1
+    }
+
+    func restore() { isMuted = false }
+}
+
 @MainActor
 final class FakeRecorder: AudioRecording {
     var isRecording = false
@@ -335,6 +349,7 @@ private func isolatedCloudClient() -> PlainsayCloudClient {
 private struct Harness {
     let settings: PlainsaySettings
     let recorder = FakeRecorder()
+    let outputMute = FakeOutputMute()
     let engine = FakeEngine()
     let cleaner = FakeCleaner()
     let inserter = FakeInserter()
@@ -379,6 +394,7 @@ private struct Harness {
             history: history,
             cloud: isolatedCloudClient(),
             recorder: recorder,
+            outputMute: outputMute,
             inserter: inserter,
             makeEngine: { _, _, _ in engine },
             makeCleaner: { _ in cleaner },
@@ -966,6 +982,72 @@ struct PipelineTests {
         harness.coordinator.handleHotkeyEdge(.down(at: 2))
         #expect(harness.coordinator.phase == .recording)
         #expect(harness.coordinator.cancelDictation())
+    }
+
+    @Test("Sound output is left alone unless muting is turned on")
+    func outputMuteIsOptIn() async throws {
+        let harness = Harness()
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(20))
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        try await harness.settle()
+        #expect(harness.outputMute.muteCount == 0)
+    }
+
+    @Test("Output is muted while recording and restored when it stops")
+    func outputMutedDuringRecording() async throws {
+        let harness = Harness()
+        harness.settings.muteOutputWhileRecording = true
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await harness.waitUntil { harness.outputMute.isMuted }
+        #expect(harness.outputMute.isMuted)
+
+        harness.coordinator.handleHotkeyEdge(.up(at: 1))
+        #expect(!harness.outputMute.isMuted)
+        try await harness.settle()
+        #expect(harness.inserter.inserted.count == 1)
+    }
+
+    @Test("Escape restores the output it muted")
+    func cancelRestoresOutput() async throws {
+        let harness = Harness()
+        harness.settings.muteOutputWhileRecording = true
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await harness.waitUntil { harness.outputMute.isMuted }
+        #expect(harness.coordinator.cancelDictation())
+        #expect(!harness.outputMute.isMuted)
+    }
+
+    @Test("A recording that ends before the mute lands never mutes the output")
+    func earlyStopNeverStrandsMute() async throws {
+        let harness = Harness()
+        harness.settings.muteOutputWhileRecording = true
+        await harness.ready()
+
+        // Press and release in the same turn: the deferred mute must see the
+        // recording is over rather than mute a Mac nobody will unmute.
+        harness.dictate(holdFor: 1)
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.outputMute.muteCount == 0)
+        #expect(!harness.outputMute.isMuted)
+    }
+
+    @Test("A recording that fails to start never mutes the output")
+    func failedStartNeverMutes() async throws {
+        let harness = Harness()
+        harness.settings.muteOutputWhileRecording = true
+        harness.recorder.startError = AudioRecorderError.noInputDevice
+        await harness.ready()
+
+        harness.coordinator.handleHotkeyEdge(.down(at: 0))
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.outputMute.muteCount == 0)
     }
 
     @Test("Escape while idle is a no-op")

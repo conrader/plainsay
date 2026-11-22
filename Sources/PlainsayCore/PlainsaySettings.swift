@@ -56,6 +56,9 @@ public final class PlainsaySettings {
     }
     @ObservationIgnored public var onUsageStatisticsChanged: ((Int) -> Void)?
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
+    /// Mute the Mac's sound output while recording. Off by default: silencing
+    /// everything else on the machine is not something to discover by surprise.
+    public var muteOutputWhileRecording: Bool { didSet { defaults.set(muteOutputWhileRecording, forKey: Key.muteOutputWhileRecording.rawValue) } }
     /// Whether dictations are written to disk at all.
     ///
     /// On by default, and that default is deliberate: pasting into another app
@@ -336,6 +339,7 @@ public final class PlainsaySettings {
         case dismissedTermProposals
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
+        case muteOutputWhileRecording
         case appProfiles
         case replacementRules
     }
@@ -375,6 +379,7 @@ public final class PlainsaySettings {
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
         usageStatisticsConsentRevision = defaults.integer(forKey: Key.usageStatisticsConsentRevision.rawValue)
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
+        muteOutputWhileRecording = defaults.object(forKey: Key.muteOutputWhileRecording.rawValue) as? Bool ?? false
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
         // Lossy and logged, unlike `decode`: one bad profile drops alone.
