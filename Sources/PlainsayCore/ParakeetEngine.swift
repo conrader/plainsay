@@ -12,12 +12,14 @@ public actor ParakeetEngine: TranscriptionEngine {
 
     private var manager: AsrManager?
     private let language: String?
+    private let modelCache: URL?
     /// Every language the speaker listed, not just the primary. The hint
     /// below can only carry one, but judging whether a transcript came out
     /// in a language they never speak needs the whole set — otherwise a
     /// Polish word from someone whose list starts with English reads as
     /// foreign when it is exactly what they said.
     private let spokenLanguages: [String]
+    private let usesPolishEnglishProfile: Bool
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
     private var activeTranscriptions = 0
@@ -29,10 +31,14 @@ public actor ParakeetEngine: TranscriptionEngine {
     public init(
         language: String? = nil,
         spokenLanguages: [String] = [],
+        modelCache: URL? = nil,
         onStateChange: @escaping @Sendable (LoadState) -> Void = { _ in }
     ) {
         self.language = language
-        self.spokenLanguages = spokenLanguages.isEmpty ? [language].compactMap { $0 } : spokenLanguages
+        self.modelCache = modelCache
+        let languages = spokenLanguages.isEmpty ? [language].compactMap { $0 } : spokenLanguages
+        self.spokenLanguages = languages
+        self.usesPolishEnglishProfile = DictationTuning.usesPolishEnglishProfile(languages)
         self.onStateChange = onStateChange
     }
 
@@ -108,27 +114,35 @@ public actor ParakeetEngine: TranscriptionEngine {
             // in the same call that fetches it, leaving nowhere to check what
             // arrived. FluidAudio never hashes downloaded files at all — it
             // uses ETags only to resume interrupted transfers (#27).
-            let modelDirectory = try await AsrModels.download(
-                version: .v3,
-                encoderPrecision: .int8,
-                progressHandler: { [weak self] progress in
-                    let isCompiling: Bool
-                    switch progress.phase {
-                    case .compiling:
-                        isCompiling = true
-                    case .listing, .downloading:
-                        isCompiling = false
-                    }
-                    let fraction = progress.fractionCompleted
-                    Task { [weak self] in
-                        await self?.receiveFluidProgress(
-                            fractionCompleted: fraction,
-                            isCompiling: isCompiling,
-                            loadID: loadID
-                        )
-                    }
+            let modelDirectory: URL
+            if let modelCache {
+                modelDirectory = modelCache.appending(path: Repo.parakeetV3.folderName)
+                guard FileManager.default.fileExists(atPath: modelDirectory.path) else {
+                    throw TranscriptionError.failed("Missing cached Parakeet model at \(modelDirectory.path)")
                 }
-            )
+            } else {
+                modelDirectory = try await AsrModels.download(
+                    version: .v3,
+                    encoderPrecision: .int8,
+                    progressHandler: { [weak self] progress in
+                        let isCompiling: Bool
+                        switch progress.phase {
+                        case .compiling:
+                            isCompiling = true
+                        case .listing, .downloading:
+                            isCompiling = false
+                        }
+                        let fraction = progress.fractionCompleted
+                        Task { [weak self] in
+                            await self?.receiveFluidProgress(
+                                fractionCompleted: fraction,
+                                isCompiling: isCompiling,
+                                loadID: loadID
+                            )
+                        }
+                    }
+                )
+            }
             try Task.checkCancellation()
             guard activeLoadID == loadID else { throw CancellationError() }
 
@@ -159,7 +173,9 @@ public actor ParakeetEngine: TranscriptionEngine {
             // FluidAudio recommends disabling mel-context carry-over for v3
             // multilingual recordings longer than a single model window. It
             // prevents later Polish chunks drifting toward English.
-            let manager = AsrManager(config: ASRConfig(melChunkContext: false))
+            let manager = AsrManager(
+                config: DictationTuning.parakeetConfig(usesPolishEnglishProfile: usesPolishEnglishProfile)
+            )
             try await manager.loadModels(models)
 
             // Model selection may have changed while FluidAudio was compiling
@@ -204,8 +220,9 @@ public actor ParakeetEngine: TranscriptionEngine {
         do {
             let decoderLayers = await manager.decoderLayerCount
             var decoderState = try TdtDecoderState(decoderLayers: decoderLayers)
+            let input = usesPolishEnglishProfile ? DictationTuning.parakeetAudio(samples) : samples
             let result = try await manager.transcribe(
-                samples,
+                input,
                 decoderState: &decoderState,
                 language: Self.languageHint(from: language)
             )

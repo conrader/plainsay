@@ -107,11 +107,20 @@ public final class AudioSampleSink: @unchecked Sendable {
 
     /// Copies out everything written so far.
     public func drain() -> [Float] {
+        drain(last: capacity)
+    }
+
+    /// Copies at most the last `maxSamples` samples without resetting the sink.
+    /// Nonpositive limits return an empty snapshot. As with `drain()`, reset
+    /// must not run concurrently: the published prefix is otherwise immutable
+    /// while the producer appends beyond it, so copying needs no audio lock.
+    public func drain(last maxSamples: Int) -> [Float] {
         os_unfair_lock_lock(lock)
-        let n = writeIndexValue
+        let end = writeIndexValue
         os_unfair_lock_unlock(lock)
+        let n = min(end, max(0, maxSamples))
         guard n > 0 else { return [] }
-        return Array(UnsafeBufferPointer(start: storage, count: n))
+        return Array(UnsafeBufferPointer(start: storage.advanced(by: end - n), count: n))
     }
 
     /// Rewinds for a new recording. Only safe while the producer is stopped.

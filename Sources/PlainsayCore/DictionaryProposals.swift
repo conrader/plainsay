@@ -109,7 +109,7 @@ public enum DictionaryProposer {
         }
 
         for character in text {
-            if character.isLetter || character == "'" || character == "-" {
+            if isWordCharacter(character) {
                 word.append(character)
             } else {
                 flush()
@@ -120,6 +120,17 @@ public enum DictionaryProposer {
         }
         flush()
         return found
+    }
+
+    /// The word runs `candidateWords` reads, before its name filter: a phrase
+    /// splits into exactly the units a proposal can be. Replacement-rule
+    /// targets are excluded at this granularity (`hasTarget(matching:)`).
+    static func words(in text: String) -> [String] {
+        text.split(whereSeparator: { !isWordCharacter($0) }).map(String.init)
+    }
+
+    static func isWordCharacter(_ character: Character) -> Bool {
+        character.isLetter || character == "'" || character == "-"
     }
 
     static func isCandidate(_ word: String, atSentenceStart: Bool) -> Bool {

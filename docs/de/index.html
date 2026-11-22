@@ -312,7 +312,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">WAS OFFEN IST</span>
-          <p>Der Quellcode des Plainsay-Mac-Clients umfasst die Integrationen für Transkription und Polishing, HUD, Einstellungen und Setup-Assistent. Komponenten und Modelle Dritter behalten ihre eigenen Lizenzen. Der Mac-Client sendet keine Analyse- oder Telemetriedaten. Prüfungen auf signierte Updates kontaktieren standardmäßig api.plainsay.app und lassen sich in den Einstellungen deaktivieren. Die optionale Cloud zeichnet Konto-, Abonnement- und Nutzungsmetadaten auf, die für den kostenpflichtigen Dienst benötigt werden.</p>
+          <p>Der Quellcode des Plainsay-Mac-Clients umfasst die Integrationen für Transkription und Polishing, HUD, Einstellungen und Setup-Assistent. Komponenten und Modelle Dritter behalten ihre eigenen Lizenzen. Optionale Nutzungsstatistiken sind standardmäßig deaktiviert. Prüfungen auf signierte Updates kontaktieren standardmäßig api.plainsay.app und lassen sich in den Einstellungen deaktivieren. Die optionale Cloud zeichnet Konto-, Abonnement- und Nutzungsmetadaten auf, die für den kostenpflichtigen Dienst benötigt werden.</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">WAS NICHT</span>
@@ -448,7 +448,7 @@
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open Source", body: "Der Quellcode des Plainsay-Mac-Clients ist unter MIT öffentlich. Jede bereits unter MIT veröffentlichte Version bleibt frei forkbar und veränderbar; Komponenten und Modelle Dritter haben eigene Lizenzen." },
-    { icon: "lock.shield.fill", title: "Standardmäßig transparent", body: "Der Mac-Client sendet keine Analyse- oder Telemetriedaten. Prüfungen auf signierte Updates kontaktieren standardmäßig api.plainsay.app und lassen sich in den Einstellungen deaktivieren. Die optionale Cloud zeichnet die für den kostenpflichtigen Dienst nötigen Konto-, Abonnement- und Nutzungsmetadaten auf." },
+    { icon: "lock.shield.fill", title: "Standardmäßig transparent", body: "Optionale Nutzungsstatistiken sind standardmäßig deaktiviert. Prüfungen auf signierte Updates kontaktieren standardmäßig api.plainsay.app und lassen sich in den Einstellungen deaktivieren. Die optionale Cloud zeichnet die für den kostenpflichtigen Dienst nötigen Konto-, Abonnement- und Nutzungsmetadaten auf." },
     { icon: "clock.arrow.circlepath", title: "Wiederherstellbare Rückfälle", body: "Schlägt Polishing fehl, verwendet Plainsay das Rohtranskript. Gibt es kein sicheres Einfügeziel, bleibt der Text in der Zwischenablage; ist der Verlauf aktiviert, fügt Plainsay das fertige Transkript vor dem Einfügen zum lokalen Verlauf hinzu." },
     { icon: "clock.arrow.circlepath", title: "Verlauf unter deiner Kontrolle", body: "Der Verlauf speichert standardmäßig bis zu 100 Diktate für 30 Tage. Du kannst 7, 30, 90 oder 365 Tage wählen, den Verlauf leeren oder ihn ausschalten; beim Ausschalten werden gespeicherte Transkripte gelöscht." },
     { icon: "text.quote", title: "Wortschatzvorschläge", body: "Die Einstellungen schlagen wiederkehrende Namen und Produktbegriffe aus gespeicherten Diktaten vor. Nichts wird hinzugefügt, solange du nicht „Hinzufügen“ wählst; jeden Vorschlag kannst du verwerfen. Angewandte Korrekturen verwenden einen konservativen Abgleich und wählen den ähnlichsten Kandidaten." },

@@ -38,9 +38,13 @@ let package = Package(
             name: "PlainsayCoreTests",
             dependencies: ["PlainsayCore"]
         ),
+        .testTarget(
+            name: "PlainsayAppTests",
+            dependencies: ["PlainsayApp"]
+        ),
         .executableTarget(
             name: "BenchmarkCLI",
-            dependencies: ["PlainsayCore"]
+            dependencies: ["PlainsayCore", .product(name: "FluidAudio", package: "FluidAudio")]
         ),
         .executableTarget(
             name: "MiniTranscribeServer",

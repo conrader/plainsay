@@ -11,6 +11,7 @@ public actor WhisperKitEngine: TranscriptionEngine {
     private var kit: WhisperKit?
     private let model: OnDeviceModel
     private let spokenLanguages: [String]
+    private let modelCache: URL?
     private var state: LoadState = .idle
     private let onStateChange: @Sendable (LoadState) -> Void
     private var activeLoadID: UUID?
@@ -26,10 +27,12 @@ public actor WhisperKitEngine: TranscriptionEngine {
     public init(
         model: OnDeviceModel = .largeV3Turbo,
         spokenLanguages: [String] = [],
+        modelCache: URL? = nil,
         onStateChange: @escaping @Sendable (LoadState) -> Void = { _ in }
     ) {
         self.model = model
         self.spokenLanguages = spokenLanguages
+        self.modelCache = modelCache
         self.onStateChange = onStateChange
     }
 
@@ -67,15 +70,23 @@ public actor WhisperKitEngine: TranscriptionEngine {
         isDownloading = true
         setState(.downloading(progress: 0))
         do {
-            let modelFolder = try await WhisperKit.download(
-                variant: modelID,
-                progressCallback: { [weak self] progress in
-                    let fraction = progress.fractionCompleted
-                    Task { [weak self] in
-                        await self?.reportDownloadProgress(fraction, loadID: loadID)
-                    }
+            let modelFolder: URL
+            if let modelCache {
+                modelFolder = modelCache.appending(path: modelID)
+                guard FileManager.default.fileExists(atPath: modelFolder.path) else {
+                    throw TranscriptionError.failed("Missing cached Whisper model at \(modelFolder.path)")
                 }
-            )
+            } else {
+                modelFolder = try await WhisperKit.download(
+                    variant: modelID,
+                    progressCallback: { [weak self] progress in
+                        let fraction = progress.fractionCompleted
+                        Task { [weak self] in
+                            await self?.reportDownloadProgress(fraction, loadID: loadID)
+                        }
+                    }
+                )
+            }
             try Task.checkCancellation()
             guard activeLoadID == loadID else { throw CancellationError() }
 
@@ -90,6 +101,7 @@ public actor WhisperKitEngine: TranscriptionEngine {
             let config = WhisperKitConfig(
                 model: modelID,
                 modelFolder: modelFolder.path,
+                tokenizerFolder: modelCache?.appending(path: "whisper-large-v3-tokenizer"),
                 verbose: false,
                 logLevel: .error,
                 prewarm: true,
@@ -126,20 +138,18 @@ public actor WhisperKitEngine: TranscriptionEngine {
         setState(.idle)
     }
 
-    /// Whisper's window. Audio below this fits in a single pass, so splitting
-    /// it can only lose material.
-    private static let windowSeconds: Double = 30
-
     public func transcribe(samples: [Float], prompt: String?) async throws -> String {
-        var result = try await run(samples: samples, prompt: prompt, relaxed: false, forceLanguage: nil)
+        let input = DictationTuning.whisperAudio(samples)
+        let prompt = DictationTuning.whisperPrompt(dictionaryPrompt: prompt)
+        var result = try await run(samples: input, prompt: prompt, relaxed: false, forceLanguage: nil)
 
-        if result.text.isEmpty, Self.hasSignal(samples) {
+        if result.text.isEmpty, Self.hasSignal(samples, threshold: DictationTuning.whisperAudiblePeak) {
             // An empty result on audio that clearly contained speech is a
             // decoder suppression, not silence. Retrying with the silence
             // heuristics off costs a second in the rare failure case and
             // saves the dictation.
             Log.model.info("empty transcript despite audible input — retrying with silence detection off")
-            result = try await run(samples: samples, prompt: prompt, relaxed: true, forceLanguage: nil)
+            result = try await run(samples: input, prompt: prompt, relaxed: true, forceLanguage: nil)
         }
 
         if !result.text.isEmpty,
@@ -150,7 +160,7 @@ public actor WhisperKitEngine: TranscriptionEngine {
             // the extra pass — silently keeping a wrong-language transcript
             // is worse.
             Log.model.info("detected \(result.language), outside spoken-languages list — retrying forced to \(forced)")
-            let retried = try await run(samples: samples, prompt: prompt, relaxed: false, forceLanguage: forced)
+            let retried = try await run(samples: input, prompt: prompt, relaxed: false, forceLanguage: forced)
             if !retried.text.isEmpty { return retried.text }
         }
 
@@ -175,7 +185,7 @@ public actor WhisperKitEngine: TranscriptionEngine {
     }
 
     /// True when the audio is loud enough that a human would hear speech.
-    static func hasSignal(_ samples: [Float], threshold: Float = 0.02) -> Bool {
+    static func hasSignal(_ samples: [Float], threshold: Float = DictationTuning.whisperAudiblePeak) -> Bool {
         var peak: Float = 0
         for sample in samples where abs(sample) > peak { peak = abs(sample) }
         return peak > threshold
@@ -189,28 +199,8 @@ public actor WhisperKitEngine: TranscriptionEngine {
     ) async throws -> (text: String, language: String) {
         guard let kit else { throw TranscriptionError.modelNotLoaded }
 
-        // VAD chunking exists to split audio longer than the model's window.
-        // Applied to a short dictation it has nothing to divide and can
-        // classify the whole clip as non-speech, yielding no chunks at all.
-        let needsChunking = Double(samples.count) / whisperSampleRate > Self.windowSeconds
-
-        var options = DecodingOptions(
-            verbose: false,
-            task: .transcribe,
-            language: model.isEnglishOnly ? "en" : forceLanguage,
-            temperature: 0,
-            usePrefillPrompt: true,
-            detectLanguage: model.isEnglishOnly ? false : (forceLanguage == nil),
-            skipSpecialTokens: true,
-            withoutTimestamps: true,
-            // Quiet, close-mic dictation sits near these thresholds, and both
-            // must fire together for Whisper to declare silence. Loosening them
-            // trades the odd hallucination on true silence — which the empty
-            // check catches anyway — for not dropping a real sentence.
-            compressionRatioThreshold: relaxed ? nil : 2.4,
-            logProbThreshold: relaxed ? nil : -1.0,
-            noSpeechThreshold: relaxed ? nil : 0.9,
-            chunkingStrategy: needsChunking ? .vad : nil
+        var options = DictationTuning.whisperOptions(
+            sampleCount: samples.count, relaxed: relaxed, forcedLanguage: forceLanguage, englishOnly: model.isEnglishOnly
         )
 
         if let prompt, let tokenizer = kit.tokenizer {

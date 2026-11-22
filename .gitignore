@@ -5,3 +5,9 @@ build/
 .DS_Store
 dist/
 .claude/
+
+# Dictation eval keeps raw corpora and model files outside the checkout.
+# Allow only the pinned manifests here.
+/data/*
+!/data/manifest-dev.tsv
+!/data/manifest-heldout.tsv

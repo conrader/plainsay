@@ -6,6 +6,38 @@ import Testing
 @Suite("Tail grace")
 @MainActor
 struct TailGraceTests {
+    @Test("Bounded snapshots preserve short-clip and tail-window decisions")
+    func boundedTailDecisions() {
+        let window = Int(AudioRecorder.tailWindow * whisperSampleRate)
+        for count in [0, window - 1, window, window + 1, window * 4] {
+            for speechAtEnd in [false, true] {
+                let sink = AudioSampleSink(seconds: 2)
+                var samples = [Float](repeating: 0, count: count)
+                if count > 0 {
+                    // A loud first sample is outside the window on long clips.
+                    samples[0] = 0.3
+                    samples[count - 1] = speechAtEnd ? 0.3 : 0
+                    samples.withUnsafeBufferPointer { sink.append($0.baseAddress!, count: $0.count) }
+                }
+                let expected = count > window && speechAtEnd
+                #expect(AudioRecorder.endedMidSpeech(samples) == expected)
+                #expect(AudioRecorder.endedMidSpeech(sink.drain(last: window + 1)) == expected)
+            }
+        }
+    }
+
+    @Test("Custom recorders retain the existing tail check through the protocol")
+    func defaultTailCheck() throws {
+        let recorder = FakeRecorder()
+        let recording: any AudioRecording = recorder
+        try recording.start()
+        #expect(!recording.isEndingMidSpeech)
+        recorder.endsMidWord = true
+        #expect(recording.isEndingMidSpeech)
+        recorder.duration = AudioRecorder.tailWindow
+        #expect(!recording.isEndingMidSpeech)
+    }
+
     private func flat(_ count: Int, _ amplitude: Float) -> [Float] {
         (0..<count).map { _ in amplitude }
     }

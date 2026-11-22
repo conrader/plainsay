@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Materialize the pinned FLEURS samples and public Core ML weights."""
+import argparse
+from concurrent.futures import ThreadPoolExecutor
+import csv
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tarfile
+from urllib.parse import quote
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA = ROOT.parent / "data"
+HUB = "https://huggingface.co"
+FLEURS = "70bb2e84b976b7e960aa89f1c648e09c59f894dd"
+ARCHIVES = {
+    ("pl_pl", "dev"): "f14102f21a1be72af158f5cd1165ebf5fc750e0bbb0e01844e35b21b2571832b",
+    ("pl_pl", "test"): "dad5fa1600b6c283b57af9b4c80aa8ddf29ed79393bfb7e7221914224ab9b638",
+    ("en_us", "dev"): "2658fda72f199e12676ecac9415094667a4e14e149b146e568ea00b2a2f0954c",
+    ("en_us", "test"): "d9c2e37b41aacd41bc283554a0a82b5476b36887049774ecb2819dcaaa55a356",
+}
+
+
+def check_disk():
+    if shutil.disk_usage("/").free < 8 * 1024**3:
+        raise SystemExit("Stopped: / has less than 8 GiB free")
+
+
+def digest_file(path, algorithm="sha256"):
+    digest = hashlib.sha256() if algorithm == "sha256" else hashlib.sha1()
+    if algorithm == "git-blob-sha1":
+        digest.update(f"blob {path.stat().st_size}\0".encode())
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def fetch(url, destination, digest=None, algorithm="sha256"):
+    if destination.is_file() and (digest is None or digest_file(destination, algorithm) == digest):
+        return
+    check_disk()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = destination.with_suffix(destination.suffix + ".part")
+    subprocess.run(
+        ["curl", "-q", "--fail", "--silent", "--show-error", "--location",
+         "--retry", "2", "--max-time", "600", url, "-o", str(partial)],
+        check=True,
+    )
+    if digest is not None and digest_file(partial, algorithm) != digest:
+        raise ValueError(f"checksum mismatch for {url}")
+    partial.replace(destination)
+
+
+def sample(locale, split, count, used_ids):
+    source = DATA / "fleurs" / locale / split
+    url = f"{HUB}/datasets/google/fleurs/resolve/{FLEURS}/data/{locale}"
+    metadata, archive = source / "metadata.tsv", source / "audio.tar.gz"
+    fetch(f"{url}/{split}.tsv", metadata)
+    fetch(f"{url}/audio/{split}.tar.gz", archive, ARCHIVES[locale, split])
+    with metadata.open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.reader(stream, delimiter="\t", quoting=csv.QUOTE_NONE))
+    rows.sort(key=lambda row: hashlib.sha256(
+        f"plainsay-fleurs-v1/{locale}/{split}/{row[1]}".encode()
+    ).digest())
+    desired = {"FEMALE": count // 2, "MALE": count // 2}
+    selected = {}
+    for sentence, filename, reference, _, _, _, gender in rows:
+        if desired[gender] and sentence not in used_ids:
+            selected[filename] = (sentence, reference)
+            used_ids.add(sentence)
+            desired[gender] -= 1
+    if len(selected) != count:
+        raise ValueError(f"could not sample {count} from {locale}/{split}")
+    destination = DATA / "clips" / locale
+    destination.mkdir(parents=True, exist_ok=True)
+    audio_hashes = {}
+    with tarfile.open(archive, "r|gz") as members:
+        for member in members:
+            name = Path(member.name).name
+            if member.isfile() and name in selected:
+                audio = members.extractfile(member).read()
+                audio_hashes[name] = hashlib.sha256(audio).hexdigest()
+                (destination / name).write_bytes(audio)
+    output = []
+    for name, (sentence, reference) in selected.items():
+        reference_bytes = reference.encode("utf-8")
+        (destination / (Path(name).stem + ".txt")).write_bytes(reference_bytes)
+        output.append((locale, sentence, Path(name).stem, audio_hashes[name],
+                       hashlib.sha256(reference_bytes).hexdigest()))
+    return output
+
+
+def dataset(write_manifests):
+    used_ids = set()
+    for name, split, count in (("dev", "dev", 60), ("heldout", "test", 40)):
+        polish = sample("pl_pl", split, count, used_ids)
+        english = sample("en_us", split, count, used_ids)
+        rows = [row for pair in zip(polish, english) for row in pair]
+        header = "locale\tsentence_id\tclip_id\taudio_sha256\treference_sha256\n"
+        contents = header + "".join("\t".join(row) + "\n" for row in rows)
+        path = ROOT / "data" / f"manifest-{name}.tsv"
+        if write_manifests:
+            if path.exists() and path.read_text() != contents:
+                raise ValueError(f"refusing to overwrite a different manifest at {path}")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents)
+        if path.read_text() != contents:
+            raise ValueError(f"pinned manifest mismatch for {name}")
+        print(f"{name}: verified {len(rows)} clips", flush=True)
+
+
+def models(selection):
+    swift = (ROOT / "Sources/PlainsayCore/ModelDigests.swift").read_text()
+    records = json.loads(swift.split('#"""\n', 1)[1].split('\n"""#', 1)[0])["models"]
+    jobs = []
+    if selection in ("all", "whisper"):
+        variant = "openai_whisper-large-v3-v20240930_turbo_632MB"
+        record = records[variant]
+        base = f"{HUB}/{record['repo']}/resolve/{record['commit']}/{variant}"
+        for name, entry in record["files"].items():
+            jobs.append((f"{base}/{quote(name)}", DATA / "models" / variant / name,
+                         entry["digest"], entry["algorithm"]))
+        base = f"{HUB}/openai/whisper-large-v3/resolve/06f233fe06e710322aca913c1bc4249a0d71fce1"
+        for name in ("config.json", "tokenizer.json", "tokenizer_config.json"):
+            jobs.append((f"{base}/{name}", DATA / "models" / "whisper-large-v3-tokenizer" / name))
+    if selection in ("all", "parakeet"):
+        record = records["nvidia_parakeet-tdt-0.6b-v3"]
+        base = f"{HUB}/{record['repo']}/resolve/{record['commit']}"
+        for name, entry in record["files"].items():
+            jobs.append((f"{base}/{quote(name)}", DATA / "models" / "parakeet-tdt-0.6b-v3" / name,
+                         entry["digest"], entry["algorithm"]))
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda job: fetch(*job), jobs))
+    print(f"{selection}: model files ready", flush=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    subcommands = parser.add_subparsers(dest="command", required=True)
+    dataset_parser = subcommands.add_parser("dataset")
+    dataset_parser.add_argument("--write-manifests", action="store_true")
+    models_parser = subcommands.add_parser("models")
+    models_parser.add_argument("selection", choices=["all", "whisper", "parakeet"])
+    args = parser.parse_args()
+    check_disk()
+    if args.command == "dataset":
+        dataset(args.write_manifests)
+    else:
+        models(args.selection)

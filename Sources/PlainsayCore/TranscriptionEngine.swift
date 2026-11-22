@@ -347,30 +347,3 @@ public enum OnDeviceModel: String, Codable, CaseIterable, Sendable {
 
 /// Source compatibility for code that constructed WhisperKitEngine directly.
 public typealias WhisperModel = OnDeviceModel
-
-/// Bare markers Whisper emits for non-speech audio, after annotation stripping.
-///
-/// Deliberately excludes Whisper's silence hallucinations ("Thank you.", "you"):
-/// suppressing those would eat real dictation, and the minimum-duration guard
-/// plus `noSpeechThreshold` already cover actual silence.
-let nonSpeechMarkers: Set<String> = ["", ".", "-", "..."]
-
-/// Strips Whisper's bracketed sound annotations and decides whether anything
-/// meaningful was actually said.
-public func normalizeTranscript(_ raw: String) -> String {
-    var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-
-    // Drop annotations like [BLANK_AUDIO], (upbeat music), ♪ ... ♪
-    let patterns = [#"\[[^\]]*\]"#, #"\([^\)]*\)"#, #"♪[^♪]*♪"#]
-    for pattern in patterns {
-        text = text.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
-    }
-
-    text = text
-        .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-
-    // Whisper's stock hallucinations on silence.
-    if nonSpeechMarkers.contains(text) { return "" }
-    return text
-}

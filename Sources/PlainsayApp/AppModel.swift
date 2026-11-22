@@ -20,7 +20,11 @@ final class AppModel {
     let updates = UpdateController()
     let hud: HUDController
     let settingsWindow: SettingsWindowController
-    lazy var voiceEditWindow = VoiceEditWindowController(settings: settings)
+    lazy var voiceEditWindow = VoiceEditWindowController(
+        settings: settings,
+        editGate: coordinator.privateDictation.hostedEdits,
+        refusesEditing: { [weak self] in self?.coordinator.refuseEditingIfPrivate() ?? false }
+    )
     lazy var correctionWindow = DictationCorrectionWindow(coordinator: coordinator, settings: settings)
     lazy var setupAssistantWindow: SetupAssistantWindowController = {
         SetupAssistantWindowController(
@@ -34,11 +38,14 @@ final class AppModel {
         )
     }()
 
+    private let usageStatistics: UsageStatistics
     private var startTask: Task<Void, Never>?
 
     private init() {
         let settings = PlainsaySettings.shared
-        let coordinator = DictationCoordinator(settings: settings)
+        let usageStatistics = UsageStatistics()
+        let coordinator = DictationCoordinator(settings: settings, usageStatistics: usageStatistics)
+        self.usageStatistics = usageStatistics
         self.coordinator = coordinator
         self.hud = HUDController(coordinator: coordinator)
         self.settingsWindow = SettingsWindowController(
@@ -48,12 +55,16 @@ final class AppModel {
             updates: updates,
             voiceEnrollment: voiceEnrollment
         )
+        settings.onUsageStatisticsChanged = { [usageStatistics] revision in
+            usageStatistics.updateConsent(revision)
+        }
         coordinator.onVoiceEdit = { [weak self] in
-            guard let self, !self.coordinator.phase.isBusy else { return }
+            guard let self, !self.coordinator.phase.isBusy, !self.coordinator.refuseEditingIfPrivate() else { return }
             self.voiceEditWindow.show()
         }
         coordinator.onCorrectLastDictation = { [weak self] in
-            self?.correctionWindow.show(record: true)
+            guard let self, !self.coordinator.refuseEditingIfPrivate() else { return }
+            self.correctionWindow.show(record: true)
         }
     }
 
@@ -65,6 +76,7 @@ final class AppModel {
             return
         }
 
+        usageStatistics.updateConsent(settings.usageStatisticsConsentRevision)
         hud.start()
         let task = Task { @MainActor [coordinator] in
             await coordinator.start(requestMicrophonePermission: requestMicrophonePermission)

@@ -312,7 +312,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">开放的部分</span>
-          <p>Plainsay Mac 客户端源码包括转录和 Polishing 集成、HUD、设置及设置助理。第三方组件和模型保留各自的许可证。Mac 客户端不会发送分析或遥测数据。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。</p>
+          <p>Plainsay Mac 客户端源码包括转录和 Polishing 集成、HUD、设置及设置助理。第三方组件和模型保留各自的许可证。可选的使用统计默认关闭。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">不开放的部分</span>
@@ -448,7 +448,7 @@
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "开源", body: "Plainsay Mac 客户端源码以 MIT 许可公开。每个已按 MIT 发布的版本都可以自由复刻和修改；第三方组件和模型各有自己的许可证。" },
-    { icon: "lock.shield.fill", title: "默认透明", body: "Mac 客户端不会发送分析或遥测数据。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。" },
+    { icon: "lock.shield.fill", title: "默认透明", body: "可选的使用统计默认关闭。签名更新检查默认会连接 api.plainsay.app，并可在设置中关闭。可选的 Cloud 会记录运营付费服务所需的账户、订阅和用量元数据。" },
     { icon: "clock.arrow.circlepath", title: "可恢复的备用路径", body: "Polishing 失败时，Plainsay 会使用原始转录文本。没有安全的粘贴目标时，文字会留在剪贴板中。启用历史记录后，Plainsay 会在插入前将完成的转录加入本地历史记录。" },
     { icon: "clock.arrow.circlepath", title: "由你掌控的历史记录", body: "历史记录默认最多保留 100 段听写，保留期限为 30 天。你可以将期限设为 7、30、90 或 365 天，也可以清除或关闭历史记录；关闭后会删除已保存的转录文本。" },
     { icon: "text.quote", title: "词汇建议", body: "在“设置”中，Plainsay 会根据已保存的听写，推荐反复出现的人名和产品术语。除非你选择“添加”，否则不会加入任何内容；每条建议都可以忽略。应用修正时会采用保守匹配，并选择最接近的候选项。" },

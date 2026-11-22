@@ -11,6 +11,7 @@ import PlainsayCore
 final class HUDController {
     private let coordinator: DictationCoordinator
     private var panel: NSPanel?
+    private var spaceObserver: NSObjectProtocol?
     private var observationTask: Task<Void, Never>?
     /// Only running while `.recording`: the live preview grows the panel by a
     /// second line without changing `phase`, so it needs its own trigger to
@@ -23,17 +24,28 @@ final class HUDController {
 
     func start() {
         observePhase()
+        if spaceObserver == nil {
+            spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.activeSpaceChanged() }
+            }
+        }
     }
 
     func stop() {
         observationTask?.cancel()
         previewObservationTask?.cancel()
+        if let spaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
+            self.spaceObserver = nil
+        }
         hide()
     }
 
     // MARK: - Panel
 
-    private func makePanel() -> NSPanel {
+    static func makePanel(contentView: NSView) -> NSPanel {
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: Metrics.hudWidth + 48, height: Metrics.hudHeight + 48),
             // `.nonactivatingPanel` is the load-bearing flag here.
@@ -48,37 +60,86 @@ final class HUDController {
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+        // Cross-app fullscreen Spaces require the overlay collection behavior.
+        panel.collectionBehavior = [
+            .canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary, .stationary, .ignoresCycle,
+        ]
         // Belt and braces: even ordered front, this panel must never become key.
         panel.becomesKeyOnlyIfNeeded = true
 
-        let hosting = NSHostingView(rootView: HUDHost(coordinator: coordinator))
-        hosting.translatesAutoresizingMaskIntoConstraints = true
-        hosting.autoresizingMask = [.width, .height]
-        panel.contentView = hosting
+        contentView.translatesAutoresizingMaskIntoConstraints = true
+        contentView.autoresizingMask = [.width, .height]
+        panel.contentView = contentView
 
         return panel
     }
 
     private func show() {
-        let panel = self.panel ?? makePanel()
+        // AppKit can leave an ordered panel on the Space it was shown on.
+        if let panel, !panel.isOnActiveSpace { hide() }
+        let panel = self.panel ?? Self.makePanel(
+            contentView: NSHostingView(rootView: HUDHost(coordinator: coordinator))
+        )
         self.panel = panel
 
-        position(panel)
-        // `orderFrontRegardless` rather than `makeKeyAndOrderFront`: we want it
-        // visible without touching the responder chain.
+        position(panel, on: workingScreen())
+        // Order the HUD while the dictation target keeps keyboard focus.
         panel.orderFrontRegardless()
     }
 
     private func hide() {
         panel?.orderOut(nil)
+        // Give the next presentation a fresh WindowServer window.
+        panel = nil
     }
 
-    private func position(_ panel: NSPanel) {
-        // Follow the screen the user is actually working on, not the main one.
-        let mouse = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) }
-            ?? NSScreen.main
+    private func activeSpaceChanged() {
+        guard panel != nil else { return }
+        show()
+    }
+
+    private static let accessibilityTimeout: Float = 0.25
+
+    private func workingScreen() -> NSScreen? {
+        let screens = NSScreen.screens
+        guard screens.count > 1 else { return screens.first }
+        // Runs on the main thread; bound each AX request so a hung frontmost app
+        // falls back to the pointer's display instead of stalling the HUD.
+        let focusedFrame = NSWorkspace.shared.frontmostApplication.flatMap {
+            FocusedWindow.accessibilityFrame(of: $0, messagingTimeout: Self.accessibilityTimeout)
+        }
+        let index = Self.screenIndex(
+            screenFrames: screens.map(\.frame),
+            focusedFrame: focusedFrame,
+            mouseLocation: NSEvent.mouseLocation
+        )
+        return index.map { screens[$0] } ?? NSScreen.main ?? screens.first
+    }
+
+    nonisolated static func screenIndex(
+        screenFrames: [CGRect], focusedFrame: CGRect?, mouseLocation: CGPoint
+    ) -> Int? {
+        if let focusedFrame, let primaryFrame = screenFrames.first {
+            // Accessibility measures down from the primary screen's top edge.
+            var frame = focusedFrame
+            frame.origin.y = primaryFrame.maxY - focusedFrame.maxY
+            var bestIndex: Int?
+            var largestArea: CGFloat = 0
+            for (index, screenFrame) in screenFrames.enumerated() {
+                let overlap = screenFrame.intersection(frame)
+                guard !overlap.isEmpty else { continue }
+                let area = overlap.width * overlap.height
+                if area > largestArea {
+                    bestIndex = index
+                    largestArea = area
+                }
+            }
+            if let bestIndex { return bestIndex }
+        }
+        return screenFrames.firstIndex { $0.contains(mouseLocation) }
+    }
+
+    private func position(_ panel: NSPanel, on screen: NSScreen?) {
         guard let screen else { return }
 
         panel.setContentSize(NSSize(
@@ -129,10 +190,8 @@ final class HUDController {
         case .idle:
             hide()
         case .recording, .recordingLimitReached, .transcribing, .cleaning,
-             .modelLoading, .insertedRaw, .savedToClipboard, .cancelled, .error:
+             .modelLoading, .insertedRaw, .savedToClipboard, .copied, .cancelled, .error:
             show()
-            // Supplementary error/notice text changes the panel's height.
-            if let panel { position(panel) }
         }
 
         if phase == .recording {
@@ -155,7 +214,9 @@ final class HUDController {
                 } onChange: {
                     // Intentionally empty: re-read on the next loop pass.
                 }
-                if let panel = self.panel { self.position(panel) }
+                if let panel = self.panel {
+                    self.position(panel, on: panel.screen ?? self.workingScreen())
+                }
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
                         _ = self.coordinator.livePreviewText

@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Only a PR's obsolete runs share a group. Main pushes each keep their run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   test:
     # The unit suite needs no microphone, no model download, and no network —

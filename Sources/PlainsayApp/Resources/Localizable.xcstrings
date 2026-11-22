@@ -5003,6 +5003,22 @@
         }
       }
     },
+    "Profiles": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profiles"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile"
+          }
+        }
+      }
+    },
     "Quit Plainsay": {
       "localizations": {
         "de": {
@@ -9622,13 +9638,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Использовано %d из %d минут за последние 30 дней"
+            "value": "Использовано за последние 30 дней: %d из %d мин"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Використано %d із %d хвилин за останні 30 днів"
+            "value": "Використано за останні 30 днів: %d із %d хв"
           }
         },
         "zh-Hans": {
@@ -10377,6 +10393,120 @@
         }
       }
     },
+    "history.deletionFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some dictations that should have been deleted are still on this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niektóre dyktowania, które powinny zostać usunięte, nadal znajdują się na tym Macu."
+          }
+        }
+      }
+    },
+    "history.disabledDescription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diktate werden nicht gespeichert, und alles bisher Gespeicherte wurde gelöscht. Plainsay kann ein Diktat, dessen Einfügen unbemerkt fehlgeschlagen ist, nicht mehr wiederherstellen – du müsstest es noch einmal sagen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations are not being saved, and anything previously saved has been deleted. Plainsay can no longer recover a dictation whose paste silently failed — you would have to say it again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los dictados no se están guardando y todo lo guardado antes se ha eliminado. Plainsay ya no puede recuperar un dictado cuyo pegado haya fallado sin avisar: tendrías que decirlo otra vez."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dictées ne sont pas enregistrées, et tout ce qui l'était a été supprimé. Plainsay ne peut plus récupérer une dictée dont le collage a échoué sans prévenir — il faudrait la redire."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le dettature non vengono salvate e tutto ciò che era stato salvato è stato eliminato. Plainsay non può più recuperare una dettatura il cui incolla non è andato a buon fine senza avvisare: dovresti ripeterla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口述筆記は保存されておらず、以前に保存した内容は削除されています。貼り付けが気づかないうちに失敗した口述筆記を、Plainsayは復元できなくなります。もう一度話す必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "받아쓰기가 저장되지 않으며, 이전에 저장된 내용은 모두 삭제되었습니다. 붙여넣기가 알림 없이 실패한 받아쓰기는 Plainsay가 더 이상 복구할 수 없으므로 다시 말해야 합니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dicteringen worden niet bewaard en alles wat eerder was bewaard, is verwijderd. Plainsay kan een dictaat waarvan het plakken ongemerkt mislukte niet meer terughalen — je zou het opnieuw moeten zeggen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania nie są zapisywane, a wszystko, co zapisano wcześniej, zostało usunięte. Jeśli wklejenie po cichu się nie uda, Plainsay nie odzyska już takiego dyktowania — trzeba będzie powiedzieć je jeszcze raz."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os ditados não estão a ser guardados e tudo o que foi guardado antes foi eliminado. O Plainsay já não consegue recuperar um ditado cuja colagem falhou sem aviso — terias de o dizer outra vez."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записи не сохраняются, а всё сохранённое ранее удалено. Plainsay больше не сможет восстановить запись, вставка которой незаметно не удалась, — её придётся надиктовать заново."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записи не зберігаються, а все збережене раніше видалено. Plainsay більше не зможе відновити запис, вставлення якого непомітно не вдалося, — його доведеться надиктувати знову."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "听写不会被保存，之前保存的内容也已删除。如果粘贴悄无声息地失败，Plainsay 将无法再找回这段听写，你需要重新说一遍。"
+          }
+        }
+      }
+    },
+    "history.disabledDescriptionNotDeleted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations are not being saved, but some saved before could not be deleted yet. Use Try again above."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania nie są zapisywane, ale nie udało się jeszcze usunąć niektórych wcześniej zapisanych. Użyj przycisku „Spróbuj ponownie” powyżej."
+          }
+        }
+      }
+    },
     "history.durationSeconds": {
       "localizations": {
         "de": {
@@ -10541,6 +10671,170 @@
         }
       }
     },
+    "history.explainerOff": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du dies einschaltest, werden neue Diktate gespeichert. Bereits Gelöschtes kommt dadurch nicht zurück."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turning this on starts saving new dictations. It does not bring back anything already deleted."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al activarlo se empiezan a guardar los nuevos dictados. No recupera nada de lo que ya se eliminó."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'activer enregistre les nouvelles dictées. Cela ne restaure rien de ce qui a déjà été supprimé."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attivandolo inizi a salvare le nuove dettature. Non recupera nulla di ciò che è già stato eliminato."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンにすると、新しい口述筆記の保存が始まります。すでに削除された内容は元に戻りません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "켜면 새 받아쓰기부터 저장됩니다. 이미 삭제된 내용은 복구되지 않습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als je dit inschakelt, worden nieuwe dicteringen bewaard. Wat al is verwijderd, komt niet terug."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Po włączeniu Plainsay zacznie zapisywać nowe dyktowania. Nie przywróci to niczego, co już zostało usunięte."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao ativar, os novos ditados passam a ser guardados. Nada do que já foi eliminado é recuperado."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если включить, новые записи начнут сохраняться. Уже удалённое это не вернёт."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Якщо ввімкнути, нові записи почнуть зберігатися. Уже видалене це не поверне."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启后将开始保存新的听写。已删除的内容不会恢复。"
+          }
+        }
+      }
+    },
+    "history.explainerOn": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkripte werden nur auf diesem Mac gespeichert, sind nur für deinen Account lesbar und von Time Machine ausgeschlossen. Sie werden aufbewahrt, damit ein Diktat nicht verloren geht, dessen Einfügen unbemerkt fehlgeschlagen ist."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcripts are stored on this Mac only, readable by your account alone, and excluded from Time Machine. They are kept so a dictation whose paste silently failed is not lost."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las transcripciones se guardan solo en este Mac, solo tu cuenta puede leerlas y se excluyen de Time Machine. Se conservan para que no se pierda un dictado cuyo pegado haya fallado sin avisar."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les transcriptions sont stockées uniquement sur ce Mac, lisibles par votre seul compte et exclues de Time Machine. Elles sont conservées pour qu'une dictée dont le collage a échoué sans prévenir ne soit pas perdue."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le trascrizioni sono archiviate solo su questo Mac, leggibili soltanto dal tuo account ed escluse da Time Machine. Vengono conservate perché una dettatura il cui incolla non è andato a buon fine senza avvisare non vada persa."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字起こしはこのMacにのみ保存され、あなたのアカウントだけが読み取れ、Time Machineの対象外です。貼り付けが気づかないうちに失敗した口述筆記を失わないために保存されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "필사문은 이 Mac에만 저장되고 내 계정만 읽을 수 있으며 Time Machine에서 제외됩니다. 붙여넣기가 알림 없이 실패한 받아쓰기를 잃지 않도록 보관됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcripties worden alleen op deze Mac bewaard, zijn alleen leesbaar voor jouw account en worden uitgesloten van Time Machine. Ze worden bewaard zodat een dictaat waarvan het plakken ongemerkt mislukte niet verloren gaat."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkrypcje są przechowywane tylko na tym Macu, może je odczytać wyłącznie Twoje konto i nie trafiają do Time Machine. Plainsay je zachowuje, żeby nie przepadło dyktowanie, którego wklejenie po cichu się nie udało."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As transcrições ficam guardadas apenas neste Mac, só a tua conta as pode ler e são excluídas do Time Machine. São mantidas para que um ditado cuja colagem falhou sem aviso não se perca."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расшифровки хранятся только на этом Mac, доступны для чтения только вашей учётной записи и исключены из Time Machine. Они сохраняются, чтобы не потерять запись, вставка которой незаметно не удалась."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розшифрування зберігаються лише на цьому Mac, доступні для читання лише вашому обліковому запису й виключені з Time Machine. Вони зберігаються, щоб не втратити запис, вставлення якого непомітно не вдалося."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转录仅存储在这台 Mac 上，只有你的账户可以读取，且不会纳入 Time Machine 备份。保留它们是为了在粘贴悄无声息地失败时不丢失听写。"
+          }
+        }
+      }
+    },
     "history.notPasted": {
       "localizations": {
         "de": {
@@ -10619,6 +10913,416 @@
           "stringUnit": {
             "state": "translated",
             "value": "未粘贴"
+          }
+        }
+      }
+    },
+    "history.retention.days": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d Tag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d Tage"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d days"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d día"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d días"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d días"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jour"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jours"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d jours"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorno"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorni"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d giorni"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d日"
+                }
+              }
+            }
+          }
+        },
+        "ko": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d일"
+                }
+              }
+            }
+          }
+        },
+        "nl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dag"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dagen"
+                }
+              }
+            }
+          }
+        },
+        "pl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dzień"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dni"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dni"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dnia"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dia"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dias"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d dias"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d день"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дней"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d день"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дні"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d днів"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d дня"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d 天"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "history.retention.year": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 Jahr"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 year"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 año"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 an"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 anno"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1年"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1년"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 jaar"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 rok"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 ano"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 год"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 рік"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 年"
+          }
+        }
+      }
+    },
+    "history.retryDeletion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spróbuj ponownie"
+          }
+        }
+      }
+    },
+    "history.saveFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent dictations could not be saved to disk. They are listed here only until Plainsay quits; the next dictation tries again."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie udało się zapisać ostatnich dyktowań na dysku. Są dostępne tutaj tylko do zamknięcia Plainsay; przy następnym dyktowaniu aplikacja ponowi próbę zapisu."
+          }
+        }
+      }
+    },
+    "history.saveUnprotected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dictations were saved, but could not be made readable by your account only and excluded from Time Machine. The next dictation tries again."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowania zostały zapisane, ale nie udało się ograniczyć dostępu do nich wyłącznie do Twojego konta i wykluczyć ich z kopii Time Machine. Przy następnym dyktowaniu aplikacja ponowi próbę."
           }
         }
       }
@@ -10865,6 +11569,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "听写已取消"
+          }
+        }
+      }
+    },
+    "hud.a11y.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied to the clipboard; this app’s profile does not paste."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano do schowka; profil tej aplikacji nie wkleja tekstu."
           }
         }
       }
@@ -11168,7 +11888,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Słucham, %d sekund"
+            "value": "Słucham, %d s"
           }
         },
         "pt": {
@@ -11180,13 +11900,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд"
+            "value": "Слушаю, секунд: %d"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд"
+            "value": "Слухаю, секунд: %d"
           }
         },
         "zh-Hans": {
@@ -11262,13 +11982,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Escape отменяет."
+            "value": "Слушаю, секунд: %d. Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Escape скасовує."
+            "value": "Слухаю, секунд: %d. Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11344,13 +12064,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Отпустите, чтобы завершить; Escape отменяет."
+            "value": "Слушаю, секунд: %d. Отпустите, чтобы завершить; Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Відпустіть, щоб завершити; Escape скасовує."
+            "value": "Слухаю, секунд: %d. Відпустіть, щоб завершити; Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11426,13 +12146,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слушаю, %d секунд. Нажмите ещё раз, чтобы завершить; Escape отменяет."
+            "value": "Слушаю, секунд: %d. Нажмите ещё раз, чтобы завершить; Escape отменяет."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Слухаю, %d секунд. Натисніть ще раз, щоб завершити; Escape скасовує."
+            "value": "Слухаю, секунд: %d. Натисніть ще раз, щоб завершити; Escape скасовує."
           }
         },
         "zh-Hans": {
@@ -11508,13 +12228,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Загрузка речевой модели, %d процентов"
+            "value": "Загрузка речевой модели, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Завантаження мовленнєвої моделі, %d відсотків"
+            "value": "Завантаження мовленнєвої моделі, %d%%"
           }
         },
         "zh-Hans": {
@@ -11754,13 +12474,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Подготовка речевой модели, %d процентов"
+            "value": "Подготовка речевой модели, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Підготовка мовленнєвої моделі, %d відсотків"
+            "value": "Підготовка мовленнєвої моделі, %d%%"
           }
         },
         "zh-Hans": {
@@ -12013,6 +12733,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在润色转录内容"
+          }
+        }
+      }
+    },
+    "hud.a11y.private": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation, on this Mac, not saved"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dyktowanie prywatne, na tym Macu, bez zapisu"
           }
         }
       }
@@ -12837,6 +13573,22 @@
         }
       }
     },
+    "hud.label.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COPIED"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKOPIOWANO"
+          }
+        }
+      }
+    },
     "hud.label.error": {
       "localizations": {
         "de": {
@@ -13243,6 +13995,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在准备模型"
+          }
+        }
+      }
+    },
+    "hud.label.private": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRIVATE · ON THIS MAC · NOT SAVED"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PRYWATNIE · NA TYM MACU · BEZ ZAPISU"
           }
         }
       }
@@ -14624,13 +15392,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay загружает речевую модель, %d процентов"
+            "value": "Plainsay загружает речевую модель, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay завантажує мовленнєву модель, %d відсотків"
+            "value": "Plainsay завантажує мовленнєву модель, %d%%"
           }
         },
         "zh-Hans": {
@@ -15444,19 +16212,35 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay готовит речевую модель, %d процентов"
+            "value": "Plainsay готовит речевую модель, %d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plainsay готує мовленнєву модель, %d відсотків"
+            "value": "Plainsay готує мовленнєву модель, %d%%"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "Plainsay 正在准备语音模型，已完成 %d%%"
+          }
+        }
+      }
+    },
+    "menu.a11y.privateArmed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation armed"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie będzie prywatne"
           }
         }
       }
@@ -16035,6 +16819,22 @@
         }
       }
     },
+    "menu.correctLast": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct last dictation…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popraw ostatnie dyktowanie…"
+          }
+        }
+      }
+    },
     "menu.dismissIssue": {
       "localizations": {
         "de": {
@@ -16277,6 +17077,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "缺少以下权限：%@"
+          }
+        }
+      }
+    },
+    "menu.private.arm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne"
+          }
+        }
+      }
+    },
+    "menu.private.armed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private dictation armed — turn off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne — wyłącz"
+          }
+        }
+      }
+    },
+    "menu.private.copy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy private dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiuj dyktowanie prywatne"
           }
         }
       }
@@ -16605,6 +17453,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "听写已取消"
+          }
+        }
+      }
+    },
+    "menu.status.copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied — this app’s profile does not paste"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano — profil tej aplikacji nie wkleja tekstu"
           }
         }
       }
@@ -17097,6 +17961,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "尚未就绪 — 请授予缺少的权限"
+          }
+        }
+      }
+    },
+    "menu.status.hold": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ halten, um zu diktieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold %@ to dictate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado %@ para dictar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenez %@ pour dicter"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni premuto %@ per dettare"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を押しながら口述筆記"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 를 누른 채로 받아쓰기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd %@ ingedrukt om te dicteren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przytrzymaj %@, by dyktować"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantém premido %@ para ditar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживайте %@ для диктовки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Утримуйте %@ для диктування"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住 %@ 即可听写"
+          }
+        }
+      }
+    },
+    "menu.status.holdOrTap": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ halten oder tippen, um zu diktieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold or tap %@ to dictate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantén pulsado o pulsa %@ para dictar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenez ou appuyez sur %@ pour dicter"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tieni premuto o premi %@ per dettare"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を押しながら、またはタップして口述筆記"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 를 누르거나 탭해서 받아쓰기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Houd %@ ingedrukt of tik erop om te dicteren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przytrzymaj lub stuknij %@, by dyktować"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mantém premido ou prime %@ para ditar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удерживайте или нажмите %@ для диктовки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Утримуйте або натисніть %@ для диктування"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住或轻按 %@ 即可听写"
           }
         }
       }
@@ -18577,6 +19605,88 @@
         }
       }
     },
+    "menu.status.tap": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tippen, um zu diktieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap %@ to dictate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsa %@ para dictar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appuyez sur %@ pour dicter"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premi %@ per dettare"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をタップして口述筆記"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 를 탭해서 받아쓰기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tik op %@ om te dicteren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naciśnij %@, aby dyktować"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prime %@ para ditar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите %@ для диктовки"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Натисніть %@ для диктування"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻按 %@ 即可听写"
+          }
+        }
+      }
+    },
     "menu.status.transcribing": {
       "localizations": {
         "de": {
@@ -18819,6 +19929,416 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在准备声音识别模型"
+          }
+        }
+      }
+    },
+    "menu.translate.active": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übersetzung → %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translating → %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduciendo → %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduction → %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduzione → %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻訳中 → %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역 중 → %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertalen → %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tłumaczenie → %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A traduzir → %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод → %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переклад → %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在翻译 → %@"
+          }
+        }
+      }
+    },
+    "menu.translate.idle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übersetzen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduire"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduci"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻訳"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertalen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tłumaczenie"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduzir"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переклад"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译"
+          }
+        }
+      }
+    },
+    "menu.translate.locked": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Übersetzen — erfordert Plainsay Cloud"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translate — needs Plainsay Cloud"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traducir — requiere Plainsay Cloud"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduire — nécessite Plainsay Cloud"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduci — richiede Plainsay Cloud"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻訳 — Plainsay Cloudが必要"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역 — Plainsay Cloud 필요"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertalen — vereist Plainsay Cloud"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tłumaczenie — wymaga Plainsay Cloud"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Traduzir — requer o Plainsay Cloud"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перевод — нужен Plainsay Cloud"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переклад — потрібен Plainsay Cloud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻译 — 需要 Plainsay Cloud"
+          }
+        }
+      }
+    },
+    "menu.translate.off": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht übersetzen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't translate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No traducir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne pas traduire"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non tradurre"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "翻訳しない"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "번역 안 함"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niet vertalen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie tłumacz"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não traduzir"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не переводить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не перекладати"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不翻译"
+          }
+        }
+      }
+    },
+    "menu.translate.shortcut": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ schaltet die Übersetzung überall ein oder aus"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ toggles translation anywhere"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ activa o desactiva la traducción en cualquier app"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ active ou désactive la traduction partout"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ attiva o disattiva la traduzione ovunque"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ でどこでも翻訳のオン／オフを切り替え"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 로 어디서나 번역 켜기/끄기"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ schakelt vertalen overal in of uit"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ włącza i wyłącza tłumaczenie w dowolnej aplikacji"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ ativa ou desativa a tradução em qualquer app"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ включает и выключает перевод в любом приложении"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ вмикає та вимикає переклад у будь-якій програмі"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 可在任意位置开关翻译"
           }
         }
       }
@@ -19298,13 +20818,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d процентов"
+            "value": "%d%%"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d відсотків"
+            "value": "%d%%"
           }
         },
         "zh-Hans": {
@@ -19380,13 +20900,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d процентов, прошло %d с"
+            "value": "%d%%, прошло %d с"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "%d відсотків, минуло %d с"
+            "value": "%d%%, минуло %d с"
           }
         },
         "zh-Hans": {
@@ -20053,6 +21573,88 @@
         }
       }
     },
+    "modelStatus.percentageOfSize": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d %% von %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% of %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% de %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d %% de %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% di %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%%（%@中）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% (%@ 중)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% van %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% z %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% de %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% из %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%% із %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d%%（共 %@）"
+          }
+        }
+      }
+    },
     "modelStatus.restart": {
       "localizations": {
         "de": {
@@ -20217,6 +21819,170 @@
         }
       }
     },
+    "permission.action.grant": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlauben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grant"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conceder"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concedi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "許可"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "허용"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toestaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przyznaj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conceder"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозволити"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授权"
+          }
+        }
+      }
+    },
+    "permission.action.openSettings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einstellungen öffnen…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir les Réglages…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Impostazioni…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "설정 열기…"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instellingen openen…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz Ustawienia…"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Definições…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Настройки…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити Налаштування…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置…"
+          }
+        }
+      }
+    },
     "primary": {
       "localizations": {
         "de": {
@@ -20299,6 +22065,538 @@
         }
       }
     },
+    "profiles.add": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj profil"
+          }
+        }
+      }
+    },
+    "profiles.addApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add app…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj aplikację…"
+          }
+        }
+      }
+    },
+    "profiles.addTerm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a term"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj termin"
+          }
+        }
+      }
+    },
+    "profiles.apps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apps"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aplikacje"
+          }
+        }
+      }
+    },
+    "profiles.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
+          }
+        }
+      }
+    },
+    "profiles.chooseApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose app…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz aplikację…"
+          }
+        }
+      }
+    },
+    "profiles.cloudRequired": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requires Plainsay Cloud."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wymaga Plainsay Cloud."
+          }
+        }
+      }
+    },
+    "profiles.default": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default (your current settings)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domyślny (Twoje obecne ustawienia)"
+          }
+        }
+      }
+    },
+    "profiles.delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń profil"
+          }
+        }
+      }
+    },
+    "profiles.email": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila"
+          }
+        }
+      }
+    },
+    "profiles.email.composers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In mail composers"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W oknach nowej wiadomości e-mail"
+          }
+        }
+      }
+    },
+    "profiles.email.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączony"
+          }
+        }
+      }
+    },
+    "profiles.explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick settings for specific apps. Plainsay chooses the profile from the app in front when you start recording. Everything else uses Default."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz ustawienia dla konkretnych aplikacji. Plainsay dobiera profil według aplikacji na pierwszym planie w chwili rozpoczęcia nagrywania. Pozostałe aplikacje korzystają z profilu Domyślnego."
+          }
+        }
+      }
+    },
+    "profiles.inherit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same as Default"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jak w profilu Domyślnym"
+          }
+        }
+      }
+    },
+    "profiles.limit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to 20 profiles."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maksymalnie 20 profili."
+          }
+        }
+      }
+    },
+    "profiles.move": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przenieś"
+          }
+        }
+      }
+    },
+    "profiles.moveApp": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already in “%@”. Move it here?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ jest już w profilu „%@”. Przenieść tutaj?"
+          }
+        }
+      }
+    },
+    "profiles.name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwa"
+          }
+        }
+      }
+    },
+    "profiles.nameInvalid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A profile name needs 1–40 characters."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwa profilu musi mieć od 1 do 40 znaków."
+          }
+        }
+      }
+    },
+    "profiles.needsKey": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout and translation need Polishing, and %@ has no API key. Add one in Settings › Speech › Polishing."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila i tłumaczenie wymagają Korekty tekstu, a %@ nie ma klucza API. Dodaj go w Ustawieniach › Mowa › Korekta tekstu."
+          }
+        }
+      }
+    },
+    "profiles.needsPolishing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Email layout and translation need Polishing turned on."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Układ e-maila i tłumaczenie wymagają włączonej Korekty tekstu."
+          }
+        }
+      }
+    },
+    "profiles.network": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profile names, apps and settings stay on this Mac. Extra vocabulary is sent to remote speech and Polishing providers exactly like your main vocabulary."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwy profili, aplikacje i ustawienia zostają na tym Macu. Dodatkowy słownik jest wysyłany do zdalnych dostawców rozpoznawania mowy i Korekty tekstu tak samo jak główny słownik."
+          }
+        }
+      }
+    },
+    "profiles.newName": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New profile"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowy profil"
+          }
+        }
+      }
+    },
+    "profiles.output": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Po dyktowaniu"
+          }
+        }
+      }
+    },
+    "profiles.output.copy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy only"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tylko kopiuj"
+          }
+        }
+      }
+    },
+    "profiles.output.paste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wklej"
+          }
+        }
+      }
+    },
+    "profiles.polishing.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off for this app"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączona w tej aplikacji"
+          }
+        }
+      }
+    },
+    "profiles.translation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tłumaczenie"
+          }
+        }
+      }
+    },
+    "profiles.translation.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłączone"
+          }
+        }
+      }
+    },
+    "profiles.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra vocabulary"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodatkowy słownik"
+          }
+        }
+      }
+    },
+    "profiles.vocabulary.overflow": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d term may not fit in the speech hint; it still gets local corrections."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d terms may not fit in the speech hint; they still get local corrections."
+                }
+              }
+            }
+          }
+        },
+        "pl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d termin może nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują go lokalne poprawki."
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d terminy mogą nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują je lokalne poprawki."
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d terminów może nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują je lokalne poprawki."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d terminów może nie zmieścić się w podpowiedzi dla modelu mowy; nadal obejmują je lokalne poprawki."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "raw": {
       "localizations": {
         "de": {
@@ -20377,6 +22675,764 @@
           "stringUnit": {
             "state": "translated",
             "value": "未处理"
+          }
+        }
+      }
+    },
+    "rules.confirm.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anuluj"
+          }
+        }
+      }
+    },
+    "rules.confirm.from": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When Plainsay writes"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy Plainsay napisze"
+          }
+        }
+      }
+    },
+    "rules.confirm.inflection": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other forms of the word (e.g. other endings) need their own rule."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inne formy słowa (np. inne końcówki) wymagają osobnej reguły."
+          }
+        }
+      }
+    },
+    "rules.confirm.save": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save rule"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisz regułę"
+          }
+        }
+      }
+    },
+    "rules.confirm.saveAnyway": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save anyway"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapisz mimo to"
+          }
+        }
+      }
+    },
+    "rules.confirm.scope": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only this exact phrase is replaced, everywhere you dictate, on this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zamieniana jest tylko ta dokładna fraza, we wszystkim, co dyktujesz, na tym Macu."
+          }
+        }
+      }
+    },
+    "rules.confirm.to": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write instead"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Napisz zamiast tego"
+          }
+        }
+      }
+    },
+    "rules.confirm.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Also add \"%@\" to Vocabulary (sent as a hint to your speech and Polishing services)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj też „%@” do Słownika (trafia jako podpowiedź do usług mowy i Korekty tekstu)"
+          }
+        }
+      }
+    },
+    "rules.confirm.vocabularyFuzzy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay will then also correct similar spellings."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay będzie wtedy poprawiać też podobne zapisy."
+          }
+        }
+      }
+    },
+    "rules.duplicate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rule for \"%@\" already exists. Replace it?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguła dla „%@” już istnieje. Zastąpić ją?"
+          }
+        }
+      }
+    },
+    "rules.duplicate.replace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zastąp"
+          }
+        }
+      }
+    },
+    "rules.forget": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forget this rule"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapomnij tę regułę"
+          }
+        }
+      }
+    },
+    "rules.forgotten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule forgotten."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapomniano regułę."
+          }
+        }
+      }
+    },
+    "rules.inverse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This reverses your rule \"%1$@ → %2$@\". Turn that rule off?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To odwraca Twoją regułę „%1$@ → %2$@”. Wyłączyć ją?"
+          }
+        }
+      }
+    },
+    "rules.inverse.done": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule turned off. Turn it back on in Settings → Speech → Replacement rules."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguła wyłączona. Włączysz ją ponownie w Ustawieniach → Mowa → Reguły zamiany."
+          }
+        }
+      }
+    },
+    "rules.inverse.keep": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zostaw"
+          }
+        }
+      }
+    },
+    "rules.inverse.off": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wyłącz"
+          }
+        }
+      }
+    },
+    "rules.offer.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next time, write \"%2$@\" whenever Plainsay would write \"%1$@\"."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następnym razem pisz „%2$@” wszędzie tam, gdzie Plainsay napisałby „%1$@”."
+          }
+        }
+      }
+    },
+    "rules.offer.notNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie teraz"
+          }
+        }
+      }
+    },
+    "rules.offer.remember": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętaj…"
+          }
+        }
+      }
+    },
+    "rules.offer.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember this correction?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętać tę poprawkę?"
+          }
+        }
+      }
+    },
+    "rules.reject.contains": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The new spelling contains the old phrase, so the rule would repeat itself."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowa pisownia zawiera starą frazę, więc reguła powtarzałaby się."
+          }
+        }
+      }
+    },
+    "rules.reject.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in both phrases."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wpisz obie frazy."
+          }
+        }
+      }
+    },
+    "rules.reject.limit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have 200 rules, the maximum."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Masz już 200 reguł, to maksimum."
+          }
+        }
+      }
+    },
+    "rules.reject.same": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The new spelling is the same."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nowa pisownia jest taka sama."
+          }
+        }
+      }
+    },
+    "rules.reject.tooLong": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rules are for short phrases: up to 4 words, replaced by up to 8."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguły są dla krótkich fraz: do 4 słów, zamienianych na maksymalnie 8."
+          }
+        }
+      }
+    },
+    "rules.reject.tooShort": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A single word needs at least 3 letters."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pojedyncze słowo musi mieć co najmniej 3 litery."
+          }
+        }
+      }
+    },
+    "rules.reject.vocabulary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is in your Vocabulary. Remove it there first."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@” jest w Twoim Słowniku. Najpierw usuń je stamtąd."
+          }
+        }
+      }
+    },
+    "rules.saved": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remembered. Manage rules in Settings → Speech → Replacement rules."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapamiętano. Reguły znajdziesz w Ustawieniach → Mowa → Reguły zamiany."
+          }
+        }
+      }
+    },
+    "rules.warn.common": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is a common word. This rule will change it everywhere."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "„%@” to częste słowo. Ta reguła zmieni je wszędzie."
+          }
+        }
+      }
+    },
+    "rules.warn.factual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This looks like a one-time fact (a date, day, number or address), not a spelling. Save anyway?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To wygląda na jednorazowy fakt (data, dzień, liczba lub adres), a nie pisownię. Zapisać mimo to?"
+          }
+        }
+      }
+    },
+    "rules.warn.short": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Short phrases can change other words. Check it only matches what you mean."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Krótkie frazy mogą zmieniać inne słowa. Upewnij się, że pasują tylko tam, gdzie trzeba."
+          }
+        }
+      }
+    },
+    "settings.about.copied": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copié"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiato"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピーしました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사됨"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gekopieerd"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skopiowano"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiado"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировано"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопійовано"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
+          }
+        }
+      }
+    },
+    "settings.about.copy": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "복사"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiëren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kopiuj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制"
+          }
+        }
+      }
+    },
+    "settings.about.version": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versione %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "버전 %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versie %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wersja %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versão %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версия %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Версія %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 %@"
           }
         }
       }
@@ -20955,6 +24011,170 @@
         }
       }
     },
+    "settings.emailMode.explanation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du in eine Mail-App oder ein Webmail-Fenster zum Verfassen diktierst, formatiert Plainsay das Ergebnis als E-Mail: die Anrede in einer eigenen Zeile, Absätze im Text und die Grußformel davon abgesetzt. Es fügt nie eine Anrede oder Grußformel hinzu, die du nicht gesagt hast. Überall sonst bleibt das Diktat unverändert."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you dictate into a mail app, or a webmail compose window, Plainsay lays the result out as an email: the greeting on its own line, paragraphs in the body, and the sign-off separated from it. It never adds a greeting or a sign-off you did not say. Everywhere else, dictation is unchanged."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando dictas en una app de correo o en una ventana de redacción de correo web, Plainsay da al resultado forma de correo: el saludo en su propia línea, párrafos en el cuerpo y la despedida separada. Nunca añade un saludo ni una despedida que no hayas dicho. En cualquier otro lugar, el dictado no cambia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lorsque vous dictez dans une app de messagerie ou une fenêtre de rédaction de webmail, Plainsay met le résultat en forme d'e-mail : la formule d'appel sur sa propre ligne, des paragraphes dans le corps et la formule de politesse séparée. Il n'ajoute jamais de formule d'appel ni de politesse que vous n'avez pas dite. Partout ailleurs, la dictée reste inchangée."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando detti in un'app di posta o in una finestra di composizione webmail, Plainsay impagina il risultato come un'email: il saluto su una riga a sé, i paragrafi nel corpo e la chiusura separata. Non aggiunge mai un saluto o una chiusura che non hai detto. Altrove la dettatura resta invariata."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メールアプリやWebメールの作成ウインドウで口述筆記すると、Plainsayは結果をメールの形に整えます。宛名の挨拶は独立した行に、本文は段落に分け、結びの挨拶は本文から離して配置します。話していない挨拶や結びを追加することはありません。それ以外の場所では口述筆記は変わりません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "메일 앱이나 웹메일 작성 창에 받아쓰면 Plainsay가 결과를 이메일 형식으로 정리합니다. 인사말은 별도 줄에, 본문은 문단으로, 맺음말은 본문과 분리해 배치합니다. 말하지 않은 인사말이나 맺음말은 절대 추가하지 않습니다. 그 밖의 곳에서는 받아쓰기가 그대로입니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als je dicteert in een mail-app of een webmailvenster om een bericht op te stellen, zet Plainsay het resultaat op als e-mail: de aanhef op een eigen regel, alinea's in de tekst en de afsluiting daarvan gescheiden. Het voegt nooit een aanhef of afsluiting toe die je niet hebt gezegd. Overal elders blijft dicteren ongewijzigd."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy dyktujesz w aplikacji pocztowej albo w oknie tworzenia wiadomości w poczcie przeglądarkowej, Plainsay układa tekst jak e-mail: powitanie w osobnym wierszu, treść w akapitach, a zakończenie oddzielone od reszty. Nigdy nie dodaje powitania ani zakończenia, których nie wypowiedziano. Poza pocztą dyktowanie działa bez zmian."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando ditas numa app de e-mail ou numa janela de redação de webmail, o Plainsay formata o resultado como um e-mail: a saudação numa linha própria, parágrafos no corpo e a despedida separada. Nunca acrescenta uma saudação ou despedida que não tenhas dito. Em todos os outros sítios, o ditado não muda."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда вы диктуете в почтовом приложении или в окне создания письма веб-почты, Plainsay оформляет результат как письмо: приветствие на отдельной строке, текст разбит на абзацы, а подпись отделена от него. Plainsay никогда не добавляет приветствие или подпись, которых вы не произносили. Во всех остальных местах диктовка не меняется."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли ви диктуєте в поштовому застосунку або у вікні створення листа вебпошти, Plainsay оформлює результат як лист: привітання в окремому рядку, текст розбитий на абзаци, а підпис відокремлений від нього. Plainsay ніколи не додає привітання чи підпис, яких ви не промовляли. В усіх інших місцях диктування не змінюється."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在邮件 App 或网页邮箱的撰写窗口中听写时，Plainsay 会将结果排成邮件格式：称呼单独一行，正文分段，结尾敬语与正文分开。它绝不会添加你没有说出的称呼或结尾敬语。在其他地方，听写保持不变。"
+          }
+        }
+      }
+    },
+    "settings.emailMode.needsSubscription": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das gehört zu Plainsay Cloud – ohne aktives Abo hat der Schalter keine Wirkung."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is part of Plainsay Cloud — without an active subscription the switch has no effect."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forma parte de Plainsay Cloud: sin una suscripción activa, el interruptor no tiene efecto."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette fonction fait partie de Plainsay Cloud — sans abonnement actif, l'interrupteur n'a aucun effet."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fa parte di Plainsay Cloud: senza un abbonamento attivo l'interruttore non ha effetto."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これはPlainsay Cloudの機能です。有効なサブスクリプションがない場合、このスイッチは効果がありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plainsay Cloud 기능입니다. 활성 구독이 없으면 이 스위치는 효과가 없습니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dit hoort bij Plainsay Cloud — zonder actief abonnement heeft de schakelaar geen effect."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To funkcja Plainsay Cloud — bez aktywnej subskrypcji ten przełącznik nic nie zmienia."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Isto faz parte do Plainsay Cloud — sem uma subscrição ativa, o interruptor não tem efeito."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это часть Plainsay Cloud — без активной подписки переключатель ни на что не влияет."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Це частина Plainsay Cloud — без активної підписки перемикач ні на що не впливає."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这是 Plainsay Cloud 的功能——没有有效订阅时，此开关不起作用。"
+          }
+        }
+      }
+    },
     "settings.emailMode.toggle": {
       "localizations": {
         "de": {
@@ -21067,6 +24287,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "下载 %@，之后将完全在这台 Mac 上运行。"
+          }
+        }
+      }
+    },
+    "settings.modelDownloadNoteWithPreparation": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Download, danach eine einmalige Vorbereitung für diesen Mac – %@. Anschließend läuft es vollständig auf diesem Mac."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ download, then a one-time preparation for this Mac — %@. After that it runs entirely on this Mac."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descarga de %@ y después una preparación única para este Mac: %@. A partir de ahí se ejecuta totalmente en este Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Téléchargement de %@, puis une préparation unique pour ce Mac — %@. Ensuite, fonctionne entièrement sur ce Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download di %@, poi una preparazione una tantum per questo Mac: %@. Dopodiché funziona interamente su questo Mac."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をダウンロードした後、このMac向けの1回限りの準備（%@）があります。その後は完全にこのMac上で動作します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 다운로드 후 이 Mac을 위한 1회 준비 과정(%@)이 있습니다. 그 이후에는 이 Mac에서 완전히 실행됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ downloaden, daarna een eenmalige voorbereiding voor deze Mac — %@. Daarna draait het volledig op deze Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pobranie %@, potem jednorazowe przygotowanie dla tego Maca — %@. Później działa w całości na tym Macu."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transferência de %@ e depois uma preparação única para este Mac — %@. A partir daí funciona inteiramente neste Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загрузка %@, затем однократная подготовка для этого Mac — %@. После этого всё работает полностью на этом Mac."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завантаження %@, потім одноразова підготовка для цього Mac — %@. Після цього все працює повністю на цьому Mac."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载 %@，然后为这台 Mac 进行一次性准备——%@。之后将完全在这台 Mac 上运行。"
           }
         }
       }
@@ -21313,6 +24615,214 @@
           "stringUnit": {
             "state": "translated",
             "value": "要求所选模型去除填充词和说错后重说的片段，同时保留原意、语气和语言。请检查重要文本；关闭 Polishing 可插入原始转录。"
+          }
+        }
+      }
+    },
+    "settings.private.armNow": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arm now"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Włącz dla następnego dyktowania"
+          }
+        }
+      }
+    },
+    "settings.private.consumption": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One finished private dictation turns this off. If it is refused, cancelled, silent or fails, it stays on until you turn it off."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcja wyłącza się po jednym ukończonym dyktowaniu prywatnym. Jeśli dyktowanie zostanie odrzucone lub anulowane, nie wykryje mowy albo zakończy się błędem, opcja pozostanie włączona, dopóki jej nie wyłączysz."
+          }
+        }
+      }
+    },
+    "settings.private.explainer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation uses only the on-device model. It skips Polishing, translation and email layout, and keeps the text and audio out of History and crash recovery. If Plainsay quits mid-dictation, that dictation is lost. \"Correct last dictation\" is unavailable afterwards, and after a confirmed paste the text is not kept on the clipboard. The app you dictate into, clipboard managers and macOS itself are outside Plainsay's control. Model downloads and update checks still use the network."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne korzysta tylko z modelu na tym Macu. Pomija Korektę tekstu, tłumaczenie i układ e-maila, a tekstu i dźwięku nie zapisuje w Historii ani w danych odzyskiwania po awarii. Jeśli Plainsay zakończy działanie w trakcie dyktowania, zostanie ono utracone. Potem nie da się użyć „Popraw ostatnie dyktowanie”, a po potwierdzonym wklejeniu tekst nie zostaje w schowku. Aplikacja, do której dyktujesz, menedżery schowka i sam macOS są poza kontrolą Plainsay. Pobieranie modeli i sprawdzanie aktualizacji nadal korzystają z sieci."
+          }
+        }
+      }
+    },
+    "settings.private.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private next dictation"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Następne dyktowanie prywatne"
+          }
+        }
+      }
+    },
+    "settings.rules.delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete rule %1$@ → %2$@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń regułę %1$@ → %2$@"
+          }
+        }
+      }
+    },
+    "settings.rules.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No rules yet. After you fix a dictation with \"Change … to …\", Plainsay can offer to remember it."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brak reguł. Gdy poprawisz dyktowanie poleceniem „Zmień … na …”, Plainsay może zaproponować zapamiętanie tej poprawki."
+          }
+        }
+      }
+    },
+    "settings.rules.enable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use rule %1$@ → %2$@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stosuj regułę %1$@ → %2$@"
+          }
+        }
+      }
+    },
+    "settings.rules.explanation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exact phrases replaced on this Mac after Polishing, just before Plainsay types. Rules never leave this Mac."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dokładne frazy zamieniane na tym Macu po Korekcie tekstu, tuż przed wpisaniem. Reguły nie opuszczają tego Maca."
+          }
+        }
+      }
+    },
+    "settings.rules.source.correction": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From a correction"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Z poprawki"
+          }
+        }
+      }
+    },
+    "settings.rules.source.manual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added by you"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodana przez Ciebie"
+          }
+        }
+      }
+    },
+    "settings.rules.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replacement rules"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reguły zamiany"
+          }
+        }
+      }
+    },
+    "settings.rules.toggle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply replacement rules"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stosuj reguły zamiany"
+          }
+        }
+      }
+    },
+    "settings.rules.translation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With translation or email layout on, rules apply to the translated or laid-out text."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Przy włączonym tłumaczeniu lub układzie e-maila reguły działają na tekście po tłumaczeniu lub formatowaniu."
           }
         }
       }
@@ -21727,6 +25237,450 @@
         }
       }
     },
+    "settings.vocabulary.accept": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hinzufügen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "追加"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "추가"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toevoegen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dodaj"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加"
+          }
+        }
+      }
+    },
+    "settings.vocabulary.dictationCount": {
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d Diktat"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d Diktaten"
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictation"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictations"
+                }
+              }
+            }
+          }
+        },
+        "es": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictado"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictados"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "en %d dictados"
+                }
+              }
+            }
+          }
+        },
+        "fr": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictée"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictées"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "dans %d dictées"
+                }
+              }
+            }
+          }
+        },
+        "it": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettato"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettati"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dettati"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%d 件の口述筆記で"
+                }
+              }
+            }
+          }
+        },
+        "ko": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "받아쓰기 %d회"
+                }
+              }
+            }
+          }
+        },
+        "nl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictatie"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "in %d dictaties"
+                }
+              }
+            }
+          }
+        },
+        "pl": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniu"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "w %d dyktowaniach"
+                }
+              }
+            }
+          }
+        },
+        "pt": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditado"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditados"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "em %d ditados"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записи"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "в %d записях"
+                }
+              }
+            }
+          }
+        },
+        "uk": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записі"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "у %d записах"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "出现在 %d 次听写中"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "settings.vocabulary.dismiss": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ verwerfen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartar %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorer %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignora %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を無視"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 무시"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ negeren"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odrzuć %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignorar %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отклонить %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відхилити %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "忽略 %@"
+          }
+        }
+      }
+    },
     "settings.vocabulary.explanation.other": {
       "localizations": {
         "de": {
@@ -21969,6 +25923,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "移除 %@"
+          }
+        }
+      }
+    },
+    "settings.vocabulary.suggested": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorschläge aus Wörtern, die du oft sagst"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested from words you keep saying"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugerencias a partir de palabras que repites"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggestions d'après les mots que vous répétez souvent"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggerimenti dalle parole che ripeti spesso"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "よく話す言葉からの候補"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자주 말하는 단어에서 추천"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voorgesteld op basis van woorden die je vaak zegt"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Propozycje na podstawie słów, które często powtarzasz"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sugestões a partir das palavras que repetes"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Предложено на основе часто произносимых слов"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запропоновано на основі слів, які ви часто вимовляєте"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根据你常说的词语推荐"
+          }
+        }
+      }
+    },
+    "spokenLanguages.makePrimary": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ als Hauptsprache festlegen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make %@ the main language"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar %@ como idioma principal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définir %@ comme langue principale"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imposta %@ come lingua principale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をメイン言語にする"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기본 언어로 설정: %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ als hoofdtaal instellen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ustaw jako główny język: %@"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Definir %@ como idioma principal"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сделать основным языком: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зробити основною мовою: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 %@ 设为主要语言"
           }
         }
       }
@@ -22625,6 +26743,252 @@
           "stringUnit": {
             "state": "translated",
             "value": "声音太小或时间太短——请再试一次，并清晰地说话。"
+          }
+        }
+      }
+    },
+    "usageStatistics.detail": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Hilf uns, Plainsay zu verbessern: Teile tägliche Nutzungsbereiche, App- und macOS-Versionen, Sprachmodus, Sprachhinweise und Fehlerzahlen. Diktatinhalte und Kontodaten werden nie übertragen. Unter Einstellungen › Allgemein kannst du die Freigabe beenden und ausstehende Statistiken löschen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Help improve Plainsay by sharing daily usage ranges, app and macOS versions, speech mode, language hints, and failure counts. Dictation content and account details are never included. Turn this off in Settings › General to stop sharing and delete pending statistics."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Ayuda a mejorar Plainsay compartiendo intervalos de uso diario, versiones de la app y de macOS, modo de reconocimiento de voz, indicaciones de idioma y recuentos de fallos. Nunca se incluye el contenido de los dictados ni datos de la cuenta. Desactívalo en Ajustes › General para dejar de compartir y borrar las estadísticas pendientes."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Aidez à améliorer Plainsay en partageant des plages d’utilisation quotidienne, les versions de l’app et de macOS, le mode de reconnaissance vocale, les indications de langue et le nombre d’échecs. Le contenu des dictées et les données du compte sont toujours exclus. Désactivez le partage dans Réglages › Général pour supprimer les statistiques en attente."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facoltativo. Aiuta a migliorare Plainsay condividendo intervalli di utilizzo giornaliero, versioni dell’app e di macOS, modalità di riconoscimento vocale, indicazioni sulla lingua e conteggi degli errori. Il contenuto delle dettature e i dati dell’account sono sempre esclusi. Disattiva l’opzione in Impostazioni › Generali per interrompere la condivisione ed eliminare le statistiche in attesa."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任意です。日ごとの使用量の範囲、アプリとmacOSのバージョン、音声認識モード、言語のヒント、失敗件数を共有すると、Plainsayの改善に役立ちます。音声入力の内容やアカウント情報は含まれません。共有を停止して未送信の統計を削除するには、「設定」›「一般」でオフにしてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "선택 사항입니다. 일일 사용량 범위, 앱 및 macOS 버전, 음성 인식 모드, 언어 힌트, 실패 횟수를 공유하면 Plainsay 개선에 도움이 됩니다. 받아쓰기 내용과 계정 정보는 포함되지 않습니다. 설정 › 일반에서 끄면 공유가 중지되고 전송 대기 중인 통계가 삭제됩니다."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optioneel. Help Plainsay te verbeteren door dagelijkse gebruiksbereiken, app- en macOS-versies, spraakmodus, taalhints en aantallen fouten te delen. Dicteerinhoud en accountgegevens worden nooit meegestuurd. Zet dit uit onder Instellingen › Algemeen om het delen te stoppen en openstaande statistieken te wissen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcjonalnie. Pomóż ulepszać Plainsay, udostępniając dzienne przedziały użycia, wersje aplikacji i macOS, tryb rozpoznawania mowy, wskazówki językowe i liczbę błędów. Statystyki nigdy nie zawierają treści dyktowania ani danych konta. Wyłącz tę opcję w Ustawieniach › Ogólne, aby zatrzymać udostępnianie i usunąć oczekujące statystyki."
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Ajude a melhorar o Plainsay partilhando intervalos de utilização diária, versões da aplicação e do macOS, modo de reconhecimento de voz, indicações de idioma e contagens de falhas. Nunca são incluídos conteúdos dos ditados nem dados da conta. Desative em Definições › Geral para parar a partilha e apagar as estatísticas pendentes."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно. Помогите улучшить Plainsay, поделившись диапазонами использования за день, версиями приложения и macOS, режимом распознавания речи, языковыми подсказками и числом сбоев. Содержимое диктовок и данные аккаунта не передаются. Отключите эту опцию в разделе «Настройки › Основные», чтобы прекратить отправку и удалить неотправленную статистику."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необов’язково. Допоможіть удосконалити Plainsay, поділившись денними діапазонами використання, версіями застосунку та macOS, режимом розпізнавання мовлення, мовними підказками й кількістю помилок. Зміст диктувань і дані облікового запису не надсилаються. Вимкніть у розділі «Налаштування › Загальні», щоб припинити надсилання та видалити ненадіслану статистику."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选。分享每日使用量范围、App 和 macOS 版本、语音识别模式、语言提示及失败次数，帮助改进 Plainsay。统计从不包含听写内容或账户信息。可在“设置 › 通用”中关闭分享并删除待发送的统计。"
+          }
+        }
+      }
+    },
+    "usageStatistics.privacyLink": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutz für Nutzungsstatistiken"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage statistics privacy details"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidad de las estadísticas de uso"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confidentialité des statistiques d’utilisation"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy delle statistiche di utilizzo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用状況統計のプライバシー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용 통계 개인정보 처리 안내"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy van gebruiksstatistieken"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prywatność statystyk użycia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidade das estatísticas de utilização"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфиденциальность статистики использования"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфіденційність статистики використання"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用统计隐私详情"
+          }
+        }
+      }
+    },
+    "usageStatistics.toggle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anonyme Nutzungsstatistiken teilen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share anonymous usage statistics"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compartir estadísticas de uso anónimas"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partager des statistiques d’utilisation anonymes"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condividi statistiche di utilizzo anonime"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匿名の使用状況統計を共有"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "익명 사용 통계 공유"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anonieme gebruiksstatistieken delen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Udostępniaj anonimowe statystyki użycia"
+          }
+        },
+        "pt": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partilhar estatísticas de utilização anónimas"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Делиться анонимной статистикой использования"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ділитися анонімною статистикою використання"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享匿名使用统计"
           }
         }
       }

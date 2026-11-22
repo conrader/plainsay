@@ -49,6 +49,10 @@ verify_checkout_is_current() {
   local behind
   behind=$(git rev-list --count "HEAD..$remote")
   if [ "$behind" -gt 0 ]; then
+    if [ "$CHECK_ONLY" = 0 ] && [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
+      echo "==> main advanced during release; deferring the website deploy to the next release"
+      exit 0
+    fi
     echo "refusing to deploy: this checkout is $behind commit(s) behind $remote (on $branch)." >&2
     echo "Publishing it would revert the live site to an older version and delete anything added since." >&2
     echo "Run: git pull --ff-only origin ${DEPLOY_SITE_BRANCH:-main}" >&2
@@ -86,6 +90,8 @@ validate_legal_page() {
 validate_legal_page docs/privacy/index.html
 validate_legal_page docs/terms/index.html
 
+[ -f docs/index.html ] || { echo "docs/index.html missing — wrong directory?" >&2; exit 1; }
+
 if [ "$CHECK_ONLY" = "1" ]; then
   echo "==> docs/ is publishable from this checkout"
   exit 0
@@ -94,10 +100,13 @@ fi
 HOST="${HOST:-codex-server}"
 REMOTE_DIR=/var/www/plainsay-app
 
-[ -f docs/index.html ] || { echo "docs/index.html missing — wrong directory?" >&2; exit 1; }
-
 echo "==> Publishing docs/ to $HOST:$REMOTE_DIR"
-ssh "$HOST" "sudo mkdir -p $REMOTE_DIR && sudo chown -R \$(whoami) $REMOTE_DIR"
+# The shared directories may be owned by another publisher, so skip their
+# timestamps. The managed receiver already does this on the restricted path.
+RSYNC_OPTIONS=(--omit-dir-times)
+if [ "${PLAINSAY_MANAGED_DOCROOTS:-0}" = 1 ]; then
+  RSYNC_OPTIONS=(-e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15')
+fi
 # --delete so a page removed from docs/ actually disappears from the site
 # rather than lingering as an orphan nobody links to but crawlers still index.
 #
@@ -117,7 +126,10 @@ EXCLUDES=(
   --exclude='.DS_Store'
   --exclude='*.md'
 )
-rsync -az --delete "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
-ssh "$HOST" "sudo chown -R www-data:www-data $REMOTE_DIR && sudo chmod -R a+rX $REMOTE_DIR"
+# Keep existing directory ACL masks and let new paths inherit receiver ACLs
+# even when the source checkout is private. nginx needs read and traverse access.
+rsync -az --delete --no-perms --no-owner --no-group \
+  --chmod='Dug=rwx,Do=rx,Fug=rw,Fo=r' \
+  "${RSYNC_OPTIONS[@]}" "${EXCLUDES[@]}" docs/ "$HOST:$REMOTE_DIR/"
 
 echo "==> Live: https://plainsay.app/"

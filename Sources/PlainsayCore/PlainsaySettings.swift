@@ -23,6 +23,10 @@ public final class PlainsaySettings {
     public var hotkeyMode: HotkeyMode { didSet { persist(hotkeyMode, .hotkeyMode) } }
     public var model: OnDeviceModel { didSet { persist(model, .model) } }
     public var dictionary: TermDictionary { didSet { persist(dictionary, .dictionary) } }
+    /// Exact phrases replaced after Polishing (remember-correction). Local
+    /// only: never in a speech prompt or a Polishing request. Decoded lossily,
+    /// one rule at a time, so a bad rule cannot wipe the rest on the next save.
+    public var replacementRules: ReplacementRuleSet { didSet { persist(replacementRules, .replacementRules) } }
     /// Proposed terms the user turned down, so the same suggestion is not
     /// offered again every time they open Settings.
     public var dismissedTermProposals: [String] {
@@ -38,6 +42,19 @@ public final class PlainsaySettings {
     public var asrProvider: ASRProvider { didSet { persist(asrProvider, .asrProvider) } }
     public var asrModel: String { didSet { defaults.set(asrModel, forKey: Key.asrModel.rawValue) } }
     public var asrBaseURL: String { didSet { defaults.set(asrBaseURL, forKey: Key.asrBaseURL.rawValue) } }
+    // Odd revisions mean consent is on. A single preference stores the choice
+    // and distinguishes old queues after withdrawal, even if deletion fails.
+    public private(set) var usageStatisticsConsentRevision: Int
+    public var shareAnonymousUsageStatistics: Bool {
+        get { usageStatisticsConsentRevision % 2 == 1 }
+        set {
+            guard newValue != shareAnonymousUsageStatistics else { return }
+            usageStatisticsConsentRevision += 1
+            defaults.set(usageStatisticsConsentRevision, forKey: Key.usageStatisticsConsentRevision.rawValue)
+            onUsageStatisticsChanged?(usageStatisticsConsentRevision)
+        }
+    }
+    @ObservationIgnored public var onUsageStatisticsChanged: ((Int) -> Void)?
     public var playFeedbackSounds: Bool { didSet { defaults.set(playFeedbackSounds, forKey: Key.playFeedbackSounds.rawValue) } }
     /// Mute the Mac's sound output while recording. Off by default: silencing
     /// everything else on the machine is not something to discover by surprise.
@@ -56,6 +73,9 @@ public final class PlainsaySettings {
     /// hand it to every local user for free. Off by default: a mode that
     /// reformats text the speaker did not want reformatted is worse than no
     /// mode, so it is opted into rather than discovered by surprise.
+    /// Per-app overrides (FEATURES #4). Empty means everything uses Default,
+    /// which is the rest of these settings; nothing is migrated.
+    public var appProfiles: [DictationProfile] { didSet { persist(appProfiles, .appProfiles) } }
     public var emailModeEnabled: Bool { didSet { defaults.set(emailModeEnabled, forKey: Key.emailModeEnabled.rawValue) } }
     /// Language code every dictation is translated into, or nil for none.
     ///
@@ -152,7 +172,10 @@ public final class PlainsaySettings {
 
     public var geminiAPIKey: String {
         get { Keychain.get(account: Keychain.geminiKeyAccount) ?? "" }
-        set { Keychain.set(newValue, account: Keychain.geminiKeyAccount) }
+        set {
+            accountKeyStore(newValue, Keychain.geminiKeyAccount)
+            refreshCredentialPresence()
+        }
     }
 
     public var hasGeminiKey: Bool { !geminiAPIKey.isEmpty }
@@ -160,11 +183,54 @@ public final class PlainsaySettings {
     // Keys are stored per provider, so switching back and forth does not make
     // you paste them in again.
     public func apiKey(for provider: CleanupProvider) -> String {
-        Keychain.get(account: provider.keychainAccount) ?? ""
+        cleanupKeyLookup(provider)
+    }
+
+    /// Where Polishing keys are read from and written to: the Keychain. Tests
+    /// swap them (before the first read: `hasAPIKey` caches what the lookup
+    /// returned) so the real `ProviderFactory` availability rules run without
+    /// the login Keychain.
+    @ObservationIgnored var cleanupKeyLookup: (CleanupProvider) -> String = {
+        Keychain.get(account: $0.keychainAccount) ?? ""
+    }
+    @ObservationIgnored var cleanupKeyStore: (String, CleanupProvider) -> Void = {
+        Keychain.set($0, account: $1.keychainAccount)
+    }
+    /// Account-addressed key writes (the legacy Gemini setter and speech
+    /// keys). Swapped by tests for the same reason as `cleanupKeyStore`.
+    @ObservationIgnored var accountKeyStore: (String, String) -> Void = {
+        Keychain.set($0, account: $1)
+    }
+
+    /// Whether a Polishing key is stored, for callers that poll (the HUD chip
+    /// redraws 30 times a second, the profile editor on every render): the
+    /// Keychain is read once per provider, and every key write below clears
+    /// the answer, so it agrees with `ProviderFactory.makeCleaner`, which reads
+    /// the key itself. Cleared on every write, not per account, because
+    /// accounts are shared (the OpenAI key serves speech and Polishing, the
+    /// legacy Gemini key is the Gemini Polishing key). A key added or removed
+    /// outside Plainsay (Keychain Access) is picked up at the next recording
+    /// boundary: the coordinator calls `refreshCredentialPresence()` when a
+    /// recording starts and again just before it builds the cleaner.
+    public func hasAPIKey(for provider: CleanupProvider) -> Bool {
+        if let known = cleanupKeyPresence[provider] { return known }
+        let present = !apiKey(for: provider).isEmpty
+        cleanupKeyPresence[provider] = present
+        return present
+    }
+
+    @ObservationIgnored private var cleanupKeyPresence: [CleanupProvider: Bool] = [:]
+
+    /// Forgets every cached presence answer; the next `hasAPIKey` reads the
+    /// Keychain again. Cheap (no read happens here), so it is safe to call at
+    /// recording boundaries to catch keys changed outside the app.
+    public func refreshCredentialPresence() {
+        cleanupKeyPresence = [:]
     }
 
     public func setAPIKey(_ key: String, for provider: CleanupProvider) {
-        Keychain.set(key, account: provider.keychainAccount)
+        cleanupKeyStore(key, provider)
+        refreshCredentialPresence()
     }
 
     public func apiKey(for provider: ASRProvider) -> String {
@@ -172,7 +238,8 @@ public final class PlainsaySettings {
     }
 
     public func setAPIKey(_ key: String, for provider: ASRProvider) {
-        Keychain.set(key, account: provider.keychainAccount)
+        accountKeyStore(key, provider.keychainAccount)
+        refreshCredentialPresence()
     }
 
     /// Resolved values, falling back to the provider's defaults.
@@ -263,7 +330,7 @@ public final class PlainsaySettings {
 
     private enum Key: String {
         case binding, hotkeyMode, model, dictionary, cleanupEnabled, playFeedbackSounds, language, keepOnClipboard
-        case livePreviewEnabled
+        case livePreviewEnabled, usageStatisticsConsentRevision
         case historyEnabled, historyRetentionDays
         case emailModeEnabled, translationTargetLanguage, lastTranslationTarget
         case voiceFilterEnabled, voiceEmbedding
@@ -273,6 +340,8 @@ public final class PlainsaySettings {
         case transcriptionSource, asrProvider, asrModel, asrBaseURL
         case interfaceLanguage
         case muteOutputWhileRecording
+        case appProfiles
+        case replacementRules
     }
 
     public init(defaults: UserDefaults = .standard) {
@@ -290,19 +359,31 @@ public final class PlainsaySettings {
 
         binding = decode(.binding, HotkeyBinding.rightCommandKey)
         hotkeyMode = decode(.hotkeyMode, HotkeyMode.hybrid)
-        model = decode(.model, OnDeviceModel.largeV3Turbo)
+        let languages = decode(.language, [String]())
+        let setupVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
+        let setupWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
+        // Saved languages can also belong to a pre-onboarding install.
+        // Keep its historical Turbo default until the user picks a model.
+        let modelFallback: OnDeviceModel = setupWasPresented && setupVersion < Self.currentOnboardingVersion
+            ? DictationTuning.fallbackModel(for: languages)
+            : .largeV3Turbo
+        model = decode(.model, modelFallback)
         // "Plainsay" is a made-up word, and Whisper mishears made-up words —
         // seeded by default so a fresh install spells its own name correctly
         // without the user having to notice and add it themselves. Only
         // applies when no dictionary was ever saved; an existing user's
         // dictionary, even an empty one, is never overwritten.
         dictionary = decode(.dictionary, TermDictionary(terms: ["Plainsay"]))
+        replacementRules = decode(.replacementRules, ReplacementRuleSet())
         dismissedTermProposals = defaults.stringArray(forKey: Key.dismissedTermProposals.rawValue) ?? []
         cleanupEnabled = defaults.object(forKey: Key.cleanupEnabled.rawValue) as? Bool ?? true
+        usageStatisticsConsentRevision = defaults.integer(forKey: Key.usageStatisticsConsentRevision.rawValue)
         playFeedbackSounds = defaults.object(forKey: Key.playFeedbackSounds.rawValue) as? Bool ?? true
         muteOutputWhileRecording = defaults.object(forKey: Key.muteOutputWhileRecording.rawValue) as? Bool ?? false
         historyEnabled = defaults.object(forKey: Key.historyEnabled.rawValue) as? Bool ?? true
         emailModeEnabled = defaults.object(forKey: Key.emailModeEnabled.rawValue) as? Bool ?? false
+        // Lossy and logged, unlike `decode`: one bad profile drops alone.
+        appProfiles = DictationProfile.decodeList(defaults.data(forKey: Key.appProfiles.rawValue))
         translationTargetLanguage = defaults.string(forKey: Key.translationTargetLanguage.rawValue)
         // English by default: the common target, and often not something
         // people list among the languages they speak.
@@ -313,8 +394,8 @@ public final class PlainsaySettings {
         // which would silently mean "keep everything" for exactly the users
         // who already have the most stored.
         historyRetentionDays = defaults.object(forKey: Key.historyRetentionDays.rawValue) as? Int ?? 30
-        onboardingVersion = defaults.integer(forKey: Key.onboardingVersion.rawValue)
-        onboardingWasPresented = defaults.object(forKey: Key.onboardingWasPresented.rawValue) as? Bool ?? false
+        onboardingVersion = setupVersion
+        onboardingWasPresented = setupWasPresented
         onboardingStep = defaults.integer(forKey: Key.onboardingStep.rawValue)
         keepOnClipboard = defaults.object(forKey: Key.keepOnClipboard.rawValue) as? Bool ?? false
         livePreviewEnabled = defaults.object(forKey: Key.livePreviewEnabled.rawValue) as? Bool ?? false
@@ -327,7 +408,7 @@ public final class PlainsaySettings {
         asrProvider = decode(.asrProvider, ASRProvider.groq)
         asrModel = defaults.string(forKey: Key.asrModel.rawValue) ?? ""
         asrBaseURL = defaults.string(forKey: Key.asrBaseURL.rawValue) ?? ""
-        spokenLanguages = decode(.language, [])
+        spokenLanguages = languages
         interfaceLanguage = defaults.string(forKey: Key.interfaceLanguage.rawValue)
         Localization.setOverride(interfaceLanguage)
     }

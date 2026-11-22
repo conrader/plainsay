@@ -63,6 +63,17 @@ struct HUDPreview: View {
         )),
         ("Cleanup unavailable", HUDState(phase: .insertedRaw, levelHistory: sampleLevels)),
         ("Saved to clipboard", HUDState(phase: .savedToClipboard(.nothingFocused), levelHistory: sampleLevels)),
+        ("Copied (profile)", HUDState(phase: .copied, levelHistory: sampleLevels)),
+        ("Profile chip", HUDState(
+            phase: .recording, levelHistory: sampleLevels, elapsed: 3, recordingStyle: .releaseToFinish,
+            profileChip: "Code · Local only"
+        )),
+        ("Private recording", HUDState(
+            phase: .recording, levelHistory: sampleLevels, elapsed: 4, recordingStyle: .releaseToFinish, isPrivate: true
+        )),
+        ("Private on clipboard", HUDState(
+            phase: .savedToClipboard(.nothingFocused), levelHistory: sampleLevels, isPrivate: true
+        )),
         (
             "Saved to clipboard, target gone",
             HUDState(phase: .savedToClipboard(.targetGone(.notFrontmost)), levelHistory: sampleLevels)

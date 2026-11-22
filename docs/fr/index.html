@@ -312,7 +312,7 @@
       <div class="compare" style="margin-top: 28px;">
         <div class="col">
           <span class="eyebrow" style="color: var(--signal);">CE QUI EST OUVERT</span>
-          <p>Le code source du client Plainsay pour Mac comprend ses intégrations de transcription et Polishing, le HUD, les Réglages et l&#x27;Assistant de configuration. Les composants et modèles tiers conservent leurs propres licences. Le client Mac n&#x27;envoie ni analytics ni télémétrie. La vérification des mises à jour signées contacte api.plainsay.app par défaut et peut être désactivée dans les Réglages. Le Cloud optionnel enregistre les métadonnées de compte, d&#x27;abonnement et d&#x27;usage nécessaires au service payant.</p>
+          <p>Le code source du client Plainsay pour Mac comprend ses intégrations de transcription et Polishing, le HUD, les Réglages et l&#x27;Assistant de configuration. Les composants et modèles tiers conservent leurs propres licences. Les statistiques d’utilisation facultatives sont désactivées par défaut. La vérification des mises à jour signées contacte api.plainsay.app par défaut et peut être désactivée dans les Réglages. Le Cloud optionnel enregistre les métadonnées de compte, d&#x27;abonnement et d&#x27;usage nécessaires au service payant.</p>
         </div>
         <div class="col">
           <span class="eyebrow" style="color: var(--slate);">CE QUI NE L&#x27;EST PAS</span>
@@ -448,7 +448,7 @@
   // -----------------------------------------------------------------
   var REASONS = [
     { icon: "text.quote", title: "Open source", body: "Le code source du client Plainsay pour Mac est public sous licence MIT. Chaque version déjà publiée sous MIT reste libre d'être forkée et modifiée ; les composants et modèles tiers ont leurs propres licences." },
-    { icon: "lock.shield.fill", title: "Transparent par défaut", body: "Le client Mac n'envoie ni analytics ni télémétrie. La vérification des mises à jour signées contacte api.plainsay.app par défaut et peut être désactivée dans les Réglages. Le Cloud optionnel enregistre les métadonnées de compte, d'abonnement et d'usage nécessaires au service payant." },
+    { icon: "lock.shield.fill", title: "Transparent par défaut", body: "Les statistiques d’utilisation facultatives sont désactivées par défaut. La vérification des mises à jour signées contacte api.plainsay.app par défaut et peut être désactivée dans les Réglages. Le Cloud optionnel enregistre les métadonnées de compte, d'abonnement et d'usage nécessaires au service payant." },
     { icon: "clock.arrow.circlepath", title: "Solutions de repli récupérables", body: "Si Polishing échoue, Plainsay utilise le transcript brut. S’il n’existe aucune cible sûre pour le collage, le texte reste dans le presse-papiers ; lorsque l’historique est activé, Plainsay ajoute la transcription terminée à l’historique avant l’insertion." },
     { icon: "clock.arrow.circlepath", title: "Un historique sous votre contrôle", body: "Par défaut, l’historique conserve jusqu’à 100 dictées pendant 30 jours. Choisissez 7, 30, 90 ou 365 jours, effacez-le ou désactivez-le ; sa désactivation supprime les transcriptions enregistrées." },
     { icon: "text.quote", title: "Suggestions de vocabulaire", body: "Les Réglages proposent les noms et termes de produits récurrents détectés dans les dictées enregistrées. Rien n’est ajouté sans que vous choisissiez Ajouter, et chaque suggestion peut être écartée. Les corrections appliquées s’appuient sur une correspondance prudente et retiennent le candidat le plus proche." },

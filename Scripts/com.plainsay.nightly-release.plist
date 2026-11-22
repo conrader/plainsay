@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.plainsay.nightly-release</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/Users/konrad/Release/plainsay/Scripts/nightly-release.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/konrad/Release/plainsay</string>
+	<key>LimitLoadToSessionType</key>
+	<string>Aqua</string>
+	<key>StartCalendarInterval</key>
+	<dict>
+		<key>Hour</key>
+		<integer>2</integer>
+		<key>Minute</key>
+		<integer>10</integer>
+	</dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<!-- Reinstall and reload the LaunchAgent after changing its environment. -->
+		<key>PLAINSAY_SPARKLE_ACCOUNT</key>
+		<string>com.plainsay.sparkle</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>/Users/konrad/Library/Logs/PlainsayRelease/nightly.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/konrad/Library/Logs/PlainsayRelease/nightly.log</string>
+</dict>
+</plist>

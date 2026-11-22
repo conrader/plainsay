@@ -10,15 +10,24 @@ final class MenuBarSafetyTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let applicationSource = repositoryRoot
-            .appendingPathComponent("Sources/PlainsayApp/PlainsayApplication.swift")
-        let source = try String(contentsOf: applicationSource, encoding: .utf8)
+        // Every file that holds part of the MenuBarExtra hierarchy: the menu
+        // sections live in extensions of MenuContent outside the main file.
+        let menuBarSources = [
+            "Sources/PlainsayApp/PlainsayApplication.swift",
+            "Sources/PlainsayApp/MenuSections.swift",
+            "Sources/PlainsayApp/MenuStatusText.swift",
+        ]
         let timelineConstruction = try NSRegularExpression(pattern: #"\bTimelineView\s*\("#)
-        let sourceRange = NSRange(source.startIndex..<source.endIndex, in: source)
 
-        XCTAssertNil(
-            timelineConstruction.firstMatch(in: source, range: sourceRange),
-            "Do not place TimelineView in PlainsayApplication's MenuBarExtra hierarchy; it leaks CPU and memory on macOS 26."
-        )
+        for path in menuBarSources {
+            let applicationSource = repositoryRoot.appendingPathComponent(path)
+            let source = try String(contentsOf: applicationSource, encoding: .utf8)
+            let sourceRange = NSRange(source.startIndex..<source.endIndex, in: source)
+
+            XCTAssertNil(
+                timelineConstruction.firstMatch(in: source, range: sourceRange),
+                "Do not place TimelineView in PlainsayApplication's MenuBarExtra hierarchy (\(path)); it leaks CPU and memory on macOS 26."
+            )
+        }
     }
 }

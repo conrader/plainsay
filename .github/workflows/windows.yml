@@ -12,6 +12,11 @@ on:
       - "windows/**"
       - ".github/workflows/windows.yml"
 
+# Only a PR's obsolete runs share a group. Push/manual runs each stay unique.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   build:
     # The real build+link this app needs: cargo check on macOS can verify

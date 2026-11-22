@@ -11,7 +11,7 @@ A native Mac dictation app in a 12 MB download, with Whisper and Parakeet runnin
   <img alt="Apple silicon" src="https://img.shields.io/badge/Apple%20silicon-required-14161A?style=flat-square&logo=apple">
 </p>
 <p align="center"><code>brew install --cask conrader/plainsay/plainsay</code> · <a href="https://api.plainsay.app/releases/Plainsay-latest.dmg"><strong>Download the notarized DMG</strong></a></p>
-<p align="center"><strong>12 MB native app · free Local mode · no account · no telemetry</strong></p>
+<p align="center"><strong>12 MB native app · free Local mode · no account · usage statistics off by default</strong></p>
 <p align="center"><a href="https://github.com/conrader/plainsay"><strong>⭐ Star Plainsay on GitHub</strong></a>, the simplest way to help other Mac users find it.</p>
 
 <p align="center">
@@ -180,6 +180,7 @@ file import, so if you have recordings to transcribe rather than words to speak,
 | Local transcription + hosted Polishing | Stays on your Mac | Sent to the provider you select | Depends on provider | Depends on provider |
 | Plainsay Cloud | Sent to Plainsay Cloud | Returned by Cloud; sent onward if Cloud Polishing is enabled | Yes | US$4 gross/month, VAT included; 900 transcription minutes per rolling 30 days |
 | Your own speech API | Sent directly to the provider you configure | Returned to Plainsay | Provider key | Provider pricing |
+| [Private next dictation](#private-next-dictation) (on-device, no Polishing) | Stays on your Mac | Stays on your Mac; not saved by Plainsay | No | Free |
 
 The hosted routes are explicit:
 
@@ -216,15 +217,92 @@ signed-update delivery can still produce ordinary web-server access records.
 
 Local mode does not mean the app never uses the network: the selected model
 must be downloaded once, and the default update check contacts
-`api.plainsay.app` (it can be switched off). The Mac client sends no analytics
-or telemetry. By default, History keeps up to 100 raw and final transcript
-records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear the
+`api.plainsay.app` (it can be switched off). By default, History keeps up to
+100 raw and final transcript records on this Mac for 30 days. You can choose 7, 30, 90, or 365 days, clear the
 records, or stop saving them; turning History off deletes saved transcripts.
 Audio is staged in an owner-only local folder while a dictation is processed
 and removed after a successful or completed attempt. Interrupted recordings
 can remain for recovery. On each launch, Plainsay removes ones older than 7
 days and keeps no more than the newest 20; clearing History purges them too.
 These files are excluded from backups.
+
+### Optional anonymous usage statistics
+
+**Share anonymous usage statistics** is off by default for new and existing
+installations. You can enable it on the Ready screen during setup or in
+**Settings → General → Privacy**. It helps the developers understand active
+installs, version adoption, which features people use, and where dictation fails.
+
+- Usage statistics are optional. We seek prior consent for storing and reading the counters on your Mac under [ePrivacy Article 5(3)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02002L0058-20091219) and [Poland’s Electronic Communications Law, Article 399](https://eli.sejm.gov.pl/eli/DU/2024/1221/ogl/pol).
+- An unchecked switch asks for a specific, informed choice. Consent is our basis for any personal data processed in receiving a report. [GDPR Articles 6(1)(a) and 7](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+- The same switch withdraws consent and clears pending counters. Dictation is available either way. [GDPR Article 7(3)](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+
+When enabled, Plainsay counts standard dictation attempts on your Mac.
+It sends at most one HTTPS batch per UTC day to
+`POST https://api.plainsay.app/v1/usage-statistics`, independent of update
+checks. The batch can include up to seven closed days to cover time offline.
+Turning sharing off cancels any in-flight upload, stops collection and clears
+pending statistics. An upload already received is merged into totals.
+
+Each reported day contributes one daily active install. Your Mac marks one
+report per Monday–Sunday UTC week as a weekly active install. The figures
+cover participating installations. Reinstalls or turning sharing off and on
+can count an installation twice in a week. Expired or interrupted deliveries
+can reduce counts. No account or install identifier is sent. The request
+never contains text, audio, vocabulary, target app names or IDs, file paths,
+or error messages. Private dictations and correction commands are excluded.
+The network uses the IP address to deliver the request, and the usage
+statistics route does not log or store it. The collector folds the report into
+90-day totals and keeps no individual reports.
+
+An example request body follows. The language codes are configured speech
+hints (or `auto` when unavailable). Dictations, audio minutes, and mode totals
+are ranges. Polishing can overlap any speech mode. Failures are capped at
+100 per category per day.
+
+```json
+{
+  "schema": 1,
+  "days": [
+    {
+      "day": "2026-11-16",
+      "weekly_active": true,
+      "app_version": "0.2.38",
+      "macos_version": "15.7",
+      "dictations": "5-19",
+      "audio_minutes": "1-<5",
+      "modes": {"local": "5-19", "polishing": "1-4"},
+      "languages": ["pl"],
+      "failures": {"polishing": 1}
+    }
+  ]
+}
+```
+
+See the [privacy policy](https://plainsay.app/privacy/#usage-statistics) and
+[collector and reporting instructions](Server/UsageStatistics/README.md).
+
+### Private next dictation
+
+The menu bar item **Private next dictation** arms one dictation that uses only
+the on-device model Plainsay has already loaded. It skips Polishing,
+translation and email layout, and Plainsay writes nothing for it to History,
+crash-recovery audio, debug audio or "Correct last dictation"; the paste log
+line names no app. After one finished private dictation the app returns to
+normal. It is available only when Speech is set to On-device and the model is
+ready; otherwise it is refused and nothing is recorded. It never falls back to
+Cloud or a remote provider.
+
+What it does not cover: the app you paste into and anything it syncs; the
+system clipboard (about 600 ms for a confirmed paste, longer if the paste is
+unconfirmed or the text was left on the clipboard). Plainsay marks those
+clipboard writes concealed and transient, but whether a clipboard manager
+honours that is untested. macOS memory, swap and Accessibility, and unified-log
+metadata (duration, character count, outcome) are also outside it. Model
+downloads and update checks still use the network, and whether the speech
+libraries make any network call while transcribing has not been checked
+beyond Plainsay's own code, which makes none. A crash or quit before the
+paste loses the dictation, because nothing is staged for recovery.
 
 API keys and the Plainsay Cloud session token are stored in macOS Keychain.
 Local mode is the default choice on a new installation; cloud use requires an
@@ -307,6 +385,31 @@ transcript instead of inserting partial edited text.
 
 Read [How it works](https://plainsay.app/how-it-works/) for the pipeline and
 [Why on-device](https://plainsay.app/why-on-device/) for the privacy trade-offs.
+
+## Speech model benchmarks
+
+Measured on a Mac mini M4 on 2026-11-19 using 80 held-out FLEURS read-speech
+clips (40 Polish, 40 US English, 1,614 reference words). Overall word error
+rate (WER) is the mean of the Polish and English rates. Latency runs from audio
+already in memory to final text with the model loaded.
+
+| Model | WER overall | WER PL | WER EN | p90 latency | Model download size |
+|---|---:|---:|---:|---:|---:|
+| Whisper Turbo (previous PL+EN fallback) | 5.88% | 5.72% | 6.04% | 1.08 s | ~632 MB |
+| Parakeet v3 INT8 (tuned) | 5.68% | 5.20% | 6.15% | 0.21 s | ~475 MB |
+
+The WER difference is within noise (95 vs. 92 word errors). The main gain is
+about 5× lower p90 latency. The tuned preset uses 320 ms pre-roll, 40 ms
+post-roll, and up to 4× gain on quiet clips. Live microphone audio and clips
+longer than 30 seconds remain untested.
+
+Parakeet is the default for new Polish-primary, English-secondary setups on
+Apple silicon. Intel Macs default to Whisper Turbo. Existing installs using
+Whisper Turbo keep it.
+
+On Apple silicon, follow the [eval data and model setup](DATA.md), then run
+`eval/run_eval heldout` to evaluate Parakeet. The paired rerun used the same
+command in unpublished autoresearch runs.
 
 ## Reproducible benchmark
 

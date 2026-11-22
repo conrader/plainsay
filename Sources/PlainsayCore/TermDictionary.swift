@@ -204,7 +204,7 @@ public struct TermDictionary: Codable, Sendable, Equatable {
 
     /// Lowercased, diacritic-folded, punctuation-stripped — so "Plainsay",
     /// "plain say", and "PlainSay" all fold to the same comparison key.
-    private static func foldedKey(_ text: String) -> String {
+    static func foldedKey(_ text: String) -> String {
         String(
             text
                 .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
@@ -257,7 +257,9 @@ public struct TermDictionary: Codable, Sendable, Equatable {
                     previous[j - 1] + cost
                 )
             }
-            previous = current
+            // Reuse both row buffers. Assignment would share their storage
+            // and force a copy when current[0] is written on the next row.
+            swap(&previous, &current)
         }
         return previous[b.count]
     }

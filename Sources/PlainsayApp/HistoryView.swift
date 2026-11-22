@@ -16,6 +16,8 @@ struct HistoryView: View {
     /// Pushes a changed switch or window into the store. Turning history off
     /// deletes what is already saved, so this is not a cosmetic refresh.
     let onPolicyChange: () -> Void
+    /// Supplies the "Private next dictation" section; nil leaves it out.
+    var coordinator: DictationCoordinator? = nil
     @State private var query = ""
     @State private var copiedID: UUID?
 
@@ -33,16 +35,24 @@ struct HistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             controls
+            diskProblems
+            if let coordinator { PrivateDictationSettingsSection(coordinator: coordinator) }
 
             if !settings.historyEnabled {
                 ContentUnavailableView(
                     "History is off",
                     systemImage: "clock.badge.xmark",
                     description: Text(
-                        Localization.appString(
-                            "history.disabledDescription",
-                            fallback: "Dictations are not being saved, and anything previously saved has been deleted. Plainsay can no longer recover a dictation whose paste silently failed — you would have to say it again."
-                        )
+                        // Only claim the deletion once it has happened.
+                        history.deletionFailed
+                            ? Localization.appString(
+                                "history.disabledDescriptionNotDeleted",
+                                fallback: "Dictations are not being saved, but some saved before could not be deleted yet. Use Try again above."
+                            )
+                            : Localization.appString(
+                                "history.disabledDescription",
+                                fallback: "Dictations are not being saved, and anything previously saved has been deleted. Plainsay can no longer recover a dictation whose paste silently failed — you would have to say it again."
+                            )
                     )
                 )
             } else if history.records.isEmpty {
@@ -91,6 +101,52 @@ struct HistoryView: View {
         }
     }
 
+    /// A delete or a write that did not reach the disk, said where the user
+    /// looks for their dictations — never only in the log.
+    @ViewBuilder
+    private var diskProblems: some View {
+        if history.deletionFailed {
+            HStack(alignment: .firstTextBaseline) {
+                Label(
+                    Localization.appString(
+                        "history.deletionFailed",
+                        fallback: "Some dictations that should have been deleted are still on this Mac."
+                    ),
+                    systemImage: "exclamationmark.triangle"
+                )
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button(Localization.appString("history.retryDeletion", fallback: "Try again")) {
+                    _ = history.retryDeletion()
+                }
+            }
+            .font(.callout)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
+        }
+        if settings.historyEnabled, history.saveFailed {
+            Label(
+                history.unsavedInMemory
+                    ? Localization.appString(
+                        "history.saveFailed",
+                        fallback: "Recent dictations could not be saved to disk. They are listed here only until Plainsay quits; the next dictation tries again."
+                    )
+                    : Localization.appString(
+                        "history.saveUnprotected",
+                        fallback: "Dictations were saved, but could not be made readable by your account only and excluded from Time Machine. The next dictation tries again."
+                    ),
+                systemImage: "exclamationmark.triangle"
+            )
+            .font(.callout)
+            .foregroundStyle(.orange)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
+        }
+    }
+
     private var controls: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle(isOn: $settings.historyEnabled) {
@@ -132,7 +188,7 @@ struct HistoryView: View {
     private func label(forDays days: Int) -> String {
         days == 365
             ? Localization.appString("history.retention.year", fallback: "1 year")
-            : Localization.appFormat("history.retention.days", fallback: "%d days", days)
+            : Localization.appPlural("history.retention.days", fallback: "\(days) days", count: days)
     }
 }
 
@@ -185,5 +241,18 @@ private struct HistoryRow: View {
             .foregroundStyle(.secondary)
         }
         .padding(.vertical, 3)
+    }
+}
+
+extension HistoryView {
+    /// The Settings tab's wiring, kept here so SettingsView.swift does not grow.
+    init(coordinator: DictationCoordinator, settings: PlainsaySettings) {
+        self.init(
+            history: coordinator.history,
+            settings: settings,
+            onClearAll: { coordinator.clearAllStoredDictations() },
+            onPolicyChange: { coordinator.applyHistoryPolicy() },
+            coordinator: coordinator
+        )
     }
 }

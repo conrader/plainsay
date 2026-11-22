@@ -1301,6 +1301,8 @@ private struct ReadySetupStep: View {
                     .foregroundStyle(.secondary)
             }
 
+            UsageStatisticsPreference(isOn: $settings.shareAnonymousUsageStatistics)
+
             if case .error(let message) = coordinator.phase {
                 Label(message, systemImage: "exclamationmark.triangle.fill")
                     .font(.callout)
