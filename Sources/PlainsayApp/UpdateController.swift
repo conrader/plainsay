@@ -41,6 +41,14 @@ final class UpdateController {
         set { updater.updater.automaticallyChecksForUpdates = newValue }
     }
 
+    /// Whether a found update is downloaded and installed without asking.
+    /// SUAutomaticallyUpdate in Info.plist defaults this on; Sparkle only
+    /// honors it while automatic checks are on.
+    var automaticallyInstalls: Bool {
+        get { updater.updater.automaticallyDownloadsUpdates }
+        set { updater.updater.automaticallyDownloadsUpdates = newValue }
+    }
+
     /// Human-readable time of the last check, for the settings screen.
     var lastCheckDescription: String {
         guard let date = updater.updater.lastUpdateCheckDate else {

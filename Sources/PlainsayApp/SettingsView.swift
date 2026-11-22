@@ -160,6 +160,8 @@ private struct GeneralSettings: View {
 
             Section {
                 Toggle("Automatically check for updates", isOn: $updates.automaticallyChecks)
+                Toggle("Automatically download and install updates", isOn: $updates.automaticallyInstalls)
+                    .disabled(!updates.automaticallyChecks)
                 HStack {
                     Text(Localization.appFormat("settings.version", fallback: "Plainsay %@", updates.currentVersion))
                         .foregroundStyle(.secondary)
