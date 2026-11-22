@@ -128,7 +128,13 @@ struct DictationProfilePolicyTests {
     func promptBudget() throws {
         // Letters only, so the dropped term has exactly one exact match.
         let letters = Array("abcdefghijklmnopqrstuvwxyz")
-        let filler = (0..<99).map { "Filler" + String(letters[$0 / 26]) + String(letters[$0 % 26]) }
+        // Spelled out with types: as one expression this times out the type
+        // checker on the CI compiler.
+        let filler: [String] = (0..<99).map { (index: Int) -> String in
+            let first = String(letters[index / 26])
+            let second = String(letters[index % 26])
+            return "Filler" + first + second
+        }
         let global = filler + ["Zanzibarite"]
         let dropped = "Zanzibarite"
         let defaults = DictationDefaults(dictionary: TermDictionary(terms: global))

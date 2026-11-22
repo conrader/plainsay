@@ -33,9 +33,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.38</string>
+	<string>0.2.39</string>
 	<key>CFBundleVersion</key>
-	<string>238</string>
+	<string>239</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
@@ -46,6 +46,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Plainsay records your voice while dictation is active and transcribes it using the transcription mode you choose.</string>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
